@@ -267,7 +267,7 @@ export default function Stores() {
                       <FormItem>
                         <FormLabel>Phone</FormLabel>
                         <FormControl>
-                          <Input placeholder="(555) 123-4567" {...field} />
+                          <Input placeholder="(555) 123-4567" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -281,7 +281,7 @@ export default function Stores() {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="store@example.com" type="email" {...field} />
+                          <Input placeholder="store@example.com" type="email" {...field} value={field.value || ""} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -380,7 +380,7 @@ export default function Stores() {
         {stores.length === 0 && (
           <div className="text-center py-12">
             <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Store className="h-12 w-12 text-slate-400" />
+              <Store className="h-12 w-12 text-slate-400" />  
             </div>
             <h3 className="text-lg font-semibold text-slate-900 mb-2">No stores yet</h3>
             <p className="text-slate-600 mb-6">Get started by adding your first store location.</p>

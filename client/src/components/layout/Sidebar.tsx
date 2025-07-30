@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Eye, Home, Store, Package, ShoppingCart, Calendar, Users, BarChart3, MessageCircle, Settings, HelpCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { User } from "@shared/schema";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
@@ -18,7 +19,7 @@ const navigation = [
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user } = useAuth() as { user: User | undefined };
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
