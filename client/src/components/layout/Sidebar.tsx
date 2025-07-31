@@ -6,13 +6,11 @@ import type { User as UserType } from "@shared/schema";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
-  { name: "Patients", href: "/customers", icon: Users },
-  { name: "Book Appointment", href: "/book-appointment", icon: CalendarPlus },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
+  { name: "Patient Management", href: "/patients", icon: Users },
+  { name: "Invoice & Sales", href: "/sales", icon: ShoppingCart },
   { name: "Prescriptions", href: "/prescriptions", icon: Pill },
   { name: "Billing", href: "/billing", icon: DollarSign },
   { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Staff", href: "/staff", icon: UserCheck },
   { name: "Attendance", href: "/attendance", icon: Clock },
   { name: "Leave Management", href: "/leave-management", icon: Calendar },
