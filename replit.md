@@ -6,6 +6,15 @@ OptiStore Pro is a comprehensive multi-store management system designed for opti
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Recent Updates (January 31, 2025)
+- Fixed all action buttons in Patient & Appointment Management system
+- Enhanced professional print formats with store branding and QR codes  
+- Connected dropdown menu actions for patients (View Details, Edit, Medical History, Prescriptions, Print, Invoice, QR Code, Share, Delete)
+- Connected appointment action buttons (View, Edit, Print, QR Code, Share, Invoice, Cancel)
+- Improved tab layout with patient and appointment counts
+- Added comprehensive toast notifications for all user actions
+- Professional medical practice interface with proper authentication flow
+
 ## System Architecture
 
 ### Frontend Architecture
