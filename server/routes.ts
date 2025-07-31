@@ -6,6 +6,10 @@ import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
 import { registerDashboardRoutes } from "./routes/dashboardRoutes";
+import { registerProfileRoutes } from "./routes/profileRoutes";
+import { registerMedicalRecordsRoutes } from "./routes/medicalRoutes";
+import { registerPaymentRoutes } from "./routes/paymentRoutes";
+import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -26,6 +30,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register dashboard routes
   registerDashboardRoutes(app);
+  
+  // Register profile routes
+  registerProfileRoutes(app);
+  
+  // Register medical records routes
+  registerMedicalRecordsRoutes(app);
+  
+  // Register payment routes
+  registerPaymentRoutes(app);
+  
+  // Register store settings routes
+  registerStoreSettingsRoutes(app);
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {

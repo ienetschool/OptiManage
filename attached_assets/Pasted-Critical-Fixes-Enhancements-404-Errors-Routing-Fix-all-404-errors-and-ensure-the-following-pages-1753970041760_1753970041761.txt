@@ -1,0 +1,64 @@
+Critical Fixes & Enhancements
+404 Errors & Routing
+Fix all 404 errors and ensure the following pages and API endpoints are fully functional and accessible:
+/api/loginokay
+/pages
+/themes
+/domains
+/seo
+/profile
+/medical-records
+/payments
+/quick-sale
+/store-settings
+/reports/sales
+/reports/financial
+/reports/patients
+Ensure all routes are correctly configured in both frontend and backend.
+All pages must load without error and display the correct content.
+Notifications & Messages
+Fix click actions for notifications and messages so that clicking opens the relevant detail or conversation.
+Patient Portal UI
+Remove menu and top bar from all Patient Portal pages, including:
+/settings, /patients, /medical-records, /prescriptions, /invoices, /inventory, /stores, /store-settings, /staff, /attendance, /payroll, /communication, /notifications
+Ensure Patient Portal has a clean, minimal UI without admin navigation elements.
+/prescriptions & /medical-records
+Fix error when scheduling appointments.
+Integrate medical records as a tab within the prescriptions module.
+Allow prescription creation only for patients with scheduled appointments.
+Include basic health details (old medical history, BP, sugar, blood group, etc.) in prescription creation.
+Display prescription list with action buttons, using a consistent format across all modules.
+/invoices
+Fix discount calculation with products; ensure discount is applied correctly.
+Fix "Create Invoice" button so invoices are created and saved.
+Ensure invoices can be printed/exported with all details, including QR code and sharing features.
+/quick-sale
+Implement "Quick Sale" as a button on the top bar for easy access to create a quick invoice.
+Remove separate quick-sale module/page.
+/stores
+When adding or editing a store, add tabs for managing:
+Domain
+Webpage settings
+Payment gateways
+SMS and email gateways
+SMTP
+Website settings
+Ensure each store can have its own settings and these are used throughout the system.
+/staff
+Fix all action buttons (edit, delete, view, etc.) on staff pages.
+Add position and department lists for better filtering and management.
+Add fields for qualification, blood group, emergency contact info, photo, and document upload.
+Display staff list with action buttons, using a consistent format across all modules.
+/attendance
+Add feature for date-wise manual attendance for all employees.
+QR code should be unique for each staff member.
+Generate and display ID cards for each staff member with QR code.
+/payroll
+Use basic salary, allowances, and deductions from HR/staff profile for payroll calculation.
+Payroll module should fetch and use this data automatically.
+/reports
+Ensure all custom and standard reports are fully functional.
+Add action buttons and use a consistent format across all modules.
+/settings
+Add integration and configuration settings for all gateways (payment, SMS, email, etc.).
+Ensure settings can be managed store-wise and are applied correctly.

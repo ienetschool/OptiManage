@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import QuickSaleModal from "@/components/QuickSaleModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,7 +15,8 @@ import {
   LogOut, 
   Globe,
   Search,
-  ChevronDown
+  ChevronDown,
+  ShoppingCart
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -24,6 +26,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
   const { user } = useAuth();
   const [location] = useLocation();
 
@@ -63,6 +66,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         <div className="flex items-center space-x-2">
+          {/* Quick Sale Button */}
+          <Button 
+            variant="default" 
+            size="sm"
+            onClick={() => setQuickSaleOpen(true)}
+            className="bg-green-600 hover:bg-green-700 hidden sm:flex"
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            Quick Sale
+          </Button>
+
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -239,6 +253,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </div>
         </div>
       </footer>
+
+      {/* Quick Sale Modal */}
+      <QuickSaleModal open={quickSaleOpen} onOpenChange={setQuickSaleOpen} />
     </div>
   );
 }
