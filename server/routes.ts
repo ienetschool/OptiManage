@@ -20,10 +20,14 @@ import {
   insertSupplierSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import { addTestRoutes } from "./testAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupSimpleAuth(app);
+  
+  // Add test routes for debugging
+  addTestRoutes(app);
 
   // Register appointment routes
   registerAppointmentRoutes(app);
