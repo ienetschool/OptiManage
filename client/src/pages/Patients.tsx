@@ -193,113 +193,21 @@ export default function Patients() {
           <head>
             <title>Patient Report - ${patient.firstName} ${patient.lastName}</title>
             <style>
-              @page { 
-                size: A4; 
-                margin: 20mm; 
-              }
-              body { 
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                line-height: 1.6; 
-                color: #333;
-                margin: 0;
-                padding: 0;
-                font-size: 12pt;
-              }
-              .header { 
-                text-align: center; 
-                margin-bottom: 30px; 
-                border-bottom: 3px solid #2563eb; 
-                padding-bottom: 20px;
-                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-                padding: 30px 20px 20px 20px;
-                border-radius: 8px;
-                margin-bottom: 40px;
-              }
-              .header h1 { 
-                color: #2563eb; 
-                margin: 0 0 10px 0; 
-                font-size: 28pt;
-                font-weight: 700;
-              }
-              .header h2 { 
-                color: #64748b; 
-                margin: 0 0 15px 0; 
-                font-size: 18pt;
-                font-weight: 400;
-              }
-              .header .report-info {
-                background: white;
-                padding: 15px;
-                border-radius: 6px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                margin-top: 20px;
-              }
-              .section { 
-                margin-bottom: 35px; 
-                page-break-inside: avoid;
-              }
-              .section h3 { 
-                background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-                color: white;
-                padding: 15px 20px;
-                margin: 0 0 20px 0;
-                border-radius: 8px;
-                font-size: 16pt;
-                font-weight: 600;
-                box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
-              }
-              .info-grid { 
-                display: grid; 
-                grid-template-columns: 1fr 1fr; 
-                gap: 30px; 
-                margin-bottom: 20px;
-              }
-              .info-item { 
-                margin-bottom: 15px; 
-                padding: 12px;
-                background: #f8fafc;
-                border-left: 4px solid #e2e8f0;
-                border-radius: 4px;
-              }
-              .label { 
-                font-weight: 600; 
-                color: #1e293b;
-                display: inline-block;
-                min-width: 140px;
-                margin-right: 10px;
-              }
-              .value {
-                color: #475569;
-                font-weight: 400;
-              }
-              .footer {
-                margin-top: 50px;
-                text-align: center;
-                padding: 20px;
-                border-top: 2px solid #e2e8f0;
-                color: #64748b;
-                font-size: 10pt;
-              }
-              .no-print {
-                text-align: center;
-                margin: 30px 0;
-                padding: 20px;
-              }
-              .print-btn {
-                background: #2563eb;
-                color: white;
-                padding: 12px 24px;
-                border: none;
-                border-radius: 6px;
-                cursor: pointer;
-                font-size: 14pt;
-                font-weight: 600;
-              }
-              @media print { 
-                body { margin: 0; }
-                .no-print { display: none; }
-                .header { background: #f0f9ff !important; }
-              }
+              @page { size: A4; margin: 20mm; }
+              body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; font-size: 12pt; }
+              .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding: 30px 20px 20px 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; }
+              .header h1 { color: #2563eb; margin: 0 0 10px 0; font-size: 28pt; font-weight: 700; }
+              .header h2 { color: #64748b; margin: 0 0 15px 0; font-size: 18pt; font-weight: 400; }
+              .section { margin-bottom: 35px; page-break-inside: avoid; }
+              .section h3 { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; padding: 15px 20px; margin: 0 0 20px 0; border-radius: 8px; font-size: 16pt; font-weight: 600; }
+              .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px; }
+              .info-item { margin-bottom: 15px; padding: 12px; background: #f8fafc; border-left: 4px solid #e2e8f0; border-radius: 4px; }
+              .label { font-weight: 600; color: #1e293b; display: inline-block; min-width: 140px; margin-right: 10px; }
+              .value { color: #475569; font-weight: 400; }
+              .footer { margin-top: 50px; text-align: center; padding: 20px; border-top: 2px solid #e2e8f0; color: #64748b; font-size: 10pt; }
+              .no-print { text-align: center; margin: 30px 0; padding: 20px; }
+              .print-btn { background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14pt; font-weight: 600; }
+              @media print { body { margin: 0; } .no-print { display: none; } .header { background: #f0f9ff !important; } }
             </style>
           </head>
           <body>
@@ -307,133 +215,57 @@ export default function Patients() {
               <h1>🏥 OptiStore Pro Medical Center</h1>
               <h2>Comprehensive Patient Medical Report</h2>
               <div class="report-info">
-                <strong>Report Generated:</strong> ${new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}<br>
+                <strong>Report Generated:</strong> ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}<br>
                 <strong>Patient ID:</strong> ${patient.patientCode}
               </div>
             </div>
-
             <div class="section">
               <h3>👤 Patient Demographics</h3>
               <div class="info-grid">
                 <div>
-                  <div class="info-item">
-                    <span class="label">Full Name:</span>
-                    <span class="value">${patient.firstName} ${patient.lastName}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Patient Code:</span>
-                    <span class="value">${patient.patientCode}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Date of Birth:</span>
-                    <span class="value">${patient.dateOfBirth || 'Not specified'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Age:</span>
-                    <span class="value">${calculateAge(patient.dateOfBirth)} years</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Gender:</span>
-                    <span class="value">${patient.gender || 'Not specified'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Blood Group:</span>
-                    <span class="value">${patient.bloodGroup || 'Not tested'}</span>
-                  </div>
+                  <div class="info-item"><span class="label">Full Name:</span><span class="value">${patient.firstName} ${patient.lastName}</span></div>
+                  <div class="info-item"><span class="label">Patient Code:</span><span class="value">${patient.patientCode}</span></div>
+                  <div class="info-item"><span class="label">Date of Birth:</span><span class="value">${patient.dateOfBirth || 'Not specified'}</span></div>
+                  <div class="info-item"><span class="label">Age:</span><span class="value">${calculateAge(patient.dateOfBirth)} years</span></div>
+                  <div class="info-item"><span class="label">Gender:</span><span class="value">${patient.gender || 'Not specified'}</span></div>
+                  <div class="info-item"><span class="label">Blood Group:</span><span class="value">${patient.bloodGroup || 'Not tested'}</span></div>
                 </div>
                 <div>
-                  <div class="info-item">
-                    <span class="label">Phone:</span>
-                    <span class="value">${patient.phone || 'Not provided'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Email:</span>
-                    <span class="value">${patient.email || 'Not provided'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Address:</span>
-                    <span class="value">${patient.address || 'Not provided'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Emergency Contact:</span>
-                    <span class="value">${patient.emergencyContact || 'Not provided'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Emergency Phone:</span>
-                    <span class="value">${patient.emergencyPhone || 'Not provided'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Patient Status:</span>
-                    <span class="value" style="color: ${patient.isActive ? '#10b981' : '#ef4444'}; font-weight: 600;">
-                      ${patient.isActive ? '✅ Active' : '❌ Inactive'}
-                    </span>
-                  </div>
+                  <div class="info-item"><span class="label">Phone:</span><span class="value">${patient.phone || 'Not provided'}</span></div>
+                  <div class="info-item"><span class="label">Email:</span><span class="value">${patient.email || 'Not provided'}</span></div>
+                  <div class="info-item"><span class="label">Address:</span><span class="value">${patient.address || 'Not provided'}</span></div>
+                  <div class="info-item"><span class="label">Emergency Contact:</span><span class="value">${patient.emergencyContact || 'Not provided'}</span></div>
+                  <div class="info-item"><span class="label">Emergency Phone:</span><span class="value">${patient.emergencyPhone || 'Not provided'}</span></div>
+                  <div class="info-item"><span class="label">Patient Status:</span><span class="value" style="color: ${patient.isActive ? '#10b981' : '#ef4444'}; font-weight: 600;">${patient.isActive ? '✅ Active' : '❌ Inactive'}</span></div>
                 </div>
               </div>
             </div>
-
             <div class="section">
               <h3>🏥 Medical Information</h3>
-              <div class="info-item">
-                <span class="label">Known Allergies:</span>
-                <span class="value">${patient.allergies || 'None reported'}</span>
-              </div>
-              <div class="info-item">
-                <span class="label">Medical History:</span>
-                <span class="value">${patient.medicalHistory || 'No significant history recorded'}</span>
-              </div>
+              <div class="info-item"><span class="label">Known Allergies:</span><span class="value">${patient.allergies || 'None reported'}</span></div>
+              <div class="info-item"><span class="label">Medical History:</span><span class="value">${patient.medicalHistory || 'No significant history recorded'}</span></div>
             </div>
-
             <div class="section">
               <h3>🏥 Insurance & Account Information</h3>
               <div class="info-grid">
                 <div>
-                  <div class="info-item">
-                    <span class="label">Insurance Provider:</span>
-                    <span class="value">${patient.insuranceProvider || 'Self-pay'}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Policy Number:</span>
-                    <span class="value">${patient.insuranceNumber || 'N/A'}</span>
-                  </div>
+                  <div class="info-item"><span class="label">Insurance Provider:</span><span class="value">${patient.insuranceProvider || 'Self-pay'}</span></div>
+                  <div class="info-item"><span class="label">Policy Number:</span><span class="value">${patient.insuranceNumber || 'N/A'}</span></div>
                 </div>
                 <div>
-                  <div class="info-item">
-                    <span class="label">Loyalty Tier:</span>
-                    <span class="value" style="color: ${patient.loyaltyTier === 'gold' ? '#f59e0b' : patient.loyaltyTier === 'silver' ? '#6b7280' : '#cd7f32'}; font-weight: 600;">
-                      ${(patient.loyaltyTier || 'Bronze').toUpperCase()}
-                    </span>
-                  </div>
-                  <div class="info-item">
-                    <span class="label">Loyalty Points:</span>
-                    <span class="value">${patient.loyaltyPoints || 0} points</span>
-                  </div>
+                  <div class="info-item"><span class="label">Loyalty Tier:</span><span class="value" style="color: ${patient.loyaltyTier === 'gold' ? '#f59e0b' : patient.loyaltyTier === 'silver' ? '#6b7280' : '#cd7f32'}; font-weight: 600;">${(patient.loyaltyTier || 'Bronze').toUpperCase()}</span></div>
+                  <div class="info-item"><span class="label">Loyalty Points:</span><span class="value">${patient.loyaltyPoints || 0} points</span></div>
                 </div>
               </div>
             </div>
-
             <div class="footer">
               <p><strong>OptiStore Pro Medical Center</strong></p>
               <p>📞 Contact: +1 (555) 123-4567 | 📧 Email: info@optistorepro.com</p>
               <p>🏥 Address: 123 Medical Plaza, Healthcare District, City 12345</p>
-              <p style="margin-top: 20px; font-style: italic;">
-                This report is confidential and intended solely for the use of the patient and authorized healthcare providers.
-              </p>
-              <p style="color: #64748b; font-size: 9pt;">
-                Generated by OptiStore Pro Medical Management System v2.0 | Report ID: RPT-${Date.now()}
-              </p>
+              <p style="margin-top: 20px; font-style: italic;">This report is confidential and intended solely for the use of the patient and authorized healthcare providers.</p>
+              <p style="color: #64748b; font-size: 9pt;">Generated by OptiStore Pro Medical Management System v2.0 | Report ID: RPT-${Date.now()}</p>
             </div>
-
-            <div class="no-print">
-              <button onclick="window.print()" class="print-btn">📄 Print Professional Report</button>
-            </div>
+            <div class="no-print"><button onclick="window.print()" class="print-btn">📄 Print Professional Report</button></div>
           </body>
         </html>
       `);
@@ -446,7 +278,7 @@ export default function Patients() {
     });
   };
 
-  const filteredPatients = patients.filter((patient: Patient) =>
+  const filteredPatients = (patients as Patient[]).filter((patient: Patient) =>
     patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -480,35 +312,110 @@ export default function Patients() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Medical Practice Management</h1>
-          <p className="text-slate-600">Comprehensive patient care and appointment coordination</p>
-        </div>
-      </div>
-
       <Tabs defaultValue="patients" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="patients" className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            Patients ({patients.length})
+            Patients ({(patients as Patient[]).length})
           </TabsTrigger>
           <TabsTrigger value="appointments" className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
-            Appointments ({appointments.length})
+            Appointments ({(appointments as any[]).length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="patients" className="space-y-6">
-          {/* Patients Tab Controls */}
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <User className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Patients</p>
+                    <p className="text-2xl font-bold text-gray-900">{(patients as Patient[]).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <User className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Patients</p>
+                    <p className="text-2xl font-bold text-gray-900">{(patients as Patient[]).filter(p => p.isActive).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Calendar className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Appointments</p>
+                    <p className="text-2xl font-bold text-gray-900">{(appointments as any[]).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Stethoscope className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">This Month</p>
+                    <p className="text-2xl font-bold text-gray-900">{(appointments as any[]).filter(a => new Date(a.appointmentDate).getMonth() === new Date().getMonth()).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Patients Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex space-x-3">
+            <h2 className="text-2xl font-bold text-gray-900">Patients</h2>
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search patients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" />
+                Export
+              </Button>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <UserPlus className="mr-2 h-4 w-4" />
-                    Add Patient
+                    New Patient
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -638,7 +545,7 @@ export default function Patients() {
                                 <FormItem>
                                   <FormLabel>Phone Number *</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter phone number" />
+                                    <Input {...field} value={field.value || ""} placeholder="Enter phone number" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -652,7 +559,7 @@ export default function Patients() {
                                 <FormItem>
                                   <FormLabel>Email Address</FormLabel>
                                   <FormControl>
-                                    <Input {...field} type="email" placeholder="Enter email address" />
+                                    <Input {...field} value={field.value || ""} type="email" placeholder="Enter email address" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -666,7 +573,7 @@ export default function Patients() {
                                 <FormItem className="md:col-span-2">
                                   <FormLabel>Address</FormLabel>
                                   <FormControl>
-                                    <Textarea {...field} placeholder="Enter full address" />
+                                    <Textarea {...field} value={field.value || ""} placeholder="Enter full address" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -680,7 +587,7 @@ export default function Patients() {
                                 <FormItem>
                                   <FormLabel>Emergency Contact Name</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter emergency contact name" />
+                                    <Input {...field} value={field.value || ""} placeholder="Enter emergency contact name" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -694,7 +601,7 @@ export default function Patients() {
                                 <FormItem>
                                   <FormLabel>Emergency Contact Phone</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter emergency contact phone" />
+                                    <Input {...field} value={field.value || ""} placeholder="Enter emergency contact phone" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -712,7 +619,7 @@ export default function Patients() {
                               <FormItem>
                                 <FormLabel>Known Allergies</FormLabel>
                                 <FormControl>
-                                  <Textarea {...field} placeholder="List any known allergies..." />
+                                  <Textarea {...field} value={field.value || ""} placeholder="List any known allergies..." />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -726,7 +633,7 @@ export default function Patients() {
                               <FormItem>
                                 <FormLabel>Medical History</FormLabel>
                                 <FormControl>
-                                  <Textarea {...field} placeholder="Enter relevant medical history..." />
+                                  <Textarea {...field} value={field.value || ""} placeholder="Enter relevant medical history..." />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -744,7 +651,7 @@ export default function Patients() {
                                 <FormItem>
                                   <FormLabel>Insurance Provider</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter insurance provider" />
+                                    <Input {...field} value={field.value || ""} placeholder="Enter insurance provider" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -758,7 +665,7 @@ export default function Patients() {
                                 <FormItem>
                                   <FormLabel>Policy Number</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter policy number" />
+                                    <Input {...field} value={field.value || ""} placeholder="Enter policy number" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -776,7 +683,7 @@ export default function Patients() {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Loyalty Tier</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value || "bronze"}>
                                     <FormControl>
                                       <SelectTrigger>
                                         <SelectValue placeholder="Select loyalty tier" />
@@ -805,6 +712,7 @@ export default function Patients() {
                                       {...field} 
                                       type="number" 
                                       placeholder="0" 
+                                      value={field.value || ""}
                                       onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                                     />
                                   </FormControl>
@@ -829,115 +737,213 @@ export default function Patients() {
                 </DialogContent>
               </Dialog>
             </div>
+          </div>
 
+          {/* Patients Table */}
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-gray-200">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient #</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient Name</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Contact</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Age</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Blood Group</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPatients.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12">
+                        <div className="text-gray-500">
+                          <User className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No patients found</h3>
+                          <p>Start by registering your first patient</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPatients.map((patient: Patient) => (
+                      <tr key={patient.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 px-6">
+                          <div className="font-medium text-blue-600">{patient.patientCode}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                {patient.firstName[0]}{patient.lastName[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-gray-900">{patient.firstName} {patient.lastName}</div>
+                              <div className="text-sm text-gray-500">{patient.email || 'No email'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm">
+                            <div className="text-gray-900">{patient.phone}</div>
+                            <div className="text-gray-500">{patient.gender}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-900">{calculateAge(patient.dateOfBirth)} years</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-900">{patient.bloodGroup || '-'}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Badge variant={patient.isActive ? "default" : "secondary"}>
+                            {patient.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-6">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatient(patient);
+                                setViewPatientOpen(true);
+                              }}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatient(patient);
+                                generatePatientPDF(patient);
+                              }}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Print Report
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatient(patient);
+                                setShareModalOpen(true);
+                              }}>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="appointments" className="space-y-6">
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Calendar className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Appointments</p>
+                    <p className="text-2xl font-bold text-gray-900">{(appointments as any[]).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Calendar className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
+                    <p className="text-2xl font-bold text-gray-900">{(appointments as any[]).filter((a: any) => new Date(a.appointmentDate).toDateString() === new Date().toDateString()).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Calendar className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">This Week</p>
+                    <p className="text-2xl font-bold text-gray-900">{(appointments as any[]).filter((a: any) => {
+                      const appointmentDate = new Date(a.appointmentDate);
+                      const today = new Date();
+                      const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+                      const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+                      return appointmentDate >= weekStart && appointmentDate <= weekEnd;
+                    }).length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <Calendar className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Scheduled</p>
+                    <p className="text-2xl font-bold text-gray-900">{(appointments as any[]).filter((a: any) => a.status === 'scheduled').length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Appointments Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h2 className="text-2xl font-bold text-gray-900">Appointments</h2>
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search patients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search appointments..."
                   className="pl-10 w-64"
                 />
               </div>
-            </div>
-          </div>
-
-          {/* Patients Grid */}
-          <div className="grid gap-4">
-            {filteredPatients.length === 0 ? (
-              <Card className="p-8">
-                <div className="text-center text-gray-500">
-                  <User className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No patients found</h3>
-                  <p>Start by registering your first patient</p>
-                </div>
-              </Card>
-            ) : (
-              filteredPatients.map((patient: Patient) => (
-                <Card key={patient.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback>
-                          {patient.firstName[0]}{patient.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold">{patient.firstName} {patient.lastName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {patient.patientCode} • Age: {calculateAge(patient.dateOfBirth)}
-                        </p>
-                        <div className="flex items-center space-x-4 mt-1">
-                          <span className="text-sm text-muted-foreground flex items-center">
-                            <Phone className="h-3 w-3 mr-1" />
-                            {patient.phone}
-                          </span>
-                          {patient.email && (
-                            <span className="text-sm text-muted-foreground flex items-center">
-                              <Mail className="h-3 w-3 mr-1" />
-                              {patient.email}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={patient.isActive ? "default" : "secondary"}>
-                        {patient.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedPatient(patient);
-                            setViewPatientOpen(true);
-                          }}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedPatient(patient);
-                            generatePatientPDF(patient);
-                          }}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Print Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedPatient(patient);
-                            setShareModalOpen(true);
-                          }}>
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="appointments" className="space-y-6">
-          {/* Appointments Tab Controls */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex space-x-3">
+              <Select defaultValue="all">
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" />
+                Export
+              </Button>
               <Dialog open={appointmentOpen} onOpenChange={setAppointmentOpen}>
                 <DialogTrigger asChild>
                   <Button>
                     <CalendarPlus className="mr-2 h-4 w-4" />
-                    Schedule Appointment
+                    New Appointment
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl">
@@ -960,7 +966,7 @@ export default function Patients() {
                             <SelectValue placeholder="Select patient" />
                           </SelectTrigger>
                           <SelectContent>
-                            {patients.map((patient: Patient) => (
+                            {(patients as Patient[]).map((patient: Patient) => (
                               <SelectItem key={patient.id} value={patient.id}>
                                 {patient.firstName} {patient.lastName} - {patient.patientCode}
                               </SelectItem>
@@ -1030,44 +1036,97 @@ export default function Patients() {
             </div>
           </div>
 
-          {/* Appointments Grid */}
-          <div className="grid gap-4">
-            {appointments.length === 0 ? (
-              <Card className="p-8">
-                <div className="text-center text-gray-500">
-                  <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">No appointments scheduled</h3>
-                  <p>Start by scheduling your first appointment</p>
-                </div>
-              </Card>
-            ) : (
-              appointments.map((appointment: any) => (
-                <Card key={appointment.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="bg-blue-100 p-3 rounded-full">
-                        <Calendar className="h-6 w-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">
-                          {patients.find(p => p.id === appointment.patientId)?.firstName} {patients.find(p => p.id === appointment.patientId)?.lastName}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {appointment.service} • {new Date(appointment.appointmentDate).toLocaleDateString()} at {new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </p>
-                        {appointment.notes && (
-                          <p className="text-sm text-muted-foreground mt-1">{appointment.notes}</p>
-                        )}
-                      </div>
-                    </div>
-                    <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
-                      {appointment.status}
-                    </Badge>
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
+          {/* Appointments Table */}
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-gray-200">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Appointment #</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient Name</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Service</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Date & Time</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(appointments as any[]).length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12">
+                        <div className="text-gray-500">
+                          <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No appointments scheduled</h3>
+                          <p>Start by scheduling your first appointment</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    (appointments as any[]).map((appointment: any) => (
+                      <tr key={appointment.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 px-6">
+                          <div className="font-medium text-blue-600">APT-{appointment.id.slice(0, 8)}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                {(patients as Patient[]).find(p => p.id === appointment.patientId)?.firstName[0]}{(patients as Patient[]).find(p => p.id === appointment.patientId)?.lastName[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {(patients as Patient[]).find(p => p.id === appointment.patientId)?.firstName} {(patients as Patient[]).find(p => p.id === appointment.patientId)?.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">{(patients as Patient[]).find(p => p.id === appointment.patientId)?.patientCode}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-900">{appointment.service}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm">
+                            <div className="text-gray-900">{new Date(appointment.appointmentDate).toLocaleDateString()}</div>
+                            <div className="text-gray-500">{new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
+                            {appointment.status}
+                          </Badge>
+                        </td>
+                        <td className="py-4 px-6">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Cancel
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </TabsContent>
       </Tabs>
 
