@@ -65,6 +65,7 @@ export default function StoreSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedStore, setSelectedStore] = useState<string>("");
+  const [activeTab, setActiveTab] = useState("general");
 
   const { data: stores = [] } = useQuery({
     queryKey: ["/api/stores"],
@@ -277,6 +278,20 @@ export default function StoreSettings() {
                       onChange={(e) => setFormData({...formData, favicon: e.target.value})}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Theme</Label>
+                    <Select value={storeSettings?.theme || "modern"} onValueChange={(value) => setFormData({...formData, theme: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="modern">Modern Medical</SelectItem>
+                        <SelectItem value="classic">Classic Healthcare</SelectItem>
+                        <SelectItem value="premium">Premium Vision Care</SelectItem>
+                        <SelectItem value="minimal">Minimal Clean</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <Button onClick={() => handleSave(formData)}>
                   <Save className="h-4 w-4 mr-2" />
@@ -291,25 +306,25 @@ export default function StoreSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <CreditCard className="h-5 w-5 mr-2" />
-                  Payment Gateway Settings
+                  Payment Gateways
                 </CardTitle>
-                <CardDescription>Configure payment processing options</CardDescription>
+                <CardDescription>Configure payment processing for this store</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Stripe Settings */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">Stripe Integration</h4>
-                      <p className="text-sm text-slate-500">Accept credit card payments</p>
+                      <h3 className="text-lg font-medium">Stripe</h3>
+                      <p className="text-sm text-slate-600">Process credit card payments</p>
                     </div>
                     <Switch 
                       checked={storeSettings?.stripeEnabled || false}
                       onCheckedChange={(checked) => setFormData({...formData, stripeEnabled: checked})}
                     />
                   </div>
-                  {storeSettings?.stripeEnabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
+                  {(storeSettings?.stripeEnabled || formData.stripeEnabled) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-slate-200">
                       <div className="space-y-2">
                         <Label>Stripe Public Key</Label>
                         <Input 
@@ -335,16 +350,16 @@ export default function StoreSettings() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-medium">PayPal Integration</h4>
-                      <p className="text-sm text-slate-500">Accept PayPal payments</p>
+                      <h3 className="text-lg font-medium">PayPal</h3>
+                      <p className="text-sm text-slate-600">Accept PayPal payments</p>
                     </div>
                     <Switch 
                       checked={storeSettings?.paypalEnabled || false}
                       onCheckedChange={(checked) => setFormData({...formData, paypalEnabled: checked})}
                     />
                   </div>
-                  {storeSettings?.paypalEnabled && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 ml-6">
+                  {(storeSettings?.paypalEnabled || formData.paypalEnabled) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-slate-200">
                       <div className="space-y-2">
                         <Label>PayPal Client ID</Label>
                         <Input 
@@ -363,7 +378,6 @@ export default function StoreSettings() {
                     </div>
                   )}
                 </div>
-
                 <Button onClick={() => handleSave(formData)}>
                   <Save className="h-4 w-4 mr-2" />
                   Save Payment Settings
@@ -377,35 +391,33 @@ export default function StoreSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <MessageSquare className="h-5 w-5 mr-2" />
-                  SMS Gateway Settings
+                  SMS Gateway
                 </CardTitle>
-                <CardDescription>Configure SMS notifications and alerts</CardDescription>
+                <CardDescription>Configure SMS notifications for this store</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium">SMS Notifications</h4>
-                    <p className="text-sm text-slate-500">Send appointment reminders and updates</p>
+                    <h3 className="text-lg font-medium">SMS Notifications</h3>
+                    <p className="text-sm text-slate-600">Send appointment reminders and notifications via SMS</p>
                   </div>
                   <Switch 
                     checked={storeSettings?.smsEnabled || false}
                     onCheckedChange={(checked) => setFormData({...formData, smsEnabled: checked})}
                   />
                 </div>
-                {storeSettings?.smsEnabled && (
+                {(storeSettings?.smsEnabled || formData.smsEnabled) && (
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>SMS Provider</Label>
-                      <Select 
-                        value={storeSettings?.smsProvider || ""} 
-                        onValueChange={(value) => setFormData({...formData, smsProvider: value})}
-                      >
+                      <Select value={storeSettings?.smsProvider || "twilio"} onValueChange={(value) => setFormData({...formData, smsProvider: value})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select SMS provider" />
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="twilio">Twilio</SelectItem>
-                          <SelectItem value="nexmo">Nexmo</SelectItem>
+                          <SelectItem value="aws">AWS SNS</SelectItem>
+                          <SelectItem value="nexmo">Vonage (Nexmo)</SelectItem>
                           <SelectItem value="textlocal">TextLocal</SelectItem>
                         </SelectContent>
                       </Select>
@@ -443,22 +455,22 @@ export default function StoreSettings() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Mail className="h-5 w-5 mr-2" />
-                  Email Settings
+                  SMTP Configuration
                 </CardTitle>
-                <CardDescription>Configure SMTP settings for email notifications</CardDescription>
+                <CardDescription>Configure email settings for this store</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium">Email Notifications</h4>
-                    <p className="text-sm text-slate-500">Send appointment confirmations and invoices</p>
+                    <h3 className="text-lg font-medium">Email Notifications</h3>
+                    <p className="text-sm text-slate-600">Send appointment confirmations and notifications via email</p>
                   </div>
                   <Switch 
                     checked={storeSettings?.emailEnabled || false}
                     onCheckedChange={(checked) => setFormData({...formData, emailEnabled: checked})}
                   />
                 </div>
-                {storeSettings?.emailEnabled && (
+                {(storeSettings?.emailEnabled || formData.emailEnabled) && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -473,9 +485,8 @@ export default function StoreSettings() {
                         <Label>SMTP Port</Label>
                         <Input 
                           type="number"
-                          value={storeSettings?.smtpPort || ""} 
-                          onChange={(e) => setFormData({...formData, smtpPort: Number(e.target.value)})}
-                          placeholder="587"
+                          value={storeSettings?.smtpPort || 587} 
+                          onChange={(e) => setFormData({...formData, smtpPort: parseInt(e.target.value)})}
                         />
                       </div>
                       <div className="space-y-2">
@@ -496,9 +507,9 @@ export default function StoreSettings() {
                       <div className="space-y-2">
                         <Label>From Email</Label>
                         <Input 
-                          type="email"
                           value={storeSettings?.smtpFromEmail || ""} 
                           onChange={(e) => setFormData({...formData, smtpFromEmail: e.target.value})}
+                          placeholder="noreply@yourstore.com"
                         />
                       </div>
                       <div className="space-y-2">
@@ -506,6 +517,7 @@ export default function StoreSettings() {
                         <Input 
                           value={storeSettings?.smtpFromName || ""} 
                           onChange={(e) => setFormData({...formData, smtpFromName: e.target.value})}
+                          placeholder="Your Store Name"
                         />
                       </div>
                     </div>
@@ -526,7 +538,7 @@ export default function StoreSettings() {
                   <Settings className="h-5 w-5 mr-2" />
                   SEO & Analytics
                 </CardTitle>
-                <CardDescription>Search engine optimization and tracking</CardDescription>
+                <CardDescription>Configure SEO settings and analytics for this store</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -566,6 +578,7 @@ export default function StoreSettings() {
                     <Input 
                       value={storeSettings?.facebookPixelId || ""} 
                       onChange={(e) => setFormData({...formData, facebookPixelId: e.target.value})}
+                      placeholder="123456789012345"
                     />
                   </div>
                 </div>
