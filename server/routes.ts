@@ -509,8 +509,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Patients routes (without authentication for demo)
-  app.get("/api/patients", async (req, res) => {
+  // Patients routes 
+  app.get("/api/patients", isAuthenticated, async (req, res) => {
     try {
       const patients = [
         {
@@ -590,7 +590,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/patients/:id", async (req, res) => {
+  // Create new patient
+  app.post("/api/patients", isAuthenticated, async (req, res) => {
+    try {
+      const data = req.body;
+      // Generate patient code if not provided
+      if (!data.patientCode) {
+        data.patientCode = `PAT-${Date.now().toString().slice(-6)}`;
+      }
+      
+      const newPatient = {
+        id: `pat-${Date.now()}`,
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      res.status(201).json(newPatient);
+    } catch (error) {
+      console.error("Error creating patient:", error);
+      res.status(500).json({ message: "Failed to create patient" });
+    }
+  });
+
+  app.put("/api/patients/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       const data = req.body;
@@ -601,7 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/patients/:id", async (req, res) => {
+  app.delete("/api/patients/:id", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       res.json({ id, message: "Patient deleted successfully" });
@@ -612,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Patient history route
-  app.get("/api/patients/:id/history", async (req, res) => {
+  app.get("/api/patients/:id/history", isAuthenticated, async (req, res) => {
     try {
       const { id } = req.params;
       // Mock patient history data
