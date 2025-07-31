@@ -1,21 +1,47 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ShoppingCart, Search, Eye, TrendingUp, DollarSign, Receipt, CreditCard } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { 
+  Plus, 
+  Search, 
+  Filter,
+  DollarSign,
+  CreditCard,
+  Banknote,
+  Receipt,
+  Calendar,
+  User,
+  Package,
+  TrendingUp,
+  TrendingDown,
+  Eye,
+  Printer
+} from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { insertSaleSchema, type Sale, type InsertSale, type Product, type Customer } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import type { Sale, Product, Customer, Store } from "@shared/schema";
 
 export default function Sales() {
+  const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("today");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("all");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: sales = [], isLoading: salesLoading } = useQuery<Sale[]>({
+  const { data: sales = [], isLoading } = useQuery<Sale[]>({
     queryKey: ["/api/sales"],
   });
 
@@ -27,351 +53,479 @@ export default function Sales() {
     queryKey: ["/api/customers"],
   });
 
-  const { data: stores = [] } = useQuery<Store[]>({
-    queryKey: ["/api/stores"],
-  });
-
-  // Mock data for demo purposes
-  const mockSales = [
-    {
-      id: "1",
-      storeId: "store1",
-      customerId: "cust1",
-      staffId: "staff1",
-      subtotal: "149.99",
-      taxAmount: "12.75",
-      total: "162.74",
-      paymentMethod: "card",
-      paymentStatus: "completed",
-      createdAt: new Date().toISOString(),
-      notes: null,
-    },
-    {
-      id: "2", 
-      storeId: "store1",
-      customerId: null,
-      staffId: "staff1", 
-      subtotal: "89.99",
-      taxAmount: "7.65",
-      total: "97.64",
+  const form = useForm<InsertSale>({
+    resolver: zodResolver(insertSaleSchema),
+    defaultValues: {
+      storeId: "",
+      customerId: undefined,
+      staffId: "",
+      subtotal: 0,
+      taxAmount: 0,
+      total: 0,
       paymentMethod: "cash",
       paymentStatus: "completed",
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      notes: null,
+      notes: "",
     },
-    {
-      id: "3",
-      storeId: "store2", 
-      customerId: "cust2",
-      staffId: "staff2",
-      subtotal: "299.99",
-      taxAmount: "25.50", 
-      total: "325.49",
-      paymentMethod: "card",
-      paymentStatus: "completed",
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-      notes: "Progressive lenses with anti-glare coating",
-    }
-  ];
+  });
 
-  const filteredSales = mockSales.filter(sale => 
-    sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const createSaleMutation = useMutation({
+    mutationFn: async (data: InsertSale) => {
+      await apiRequest("POST", "/api/sales", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      toast({
+        title: "Success",
+        description: "Sale completed successfully.",
+      });
+      setOpen(false);
+      form.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to process sale.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const totalSales = mockSales.reduce((sum, sale) => sum + parseFloat(sale.total), 0);
-  const avgOrderValue = totalSales / mockSales.length;
-  const cashSales = mockSales.filter(sale => sale.paymentMethod === 'cash').length;
-  const cardSales = mockSales.filter(sale => sale.paymentMethod === 'card').length;
+  const onSubmit = (data: InsertSale) => {
+    createSaleMutation.mutate(data);
+  };
 
-  if (salesLoading) {
-    return (
-      <div className="flex-1 p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-slate-200 rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-slate-200 rounded w-1/2 mb-8"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-slate-200 rounded-xl"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Filter sales based on search and filters
+  const filteredSales = sales.filter(sale => {
+    const matchesSearch = sale.total.toString().includes(searchTerm) ||
+                         sale.paymentMethod.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesPayment = selectedPaymentMethod === "all" || sale.paymentMethod === selectedPaymentMethod;
+    
+    // Add date filtering logic here based on selectedPeriod
+    return matchesSearch && matchesPayment;
+  });
+
+  // Calculate summary statistics
+  const totalSales = filteredSales.reduce((sum, sale) => sum + parseFloat(sale.total.toString()), 0);
+  const cashSales = filteredSales.filter(s => s.paymentMethod === 'cash').length;
+  const cardSales = filteredSales.filter(s => s.paymentMethod === 'card').length;
+  const avgSaleAmount = filteredSales.length > 0 ? totalSales / filteredSales.length : 0;
+
+  const paymentMethodIcons = {
+    cash: Banknote,
+    card: CreditCard,
+    check: Receipt,
+    digital: DollarSign,
+  };
 
   return (
     <>
       <Header 
         title="Sales Management" 
-        subtitle="Process sales, view transaction history, and manage customer orders." 
+        subtitle="Process transactions, track revenue, and analyze sales performance." 
       />
       
       <main className="flex-1 overflow-y-auto p-6">
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="transactions">Transactions</TabsTrigger>
-            <TabsTrigger value="returns">Returns</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-6">
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Today's Sales</p>
-                      <p className="text-2xl font-bold text-slate-900">${totalSales.toFixed(2)}</p>
-                      <p className="text-sm font-medium text-emerald-600 mt-1">
-                        <TrendingUp className="inline mr-1 h-3 w-3" />
-                        +12.5% from yesterday
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                      <DollarSign className="text-emerald-600 h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Transactions</p>
-                      <p className="text-2xl font-bold text-slate-900">{mockSales.length}</p>
-                      <p className="text-sm font-medium text-blue-600 mt-1">
-                        <Receipt className="inline mr-1 h-3 w-3" />
-                        Today's count
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <ShoppingCart className="text-blue-600 h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Avg. Order Value</p>
-                      <p className="text-2xl font-bold text-slate-900">${avgOrderValue.toFixed(2)}</p>
-                      <p className="text-sm font-medium text-purple-600 mt-1">
-                        <TrendingUp className="inline mr-1 h-3 w-3" />
-                        +8.2% this week
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="text-purple-600 h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Payment Mix</p>
-                      <p className="text-2xl font-bold text-slate-900">{cardSales}/{cashSales}</p>
-                      <p className="text-sm font-medium text-amber-600 mt-1">
-                        <CreditCard className="inline mr-1 h-3 w-3" />
-                        Card/Cash ratio
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                      <CreditCard className="text-amber-600 h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Recent Sales */}
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card className="border-slate-200">
-              <CardHeader>
+              <CardContent className="p-6">
                 <div className="flex items-center justify-between">
-                  <CardTitle>Recent Sales</CardTitle>
-                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                    View all transactions
-                  </Button>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Sales</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      ${totalSales.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-emerald-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +12.5% from last period
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <DollarSign className="text-emerald-600 h-6 w-6" />
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Transactions</p>
+                    <p className="text-2xl font-bold text-slate-900">{filteredSales.length}</p>
+                    <p className="text-xs text-emerald-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +8.2% from last period
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Receipt className="text-blue-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Average Sale</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      ${avgSaleAmount.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-red-600 flex items-center mt-1">
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                      -2.1% from last period
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <TrendingUp className="text-purple-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Cash Payments</p>
+                    <p className="text-2xl font-bold text-slate-900">{cashSales}</p>
+                    <p className="text-xs text-slate-500">
+                      {cardSales} card payments
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <Banknote className="text-amber-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Controls */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search transactions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+              
+              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="quarter">This Quarter</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Payments</SelectItem>
+                  <SelectItem value="cash">Cash Only</SelectItem>
+                  <SelectItem value="card">Card Only</SelectItem>
+                  <SelectItem value="check">Check Only</SelectItem>
+                  <SelectItem value="digital">Digital Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-emerald-600 hover:bg-emerald-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Sale
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle>Process New Sale</DialogTitle>
+                </DialogHeader>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="customerId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Customer (Optional)</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select customer..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {customers.map((customer) => (
+                                  <SelectItem key={customer.id} value={customer.id}>
+                                    {customer.firstName} {customer.lastName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Method</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="cash">💵 Cash</SelectItem>
+                                <SelectItem value="card">💳 Credit/Debit Card</SelectItem>
+                                <SelectItem value="check">📄 Check</SelectItem>
+                                <SelectItem value="digital">📱 Digital Payment</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="subtotal"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subtotal</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="taxAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tax</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="total"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Total</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Transaction notes..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={createSaleMutation.isPending}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        {createSaleMutation.isPending ? "Processing..." : "Complete Sale"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Sales Table */}
+          <Card className="border-slate-200">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Recent Transactions</span>
+                <Button variant="outline" size="sm">
+                  <Printer className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
                 <div className="space-y-4">
-                  {mockSales.slice(0, 5).map((sale) => (
-                    <div key={sale.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Receipt className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <p className="font-medium text-slate-900">
-                              Sale #{sale.id.padStart(6, '0')}
-                            </p>
-                            <p className="text-sm text-slate-600">
-                              {format(new Date(sale.createdAt), 'MMM dd, yyyy HH:mm')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <div className="text-right">
-                          <p className="font-semibold text-slate-900">${sale.total}</p>
-                          <Badge variant={sale.paymentMethod === 'card' ? 'default' : 'secondary'}>
-                            {sale.paymentMethod.toUpperCase()}
-                          </Badge>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </div>
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="animate-pulse flex space-x-4">
+                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Transactions Tab */}
-          <TabsContent value="transactions" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">All Transactions</h3>
-                <p className="text-sm text-slate-600">View and search transaction history</p>
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Input
-                    placeholder="Search transactions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
-                  />
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              ) : filteredSales.length === 0 ? (
+                <div className="text-center py-12">
+                  <Receipt className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No sales found</h3>
+                  <p className="text-slate-600 mb-6">
+                    {searchTerm ? "Try adjusting your search criteria." : "Get started by processing your first sale."}
+                  </p>
+                  {!searchTerm && (
+                    <Button 
+                      onClick={() => setOpen(true)}
+                      className="bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Sale
+                    </Button>
+                  )}
                 </div>
-                
-                <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="week">This Week</SelectItem>
-                    <SelectItem value="month">This Month</SelectItem>
-                    <SelectItem value="year">This Year</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Transactions Table */}
-            <Card className="border-slate-200">
-              <CardContent className="p-0">
+              ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Transaction ID</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Date & Time</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Customer</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Amount</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Payment</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Status</th>
-                        <th className="text-left py-3 px-4 font-medium text-slate-900">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {filteredSales.map((sale) => (
-                        <tr key={sale.id} className="hover:bg-slate-50">
-                          <td className="py-4 px-4">
-                            <span className="font-mono text-sm">#{sale.id.padStart(6, '0')}</span>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-slate-600">
-                            {format(new Date(sale.createdAt), 'MMM dd, yyyy HH:mm')}
-                          </td>
-                          <td className="py-4 px-4 text-sm">
-                            {sale.customerId ? 'Registered Customer' : 'Walk-in Customer'}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="font-semibold text-slate-900">${sale.total}</span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <Badge variant={sale.paymentMethod === 'card' ? 'default' : 'secondary'}>
-                              {sale.paymentMethod.toUpperCase()}
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-4">
-                            <Badge variant="outline" className="text-emerald-600 border-emerald-600">
-                              COMPLETED
-                            </Badge>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex items-center space-x-2">
-                              <Button variant="ghost" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm">
-                                <Receipt className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Payment Method</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSales.map((sale) => {
+                        const PaymentIcon = paymentMethodIcons[sale.paymentMethod as keyof typeof paymentMethodIcons] || DollarSign;
+                        return (
+                          <TableRow key={sale.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Calendar className="h-4 w-4 text-slate-400" />
+                                <span className="text-sm">
+                                  {format(new Date(sale.createdAt), 'MMM dd, yyyy HH:mm')}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <User className="h-4 w-4 text-slate-400" />
+                                <span className="text-sm">
+                                  {sale.customerId ? 'Registered Customer' : 'Walk-in'}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <PaymentIcon className="h-4 w-4 text-slate-600" />
+                                <span className="text-sm capitalize">{sale.paymentMethod}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="text-sm font-semibold">
+                                ${parseFloat(sale.total.toString()).toFixed(2)}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                className={
+                                  sale.paymentStatus === 'completed' 
+                                    ? 'bg-emerald-100 text-emerald-800' 
+                                    : sale.paymentStatus === 'pending'
+                                    ? 'bg-amber-100 text-amber-800'
+                                    : 'bg-red-100 text-red-800'
+                                }
+                              >
+                                {sale.paymentStatus}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-1">
+                                <Button variant="outline" size="sm">
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button variant="outline" size="sm">
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 </div>
-              </CardContent>
-            </Card>
-
-            {filteredSales.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <ShoppingCart className="h-12 w-12 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">No transactions found</h3>
-                <p className="text-slate-600">Try adjusting your search criteria or date range.</p>
-              </div>
-            )}
-          </TabsContent>
-
-          {/* Returns Tab */}
-          <TabsContent value="returns" className="space-y-6">
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <ShoppingCart className="h-12 w-12 text-slate-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Returns & Refunds</h3>
-              <p className="text-slate-600 mb-6">Manage product returns and process refunds.</p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="mr-2 h-4 w-4" />
-                Process Return
-              </Button>
-            </div>
-          </TabsContent>
-
-          {/* Reports Tab */}
-          <TabsContent value="reports" className="space-y-6">
-            <div className="text-center py-12">
-              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="h-12 w-12 text-slate-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Sales Reports</h3>
-              <p className="text-slate-600 mb-6">Generate detailed sales reports and analytics.</p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                Generate Report
-              </Button>
-            </div>
-          </TabsContent>
-        </Tabs>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </>
   );

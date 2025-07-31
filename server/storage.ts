@@ -9,6 +9,10 @@ import {
   categories,
   suppliers,
   storeInventory,
+  systemSettings,
+  customFieldsConfig,
+  emailTemplates,
+  communicationLog,
   type User,
   type UpsertUser,
   type Store,
@@ -27,6 +31,10 @@ import {
   type Supplier,
   type InsertSupplier,
   type StoreInventory,
+  type SystemSettings,
+  type InsertSystemSettings,
+  type CustomFieldConfig,
+  type InsertCustomFieldConfig,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, and, or } from "drizzle-orm";
@@ -91,6 +99,17 @@ export interface IStorage {
     lowStockItems: number;
     activeCustomers: number;
   }>;
+
+  // System Settings operations
+  getSystemSettings(category?: string): Promise<SystemSettings[]>;
+  getSystemSetting(key: string): Promise<SystemSettings | undefined>;
+  updateSystemSetting(key: string, value: string, category: string): Promise<SystemSettings>;
+
+  // Custom Fields operations
+  getCustomFieldsConfig(entityType?: string): Promise<CustomFieldConfig[]>;
+  createCustomFieldConfig(config: InsertCustomFieldConfig): Promise<CustomFieldConfig>;
+  updateCustomFieldConfig(id: string, config: Partial<InsertCustomFieldConfig>): Promise<CustomFieldConfig>;
+  deleteCustomFieldConfig(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -402,6 +421,57 @@ export class DatabaseStorage implements IStorage {
       lowStockItems: Number(lowStockResult.count) || 0,
       activeCustomers: Number(activeCustomersResult.count) || 0,
     };
+  }
+
+  // System Settings operations
+  async getSystemSettings(category?: string): Promise<SystemSettings[]> {
+    if (category) {
+      return await db.select().from(systemSettings).where(eq(systemSettings.category, category));
+    }
+    return await db.select().from(systemSettings);
+  }
+
+  async getSystemSetting(key: string): Promise<SystemSettings | undefined> {
+    const [setting] = await db.select().from(systemSettings).where(eq(systemSettings.key, key));
+    return setting;
+  }
+
+  async updateSystemSetting(key: string, value: string, category: string): Promise<SystemSettings> {
+    const [setting] = await db
+      .insert(systemSettings)
+      .values({ key, value, category })
+      .onConflictDoUpdate({
+        target: systemSettings.key,
+        set: { value, updatedAt: new Date() },
+      })
+      .returning();
+    return setting;
+  }
+
+  // Custom Fields operations
+  async getCustomFieldsConfig(entityType?: string): Promise<CustomFieldConfig[]> {
+    if (entityType) {
+      return await db.select().from(customFieldsConfig).where(eq(customFieldsConfig.entityType, entityType));
+    }
+    return await db.select().from(customFieldsConfig).where(eq(customFieldsConfig.isActive, true));
+  }
+
+  async createCustomFieldConfig(config: InsertCustomFieldConfig): Promise<CustomFieldConfig> {
+    const [newConfig] = await db.insert(customFieldsConfig).values(config).returning();
+    return newConfig;
+  }
+
+  async updateCustomFieldConfig(id: string, config: Partial<InsertCustomFieldConfig>): Promise<CustomFieldConfig> {
+    const [updatedConfig] = await db
+      .update(customFieldsConfig)
+      .set(config)
+      .where(eq(customFieldsConfig.id, id))
+      .returning();
+    return updatedConfig;
+  }
+
+  async deleteCustomFieldConfig(id: string): Promise<void> {
+    await db.delete(customFieldsConfig).where(eq(customFieldsConfig.id, id));
   }
 }
 

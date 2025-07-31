@@ -35,6 +35,8 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").default('staff'), // admin, manager, staff
+  isActive: boolean("is_active").default(true),
+  lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -51,6 +53,9 @@ export const stores = pgTable("stores", {
   email: varchar("email"),
   managerId: varchar("manager_id").references(() => users.id),
   isActive: boolean("is_active").default(true),
+  timezone: varchar("timezone").default('America/New_York'),
+  openingHours: text("opening_hours"),
+  customFields: jsonb("custom_fields").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -86,6 +91,7 @@ export const products = pgTable("products", {
   costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
   reorderLevel: integer("reorder_level").default(10),
   isActive: boolean("is_active").default(true),
+  customFields: jsonb("custom_fields").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -113,7 +119,9 @@ export const customers = pgTable("customers", {
   state: varchar("state"),
   zipCode: varchar("zip_code"),
   loyaltyPoints: integer("loyalty_points").default(0),
+  loyaltyTier: varchar("loyalty_tier").default('Bronze'), // Bronze, Silver, Gold
   notes: text("notes"),
+  customFields: jsonb("custom_fields").$type<Record<string, any>>(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -142,7 +150,7 @@ export const sales = pgTable("sales", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default('0'),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: varchar("payment_method").notNull(), // cash, card, check
+  paymentMethod: varchar("payment_method").notNull(), // cash, card, check, digital
   paymentStatus: varchar("payment_status").default('completed'), // pending, completed, refunded
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -156,6 +164,52 @@ export const saleItems = pgTable("sale_items", {
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+});
+
+// System Settings
+export const systemSettings = pgTable("system_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  category: varchar("category").notNull(), // smtp, payment, general, security
+  key: varchar("key").notNull(),
+  value: text("value"),
+  isEncrypted: boolean("is_encrypted").default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Custom Fields Configuration
+export const customFieldsConfig = pgTable("custom_fields_config", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entityType: varchar("entity_type").notNull(), // stores, products, customers, appointments
+  fieldName: varchar("field_name").notNull(),
+  fieldType: varchar("field_type").notNull(), // text, number, date, select, boolean
+  fieldOptions: jsonb("field_options").$type<string[]>(), // for select fields
+  isRequired: boolean("is_required").default(false),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Email Templates
+export const emailTemplates = pgTable("email_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  subject: varchar("subject").notNull(),
+  body: text("body").notNull(),
+  templateType: varchar("template_type").notNull(), // appointment_reminder, welcome, invoice
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Communication Log
+export const communicationLog = pgTable("communication_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").references(() => customers.id),
+  type: varchar("type").notNull(), // email, sms
+  recipient: varchar("recipient").notNull(),
+  subject: varchar("subject"),
+  message: text("message").notNull(),
+  status: varchar("status").default('sent'), // sent, delivered, failed
+  sentAt: timestamp("sent_at").defaultNow(),
 });
 
 // Relations
@@ -269,22 +323,44 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({
   createdAt: true,
 });
 
+export const insertSystemSettingsSchema = createInsertSchema(systemSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export const insertCustomFieldConfigSchema = createInsertSchema(customFieldsConfig).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Export all type definitions
 export type Store = typeof stores.$inferSelect;
-export type InsertStore = z.infer<typeof insertStoreSchema>;
 export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Customer = typeof customers.$inferSelect;
-export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Appointment = typeof appointments.$inferSelect;
-export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 export type Sale = typeof sales.$inferSelect;
-export type InsertSale = z.infer<typeof insertSaleSchema>;
-export type SaleItem = typeof saleItems.$inferSelect;
 export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Supplier = typeof suppliers.$inferSelect;
+export type CustomFieldConfig = typeof customFieldsConfig.$inferSelect;
+export type SystemSettings = typeof systemSettings.$inferSelect;
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type CommunicationLog = typeof communicationLog.$inferSelect;
+
+// Insert type definitions
+export type InsertStore = z.infer<typeof insertStoreSchema>;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
+export type InsertSale = z.infer<typeof insertSaleSchema>;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
+export type InsertCustomFieldConfig = z.infer<typeof insertCustomFieldConfigSchema>;
+
+// Additional type definitions
+export type SaleItem = typeof saleItems.$inferSelect;
 export type StoreInventory = typeof storeInventory.$inferSelect;

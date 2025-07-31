@@ -313,6 +313,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Settings routes
+  app.get("/api/settings", isAuthenticated, async (req, res) => {
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/settings", isAuthenticated, async (req, res) => {
+    try {
+      const { key, value, category } = req.body;
+      const setting = await storage.updateSystemSetting(key, value, category);
+      res.json(setting);
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  // Custom fields routes
+  app.get("/api/custom-fields", isAuthenticated, async (req, res) => {
+    try {
+      const { entityType } = req.query;
+      const fields = await storage.getCustomFieldsConfig(entityType as string);
+      res.json(fields);
+    } catch (error) {
+      console.error("Error fetching custom fields:", error);
+      res.status(500).json({ message: "Failed to fetch custom fields" });
+    }
+  });
+
+  app.post("/api/custom-fields", isAuthenticated, async (req, res) => {
+    try {
+      const field = await storage.createCustomFieldConfig(req.body);
+      res.json(field);
+    } catch (error) {
+      console.error("Error creating custom field:", error);
+      res.status(500).json({ message: "Failed to create custom field" });
+    }
+  });
+
+  app.put("/api/custom-fields/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const field = await storage.updateCustomFieldConfig(id, req.body);
+      res.json(field);
+    } catch (error) {
+      console.error("Error updating custom field:", error);
+      res.status(500).json({ message: "Failed to update custom field" });
+    }
+  });
+
+  app.delete("/api/custom-fields/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteCustomFieldConfig(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting custom field:", error);
+      res.status(500).json({ message: "Failed to delete custom field" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

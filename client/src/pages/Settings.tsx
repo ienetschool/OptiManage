@@ -4,161 +4,273 @@ import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-  Settings as SettingsIcon, 
-  Users, 
-  Store, 
-  Mail, 
-  Bell, 
-  Shield, 
-  Database, 
-  CreditCard,
+  Settings as SettingsIcon,
+  Mail,
+  Database,
+  Users,
+  Shield,
+  Bell,
+  Palette,
+  Globe,
   Plus,
   Edit,
   Trash2,
+  Save,
+  TestTube,
+  CheckCircle,
+  XCircle,
   Key,
-  Globe,
-  Smartphone,
-  Palette,
-  Clock
+  Lock
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { insertSystemSettingsSchema, insertCustomFieldConfigSchema, type SystemSettings, type CustomFieldConfig } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 
-const userSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  role: z.enum(["admin", "manager", "staff"]),
-  storeId: z.string().optional(),
+const smtpSchema = z.object({
+  host: z.string().min(1, "SMTP host is required"),
+  port: z.coerce.number().min(1).max(65535),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+  fromEmail: z.string().email("Valid email is required"),
+  fromName: z.string().min(1, "From name is required"),
+  secure: z.boolean(),
+  enabled: z.boolean(),
 });
 
-type UserFormData = z.infer<typeof userSchema>;
+type SMTPConfig = z.infer<typeof smtpSchema>;
 
 export default function Settings() {
-  const [open, setOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("smtp");
+  const [isTestingEmail, setIsTestingEmail] = useState(false);
+  const [openCustomField, setOpenCustomField] = useState(false);
+  const [editingField, setEditingField] = useState<CustomFieldConfig | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: stores = [] } = useQuery({
-    queryKey: ["/api/stores"],
+  // Fetch system settings
+  const { data: systemSettings = [] } = useQuery<SystemSettings[]>({
+    queryKey: ["/api/settings"],
   });
 
-  const form = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+  // Fetch custom fields config
+  const { data: customFields = [] } = useQuery<CustomFieldConfig[]>({
+    queryKey: ["/api/custom-fields"],
+  });
+
+  // Get SMTP settings from system settings
+  const getSettingValue = (key: string, defaultValue: any = "") => {
+    const setting = systemSettings.find(s => s.key === key);
+    return setting ? setting.value : defaultValue;
+  };
+
+  const smtpForm = useForm<SMTPConfig>({
+    resolver: zodResolver(smtpSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      role: "staff",
-      storeId: "",
+      host: getSettingValue("smtp_host"),
+      port: parseInt(getSettingValue("smtp_port", "587")),
+      username: getSettingValue("smtp_username"),
+      password: getSettingValue("smtp_password"),
+      fromEmail: getSettingValue("smtp_from_email"),
+      fromName: getSettingValue("smtp_from_name"),
+      secure: getSettingValue("smtp_secure", "false") === "true",
+      enabled: getSettingValue("smtp_enabled", "false") === "true",
     },
   });
 
-  const createUserMutation = useMutation({
-    mutationFn: async (data: UserFormData) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return data;
+  const customFieldForm = useForm({
+    resolver: zodResolver(insertCustomFieldConfigSchema),
+    defaultValues: {
+      fieldName: "",
+      fieldLabel: "",
+      fieldType: "text",
+      entityType: "customers",
+      isRequired: false,
+      isActive: true,
+      options: null,
+      defaultValue: "",
+      validation: null,
+      sortOrder: 0,
+    },
+  });
+
+  // Update SMTP settings mutation
+  const updateSMTPMutation = useMutation({
+    mutationFn: async (data: SMTPConfig) => {
+      const settingsToUpdate = [
+        { key: "smtp_host", value: data.host, category: "email" },
+        { key: "smtp_port", value: data.port.toString(), category: "email" },
+        { key: "smtp_username", value: data.username, category: "email" },
+        { key: "smtp_password", value: data.password, category: "email" },
+        { key: "smtp_from_email", value: data.fromEmail, category: "email" },
+        { key: "smtp_from_name", value: data.fromName, category: "email" },
+        { key: "smtp_secure", value: data.secure.toString(), category: "email" },
+        { key: "smtp_enabled", value: data.enabled.toString(), category: "email" },
+      ];
+
+      for (const setting of settingsToUpdate) {
+        await apiRequest("PUT", "/api/settings", setting);
+      }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
       toast({
         title: "Success",
-        description: "User created successfully.",
+        description: "SMTP settings updated successfully.",
       });
-      setOpen(false);
-      form.reset();
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create user.",
+        description: "Failed to update SMTP settings.",
         variant: "destructive",
       });
     },
   });
 
-  // Mock system users
-  const systemUsers = [
-    {
-      id: "1",
-      firstName: "John",
-      lastName: "Admin",
-      email: "john.admin@optipro.com",
-      role: "admin",
-      status: "active",
-      lastLogin: new Date(),
-      storeId: null
+  // Test email mutation
+  const testEmailMutation = useMutation({
+    mutationFn: async (config: SMTPConfig) => {
+      await apiRequest("POST", "/api/settings/test-email", {
+        ...config,
+        testEmail: config.fromEmail,
+      });
     },
-    {
-      id: "2",
-      firstName: "Sarah",
-      lastName: "Manager",
-      email: "sarah.manager@optipro.com",
-      role: "manager",
-      status: "active",
-      lastLogin: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      storeId: "store1"
+    onSuccess: () => {
+      toast({
+        title: "Test Email Sent",
+        description: "Check your inbox for the test email.",
+      });
     },
-    {
-      id: "3",
-      firstName: "Mike",
-      lastName: "Staff",
-      email: "mike.staff@optipro.com",
-      role: "staff",
-      status: "active",
-      lastLogin: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      storeId: "store1"
-    }
-  ];
+    onError: (error: any) => {
+      toast({
+        title: "Test Failed",
+        description: error.message || "Failed to send test email.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const systemSettings = {
-    general: {
-      companyName: "OptiStore Pro",
-      timezone: "America/New_York",
-      currency: "USD",
-      language: "en"
+  // Custom field mutations
+  const createCustomFieldMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", "/api/custom-fields", data);
     },
-    notifications: {
-      emailNotifications: true,
-      smsNotifications: true,
-      appointmentReminders: true,
-      inventoryAlerts: true,
-      lowStockThreshold: 10
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-fields"] });
+      toast({
+        title: "Success",
+        description: "Custom field created successfully.",
+      });
+      setOpenCustomField(false);
+      customFieldForm.reset();
     },
-    integrations: {
-      emailProvider: "SendGrid",
-      smsProvider: "Twilio",
-      paymentGateway: "Stripe",
-      analyticsTracking: true
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create custom field.",
+        variant: "destructive",
+      });
     },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: 30,
-      passwordPolicy: "medium",
-      ipWhitelist: false
+  });
+
+  const updateCustomFieldMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      await apiRequest("PUT", `/api/custom-fields/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-fields"] });
+      toast({
+        title: "Success",
+        description: "Custom field updated successfully.",
+      });
+      setOpenCustomField(false);
+      setEditingField(null);
+      customFieldForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update custom field.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCustomFieldMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest("DELETE", `/api/custom-fields/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-fields"] });
+      toast({
+        title: "Success",
+        description: "Custom field deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete custom field.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSMTPSubmit = (data: SMTPConfig) => {
+    updateSMTPMutation.mutate(data);
+  };
+
+  const onTestEmail = async () => {
+    const isValid = await smtpForm.trigger();
+    if (isValid) {
+      setIsTestingEmail(true);
+      const formData = smtpForm.getValues();
+      testEmailMutation.mutate(formData);
+      setTimeout(() => setIsTestingEmail(false), 3000);
     }
   };
 
-  const onSubmit = (data: UserFormData) => {
-    createUserMutation.mutate(data);
+  const onCustomFieldSubmit = (data: any) => {
+    if (editingField) {
+      updateCustomFieldMutation.mutate({ id: editingField.id, data });
+    } else {
+      createCustomFieldMutation.mutate(data);
+    }
   };
 
-  const getRoleBadgeColor = (role: string) => {
-    switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'manager': return 'bg-blue-100 text-blue-800';
-      case 'staff': return 'bg-emerald-100 text-emerald-800';
-      default: return 'bg-gray-100 text-gray-800';
+  const handleEditCustomField = (field: CustomFieldConfig) => {
+    setEditingField(field);
+    customFieldForm.reset({
+      fieldName: field.fieldName,
+      fieldLabel: field.fieldLabel,
+      fieldType: field.fieldType,
+      entityType: field.entityType,
+      isRequired: field.isRequired,
+      isActive: field.isActive,
+      options: field.options,
+      defaultValue: field.defaultValue || "",
+      validation: field.validation,
+      sortOrder: field.sortOrder || 0,
+    });
+    setOpenCustomField(true);
+  };
+
+  const handleDeleteCustomField = (id: string) => {
+    if (confirm("Are you sure you want to delete this custom field?")) {
+      deleteCustomFieldMutation.mutate(id);
     }
   };
 
@@ -166,498 +278,531 @@ export default function Settings() {
     <>
       <Header 
         title="System Settings" 
-        subtitle="Configure system preferences, user management, and integrations." 
+        subtitle="Configure SMTP, custom fields, and system preferences for your optical store management system." 
       />
       
       <main className="flex-1 overflow-y-auto p-6">
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-          </TabsList>
+        <div className="max-w-6xl mx-auto space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="smtp" className="flex items-center space-x-2">
+                <Mail className="h-4 w-4" />
+                <span>SMTP Email</span>
+              </TabsTrigger>
+              <TabsTrigger value="custom-fields" className="flex items-center space-x-2">
+                <Database className="h-4 w-4" />
+                <span>Custom Fields</span>
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="flex items-center space-x-2">
+                <Bell className="h-4 w-4" />
+                <span>Notifications</span>
+              </TabsTrigger>
+              <TabsTrigger value="security" className="flex items-center space-x-2">
+                <Shield className="h-4 w-4" />
+                <span>Security</span>
+              </TabsTrigger>
+              <TabsTrigger value="general" className="flex items-center space-x-2">
+                <SettingsIcon className="h-4 w-4" />
+                <span>General</span>
+              </TabsTrigger>
+            </TabsList>
 
-          {/* General Settings Tab */}
-          <TabsContent value="general" className="space-y-6">
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Globe className="mr-2 h-5 w-5" />
-                  General Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Company Name</label>
-                    <Input defaultValue={systemSettings.general.companyName} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Timezone</label>
-                    <Select defaultValue={systemSettings.general.timezone}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="America/New_York">Eastern Time</SelectItem>
-                        <SelectItem value="America/Chicago">Central Time</SelectItem>
-                        <SelectItem value="America/Denver">Mountain Time</SelectItem>
-                        <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Currency</label>
-                    <Select defaultValue={systemSettings.general.currency}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                        <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                        <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                        <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Language</label>
-                    <Select defaultValue={systemSettings.general.language}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Save General Settings
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* User Management Tab */}
-          <TabsContent value="users" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">System Users</h3>
-                <p className="text-sm text-slate-600">Manage user accounts and permissions</p>
-              </div>
-              
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add User
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Add New User</DialogTitle>
-                  </DialogHeader>
-                  
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
+            {/* SMTP Email Configuration */}
+            <TabsContent value="smtp" className="space-y-6">
+              <Card className="border-slate-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Mail className="h-5 w-5 text-blue-600" />
+                    <span>SMTP Email Configuration</span>
+                  </CardTitle>
+                  <p className="text-sm text-slate-600">
+                    Configure email settings for notifications, invoices, and customer communication.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <Form {...smtpForm}>
+                    <form onSubmit={smtpForm.handleSubmit(onSMTPSubmit)} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
-                          control={form.control}
-                          name="firstName"
+                          control={smtpForm.control}
+                          name="enabled"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">Enable SMTP</FormLabel>
+                                <FormDescription>
+                                  Turn on email notifications and communications
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={smtpForm.control}
+                          name="secure"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                              <div className="space-y-0.5">
+                                <FormLabel className="text-base">Use SSL/TLS</FormLabel>
+                                <FormDescription>
+                                  Enable secure connection to email server
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={smtpForm.control}
+                          name="host"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>First Name</FormLabel>
+                              <FormLabel>SMTP Host</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter first name" {...field} />
+                                <Input placeholder="smtp.gmail.com" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
-                          control={form.control}
-                          name="lastName"
+                          control={smtpForm.control}
+                          name="port"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Last Name</FormLabel>
+                              <FormLabel>SMTP Port</FormLabel>
                               <FormControl>
-                                <Input placeholder="Enter last name" {...field} />
+                                <Input type="number" placeholder="587" {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                      
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email Address</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="Enter email address" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="grid grid-cols-2 gap-4">
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
-                          control={form.control}
-                          name="role"
+                          control={smtpForm.control}
+                          name="username"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Role</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select role" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="admin">Administrator</SelectItem>
-                                  <SelectItem value="manager">Manager</SelectItem>
-                                  <SelectItem value="staff">Staff</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <FormLabel>Username</FormLabel>
+                              <FormControl>
+                                <Input placeholder="your-email@gmail.com" {...field} />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
-                          control={form.control}
-                          name="storeId"
+                          control={smtpForm.control}
+                          name="password"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Store Assignment</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select store (optional)" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="">No specific store</SelectItem>
-                                  {stores.map((store: any) => (
-                                    <SelectItem key={store.id} value={store.id}>
-                                      {store.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <FormLabel>Password</FormLabel>
+                              <FormControl>
+                                <Input type="password" placeholder="App-specific password" {...field} />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                      
-                      <div className="flex justify-end space-x-2">
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={smtpForm.control}
+                          name="fromEmail"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>From Email</FormLabel>
+                              <FormControl>
+                                <Input type="email" placeholder="noreply@yourstore.com" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={smtpForm.control}
+                          name="fromName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>From Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your Optical Store" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="flex space-x-4">
+                        <Button
+                          type="submit"
+                          disabled={updateSMTPMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          {updateSMTPMutation.isPending ? "Saving..." : "Save Settings"}
+                        </Button>
+
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setOpen(false)}
+                          onClick={onTestEmail}
+                          disabled={isTestingEmail || testEmailMutation.isPending}
                         >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={createUserMutation.isPending}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          {createUserMutation.isPending ? "Creating..." : "Create User"}
+                          <TestTube className="mr-2 h-4 w-4" />
+                          {isTestingEmail ? "Testing..." : "Test Email"}
                         </Button>
                       </div>
                     </form>
                   </Form>
-                </DialogContent>
-              </Dialog>
-            </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-            {/* Users List */}
-            <div className="space-y-4">
-              {systemUsers.map((user) => (
-                <Card key={user.id} className="border-slate-200">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                          <Users className="h-6 w-6 text-blue-600" />
-                        </div>
+            {/* Custom Fields Configuration */}
+            <TabsContent value="custom-fields" className="space-y-6">
+              <Card className="border-slate-200">
+                <CardHeader>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="flex items-center space-x-2">
+                        <Database className="h-5 w-5 text-purple-600" />
+                        <span>Custom Fields</span>
+                      </CardTitle>
+                      <p className="text-sm text-slate-600">
+                        Add custom fields to customers, products, and other entities.
+                      </p>
+                    </div>
+                    <Dialog open={openCustomField} onOpenChange={setOpenCustomField}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-purple-600 hover:bg-purple-700">
+                          <Plus className="mr-2 h-4 w-4" />
+                          Add Custom Field
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>
+                            {editingField ? "Edit Custom Field" : "Add Custom Field"}
+                          </DialogTitle>
+                        </DialogHeader>
                         
-                        <div>
-                          <div className="flex items-center space-x-3 mb-1">
-                            <h3 className="text-lg font-semibold text-slate-900">
-                              {user.firstName} {user.lastName}
-                            </h3>
-                            <Badge className={getRoleBadgeColor(user.role)}>
-                              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                            </Badge>
-                            <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
-                              {user.status}
-                            </Badge>
-                          </div>
-                          
-                          <p className="text-sm text-slate-600 mb-1">{user.email}</p>
-                          <p className="text-xs text-slate-500">
-                            Last login: {user.lastLogin.toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                        <Form {...customFieldForm}>
+                          <form onSubmit={customFieldForm.handleSubmit(onCustomFieldSubmit)} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={customFieldForm.control}
+                                name="fieldName"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Field Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="insurance_provider" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                      Internal name (no spaces, lowercase)
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={customFieldForm.control}
+                                name="fieldLabel"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Field Label</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Insurance Provider" {...field} />
+                                    </FormControl>
+                                    <FormDescription>
+                                      Display name shown to users
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={customFieldForm.control}
+                                name="fieldType"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Field Type</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="text">Text</SelectItem>
+                                        <SelectItem value="number">Number</SelectItem>
+                                        <SelectItem value="email">Email</SelectItem>
+                                        <SelectItem value="phone">Phone</SelectItem>
+                                        <SelectItem value="date">Date</SelectItem>
+                                        <SelectItem value="select">Dropdown</SelectItem>
+                                        <SelectItem value="checkbox">Checkbox</SelectItem>
+                                        <SelectItem value="textarea">Text Area</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={customFieldForm.control}
+                                name="entityType"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Apply To</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="customers">Customers</SelectItem>
+                                        <SelectItem value="products">Products</SelectItem>
+                                        <SelectItem value="stores">Stores</SelectItem>
+                                        <SelectItem value="appointments">Appointments</SelectItem>
+                                        <SelectItem value="sales">Sales</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            
+                            <div className="flex items-center space-x-6">
+                              <FormField
+                                control={customFieldForm.control}
+                                name="isRequired"
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                      <FormLabel>Required Field</FormLabel>
+                                    </div>
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={customFieldForm.control}
+                                name="isActive"
+                                render={({ field }) => (
+                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                    <FormControl>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormControl>
+                                    <div className="space-y-1 leading-none">
+                                      <FormLabel>Active</FormLabel>
+                                    </div>
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                            
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setOpenCustomField(false);
+                                  setEditingField(null);
+                                  customFieldForm.reset();
+                                }}
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                type="submit"
+                                disabled={createCustomFieldMutation.isPending || updateCustomFieldMutation.isPending}
+                                className="bg-purple-600 hover:bg-purple-700"
+                              >
+                                {createCustomFieldMutation.isPending || updateCustomFieldMutation.isPending
+                                  ? "Saving..." 
+                                  : editingField ? "Update Field" : "Create Field"}
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {customFields.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Database className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                      <h3 className="text-lg font-semibold text-slate-900 mb-2">No custom fields</h3>
+                      <p className="text-slate-600 mb-6">
+                        Add custom fields to collect additional information for your business.
+                      </p>
+                      <Button 
+                        onClick={() => setOpenCustomField(true)}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Custom Field
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Field Name</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Entity</TableHead>
+                            <TableHead>Required</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {customFields.map((field) => (
+                            <TableRow key={field.id}>
+                              <TableCell>
+                                <div>
+                                  <p className="font-medium">{field.fieldLabel}</p>
+                                  <p className="text-sm text-slate-500">{field.fieldName}</p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="capitalize">
+                                  {field.fieldType}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="capitalize">{field.entityType}</TableCell>
+                              <TableCell>
+                                {field.isRequired ? (
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                ) : (
+                                  <XCircle className="h-4 w-4 text-slate-400" />
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <Badge 
+                                  className={field.isActive 
+                                    ? 'bg-emerald-100 text-emerald-800' 
+                                    : 'bg-red-100 text-red-800'
+                                  }
+                                >
+                                  {field.isActive ? 'Active' : 'Inactive'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex space-x-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleEditCustomField(field)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeleteCustomField(field.id)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Bell className="mr-2 h-5 w-5" />
-                  Notification Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">Email Notifications</h4>
-                      <p className="text-sm text-slate-600">Receive notifications via email</p>
-                    </div>
-                    <Switch defaultChecked={systemSettings.notifications.emailNotifications} />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">SMS Notifications</h4>
-                      <p className="text-sm text-slate-600">Receive notifications via SMS</p>
-                    </div>
-                    <Switch defaultChecked={systemSettings.notifications.smsNotifications} />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">Appointment Reminders</h4>
-                      <p className="text-sm text-slate-600">Send automatic appointment reminders</p>
-                    </div>
-                    <Switch defaultChecked={systemSettings.notifications.appointmentReminders} />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">Inventory Alerts</h4>
-                      <p className="text-sm text-slate-600">Get alerts for low stock items</p>
-                    </div>
-                    <Switch defaultChecked={systemSettings.notifications.inventoryAlerts} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Low Stock Threshold</label>
-                    <Input 
-                      type="number" 
-                      defaultValue={systemSettings.notifications.lowStockThreshold}
-                      className="w-24"
-                    />
-                    <p className="text-xs text-slate-600">Alert when stock falls below this number</p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Save Notification Settings
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Integrations Tab */}
-          <TabsContent value="integrations" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Other tabs placeholder */}
+            <TabsContent value="notifications">
               <Card className="border-slate-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Mail className="mr-2 h-5 w-5" />
-                    Email Provider
+                  <CardTitle className="flex items-center space-x-2">
+                    <Bell className="h-5 w-5 text-amber-600" />
+                    <span>Notification Settings</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Select defaultValue={systemSettings.integrations.emailProvider}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="SendGrid">SendGrid</SelectItem>
-                      <SelectItem value="Mailgun">Mailgun</SelectItem>
-                      <SelectItem value="AWS SES">AWS SES</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button className="w-full mt-4" variant="outline">
-                    <Key className="mr-2 h-4 w-4" />
-                    Configure API Keys
-                  </Button>
+                  <p className="text-slate-600">Notification preferences coming soon...</p>
                 </CardContent>
               </Card>
+            </TabsContent>
 
+            <TabsContent value="security">
               <Card className="border-slate-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Smartphone className="mr-2 h-5 w-5" />
-                    SMS Provider
+                  <CardTitle className="flex items-center space-x-2">
+                    <Shield className="h-5 w-5 text-red-600" />
+                    <span>Security Settings</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Select defaultValue={systemSettings.integrations.smsProvider}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Twilio">Twilio</SelectItem>
-                      <SelectItem value="AWS SNS">AWS SNS</SelectItem>
-                      <SelectItem value="MessageBird">MessageBird</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button className="w-full mt-4" variant="outline">
-                    <Key className="mr-2 h-4 w-4" />
-                    Configure API Keys
-                  </Button>
+                  <p className="text-slate-600">Security configurations coming soon...</p>
                 </CardContent>
               </Card>
+            </TabsContent>
 
+            <TabsContent value="general">
               <Card className="border-slate-200">
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <CreditCard className="mr-2 h-5 w-5" />
-                    Payment Gateway
+                  <CardTitle className="flex items-center space-x-2">
+                    <SettingsIcon className="h-5 w-5 text-slate-600" />
+                    <span>General Settings</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Select defaultValue={systemSettings.integrations.paymentGateway}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Stripe">Stripe</SelectItem>
-                      <SelectItem value="PayPal">PayPal</SelectItem>
-                      <SelectItem value="Square">Square</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button className="w-full mt-4" variant="outline">
-                    <Key className="mr-2 h-4 w-4" />
-                    Configure Payment Settings
-                  </Button>
+                  <p className="text-slate-600">General system preferences coming soon...</p>
                 </CardContent>
               </Card>
-
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Database className="mr-2 h-5 w-5" />
-                    Analytics Tracking
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm font-medium">Enable Analytics</span>
-                    <Switch defaultChecked={systemSettings.integrations.analyticsTracking} />
-                  </div>
-                  <Button className="w-full" variant="outline">
-                    <Key className="mr-2 h-4 w-4" />
-                    Configure Tracking
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Security Tab */}
-          <TabsContent value="security" className="space-y-6">
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Security Settings
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">Two-Factor Authentication</h4>
-                      <p className="text-sm text-slate-600">Require 2FA for all user accounts</p>
-                    </div>
-                    <Switch defaultChecked={systemSettings.security.twoFactorAuth} />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Session Timeout (minutes)</label>
-                    <Input 
-                      type="number" 
-                      defaultValue={systemSettings.security.sessionTimeout}
-                      className="w-24"
-                    />
-                    <p className="text-xs text-slate-600">Automatically log users out after inactivity</p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-900">Password Policy</label>
-                    <Select defaultValue={systemSettings.security.passwordPolicy}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weak">Weak (8+ characters)</SelectItem>
-                        <SelectItem value="medium">Medium (8+ chars, mixed case)</SelectItem>
-                        <SelectItem value="strong">Strong (12+ chars, symbols)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-slate-900">IP Whitelist</h4>
-                      <p className="text-sm text-slate-600">Restrict access to specific IP addresses</p>
-                    </div>
-                    <Switch defaultChecked={systemSettings.security.ipWhitelist} />
-                  </div>
-                </div>
-                
-                <div className="flex justify-end">
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    Save Security Settings
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
     </>
   );
