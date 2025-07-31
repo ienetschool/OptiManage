@@ -231,7 +231,14 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
                 </div>
                 <div className="text-right">
                   <p className="font-bold">${(typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0).toFixed(2)}</p>
-                  <Button size="sm" variant="outline">
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(product);
+                    }}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>

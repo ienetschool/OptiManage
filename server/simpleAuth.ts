@@ -32,6 +32,23 @@ export function setupSimpleAuth(app: Express) {
       res.redirect("/");
     });
   });
+
+  // Google OAuth endpoints (mock for development)
+  app.get("/api/auth/google", (req, res) => {
+    // Mock Google OAuth login
+    (req.session as any).user = {
+      id: "google-" + Date.now(),
+      email: "user@gmail.com",  
+      firstName: "Google",
+      lastName: "User",
+      profileImageUrl: "/api/placeholder/40/40"
+    };
+    res.redirect("/");
+  });
+
+  app.get("/api/auth/google/callback", (req, res) => {
+    res.redirect("/");
+  });
 }
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {

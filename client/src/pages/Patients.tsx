@@ -58,7 +58,7 @@ export default function Patients() {
       firstName: "",
       lastName: "",
       dateOfBirth: "",
-      gender: "male",
+      gender: "male" as const,
       phone: "",
       email: "",
       address: "",
@@ -70,7 +70,7 @@ export default function Patients() {
       insuranceProvider: "",
       insuranceNumber: "",
       isActive: true,
-      loyaltyTier: "bronze",
+      loyaltyTier: "bronze" as const,
       loyaltyPoints: 0,
       customFields: {},
     },
@@ -114,8 +114,8 @@ export default function Patients() {
     
     // Fetch patient history
     try {
-      const history = await apiRequest("GET", `/api/patients/${patient.id}/history`);
-      setPatientHistory(history);
+      const response = await apiRequest("GET", `/api/patients/${patient.id}/history`) as PatientHistory[];
+      setPatientHistory(response);
     } catch (error) {
       console.error("Error fetching patient history:", error);
       setPatientHistory([]);
@@ -161,7 +161,7 @@ export default function Patients() {
                   <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="personal">Personal Info</TabsTrigger>
                     <TabsTrigger value="contact">Contact Details</TabsTrigger>
-                    <TabsTrigger value="medical">Medical Info</TabsTrigger>
+                    <TabsTrigger value="medical">Medical Records</TabsTrigger>
                     <TabsTrigger value="insurance">Insurance & Loyalty</TabsTrigger>
                   </TabsList>
 
@@ -187,7 +187,7 @@ export default function Patients() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Gender</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -243,7 +243,7 @@ export default function Patients() {
                           <FormItem>
                             <FormLabel>Date of Birth</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <Input type="date" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -343,33 +343,88 @@ export default function Patients() {
                   </TabsContent>
 
                   <TabsContent value="medical" className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="allergies"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Known Allergies</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder="List any known allergies or sensitivities" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid grid-cols-1 gap-4">
+                      <h3 className="text-lg font-medium text-slate-900 border-b pb-2">Medical Records & History</h3>
+                      
+                      <FormField
+                        control={form.control}
+                        name="allergies"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Known Allergies & Drug Reactions</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="List any known allergies, drug reactions, or sensitivities (e.g., Penicillin, Latex, etc.)" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    <FormField
-                      control={form.control}
-                      name="medicalHistory"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Medical History</FormLabel>
-                          <FormControl>
-                            <Textarea {...field} placeholder="Previous medical conditions, surgeries, treatments" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                      <FormField
+                        control={form.control}
+                        name="medicalHistory"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Previous Medical History</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} placeholder="Previous medical conditions, surgeries, hospitalizations, chronic conditions, family history" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Current Medications</Label>
+                          <Textarea placeholder="List current medications, dosages, and frequency" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Previous Eye Conditions</Label>
+                          <Textarea placeholder="Previous eye conditions, treatments, surgeries (e.g., Cataract surgery, Glaucoma, etc.)" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label>Last Eye Exam Date</Label>
+                          <Input type="date" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Current Prescription</Label>
+                          <Input placeholder="SPH/CYL/AXIS (if applicable)" />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Risk Factors</Label>
+                          <Select>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select risk level" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low">Low Risk</SelectItem>
+                              <SelectItem value="moderate">Moderate Risk</SelectItem>
+                              <SelectItem value="high">High Risk</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                          <div>
+                            <h4 className="font-medium text-amber-800">Medical Information Notice</h4>
+                            <p className="text-sm text-amber-700 mt-1">
+                              All medical information is confidential and HIPAA compliant. This data will be used for treatment, 
+                              payment, and healthcare operations as permitted by law.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="insurance" className="space-y-4">
