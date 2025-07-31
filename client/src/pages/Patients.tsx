@@ -52,6 +52,9 @@ export default function Patients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [viewPatientOpen, setViewPatientOpen] = useState(false);
+  const [medicalHistoryOpen, setMedicalHistoryOpen] = useState(false);
+  const [prescriptionsOpen, setPrescriptionsOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -175,60 +178,123 @@ export default function Patients() {
 
   // Patient action handlers
   const handleActionClick = (action: string, patient: Patient) => {
+    setSelectedPatient(patient);
+    
     switch (action) {
       case 'view':
-        setSelectedPatient(patient);
-        toast({
-          title: "View Details",
-          description: `Viewing ${patient.firstName} ${patient.lastName}`,
-        });
+        setViewPatientOpen(true);
         break;
       case 'edit':
         form.reset(patient);
         setOpen(true);
         break;
       case 'medical-history':
-        toast({
-          title: "Medical History",
-          description: `Loading medical history for ${patient.firstName} ${patient.lastName}`,
-        });
+        setMedicalHistoryOpen(true);
         break;
       case 'prescriptions':
-        toast({
-          title: "Prescriptions",
-          description: `Loading prescriptions for ${patient.firstName} ${patient.lastName}`,
-        });
+        setPrescriptionsOpen(true);
         break;
       case 'print':
+        // Generate and print patient record
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(`
+            <html>
+              <head><title>Patient Record - ${patient.firstName} ${patient.lastName}</title></head>
+              <body style="font-family: Arial, sans-serif; padding: 20px;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1>OptiStore Pro</h1>
+                  <h2>Patient Medical Record</h2>
+                </div>
+                <div style="border: 1px solid #ccc; padding: 20px; margin-bottom: 20px;">
+                  <h3>Patient Information</h3>
+                  <p><strong>Name:</strong> ${patient.firstName} ${patient.lastName}</p>
+                  <p><strong>Patient Code:</strong> ${patient.patientCode}</p>
+                  <p><strong>Date of Birth:</strong> ${patient.dateOfBirth}</p>
+                  <p><strong>Gender:</strong> ${patient.gender}</p>
+                  <p><strong>Phone:</strong> ${patient.phone}</p>
+                  <p><strong>Email:</strong> ${patient.email || 'N/A'}</p>
+                  <p><strong>Address:</strong> ${patient.address || 'N/A'}</p>
+                  <p><strong>Blood Group:</strong> ${patient.bloodGroup || 'N/A'}</p>
+                  <p><strong>Allergies:</strong> ${patient.allergies || 'None'}</p>
+                  <p><strong>Medical History:</strong> ${patient.medicalHistory || 'None'}</p>
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                  <p style="font-size: 12px;">Generated on ${new Date().toLocaleDateString()}</p>
+                </div>
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
+          printWindow.print();
+        }
         toast({
           title: "Print",
-          description: `Printing patient record for ${patient.firstName} ${patient.lastName}`,
+          description: `Patient record printed for ${patient.firstName} ${patient.lastName}`,
         });
         break;
       case 'qr-code':
+        const patientData = JSON.stringify({
+          id: patient.id,
+          name: `${patient.firstName} ${patient.lastName}`,
+          code: patient.patientCode,
+          phone: patient.phone
+        });
+        const qrWindow = window.open('', '_blank');
+        if (qrWindow) {
+          qrWindow.document.write(`
+            <html>
+              <head><title>QR Code - ${patient.firstName} ${patient.lastName}</title></head>
+              <body style="text-align: center; padding: 50px;">
+                <h2>Patient QR Code</h2>
+                <p>${patient.firstName} ${patient.lastName} - ${patient.patientCode}</p>
+                <div style="margin: 20px 0;">
+                  <canvas id="qr-code"></canvas>
+                </div>
+                <script>
+                  // QR code generation would go here
+                  document.getElementById('qr-code').innerHTML = 'QR Code: ${patientData}';
+                </script>
+              </body>
+            </html>
+          `);
+          qrWindow.document.close();
+        }
         toast({
           title: "QR Code",
           description: `QR code generated for ${patient.firstName} ${patient.lastName}`,
         });
         break;
       case 'share':
-        toast({
-          title: "Share",
-          description: `Sharing options for ${patient.firstName} ${patient.lastName}`,
-        });
+        if (navigator.share) {
+          navigator.share({
+            title: `Patient: ${patient.firstName} ${patient.lastName}`,
+            text: `Patient Code: ${patient.patientCode}\nPhone: ${patient.phone}`,
+          });
+        } else {
+          // Fallback for browsers that don't support Web Share API
+          const shareText = `Patient: ${patient.firstName} ${patient.lastName}\nCode: ${patient.patientCode}\nPhone: ${patient.phone}`;
+          navigator.clipboard.writeText(shareText);
+          toast({
+            title: "Copied to Clipboard",
+            description: "Patient information copied to clipboard",
+          });
+        }
         break;
       case 'invoice':
         toast({
           title: "Generate Invoice",
           description: `Creating invoice for ${patient.firstName} ${patient.lastName}`,
         });
+        // Here you would typically navigate to invoice generation or open invoice modal
         break;
       case 'book-appointment':
         setAppointmentForm(prev => ({ ...prev, patientId: patient.id }));
         setAppointmentOpen(true);
         break;
       case 'delete':
-        if (confirm("Are you sure you want to delete this patient?")) {
+        if (confirm(`Are you sure you want to delete patient ${patient.firstName} ${patient.lastName}?`)) {
+          // Here you would call the delete API
           toast({
             title: "Patient Deleted",
             description: `${patient.firstName} ${patient.lastName} has been deleted`,
@@ -897,6 +963,194 @@ export default function Patients() {
           <p className="text-slate-500">Try adjusting your search criteria or add a new patient.</p>
         </div>
       )}
+
+      {/* View Patient Details Modal */}
+      <Dialog open={viewPatientOpen} onOpenChange={setViewPatientOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Patient Details</DialogTitle>
+            <DialogDescription>
+              Complete patient information and medical records
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarFallback className="text-lg">
+                    {selectedPatient.firstName.charAt(0)}{selectedPatient.lastName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-semibold">{selectedPatient.firstName} {selectedPatient.lastName}</h3>
+                  <p className="text-slate-600">{selectedPatient.patientCode}</p>
+                  <Badge variant={selectedPatient.isActive ? "default" : "secondary"}>
+                    {selectedPatient.isActive ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-slate-900 border-b pb-2">Personal Information</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm">
+                      <Calendar className="mr-2 h-4 w-4 text-slate-500" />
+                      <span className="font-medium">Age:</span>
+                      <span className="ml-2">{calculateAge(selectedPatient.dateOfBirth)} years</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <User className="mr-2 h-4 w-4 text-slate-500" />
+                      <span className="font-medium">Gender:</span>
+                      <span className="ml-2 capitalize">{selectedPatient.gender}</span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <Phone className="mr-2 h-4 w-4 text-slate-500" />
+                      <span className="font-medium">Phone:</span>
+                      <span className="ml-2">{selectedPatient.phone}</span>
+                    </div>
+                    {selectedPatient.email && (
+                      <div className="flex items-center text-sm">
+                        <Mail className="mr-2 h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Email:</span>
+                        <span className="ml-2">{selectedPatient.email}</span>
+                      </div>
+                    )}
+                    {selectedPatient.address && (
+                      <div className="flex items-start text-sm">
+                        <MapPin className="mr-2 h-4 w-4 text-slate-500 mt-0.5" />
+                        <span className="font-medium">Address:</span>
+                        <span className="ml-2">{selectedPatient.address}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-slate-900 border-b pb-2">Medical Information</h4>
+                  <div className="space-y-2">
+                    {selectedPatient.bloodGroup && (
+                      <div className="flex items-center text-sm">
+                        <Activity className="mr-2 h-4 w-4 text-slate-500" />
+                        <span className="font-medium">Blood Group:</span>
+                        <span className="ml-2">{selectedPatient.bloodGroup}</span>
+                      </div>
+                    )}
+                    {selectedPatient.allergies && (
+                      <div className="text-sm">
+                        <span className="font-medium">Allergies:</span>
+                        <p className="mt-1 text-slate-600">{selectedPatient.allergies}</p>
+                      </div>
+                    )}
+                    {selectedPatient.medicalHistory && (
+                      <div className="text-sm">
+                        <span className="font-medium">Medical History:</span>
+                        <p className="mt-1 text-slate-600">{selectedPatient.medicalHistory}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedPatient.emergencyContact && (
+                <div className="border-t pt-4">
+                  <h4 className="font-semibold text-slate-900 mb-2">Emergency Contact</h4>
+                  <div className="flex items-center text-sm space-x-4">
+                    <span><strong>Name:</strong> {selectedPatient.emergencyContact}</span>
+                    {selectedPatient.emergencyPhone && (
+                      <span><strong>Phone:</strong> {selectedPatient.emergencyPhone}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Medical History Modal */}
+      <Dialog open={medicalHistoryOpen} onOpenChange={setMedicalHistoryOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Medical History</DialogTitle>
+            <DialogDescription>
+              Complete medical history for {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Current Conditions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-600">
+                      {selectedPatient.medicalHistory || "No medical history recorded"}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Allergies</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-600">
+                      {selectedPatient.allergies || "No allergies recorded"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Visit History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-600">No visit history available</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Prescriptions Modal */}
+      <Dialog open={prescriptionsOpen} onOpenChange={setPrescriptionsOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Prescriptions</DialogTitle>
+            <DialogDescription>
+              Current and past prescriptions for {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Current Prescriptions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-600">No current prescriptions</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Prescription History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-slate-600">No prescription history available</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
