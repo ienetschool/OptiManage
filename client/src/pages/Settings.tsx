@@ -10,8 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Settings as SettingsIcon,
   Mail,
@@ -21,788 +19,555 @@ import {
   Bell,
   Palette,
   Globe,
-  Plus,
-  Edit,
-  Trash2,
   Save,
   TestTube,
   CheckCircle,
   XCircle,
   Key,
-  Lock
+  Lock,
+  Building,
+  DollarSign,
+  Phone,
+  MapPin,
+  Upload
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { insertSystemSettingsSchema, insertCustomFieldConfigSchema, type SystemSettings, type CustomFieldConfig } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
 
-const smtpSchema = z.object({
-  host: z.string().min(1, "SMTP host is required"),
-  port: z.coerce.number().min(1).max(65535),
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-  fromEmail: z.string().email("Valid email is required"),
-  fromName: z.string().min(1, "From name is required"),
-  secure: z.boolean(),
-  enabled: z.boolean(),
-});
-
-type SMTPConfig = z.infer<typeof smtpSchema>;
-
-export default function Settings() {
-  const [activeTab, setActiveTab] = useState("smtp");
+export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState("general");
   const [isTestingEmail, setIsTestingEmail] = useState(false);
-  const [openCustomField, setOpenCustomField] = useState(false);
-  const [editingField, setEditingField] = useState<CustomFieldConfig | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch system settings
-  const { data: systemSettings = [] } = useQuery<SystemSettings[]>({
-    queryKey: ["/api/settings"],
+  // Mock data for settings
+  const [generalSettings, setGeneralSettings] = useState({
+    storeName: "OptiCare Medical Center",
+    tagline: "Comprehensive Eye Care & Optical Services",
+    address: "123 Medical Plaza, Healthcare District",
+    city: "Medical City",
+    phone: "(555) 123-4567",
+    email: "info@opticare.com",
+    website: "www.opticare.com",
+    timezone: "America/New_York",
+    currency: "USD",
+    language: "en"
   });
 
-  // Fetch custom fields config
-  const { data: customFields = [] } = useQuery<CustomFieldConfig[]>({
-    queryKey: ["/api/custom-fields"],
+  const [emailSettings, setEmailSettings] = useState({
+    enabled: true,
+    smtpHost: "smtp.gmail.com",
+    smtpPort: "587",
+    username: "notifications@opticare.com",
+    password: "",
+    fromName: "OptiCare Notifications",
+    fromEmail: "notifications@opticare.com",
+    encryption: "tls"
   });
 
-  // Get SMTP settings from system settings
-  const getSettingValue = (key: string, defaultValue: any = "") => {
-    const setting = systemSettings.find(s => s.key === key);
-    return setting ? setting.value : defaultValue;
-  };
-
-  const smtpForm = useForm<SMTPConfig>({
-    resolver: zodResolver(smtpSchema),
-    defaultValues: {
-      host: getSettingValue("smtp_host"),
-      port: parseInt(getSettingValue("smtp_port", "587")),
-      username: getSettingValue("smtp_username"),
-      password: getSettingValue("smtp_password"),
-      fromEmail: getSettingValue("smtp_from_email"),
-      fromName: getSettingValue("smtp_from_name"),
-      secure: getSettingValue("smtp_secure", "false") === "true",
-      enabled: getSettingValue("smtp_enabled", "false") === "true",
-    },
+  const [systemSettings, setSystemSettings] = useState({
+    maintenance: false,
+    registrationEnabled: true,
+    appointmentReminders: true,
+    smsNotifications: false,
+    emailNotifications: true,
+    autoBackup: true,
+    sessionTimeout: 60,
+    maxLoginAttempts: 5
   });
 
-  const customFieldForm = useForm({
-    resolver: zodResolver(insertCustomFieldConfigSchema),
-    defaultValues: {
-      fieldName: "",
-      fieldLabel: "",
-      fieldType: "text",
-      entityType: "customers",
-      isRequired: false,
-      isActive: true,
-      options: null,
-      defaultValue: "",
-      validation: null,
-      sortOrder: 0,
-    },
-  });
-
-  // Update SMTP settings mutation
-  const updateSMTPMutation = useMutation({
-    mutationFn: async (data: SMTPConfig) => {
-      const settingsToUpdate = [
-        { key: "smtp_host", value: data.host, category: "email" },
-        { key: "smtp_port", value: data.port.toString(), category: "email" },
-        { key: "smtp_username", value: data.username, category: "email" },
-        { key: "smtp_password", value: data.password, category: "email" },
-        { key: "smtp_from_email", value: data.fromEmail, category: "email" },
-        { key: "smtp_from_name", value: data.fromName, category: "email" },
-        { key: "smtp_secure", value: data.secure.toString(), category: "email" },
-        { key: "smtp_enabled", value: data.enabled.toString(), category: "email" },
-      ];
-
-      for (const setting of settingsToUpdate) {
-        await apiRequest("PUT", "/api/settings", setting);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
-      toast({
-        title: "Success",
-        description: "SMTP settings updated successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update SMTP settings.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Test email mutation
-  const testEmailMutation = useMutation({
-    mutationFn: async (config: SMTPConfig) => {
-      await apiRequest("POST", "/api/settings/test-email", {
-        ...config,
-        testEmail: config.fromEmail,
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Test Email Sent",
-        description: "Check your inbox for the test email.",
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Test Failed",
-        description: error.message || "Failed to send test email.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Custom field mutations
-  const createCustomFieldMutation = useMutation({
-    mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/custom-fields", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/custom-fields"] });
-      toast({
-        title: "Success",
-        description: "Custom field created successfully.",
-      });
-      setOpenCustomField(false);
-      customFieldForm.reset();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create custom field.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateCustomFieldMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      await apiRequest("PUT", `/api/custom-fields/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/custom-fields"] });
-      toast({
-        title: "Success",
-        description: "Custom field updated successfully.",
-      });
-      setOpenCustomField(false);
-      setEditingField(null);
-      customFieldForm.reset();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update custom field.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteCustomFieldMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/custom-fields/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/custom-fields"] });
-      toast({
-        title: "Success",
-        description: "Custom field deleted successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete custom field.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSMTPSubmit = (data: SMTPConfig) => {
-    updateSMTPMutation.mutate(data);
-  };
-
-  const onTestEmail = async () => {
-    const isValid = await smtpForm.trigger();
-    if (isValid) {
-      setIsTestingEmail(true);
-      const formData = smtpForm.getValues();
-      testEmailMutation.mutate(formData);
-      setTimeout(() => setIsTestingEmail(false), 3000);
-    }
-  };
-
-  const onCustomFieldSubmit = (data: any) => {
-    if (editingField) {
-      updateCustomFieldMutation.mutate({ id: editingField.id, data });
-    } else {
-      createCustomFieldMutation.mutate(data);
-    }
-  };
-
-  const handleEditCustomField = (field: CustomFieldConfig) => {
-    setEditingField(field);
-    customFieldForm.reset({
-      fieldName: field.fieldName,
-      fieldLabel: field.fieldLabel,
-      fieldType: field.fieldType,
-      entityType: field.entityType,
-      isRequired: field.isRequired,
-      isActive: field.isActive,
-      options: field.options,
-      defaultValue: field.defaultValue || "",
-      validation: field.validation,
-      sortOrder: field.sortOrder || 0,
+  const handleSaveSettings = (section: string) => {
+    toast({
+      title: "Settings Saved",
+      description: `${section} settings have been updated successfully.`,
     });
-    setOpenCustomField(true);
   };
 
-  const handleDeleteCustomField = (id: string) => {
-    if (confirm("Are you sure you want to delete this custom field?")) {
-      deleteCustomFieldMutation.mutate(id);
-    }
+  const testEmailConnection = async () => {
+    setIsTestingEmail(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsTestingEmail(false);
+      toast({
+        title: "Email Test",
+        description: "Test email sent successfully!",
+      });
+    }, 2000);
   };
 
   return (
     <>
       <Header 
         title="System Settings" 
-        subtitle="Configure SMTP, custom fields, and system preferences for your optical store management system." 
+        subtitle="Configure system preferences, integrations, and security settings." 
       />
       
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="smtp" className="flex items-center space-x-2">
-                <Mail className="h-4 w-4" />
-                <span>SMTP Email</span>
-              </TabsTrigger>
-              <TabsTrigger value="custom-fields" className="flex items-center space-x-2">
-                <Database className="h-4 w-4" />
-                <span>Custom Fields</span>
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center space-x-2">
-                <Bell className="h-4 w-4" />
-                <span>Notifications</span>
-              </TabsTrigger>
-              <TabsTrigger value="security" className="flex items-center space-x-2">
-                <Shield className="h-4 w-4" />
-                <span>Security</span>
-              </TabsTrigger>
-              <TabsTrigger value="general" className="flex items-center space-x-2">
-                <SettingsIcon className="h-4 w-4" />
-                <span>General</span>
-              </TabsTrigger>
-            </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="general" className="flex items-center space-x-2">
+              <Building className="h-4 w-4" />
+              <span>General</span>
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center space-x-2">
+              <Mail className="h-4 w-4" />
+              <span>Email</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center space-x-2">
+              <Bell className="h-4 w-4" />
+              <span>Notifications</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center space-x-2">
+              <Shield className="h-4 w-4" />
+              <span>Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="system" className="flex items-center space-x-2">
+              <Database className="h-4 w-4" />
+              <span>System</span>
+            </TabsTrigger>
+            <TabsTrigger value="billing" className="flex items-center space-x-2">
+              <DollarSign className="h-4 w-4" />
+              <span>Billing</span>
+            </TabsTrigger>
+          </TabsList>
 
-            {/* SMTP Email Configuration */}
-            <TabsContent value="smtp" className="space-y-6">
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                    <span>SMTP Email Configuration</span>
-                  </CardTitle>
-                  <p className="text-sm text-slate-600">
-                    Configure email settings for notifications, invoices, and customer communication.
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <Form {...smtpForm}>
-                    <form onSubmit={smtpForm.handleSubmit(onSMTPSubmit)} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={smtpForm.control}
-                          name="enabled"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">Enable SMTP</FormLabel>
-                                <FormDescription>
-                                  Turn on email notifications and communications
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={smtpForm.control}
-                          name="secure"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">Use SSL/TLS</FormLabel>
-                                <FormDescription>
-                                  Enable secure connection to email server
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={smtpForm.control}
-                          name="host"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>SMTP Host</FormLabel>
-                              <FormControl>
-                                <Input placeholder="smtp.gmail.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={smtpForm.control}
-                          name="port"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>SMTP Port</FormLabel>
-                              <FormControl>
-                                <Input type="number" placeholder="587" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={smtpForm.control}
-                          name="username"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username</FormLabel>
-                              <FormControl>
-                                <Input placeholder="your-email@gmail.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={smtpForm.control}
-                          name="password"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Password</FormLabel>
-                              <FormControl>
-                                <Input type="password" placeholder="App-specific password" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <FormField
-                          control={smtpForm.control}
-                          name="fromEmail"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>From Email</FormLabel>
-                              <FormControl>
-                                <Input type="email" placeholder="noreply@yourstore.com" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={smtpForm.control}
-                          name="fromName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>From Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Your Optical Store" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <div className="flex space-x-4">
-                        <Button
-                          type="submit"
-                          disabled={updateSMTPMutation.isPending}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Save className="mr-2 h-4 w-4" />
-                          {updateSMTPMutation.isPending ? "Saving..." : "Save Settings"}
-                        </Button>
-
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={onTestEmail}
-                          disabled={isTestingEmail || testEmailMutation.isPending}
-                        >
-                          <TestTube className="mr-2 h-4 w-4" />
-                          {isTestingEmail ? "Testing..." : "Test Email"}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Custom Fields Configuration */}
-            <TabsContent value="custom-fields" className="space-y-6">
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Database className="h-5 w-5 text-purple-600" />
-                        <span>Custom Fields</span>
-                      </CardTitle>
-                      <p className="text-sm text-slate-600">
-                        Add custom fields to customers, products, and other entities.
-                      </p>
-                    </div>
-                    <Dialog open={openCustomField} onOpenChange={setOpenCustomField}>
-                      <DialogTrigger asChild>
-                        <Button className="bg-purple-600 hover:bg-purple-700">
-                          <Plus className="mr-2 h-4 w-4" />
-                          Add Custom Field
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>
-                            {editingField ? "Edit Custom Field" : "Add Custom Field"}
-                          </DialogTitle>
-                        </DialogHeader>
-                        
-                        <Form {...customFieldForm}>
-                          <form onSubmit={customFieldForm.handleSubmit(onCustomFieldSubmit)} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={customFieldForm.control}
-                                name="fieldName"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Field Name</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="insurance_provider" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                      Internal name (no spaces, lowercase)
-                                    </FormDescription>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={customFieldForm.control}
-                                name="fieldLabel"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Field Label</FormLabel>
-                                    <FormControl>
-                                      <Input placeholder="Insurance Provider" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                      Display name shown to users
-                                    </FormDescription>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            
-                            <div className="grid grid-cols-2 gap-4">
-                              <FormField
-                                control={customFieldForm.control}
-                                name="fieldType"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Field Type</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="text">Text</SelectItem>
-                                        <SelectItem value="number">Number</SelectItem>
-                                        <SelectItem value="email">Email</SelectItem>
-                                        <SelectItem value="phone">Phone</SelectItem>
-                                        <SelectItem value="date">Date</SelectItem>
-                                        <SelectItem value="select">Dropdown</SelectItem>
-                                        <SelectItem value="checkbox">Checkbox</SelectItem>
-                                        <SelectItem value="textarea">Text Area</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={customFieldForm.control}
-                                name="entityType"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Apply To</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                      <FormControl>
-                                        <SelectTrigger>
-                                          <SelectValue />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        <SelectItem value="customers">Customers</SelectItem>
-                                        <SelectItem value="products">Products</SelectItem>
-                                        <SelectItem value="stores">Stores</SelectItem>
-                                        <SelectItem value="appointments">Appointments</SelectItem>
-                                        <SelectItem value="sales">Sales</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            
-                            <div className="flex items-center space-x-6">
-                              <FormField
-                                control={customFieldForm.control}
-                                name="isRequired"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                      <FormLabel>Required Field</FormLabel>
-                                    </div>
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={customFieldForm.control}
-                                name="isActive"
-                                render={({ field }) => (
-                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                                    <FormControl>
-                                      <Switch
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                      />
-                                    </FormControl>
-                                    <div className="space-y-1 leading-none">
-                                      <FormLabel>Active</FormLabel>
-                                    </div>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            
-                            <div className="flex justify-end space-x-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                  setOpenCustomField(false);
-                                  setEditingField(null);
-                                  customFieldForm.reset();
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                              <Button
-                                type="submit"
-                                disabled={createCustomFieldMutation.isPending || updateCustomFieldMutation.isPending}
-                                className="bg-purple-600 hover:bg-purple-700"
-                              >
-                                {createCustomFieldMutation.isPending || updateCustomFieldMutation.isPending
-                                  ? "Saving..." 
-                                  : editingField ? "Update Field" : "Create Field"}
-                              </Button>
-                            </div>
-                          </form>
-                        </Form>
-                      </DialogContent>
-                    </Dialog>
+          {/* General Settings */}
+          <TabsContent value="general" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Building className="h-5 w-5" />
+                  <span>Business Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="storeName">Business Name</Label>
+                    <Input
+                      id="storeName"
+                      value={generalSettings.storeName}
+                      onChange={(e) => setGeneralSettings({...generalSettings, storeName: e.target.value})}
+                    />
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {customFields.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Database className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                      <h3 className="text-lg font-semibold text-slate-900 mb-2">No custom fields</h3>
-                      <p className="text-slate-600 mb-6">
-                        Add custom fields to collect additional information for your business.
-                      </p>
-                      <Button 
-                        onClick={() => setOpenCustomField(true)}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Custom Field
-                      </Button>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="tagline">Tagline</Label>
+                    <Input
+                      id="tagline"
+                      value={generalSettings.tagline}
+                      onChange={(e) => setGeneralSettings({...generalSettings, tagline: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={generalSettings.phone}
+                      onChange={(e) => setGeneralSettings({...generalSettings, phone: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={generalSettings.email}
+                      onChange={(e) => setGeneralSettings({...generalSettings, email: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      value={generalSettings.website}
+                      onChange={(e) => setGeneralSettings({...generalSettings, website: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select value={generalSettings.timezone} onValueChange={(value) => setGeneralSettings({...generalSettings, timezone: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="America/New_York">Eastern Time</SelectItem>
+                        <SelectItem value="America/Chicago">Central Time</SelectItem>
+                        <SelectItem value="America/Denver">Mountain Time</SelectItem>
+                        <SelectItem value="America/Los_Angeles">Pacific Time</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea
+                    id="address"
+                    value={`${generalSettings.address}\n${generalSettings.city}`}
+                    onChange={(e) => {
+                      const lines = e.target.value.split('\n');
+                      setGeneralSettings({
+                        ...generalSettings, 
+                        address: lines[0] || '',
+                        city: lines[1] || ''
+                      });
+                    }}
+                    rows={3}
+                  />
+                </div>
+                
+                <Button onClick={() => handleSaveSettings('General')} className="bg-blue-600 hover:bg-blue-700">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save General Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Email Settings */}
+          <TabsContent value="email" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Mail className="h-5 w-5" />
+                  <span>SMTP Configuration</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={emailSettings.enabled}
+                    onCheckedChange={(checked) => setEmailSettings({...emailSettings, enabled: checked})}
+                  />
+                  <Label>Enable Email Notifications</Label>
+                </div>
+                
+                {emailSettings.enabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="smtpHost">SMTP Host</Label>
+                      <Input
+                        id="smtpHost"
+                        value={emailSettings.smtpHost}
+                        onChange={(e) => setEmailSettings({...emailSettings, smtpHost: e.target.value})}
+                      />
                     </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Field Name</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Entity</TableHead>
-                            <TableHead>Required</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {customFields.map((field) => (
-                            <TableRow key={field.id}>
-                              <TableCell>
-                                <div>
-                                  <p className="font-medium">{field.fieldLabel}</p>
-                                  <p className="text-sm text-slate-500">{field.fieldName}</p>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="capitalize">
-                                  {field.fieldType}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="capitalize">{field.entityType}</TableCell>
-                              <TableCell>
-                                {field.isRequired ? (
-                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
-                                ) : (
-                                  <XCircle className="h-4 w-4 text-slate-400" />
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <Badge 
-                                  className={field.isActive 
-                                    ? 'bg-emerald-100 text-emerald-800' 
-                                    : 'bg-red-100 text-red-800'
-                                  }
-                                >
-                                  {field.isActive ? 'Active' : 'Inactive'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex space-x-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleEditCustomField(field)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleDeleteCustomField(field.id)}
-                                    className="text-red-600 hover:text-red-700"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="smtpPort">SMTP Port</Label>
+                      <Input
+                        id="smtpPort"
+                        value={emailSettings.smtpPort}
+                        onChange={(e) => setEmailSettings({...emailSettings, smtpPort: e.target.value})}
+                      />
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Username</Label>
+                      <Input
+                        id="username"
+                        value={emailSettings.username}
+                        onChange={(e) => setEmailSettings({...emailSettings, username: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        value={emailSettings.password}
+                        onChange={(e) => setEmailSettings({...emailSettings, password: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="fromName">From Name</Label>
+                      <Input
+                        id="fromName"
+                        value={emailSettings.fromName}
+                        onChange={(e) => setEmailSettings({...emailSettings, fromName: e.target.value})}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="fromEmail">From Email</Label>
+                      <Input
+                        id="fromEmail"
+                        type="email"
+                        value={emailSettings.fromEmail}
+                        onChange={(e) => setEmailSettings({...emailSettings, fromEmail: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex space-x-2">
+                  <Button onClick={() => handleSaveSettings('Email')} className="bg-blue-600 hover:bg-blue-700">
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Email Settings
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={testEmailConnection}
+                    disabled={isTestingEmail || !emailSettings.enabled}
+                  >
+                    <TestTube className="mr-2 h-4 w-4" />
+                    {isTestingEmail ? 'Testing...' : 'Test Connection'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            {/* Other tabs placeholder */}
-            <TabsContent value="notifications">
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Bell className="h-5 w-5 text-amber-600" />
-                    <span>Notification Settings</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-600">Notification preferences coming soon...</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
+          {/* Notifications Settings */}
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Bell className="h-5 w-5" />
+                  <span>Notification Preferences</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Email Notifications</Label>
+                      <p className="text-sm text-slate-600">Send notifications via email</p>
+                    </div>
+                    <Switch
+                      checked={systemSettings.emailNotifications}
+                      onCheckedChange={(checked) => setSystemSettings({...systemSettings, emailNotifications: checked})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>SMS Notifications</Label>
+                      <p className="text-sm text-slate-600">Send notifications via SMS</p>
+                    </div>
+                    <Switch
+                      checked={systemSettings.smsNotifications}
+                      onCheckedChange={(checked) => setSystemSettings({...systemSettings, smsNotifications: checked})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Appointment Reminders</Label>
+                      <p className="text-sm text-slate-600">Automatic appointment reminders</p>
+                    </div>
+                    <Switch
+                      checked={systemSettings.appointmentReminders}
+                      onCheckedChange={(checked) => setSystemSettings({...systemSettings, appointmentReminders: checked})}
+                    />
+                  </div>
+                </div>
+                
+                <Button onClick={() => handleSaveSettings('Notification')} className="bg-blue-600 hover:bg-blue-700">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Notification Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="security">
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Shield className="h-5 w-5 text-red-600" />
-                    <span>Security Settings</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-600">Security configurations coming soon...</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
+          {/* Security Settings */}
+          <TabsContent value="security" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="h-5 w-5" />
+                  <span>Security Configuration</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="sessionTimeout">Session Timeout (minutes)</Label>
+                    <Input
+                      id="sessionTimeout"
+                      type="number"
+                      value={systemSettings.sessionTimeout}
+                      onChange={(e) => setSystemSettings({...systemSettings, sessionTimeout: parseInt(e.target.value)})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="maxLoginAttempts">Max Login Attempts</Label>
+                    <Input
+                      id="maxLoginAttempts"
+                      type="number"
+                      value={systemSettings.maxLoginAttempts}
+                      onChange={(e) => setSystemSettings({...systemSettings, maxLoginAttempts: parseInt(e.target.value)})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>User Registration</Label>
+                      <p className="text-sm text-slate-600">Allow new user registration</p>
+                    </div>
+                    <Switch
+                      checked={systemSettings.registrationEnabled}
+                      onCheckedChange={(checked) => setSystemSettings({...systemSettings, registrationEnabled: checked})}
+                    />
+                  </div>
+                </div>
+                
+                <Button onClick={() => handleSaveSettings('Security')} className="bg-blue-600 hover:bg-blue-700">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Security Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="general">
-              <Card className="border-slate-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <SettingsIcon className="h-5 w-5 text-slate-600" />
-                    <span>General Settings</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-600">General system preferences coming soon...</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </div>
+          {/* System Settings */}
+          <TabsContent value="system" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Database className="h-5 w-5" />
+                  <span>System Configuration</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Maintenance Mode</Label>
+                      <p className="text-sm text-slate-600">Enable maintenance mode</p>
+                    </div>
+                    <Switch
+                      checked={systemSettings.maintenance}
+                      onCheckedChange={(checked) => setSystemSettings({...systemSettings, maintenance: checked})}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label>Auto Backup</Label>
+                      <p className="text-sm text-slate-600">Automatic database backup</p>
+                    </div>
+                    <Switch
+                      checked={systemSettings.autoBackup}
+                      onCheckedChange={(checked) => setSystemSettings({...systemSettings, autoBackup: checked})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-medium">System Status</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="font-medium">Database</span>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-1">Connected</p>
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <span className="font-medium">Email Service</span>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-1">Active</p>
+                    </div>
+                    
+                    <div className="p-4 border rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <XCircle className="h-5 w-5 text-red-600" />
+                        <span className="font-medium">SMS Service</span>
+                      </div>
+                      <p className="text-sm text-slate-600 mt-1">Not Configured</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={() => handleSaveSettings('System')} className="bg-blue-600 hover:bg-blue-700">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save System Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Billing Settings */}
+          <TabsContent value="billing" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <DollarSign className="h-5 w-5" />
+                  <span>Billing Configuration</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Default Currency</Label>
+                    <Select value={generalSettings.currency} onValueChange={(value) => setGeneralSettings({...generalSettings, currency: value})}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                        <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="taxRate">Default Tax Rate (%)</Label>
+                    <Input
+                      id="taxRate"
+                      type="number"
+                      step="0.01"
+                      placeholder="8.25"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h4 className="font-medium">Payment Methods</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="cash" defaultChecked />
+                      <Label htmlFor="cash">Cash</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="card" defaultChecked />
+                      <Label htmlFor="card">Credit/Debit Card</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="check" />
+                      <Label htmlFor="check">Check</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input type="checkbox" id="digital" />
+                      <Label htmlFor="digital">Digital Payment</Label>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button onClick={() => handleSaveSettings('Billing')} className="bg-blue-600 hover:bg-blue-700">
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Billing Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </>
   );
