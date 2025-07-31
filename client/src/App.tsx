@@ -37,23 +37,26 @@ import Privacy from "@/pages/Privacy";
 import Services from "@/pages/Services";
 import Sidebar from "@/components/layout/Sidebar";
 import AppLayout from "@/components/layout/AppLayout";
+import PublicLayout from "@/components/layout/PublicLayout";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading || !isAuthenticated) {
     return (
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/about" component={About} />
-        <Route path="/features" component={Features} />
-        <Route path="/services" component={Services} />
-        <Route path="/reviews" component={Reviews} />
-        <Route path="/contact" component={Contact} />
-        <Route path="/terms" component={Terms} />
-        <Route path="/privacy" component={Privacy} />
-        <Route component={NotFound} />
-      </Switch>
+      <PublicLayout>
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/about" component={About} />
+          <Route path="/features" component={Features} />
+          <Route path="/services" component={Services} />
+          <Route path="/reviews" component={Reviews} />
+          <Route path="/contact" component={Contact} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
+          <Route component={NotFound} />
+        </Switch>
+      </PublicLayout>
     );
   }
 

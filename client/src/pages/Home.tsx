@@ -303,8 +303,13 @@ export default function Home() {
                 <Link href="/reviews" className="block text-slate-700 hover:text-blue-600 font-medium">Reviews</Link>
                 <Link href="/contact" className="block text-slate-700 hover:text-blue-600 font-medium">Contact</Link>
                 <div className="pt-4 border-t">
-                  <Button variant="outline" className="w-full mb-2">Live Chat</Button>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">Get Started</Button>
+                  <Button variant="outline" className="w-full mb-2">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Live Chat
+                  </Button>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700" asChild>
+                    <Link href="/api/login">Get Started</Link>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -332,12 +337,16 @@ export default function Home() {
                   <h1 className="text-5xl font-bold mb-6">{slide.title}</h1>
                   <p className="text-xl mb-8 text-blue-100">{slide.description}</p>
                   <div className="flex space-x-4">
-                    <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-                      {slide.cta}
-                      <ArrowRight className="ml-2 h-5 w-5" />
+                    <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50" asChild>
+                      <Link href={slide.ctaLink}>
+                        {slide.cta}
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Link>
                     </Button>
-                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                      Watch Demo
+                    <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
+                      <Link href="/contact">
+                        Watch Demo
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -485,12 +494,16 @@ export default function Home() {
               Start your free trial today and see the difference.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50" asChild>
+                <Link href="/api/login">
+                  Start Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
-                Schedule Demo
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
+                <Link href="/contact">
+                  Schedule Demo
+                </Link>
               </Button>
             </div>
           </div>
@@ -588,7 +601,10 @@ export default function Home() {
 
       {/* Quick Chat Button */}
       <div className="fixed bottom-6 right-6 z-50">
-        <Button className="bg-blue-600 hover:bg-blue-700 rounded-full w-14 h-14 shadow-lg">
+        <Button 
+          className="bg-blue-600 hover:bg-blue-700 rounded-full w-14 h-14 shadow-lg"
+          onClick={() => alert('Live chat feature will be available soon! Please contact us at (555) 123-4567 for immediate assistance.')}
+        >
           <MessageCircle className="h-6 w-6" />
         </Button>
       </div>
