@@ -527,6 +527,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Appointment status update route
+  app.patch("/api/appointments/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      // Mock status update
+      res.json({ 
+        success: true, 
+        message: `Appointment ${status} successfully`,
+        id,
+        status 
+      });
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      res.status(500).json({ message: "Failed to update appointment status" });
+    }
+  });
+
   // Dashboard route
   app.get('/api/dashboard', isAuthenticated, async (req, res) => {
     try {

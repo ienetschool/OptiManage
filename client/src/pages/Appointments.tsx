@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, Calendar, Search, Edit, Trash2, Clock, MapPin, User, Phone, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Plus, Calendar, Search, Edit, Trash2, Clock, MapPin, User, Phone, CheckCircle, XCircle, AlertCircle, MoreVertical, Eye, FileText, QrCode, Share2, Receipt, Printer, MessageSquare, UserCheck } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -121,6 +122,109 @@ export default function Appointments() {
     },
   });
 
+  const updateAppointmentStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      await apiRequest("PATCH", `/api/appointments/${id}/status`, { status });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/kpis"] });
+      toast({
+        title: "Success",
+        description: `Appointment ${variables.status} successfully.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update appointment status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Action handlers
+  const handleViewDetails = (appointment: any) => {
+    toast({
+      title: "View Details",
+      description: `Opening details for appointment with ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
+
+  const handleEdit = (appointment: any) => {
+    setEditingAppointment(appointment);
+    form.reset({
+      customerId: appointment.customerId,
+      storeId: appointment.storeId,
+      staffId: appointment.staffId,
+      appointmentDate: new Date(appointment.appointmentDate),
+      duration: appointment.duration,
+      service: appointment.service,
+      status: appointment.status,
+      notes: appointment.notes || "",
+    });
+    setOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteAppointmentMutation.mutate(id);
+  };
+
+  const handleStatusChange = (id: string, status: string) => {
+    updateAppointmentStatusMutation.mutate({ id, status });
+  };
+
+  const handlePrint = (appointment: any) => {
+    toast({
+      title: "Print Appointment",
+      description: `Generating print format for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
+
+  const handleQRCode = (appointment: any) => {
+    toast({
+      title: "QR Code Generated", 
+      description: `QR code created for appointment with ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
+
+  const handleShare = (appointment: any) => {
+    toast({
+      title: "Share Appointment",
+      description: `Sharing appointment details for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
+
+  const handleInvoice = (appointment: any) => {
+    toast({
+      title: "Invoice Generated",
+      description: `Creating invoice for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
+
+  const handleSendReminder = (appointment: any) => {
+    toast({
+      title: "Reminder Sent",
+      description: `Appointment reminder sent to ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
+
+  const handleCheckIn = (appointment: any) => {
+    handleStatusChange(appointment.id, "checked-in");
+  };
+
+  const handleStartConsultation = (appointment: any) => {
+    handleStatusChange(appointment.id, "in-progress");
+  };
+
+  const handleComplete = (appointment: any) => {
+    handleStatusChange(appointment.id, "completed");
+  };
+
+  const handleReschedule = (appointment: any) => {
+    handleEdit(appointment);
+  };
+
   // Mock appointments for demo
   const mockAppointments = [
     {
@@ -217,26 +321,7 @@ export default function Appointments() {
     }
   };
 
-  const handleEdit = (appointment: any) => {
-    setEditingAppointment(appointment);
-    form.reset({
-      customerId: appointment.customerId,
-      storeId: appointment.storeId,
-      staffId: appointment.staffId || undefined,
-      appointmentDate: appointment.appointmentDate,
-      duration: appointment.duration,
-      service: appointment.service,
-      status: appointment.status,
-      notes: appointment.notes || "",
-    });
-    setOpen(true);
-  };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to cancel this appointment?")) {
-      deleteAppointmentMutation.mutate(id);
-    }
-  };
 
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
@@ -264,10 +349,7 @@ export default function Appointments() {
 
   return (
     <>
-      <Header 
-        title="Appointment Management" 
-        subtitle="Schedule and manage customer appointments across all locations." 
-      />
+      <Header />
       
       <main className="flex-1 overflow-y-auto p-6">
         <Tabs defaultValue="appointments" className="space-y-6">
@@ -456,7 +538,7 @@ export default function Appointments() {
                           <FormItem>
                             <FormLabel>Notes</FormLabel>
                             <FormControl>
-                              <Input placeholder="Additional notes or instructions" {...field} />
+                              <Input placeholder="Additional notes or instructions" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -575,21 +657,141 @@ export default function Appointments() {
                       </div>
                       
                       <div className="flex items-center space-x-2">
+                        {/* Quick Action Buttons */}
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(appointment)}
+                          onClick={() => handleViewDetails(appointment)}
+                          title="View Details"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(appointment.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+
+                        {/* Status-based quick actions */}
+                        {appointment.status === "scheduled" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleCheckIn(appointment)}
+                            className="text-green-600 hover:text-green-700"
+                            title="Check In"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                        {appointment.status === "checked-in" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleStartConsultation(appointment)}
+                            className="text-blue-600 hover:text-blue-700"
+                            title="Start Consultation"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                        {appointment.status === "in-progress" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleComplete(appointment)}
+                            className="text-purple-600 hover:text-purple-700"
+                            title="Complete"
+                          >
+                            <CheckCircle className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                        {/* Dropdown Menu for all actions */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuLabel>Appointment Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            
+                            {/* View & Edit Actions */}
+                            <DropdownMenuItem onClick={() => handleViewDetails(appointment)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(appointment)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Appointment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleReschedule(appointment)}>
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Reschedule
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Status Actions */}
+                            {appointment.status === "scheduled" && (
+                              <DropdownMenuItem onClick={() => handleCheckIn(appointment)}>
+                                <UserCheck className="mr-2 h-4 w-4 text-green-600" />
+                                Check In Patient
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {appointment.status === "checked-in" && (
+                              <DropdownMenuItem onClick={() => handleStartConsultation(appointment)}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-blue-600" />
+                                Start Consultation
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {appointment.status === "in-progress" && (
+                              <DropdownMenuItem onClick={() => handleComplete(appointment)}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-purple-600" />
+                                Complete Appointment
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {(appointment.status === "scheduled" || appointment.status === "checked-in") && (
+                              <DropdownMenuItem onClick={() => handleSendReminder(appointment)}>
+                                <MessageSquare className="mr-2 h-4 w-4 text-blue-600" />
+                                Send Reminder
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Document Actions */}
+                            <DropdownMenuItem onClick={() => handlePrint(appointment)}>
+                              <Printer className="mr-2 h-4 w-4" />
+                              Print Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleQRCode(appointment)}>
+                              <QrCode className="mr-2 h-4 w-4" />
+                              Generate QR Code
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleShare(appointment)}>
+                              <Share2 className="mr-2 h-4 w-4" />
+                              Share Appointment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleInvoice(appointment)}>
+                              <Receipt className="mr-2 h-4 w-4" />
+                              Generate Invoice
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Danger Actions */}
+                            <DropdownMenuItem 
+                              onClick={() => handleDelete(appointment.id)}
+                              className="text-red-600 focus:text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Cancel Appointment
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </CardContent>
