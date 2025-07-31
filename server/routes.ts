@@ -611,6 +611,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Patient history route
+  app.get("/api/patients/:id/history", async (req, res) => {
+    try {
+      const { id } = req.params;
+      // Mock patient history data
+      const history = [
+        {
+          id: "hist1",
+          patientId: id,
+          date: new Date(),
+          type: "appointment",
+          description: "Regular eye examination",
+          doctor: "Dr. Smith",
+          notes: "Vision improved, prescription updated"
+        },
+        {
+          id: "hist2", 
+          patientId: id,
+          date: new Date(Date.now() - 86400000 * 30),
+          type: "treatment",
+          description: "Contact lens fitting",
+          doctor: "Dr. Johnson",
+          notes: "First time contact lens fitting successful"
+        }
+      ];
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching patient history:", error);
+      res.status(500).json({ message: "Failed to fetch patient history" });
+    }
+  });
+
   // Settings routes
   app.get("/api/settings", async (req, res) => {
     try {

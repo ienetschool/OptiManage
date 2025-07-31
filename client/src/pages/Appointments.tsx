@@ -32,8 +32,8 @@ export default function Appointments() {
     queryKey: ["/api/appointments"],
   });
 
-  const { data: customers = [] } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
+  const { data: patients = [] } = useQuery<any[]>({
+    queryKey: ["/api/patients"],
   });
 
   const { data: stores = [] } = useQuery<Store[]>({
@@ -43,6 +43,7 @@ export default function Appointments() {
   const form = useForm<InsertAppointment>({
     resolver: zodResolver(insertAppointmentSchema),
     defaultValues: {
+      patientId: "",
       customerId: "",
       storeId: "",
       staffId: undefined,
@@ -386,20 +387,20 @@ export default function Appointments() {
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
-                          name="customerId"
+                          name="patientId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Customer</FormLabel>
+                              <FormLabel>Patient</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select customer" />
+                                    <SelectValue placeholder="Select patient" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {customers.map((customer) => (
-                                    <SelectItem key={customer.id} value={customer.id}>
-                                      {customer.firstName} {customer.lastName}
+                                  {patients.map((patient) => (
+                                    <SelectItem key={patient.id} value={patient.id}>
+                                      {patient.firstName} {patient.lastName} ({patient.patientCode})
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
