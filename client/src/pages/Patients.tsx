@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -222,7 +222,7 @@ export default function Patients() {
     // Fetch patient history
     try {
       const response = await apiRequest("GET", `/api/patients/${patient.id}/history`);
-      const history = response as PatientHistory[];
+      const history = await response.json() as PatientHistory[];
       setPatientHistory(history);
     } catch (error) {
       console.error("Error fetching patient history:", error);
@@ -982,6 +982,7 @@ export default function Patients() {
                 <p className="text-sm font-medium text-slate-600">New This Month</p>
                 <p className="text-2xl font-bold text-slate-900">
                   {patients.filter(p => {
+                    if (!p.createdAt) return false;
                     const date = new Date(p.createdAt);
                     const now = new Date();
                     return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -1540,7 +1541,7 @@ export default function Patients() {
                             </Badge>
                           </div>
                           <span className="text-sm text-slate-500">
-                            {format(new Date(record.recordDate), 'MMM dd, yyyy')}
+                            {record.recordDate ? format(new Date(record.recordDate), 'MMM dd, yyyy') : 'N/A'}
                           </span>
                         </div>
                       </div>
