@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupOAuthAuth, isAuthenticated } from "./oauthAuth";
+import { setupSimpleAuth, isAuthenticated } from "./simpleAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
@@ -25,7 +25,7 @@ import { addTestRoutes } from "./testAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  setupOAuthAuth(app);
+  setupSimpleAuth(app);
   
   // Add test routes for debugging
   addTestRoutes(app);
@@ -50,6 +50,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register analytics routes
   registerAnalyticsRoutes(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        // Create a default user if not exists
+        const defaultUser = {
+          id: userId,
+          email: req.user.claims.email || "admin@optistorepro.com",
+          firstName: "Admin",
+          lastName: "User",
+          profileImageUrl: "/api/placeholder/40/40"
+        };
+        res.json(defaultUser);
+      } else {
+        res.json(user);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
 
   // Additional API routes can be added here
 
