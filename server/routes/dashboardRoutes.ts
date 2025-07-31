@@ -10,7 +10,7 @@ import {
   users 
 } from "@shared/schema";
 import { count, desc, eq, gte, sum, sql, and } from "drizzle-orm";
-import { isAuthenticated } from "../replitAuth";
+import { isAuthenticated } from "../simpleAuth";
 
 export function registerDashboardRoutes(app: Express) {
   // Enhanced dashboard data endpoint

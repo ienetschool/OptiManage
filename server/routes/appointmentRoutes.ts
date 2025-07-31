@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "../db";
 import { appointments, insertAppointmentSchema } from "@shared/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
-import { isAuthenticated } from "../replitAuth";
+import { isAuthenticated } from "../simpleAuth";
 
 const appointmentQuerySchema = z.object({
   startDate: z.string().optional(),

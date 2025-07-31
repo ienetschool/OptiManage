@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { isAuthenticated } from "../replitAuth";
+import { isAuthenticated } from "../simpleAuth";
 
 export function registerStoreSettingsRoutes(app: Express) {
   // Get store settings

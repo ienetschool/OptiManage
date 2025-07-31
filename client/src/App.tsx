@@ -46,6 +46,7 @@ import Contact from "@/pages/Contact";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Services from "@/pages/Services";
+import Login from "@/pages/Login";
 import Sidebar from "@/components/layout/Sidebar";
 import AppLayout from "@/components/layout/AppLayout";
 import PublicLayout from "@/components/layout/PublicLayout";
@@ -75,25 +76,30 @@ function Router() {
 
   if (!isAuthenticated && !isPatientPortal) {
     return (
-      <PublicLayout>
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/about" component={About} />
-          <Route path="/features" component={Features} />
-          <Route path="/services" component={Services} />
-          <Route path="/services/:serviceType" component={Services} />
-          <Route path="/reviews" component={Reviews} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/terms" component={Terms} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/book-appointment" component={BookAppointment} />
-          <Route component={NotFound} />
-        </Switch>
-      </PublicLayout>
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route>
+          <PublicLayout>
+            <Switch>
+              <Route path="/" component={Home} />
+              <Route path="/about" component={About} />
+              <Route path="/features" component={Features} />
+              <Route path="/services" component={Services} />
+              <Route path="/services/:serviceType" component={Services} />
+              <Route path="/reviews" component={Reviews} />
+              <Route path="/contact" component={Contact} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/privacy" component={Privacy} />
+              <Route path="/book-appointment" component={BookAppointment} />
+              <Route component={NotFound} />
+            </Switch>
+          </PublicLayout>
+        </Route>
+      </Switch>
     );
   }
 
-  // Patient Portal routes (clean UI without menu/top bar)
+  // Patient Portal routes (clean UI without menu/top bar) - No authentication required
   if (isPatientPortal) {
     return (
       <PatientPortalLayout>

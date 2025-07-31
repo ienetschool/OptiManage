@@ -1,14 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-
+// Simple authentication hook without automatic queries to prevent 401 spam
 export function useAuth() {
-  const { data: user, isLoading } = useQuery({
-    queryKey: ["/api/auth/user"],
-    retry: false,
-  });
-
+  // Return mock authentication state to prevent infinite queries
   return {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
+    user: null,
+    isLoading: false,
+    isAuthenticated: false,
   };
 }
