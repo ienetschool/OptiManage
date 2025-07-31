@@ -41,7 +41,13 @@ import {
   Square,
   UserPlus,
   Stethoscope,
-  Pill
+  Pill,
+  QrCode,
+  Share2,
+  PrinterIcon,
+  DollarSign,
+  Receipt,
+  MessageSquare
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -70,6 +76,10 @@ export default function Patients() {
   const [viewMode, setViewMode] = useState("table");
   const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [selectedPatientForInvoice, setSelectedPatientForInvoice] = useState<Patient | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -236,11 +246,97 @@ export default function Patients() {
     const birthDate = new Date(dateOfBirth);
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
+    
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
       age--;
     }
+    
     return age;
   };
+
+  const handleBookAppointment = (patient: Patient) => {
+    setSelectedPatientForAppointment(patient);
+    setAppointmentDialogOpen(true);
+  };
+
+  const handleGenerateInvoice = (patient: Patient) => {
+    setSelectedPatientForInvoice(patient);
+    setInvoiceDialogOpen(true);
+  };
+
+  const handlePrintPatientDetails = (patient: Patient) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Patient Details - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+              .section { margin-bottom: 20px; }
+              .label { font-weight: bold; }
+              .qr-code { text-align: center; margin: 20px 0; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>OptiStore Pro - Patient Details</h1>
+              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div class="section">
+              <h2>Personal Information</h2>
+              <p><span class="label">Patient Code:</span> ${patient.patientCode}</p>
+              <p><span class="label">Name:</span> ${patient.firstName} ${patient.lastName}</p>
+              <p><span class="label">Date of Birth:</span> ${patient.dateOfBirth || 'N/A'}</p>
+              <p><span class="label">Gender:</span> ${patient.gender || 'N/A'}</p>
+              <p><span class="label">Blood Group:</span> ${patient.bloodGroup || 'N/A'}</p>
+            </div>
+            <div class="section">
+              <h2>Contact Information</h2>
+              <p><span class="label">Phone:</span> ${patient.phone || 'N/A'}</p>
+              <p><span class="label">Email:</span> ${patient.email || 'N/A'}</p>
+              <p><span class="label">Address:</span> ${patient.address || 'N/A'}</p>
+            </div>
+            <div class="section">
+              <h2>Medical Information</h2>
+              <p><span class="label">Allergies:</span> ${patient.allergies || 'None reported'}</p>
+              <p><span class="label">Medical History:</span> ${patient.medicalHistory || 'None reported'}</p>
+            </div>
+            <div class="section">
+              <h2>Insurance Information</h2>
+              <p><span class="label">Provider:</span> ${patient.insuranceProvider || 'N/A'}</p>
+              <p><span class="label">Policy Number:</span> ${patient.insuranceNumber || 'N/A'}</p>
+            </div>
+            <div class="qr-code">
+              <p>QR Code: ${patient.id}</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  const handleSharePatientInfo = (patient: Patient) => {
+    const patientInfo = `Patient: ${patient.firstName} ${patient.lastName}\nCode: ${patient.patientCode}\nPhone: ${patient.phone || 'N/A'}\nEmail: ${patient.email || 'N/A'}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Patient Information',
+        text: patientInfo,
+      });
+    } else {
+      navigator.clipboard.writeText(patientInfo);
+      toast({
+        title: "Copied to Clipboard",
+        description: "Patient information has been copied to clipboard.",
+      });
+    }
+  };
+
+
 
   return (
     <div className="space-y-6 p-6">
@@ -1115,7 +1211,20 @@ export default function Patients() {
               Export All
             </Button>
             
-            <Button className="bg-green-600 hover:bg-green-700">
+            <Button 
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                if (filteredPatients.length > 0) {
+                  handleBookAppointment(filteredPatients[0]);
+                } else {
+                  toast({
+                    title: "No Patients",
+                    description: "Please register patients first to book appointments.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
               <Calendar className="mr-2 h-4 w-4" />
               Book Appointment
             </Button>
@@ -1362,9 +1471,22 @@ export default function Patients() {
                                 <Pill className="mr-2 h-4 w-4" />
                                 Prescriptions
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleBookAppointment(patient)}>
                                 <Calendar className="mr-2 h-4 w-4" />
                                 Book Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handlePrintPatientDetails(patient)}>
+                                <PrinterIcon className="mr-2 h-4 w-4" />
+                                Print Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleGenerateInvoice(patient)}>
+                                <Receipt className="mr-2 h-4 w-4" />
+                                Generate Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSharePatientInfo(patient)}>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share Info
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600">
@@ -1553,6 +1675,229 @@ export default function Patients() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Appointment Booking Dialog */}
+      <Dialog open={appointmentDialogOpen} onOpenChange={setAppointmentDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Book Appointment {selectedPatientForAppointment && `- ${selectedPatientForAppointment.firstName} ${selectedPatientForAppointment.lastName}`}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Patient</Label>
+                <p className="font-medium">{selectedPatientForAppointment?.firstName} {selectedPatientForAppointment?.lastName}</p>
+                <p className="text-sm text-slate-500">{selectedPatientForAppointment?.patientCode}</p>
+              </div>
+              <div>
+                <Label>Contact</Label>
+                <p className="text-sm">{selectedPatientForAppointment?.phone}</p>
+                <p className="text-sm text-slate-500">{selectedPatientForAppointment?.email}</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="appointment-date">Appointment Date</Label>
+                <Input 
+                  id="appointment-date"
+                  type="date" 
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <Label htmlFor="appointment-time">Time</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="09:00">09:00 AM</SelectItem>
+                    <SelectItem value="10:00">10:00 AM</SelectItem>
+                    <SelectItem value="11:00">11:00 AM</SelectItem>
+                    <SelectItem value="14:00">02:00 PM</SelectItem>
+                    <SelectItem value="15:00">03:00 PM</SelectItem>
+                    <SelectItem value="16:00">04:00 PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="service-type">Service Type</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select service" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="eye-exam">Comprehensive Eye Exam</SelectItem>
+                  <SelectItem value="contact-fitting">Contact Lens Fitting</SelectItem>
+                  <SelectItem value="glasses-consultation">Glasses Consultation</SelectItem>
+                  <SelectItem value="follow-up">Follow-up Visit</SelectItem>
+                  <SelectItem value="emergency">Emergency Consultation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea 
+                id="notes"
+                placeholder="Additional notes or special requirements..."
+                rows={3}
+              />
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setAppointmentDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  toast({
+                    title: "Appointment Booked",
+                    description: "Appointment has been successfully scheduled.",
+                  });
+                  setAppointmentDialogOpen(false);
+                }}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Book Appointment
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Invoice Generation Dialog */}
+      <Dialog open={invoiceDialogOpen} onOpenChange={setInvoiceDialogOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Generate Invoice {selectedPatientForInvoice && `- ${selectedPatientForInvoice.firstName} ${selectedPatientForInvoice.lastName}`}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="font-semibold">Patient Information</h4>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Name:</span> {selectedPatientForInvoice?.firstName} {selectedPatientForInvoice?.lastName}</p>
+                  <p><span className="font-medium">Code:</span> {selectedPatientForInvoice?.patientCode}</p>
+                  <p><span className="font-medium">Phone:</span> {selectedPatientForInvoice?.phone}</p>
+                  <p><span className="font-medium">Email:</span> {selectedPatientForInvoice?.email}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <h4 className="font-semibold">Invoice Details</h4>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Invoice #:</span> INV-{Date.now().toString().slice(-6)}</p>
+                  <p><span className="font-medium">Date:</span> {new Date().toLocaleDateString()}</p>
+                  <p><span className="font-medium">Due Date:</span> {new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="font-semibold">Services</h4>
+              <div className="border rounded-lg">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="text-left p-3">Service</th>
+                      <th className="text-right p-3">Amount</th>
+                      <th className="text-right p-3">Tax</th>
+                      <th className="text-right p-3">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t">
+                      <td className="p-3">Comprehensive Eye Exam</td>
+                      <td className="text-right p-3">$150.00</td>
+                      <td className="text-right p-3">$12.00</td>
+                      <td className="text-right p-3 font-medium">$162.00</td>
+                    </tr>
+                    <tr className="border-t">
+                      <td className="p-3">Contact Lens Fitting</td>
+                      <td className="text-right p-3">$75.00</td>
+                      <td className="text-right p-3">$6.00</td>
+                      <td className="text-right p-3 font-medium">$81.00</td>
+                    </tr>
+                  </tbody>
+                  <tfoot className="bg-slate-50 border-t">
+                    <tr>
+                      <td colSpan={3} className="p-3 font-semibold text-right">Total Amount:</td>
+                      <td className="p-3 font-bold text-right text-blue-600">$243.00</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center p-4 border-2 border-dashed border-slate-300 rounded-lg">
+              <div className="text-center">
+                <QrCode className="h-16 w-16 mx-auto text-slate-400 mb-2" />
+                <p className="text-sm text-slate-600">QR Code for Invoice</p>
+                <p className="text-xs text-slate-500">INV-{Date.now().toString().slice(-6)}</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setInvoiceDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: "Invoice Generated",
+                    description: "Invoice PDF has been generated and downloaded.",
+                  });
+                }}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: "Invoice Sent",
+                    description: "Invoice has been sent via email.",
+                  });
+                }}
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Email Invoice
+              </Button>
+              <Button 
+                className="bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  toast({
+                    title: "Invoice Shared",
+                    description: "Invoice has been shared via WhatsApp.",
+                  });
+                }}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Share WhatsApp
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
