@@ -162,15 +162,19 @@ function Router() {
         <PublicLayout><BookAppointment /></PublicLayout>
       </Route>
 
-      {/* Dashboard routes - always accessible for testing */}
-      <Route path="/dashboard">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Dashboard />
-          </div>
-        </AppLayout>
-      </Route>
+      {/* Protected Dashboard routes - require authentication */}
+      {!isAuthenticated ? (
+        <Route path="/dashboard" component={Login} />
+      ) : (
+        <>
+        <Route path="/dashboard">
+          <AppLayout>
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Dashboard />
+            </div>
+          </AppLayout>
+        </Route>
       
       <Route path="/stores">
         <AppLayout>
@@ -334,9 +338,21 @@ function Router() {
         </AppLayout>
       </Route>
 
-      {/* Homepage - Must be last for catch-all */}
+        </>
+      )}
+
+      {/* Homepage - conditional based on authentication */}
       <Route path="/">
-        <PublicLayout><Home /></PublicLayout>
+        {isAuthenticated ? (
+          <AppLayout>
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Dashboard />
+            </div>
+          </AppLayout>
+        ) : (
+          <PublicLayout><Home /></PublicLayout>
+        )}
       </Route>
     </Switch>
   );
