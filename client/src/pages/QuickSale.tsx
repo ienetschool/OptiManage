@@ -45,7 +45,7 @@ interface QuickSaleProps {
   onClose?: () => void;
 }
 
-export default function QuickSale({ onClose }: QuickSaleProps = { onClose: undefined }) {
+export default function QuickSale({ onClose }: QuickSaleProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [cart, setCart] = useState<CartItem[]>([]);

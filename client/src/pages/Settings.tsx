@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Header from "@/components/layout/Header";
+// Header removed for Patient Portal compatibility
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -238,10 +238,11 @@ export default function Settings() {
 
   return (
     <>
-      <Header 
-        title="System Settings" 
-        subtitle="Configure system preferences, email settings, security, and billing options." 
-      />
+      {/* Header removed for Patient Portal compatibility */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">System Settings</h1>
+        <p className="text-slate-600 mt-1">Configure system preferences, email settings, security, and billing options.</p>
+      </div>
       
       <main className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
