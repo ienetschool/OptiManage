@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupSimpleAuth, isAuthenticated } from "./simpleAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
@@ -23,7 +23,7 @@ import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupSimpleAuth(app);
 
   // Register appointment routes
   registerAppointmentRoutes(app);
@@ -46,8 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = (req.session as any).user;
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);

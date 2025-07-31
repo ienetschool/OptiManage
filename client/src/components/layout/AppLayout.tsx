@@ -19,6 +19,7 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import LiveChat from "@/components/LiveChat";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -256,6 +257,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Quick Sale Modal */}
       <QuickSaleModal open={quickSaleOpen} onOpenChange={setQuickSaleOpen} />
+      
+      {/* Live Chat for mobile */}
+      <div className="block sm:hidden">
+        <LiveChat />
+      </div>
     </div>
   );
 }

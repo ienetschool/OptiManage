@@ -26,6 +26,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import LiveChat from "@/components/LiveChat";
 
 const services = [
   {
@@ -186,10 +187,14 @@ export default function Header() {
                   Book Appointment
                 </Link>
               </Button>
-              <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Live Chat
-              </Button>
+              <LiveChat 
+                trigger={
+                  <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Live Chat
+                  </Button>
+                }
+              />
             </div>
 
             {/* Mobile menu button */}
@@ -252,10 +257,14 @@ export default function Header() {
                       Book Appointment
                     </Button>
                   </Link>
-                  <Button variant="ghost" className="w-full text-blue-600 hover:text-blue-700" onClick={() => setMobileMenuOpen(false)}>
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Live Chat
-                  </Button>
+                  <LiveChat 
+                    trigger={
+                      <Button variant="ghost" className="w-full text-blue-600 hover:text-blue-700" onClick={() => setMobileMenuOpen(false)}>
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Live Chat
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             </div>
