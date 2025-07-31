@@ -56,14 +56,26 @@ export default function Appointments() {
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: InsertAppointment) => {
-      await apiRequest("POST", "/api/appointments", data);
+      const response = await apiRequest("POST", "/api/appointments", data);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newAppointment) => {
+      // Force immediate refetch to show new appointment
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.refetchQueries({ queryKey: ["/api/appointments"], type: 'active' });
+      
+      // Update cache immediately with new appointment
+      queryClient.setQueryData(["/api/appointments"], (oldData: any) => {
+        if (oldData) {
+          return [...oldData, newAppointment];
+        }
+        return [newAppointment];
+      });
+      
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/kpis"] });
       toast({
         title: "Success",
-        description: "Appointment scheduled successfully.",
+        description: "Appointment scheduled successfully and added to list.",
       });
       setOpen(false);
       form.reset();
@@ -145,9 +157,25 @@ export default function Appointments() {
 
   // Action handlers
   const handleViewDetails = (appointment: any) => {
+    const appointmentInfo = `
+Appointment Details
+
+Patient: ${appointment.customer?.firstName || 'N/A'} ${appointment.customer?.lastName || 'N/A'}
+Date: ${new Date(appointment.appointmentDate).toLocaleDateString()}
+Time: ${new Date(appointment.appointmentDate).toLocaleTimeString()}
+Service: ${appointment.service}
+Status: ${appointment.status}
+Duration: ${appointment.duration} minutes
+Notes: ${appointment.notes || 'No notes'}
+Staff: ${appointment.staff?.name || 'Not assigned'}
+    `;
+    
+    // Create a modal-like alert with detailed info
+    alert(appointmentInfo);
+    
     toast({
-      title: "View Details",
-      description: `Opening details for appointment with ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "Appointment Details",
+      description: `Viewing details for ${appointment.customer?.firstName || 'Unknown'} ${appointment.customer?.lastName || 'Patient'}`,
     });
   };
 
@@ -175,9 +203,134 @@ export default function Appointments() {
   };
 
   const handlePrint = (appointment: any) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment Details - ${appointment.customer?.firstName} ${appointment.customer?.lastName}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Times New Roman', serif; 
+                line-height: 1.6; 
+                color: #000;
+                background: #fff;
+                font-size: 12pt;
+                padding: 20mm;
+              }
+              .letterhead { 
+                text-align: center;
+                border-bottom: 3px solid #2563eb;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+              }
+              .clinic-name { 
+                font-size: 24pt; 
+                font-weight: bold; 
+                color: #2563eb;
+                margin-bottom: 5px;
+              }
+              .appointment-card {
+                border: 2px solid #2563eb;
+                border-radius: 10px;
+                padding: 20px;
+                margin: 20px 0;
+              }
+              .section-title { 
+                font-size: 14pt;
+                font-weight: bold;
+                color: #2563eb;
+                border-bottom: 1px solid #e2e8f0;
+                padding-bottom: 5px;
+                margin-bottom: 15px;
+              }
+              .info-row { 
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                padding: 8px 0;
+                border-bottom: 1px dotted #ccc;
+              }
+              .label { font-weight: bold; }
+              .footer { 
+                margin-top: 30px;
+                text-align: center;
+                font-size: 10pt;
+                color: #666;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="letterhead">
+              <div class="clinic-name">OptiStore Pro Medical Center</div>
+              <div>Appointment Confirmation & Details</div>
+            </div>
+
+            <div class="appointment-card">
+              <div class="section-title">Appointment Information</div>
+              
+              <div class="info-row">
+                <span class="label">Patient Name:</span>
+                <span>${appointment.customer?.firstName || 'N/A'} ${appointment.customer?.lastName || 'N/A'}</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="label">Appointment Date:</span>
+                <span>${new Date(appointment.appointmentDate).toLocaleDateString()}</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="label">Appointment Time:</span>
+                <span>${new Date(appointment.appointmentDate).toLocaleTimeString()}</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="label">Service:</span>
+                <span>${appointment.service}</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="label">Duration:</span>
+                <span>${appointment.duration} minutes</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="label">Status:</span>
+                <span style="text-transform: uppercase; font-weight: bold;">${appointment.status}</span>
+              </div>
+              
+              <div class="info-row">
+                <span class="label">Assigned Staff:</span>
+                <span>${appointment.staff?.name || 'Not assigned'}</span>
+              </div>
+              
+              ${appointment.notes ? `
+              <div class="info-row">
+                <span class="label">Notes:</span>
+                <span>${appointment.notes}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <div class="footer">
+              <p><strong>OptiStore Pro Medical Center</strong></p>
+              <p>Generated on ${new Date().toLocaleString()}</p>
+              <p>For questions, please contact us at (555) 123-EYES</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+    
     toast({
-      title: "Print Appointment",
-      description: `Generating print format for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "Appointment Details Printed",
+      description: `Professional appointment details for ${appointment.customer?.firstName} ${appointment.customer?.lastName} ready for printing.`,
     });
   };
 
@@ -189,10 +342,38 @@ export default function Appointments() {
   };
 
   const handleShare = (appointment: any) => {
-    toast({
-      title: "Share Appointment",
-      description: `Sharing appointment details for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
-    });
+    const appointmentInfo = `Appointment Details\n\nPatient: ${appointment.customer?.firstName || 'N/A'} ${appointment.customer?.lastName || 'N/A'}\nDate: ${new Date(appointment.appointmentDate).toLocaleDateString()}\nTime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}\nService: ${appointment.service}\nDuration: ${appointment.duration} minutes\nStatus: ${appointment.status}\nStaff: ${appointment.staff?.name || 'Not assigned'}\n\nOptiStore Pro Medical Center\nPhone: (555) 123-EYES`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Appointment Details',
+        text: appointmentInfo,
+      }).then(() => {
+        toast({
+          title: "Shared Successfully",
+          description: "Appointment details have been shared.",
+        });
+      }).catch(() => {
+        navigator.clipboard.writeText(appointmentInfo);
+        toast({
+          title: "Copied to Clipboard",
+          description: "Appointment details copied to clipboard.",
+        });
+      });
+    } else {
+      navigator.clipboard.writeText(appointmentInfo).then(() => {
+        toast({
+          title: "Copied to Clipboard",
+          description: "Appointment details copied to clipboard.",
+        });
+      }).catch(() => {
+        toast({
+          title: "Share Failed",
+          description: "Unable to share or copy appointment details.",
+          variant: "destructive",
+        });
+      });
+    }
   };
 
   const handleInvoice = (appointment: any) => {
