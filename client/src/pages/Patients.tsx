@@ -80,6 +80,14 @@ export default function Patients() {
   const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [selectedPatientForInvoice, setSelectedPatientForInvoice] = useState<Patient | null>(null);
+  const [activeTab, setActiveTab] = useState("patients");
+  const [appointmentFormData, setAppointmentFormData] = useState({
+    patientId: "",
+    appointmentDate: "",
+    appointmentTime: "",
+    serviceType: "",
+    notes: ""
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -254,10 +262,49 @@ export default function Patients() {
     return age;
   };
 
-  const handleBookAppointment = (patient: Patient) => {
-    setSelectedPatientForAppointment(patient);
+  const handleBookAppointment = (patient?: Patient) => {
+    if (patient) {
+      setSelectedPatientForAppointment(patient);
+      setAppointmentFormData(prev => ({ ...prev, patientId: patient.id }));
+    } else {
+      setSelectedPatientForAppointment(null);
+      setAppointmentFormData(prev => ({ ...prev, patientId: "" }));
+    }
     setAppointmentDialogOpen(true);
   };
+
+  const handleAppointmentFormChange = (field: string, value: string) => {
+    setAppointmentFormData(prev => ({ ...prev, [field]: value }));
+    if (field === "patientId") {
+      const selectedPatient = patients.find(p => p.id === value);
+      setSelectedPatientForAppointment(selectedPatient || null);
+    }
+  };
+
+  const mockAppointments = [
+    {
+      id: "1",
+      patientId: patients[0]?.id || "",
+      patientName: patients[0] ? `${patients[0].firstName} ${patients[0].lastName}` : "John Doe",
+      patientCode: patients[0]?.patientCode || "PAT-001",
+      appointmentDate: "2025-08-01",
+      appointmentTime: "10:00",
+      serviceType: "Comprehensive Eye Exam",
+      status: "scheduled",
+      notes: "Regular checkup"
+    },
+    {
+      id: "2", 
+      patientId: patients[1]?.id || "",
+      patientName: patients[1] ? `${patients[1].firstName} ${patients[1].lastName}` : "Jane Smith",
+      patientCode: patients[1]?.patientCode || "PAT-002",
+      appointmentDate: "2025-08-02",
+      appointmentTime: "14:00",
+      serviceType: "Contact Lens Fitting",
+      status: "completed",
+      notes: "First-time contact lens fitting"
+    }
+  ];
 
   const handleGenerateInvoice = (patient: Patient) => {
     setSelectedPatientForInvoice(patient);
@@ -343,11 +390,33 @@ export default function Patients() {
       {/* Page Header */}
       <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Patient Management</h1>
-          <p className="text-slate-600">Manage patient records, medical history, and personal information securely.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Patient & Appointment Management</h1>
+          <p className="text-slate-600">Manage patient records, appointments, medical history, and personal information securely.</p>
         </div>
         
-        <Dialog open={open} onOpenChange={setOpen}>
+        <div className="flex space-x-2">
+          <Button 
+            variant={activeTab === "patients" ? "default" : "outline"}
+            onClick={() => setActiveTab("patients")}
+          >
+            <User className="mr-2 h-4 w-4" />
+            Patients
+          </Button>
+          <Button 
+            variant={activeTab === "appointments" ? "default" : "outline"}
+            onClick={() => setActiveTab("appointments")}
+          >
+            <Calendar className="mr-2 h-4 w-4" />
+            Appointments
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Content Tabs */}
+      <div className="min-h-screen">
+        {activeTab === "patients" && (
+          <div className="space-y-6">
+            <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="mr-2 h-4 w-4" />
@@ -1049,9 +1118,8 @@ export default function Patients() {
             </Form>
           </DialogContent>
         </Dialog>
-      </div>
 
-      {/* Summary Cards */}
+        {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="border-slate-200">
           <CardContent className="p-6">
@@ -1688,29 +1756,53 @@ export default function Patients() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Patient</Label>
-                <p className="font-medium">{selectedPatientForAppointment?.firstName} {selectedPatientForAppointment?.lastName}</p>
-                <p className="text-sm text-slate-500">{selectedPatientForAppointment?.patientCode}</p>
+                <Label htmlFor="patient-select">Select Patient *</Label>
+                <Select 
+                  value={appointmentFormData.patientId} 
+                  onValueChange={(value) => handleAppointmentFormChange("patientId", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a patient" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {patients.map((patient) => (
+                      <SelectItem key={patient.id} value={patient.id}>
+                        {patient.firstName} {patient.lastName} - {patient.patientCode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <Label>Contact</Label>
-                <p className="text-sm">{selectedPatientForAppointment?.phone}</p>
-                <p className="text-sm text-slate-500">{selectedPatientForAppointment?.email}</p>
+                <Label>Patient Info</Label>
+                {selectedPatientForAppointment ? (
+                  <div>
+                    <p className="text-sm font-medium">{selectedPatientForAppointment.phone || "No phone"}</p>
+                    <p className="text-sm text-slate-500">{selectedPatientForAppointment.email || "No email"}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">Select a patient to view info</p>
+                )}
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="appointment-date">Appointment Date</Label>
+                <Label htmlFor="appointment-date">Appointment Date *</Label>
                 <Input 
                   id="appointment-date"
                   type="date" 
                   min={new Date().toISOString().split('T')[0]}
+                  value={appointmentFormData.appointmentDate}
+                  onChange={(e) => handleAppointmentFormChange("appointmentDate", e.target.value)}
                 />
               </div>
               <div>
-                <Label htmlFor="appointment-time">Time</Label>
-                <Select>
+                <Label htmlFor="appointment-time">Time *</Label>
+                <Select 
+                  value={appointmentFormData.appointmentTime}
+                  onValueChange={(value) => handleAppointmentFormChange("appointmentTime", value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
@@ -1727,17 +1819,20 @@ export default function Patients() {
             </div>
 
             <div>
-              <Label htmlFor="service-type">Service Type</Label>
-              <Select>
+              <Label htmlFor="service-type">Service Type *</Label>
+              <Select 
+                value={appointmentFormData.serviceType}
+                onValueChange={(value) => handleAppointmentFormChange("serviceType", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select service" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="eye-exam">Comprehensive Eye Exam</SelectItem>
-                  <SelectItem value="contact-fitting">Contact Lens Fitting</SelectItem>
-                  <SelectItem value="glasses-consultation">Glasses Consultation</SelectItem>
-                  <SelectItem value="follow-up">Follow-up Visit</SelectItem>
-                  <SelectItem value="emergency">Emergency Consultation</SelectItem>
+                  <SelectItem value="eye-exam">Comprehensive Eye Exam ($150)</SelectItem>
+                  <SelectItem value="contact-fitting">Contact Lens Fitting ($75)</SelectItem>
+                  <SelectItem value="glasses-consultation">Glasses Consultation ($50)</SelectItem>
+                  <SelectItem value="follow-up">Follow-up Visit ($75)</SelectItem>
+                  <SelectItem value="emergency">Emergency Consultation ($125)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1748,6 +1843,8 @@ export default function Patients() {
                 id="notes"
                 placeholder="Additional notes or special requirements..."
                 rows={3}
+                value={appointmentFormData.notes}
+                onChange={(e) => handleAppointmentFormChange("notes", e.target.value)}
               />
             </div>
             
@@ -1761,11 +1858,29 @@ export default function Patients() {
               <Button 
                 className="bg-blue-600 hover:bg-blue-700"
                 onClick={() => {
+                  if (!appointmentFormData.patientId || !appointmentFormData.appointmentDate || !appointmentFormData.appointmentTime || !appointmentFormData.serviceType) {
+                    toast({
+                      title: "Missing Information",
+                      description: "Please fill in all required fields marked with *",
+                      variant: "destructive"
+                    });
+                    return;
+                  }
+                  
                   toast({
-                    title: "Appointment Booked",
-                    description: "Appointment has been successfully scheduled.",
+                    title: "Appointment Booked Successfully",
+                    description: `Appointment scheduled for ${selectedPatientForAppointment?.firstName} ${selectedPatientForAppointment?.lastName} on ${appointmentFormData.appointmentDate} at ${appointmentFormData.appointmentTime}`,
                   });
+                  
                   setAppointmentDialogOpen(false);
+                  setAppointmentFormData({
+                    patientId: "",
+                    appointmentDate: "",
+                    appointmentTime: "",
+                    serviceType: "",
+                    notes: ""
+                  });
+                  setSelectedPatientForAppointment(null);
                 }}
               >
                 <Calendar className="mr-2 h-4 w-4" />
@@ -1898,6 +2013,106 @@ export default function Patients() {
           </div>
         </DialogContent>
       </Dialog>
+            </div>
+        )}
+
+        {/* Appointments Tab Content */}
+        {activeTab === "appointments" && (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center">
+                      <Calendar className="mr-2 h-5 w-5 text-blue-600" />
+                      Appointment Management
+                    </CardTitle>
+                    <p className="text-slate-600 mt-1">Schedule, manage, and track patient appointments</p>
+                  </div>
+                  <Button 
+                    onClick={() => handleBookAppointment()}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Appointment
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockAppointments.map((appointment) => (
+                    <div key={appointment.id} className="border rounded-lg p-4 hover:bg-slate-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-4">
+                            <div>
+                              <h4 className="font-semibold text-slate-900">{appointment.patientName}</h4>
+                              <p className="text-sm text-slate-600">{appointment.patientCode}</p>
+                            </div>
+                            <div className="text-sm text-slate-600">
+                              <p className="font-medium">{appointment.serviceType}</p>
+                              <p>{new Date(appointment.appointmentDate).toLocaleDateString()} at {appointment.appointmentTime}</p>
+                            </div>
+                            <Badge 
+                              variant={appointment.status === "completed" ? "default" : appointment.status === "scheduled" ? "secondary" : "outline"}
+                              className={appointment.status === "completed" ? "bg-green-100 text-green-800" : 
+                                         appointment.status === "scheduled" ? "bg-blue-100 text-blue-800" : ""}
+                            >
+                              {appointment.status}
+                            </Badge>
+                          </div>
+                          {appointment.notes && (
+                            <p className="text-sm text-slate-500 mt-2">{appointment.notes}</p>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button variant="ghost" size="sm">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <PrinterIcon className="mr-2 h-4 w-4" />
+                                Print Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <QrCode className="mr-2 h-4 w-4" />
+                                Generate QR Code
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Receipt className="mr-2 h-4 w-4" />
+                                Generate Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Cancel Appointment
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
