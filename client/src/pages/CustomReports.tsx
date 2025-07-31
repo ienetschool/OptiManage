@@ -216,7 +216,7 @@ export default function CustomReports() {
       )}
 
       {/* Reports List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
         {reports.map((report) => (
           <Card key={report.id} className="hover:shadow-md transition-shadow">
             <CardHeader>

@@ -222,7 +222,7 @@ export default function Reports() {
         </TabsList>
 
         <TabsContent value="predefined" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
             {filteredPredefined.map((report) => (
               <Card key={report.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>
@@ -278,7 +278,7 @@ export default function Reports() {
         </TabsContent>
 
         <TabsContent value="custom" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
             {filteredCustom.map((report) => (
               <Card key={report.id} className="hover:shadow-md transition-shadow">
                 <CardHeader>

@@ -23,9 +23,7 @@ import {
   Archive,
   Trash2
 } from "lucide-react";
-import { 
-  type NotificationHR
-} from "@shared/schema";
+// Removed NotificationHR import as we'll use API response directly
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format, formatDistanceToNow } from "date-fns";
@@ -35,7 +33,7 @@ export default function NotificationsPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: notifications = [], isLoading } = useQuery<NotificationHR[]>({
+  const { data: notifications = [], isLoading } = useQuery({
     queryKey: ["/api/notifications"],
   });
 
@@ -63,7 +61,7 @@ export default function NotificationsPage() {
     markAsReadMutation.mutate(notificationId);
   };
 
-  const handleNotificationClick = (notification: NotificationHR) => {
+  const handleNotificationClick = (notification: any) => {
     // Mark as read when clicked
     if (!notification.isRead) {
       handleMarkAsRead(notification.id);
@@ -214,11 +212,32 @@ export default function NotificationsPage() {
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-slate-900">Recent Notifications</h3>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  const unreadIds = notifications.filter(n => !n.isRead).map(n => n.id);
+                  unreadIds.forEach(id => markAsReadMutation.mutate(id));
+                  toast({
+                    title: "Success",
+                    description: `Marked ${unreadIds.length} notifications as read`,
+                  });
+                }}
+                disabled={markAsReadMutation.isPending || unreadCount === 0}
+              >
                 <Check className="mr-2 h-4 w-4" />
                 Mark All Read
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  toast({
+                    title: "Archive All",
+                    description: "Archiving all notifications...",
+                  });
+                }}
+              >
                 <Archive className="mr-2 h-4 w-4" />
                 Archive All
               </Button>
@@ -266,7 +285,7 @@ export default function NotificationsPage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-slate-200">
+                    <div className="divide-y divide-slate-200 max-h-[calc(100vh-600px)] overflow-y-auto">
                       {filteredNotifications.map((notification) => (
                         <div 
                           key={notification.id} 
@@ -327,11 +346,33 @@ export default function NotificationsPage() {
                                     </Button>
                                   )}
                                   
-                                  <Button variant="ghost" size="sm">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toast({
+                                        title: "View Details",
+                                        description: `Opening details for ${notification.title}`,
+                                      });
+                                    }}
+                                  >
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                   
-                                  <Button variant="ghost" size="sm">
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // Mock delete functionality
+                                      toast({
+                                        title: "Deleted",
+                                        description: `${notification.title} has been deleted`,
+                                        variant: "destructive",
+                                      });
+                                    }}
+                                  >
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </div>

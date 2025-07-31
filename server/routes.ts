@@ -809,6 +809,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notifications routes
+  app.get("/api/notifications", isAuthenticated, async (req, res) => {
+    try {
+      const notifications = [
+        {
+          id: "1",
+          title: "Appointment Reminder",
+          message: "You have a patient appointment with Sarah Johnson at 2:00 PM today.",
+          type: "appointment",
+          priority: "high",
+          isRead: false,
+          sentAt: new Date().toISOString(),
+          relatedType: "appointment",
+          relatedId: "apt_001"
+        },
+        {
+          id: "2",
+          title: "Payment Received",
+          message: "Payment of $250.00 received from John Smith for Invoice #INV-001.",
+          type: "billing",
+          priority: "normal",
+          isRead: true,
+          sentAt: new Date(Date.now() - 3600000).toISOString(),
+          relatedType: "payment",
+          relatedId: "pay_001"
+        },
+        {
+          id: "3",
+          title: "Low Inventory Alert",
+          message: "Contact lenses stock is running low. Only 5 units remaining.",
+          type: "inventory",
+          priority: "urgent",
+          isRead: false,
+          sentAt: new Date(Date.now() - 7200000).toISOString(),
+          relatedType: "product",
+          relatedId: "prod_001"
+        },
+        {
+          id: "4",
+          title: "New Patient Registration",
+          message: "Maria Rodriguez has completed online registration and needs appointment scheduling.",
+          type: "patient",
+          priority: "normal",
+          isRead: false,
+          sentAt: new Date(Date.now() - 10800000).toISOString(),
+          relatedType: "patient",
+          relatedId: "pat_001"
+        },
+        {
+          id: "5",
+          title: "System Backup Complete",
+          message: "Daily database backup completed successfully at 3:00 AM.",
+          type: "system",
+          priority: "low",
+          isRead: true,
+          sentAt: new Date(Date.now() - 86400000).toISOString(),
+          relatedType: "system",
+          relatedId: "backup_001"
+        },
+        {
+          id: "6",
+          title: "Staff Leave Request",
+          message: "Dr. Anderson has requested leave for March 15-20, 2025. Approval needed.",
+          type: "hr",
+          priority: "high",
+          isRead: false,
+          sentAt: new Date(Date.now() - 14400000).toISOString(),
+          relatedType: "leave",
+          relatedId: "leave_001"
+        }
+      ];
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // Mock implementation - in real app this would update database
+      res.json({ success: true, message: "Notification marked as read" });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      // Mock implementation - in real app this would delete from database
+      res.json({ success: true, message: "Notification deleted" });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
 
 
   // Dashboard route

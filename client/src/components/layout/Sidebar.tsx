@@ -149,18 +149,7 @@ export default function Sidebar() {
     )}>
       {/* Sidebar Header */}
       <div className="p-4 border-b border-slate-200">
-        <div className="flex items-center justify-between">
-          {!collapsed && (
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Eye className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h2 className="font-bold text-slate-900">OptiStore Pro</h2>
-                <p className="text-xs text-slate-500">Medical Practice</p>
-              </div>
-            </div>
-          )}
+        <div className="flex items-center justify-end">
           <Button
             variant="ghost"
             size="sm"
@@ -253,31 +242,7 @@ export default function Sidebar() {
         </nav>
       </ScrollArea>
 
-      {/* Sidebar Footer */}
-      <div className="p-3 border-t border-slate-200">
-        {!collapsed && (
-          <div className="bg-blue-50 rounded-lg p-3">
-            <div className="flex items-center space-x-2 mb-2">
-              <Heart className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">System Health</span>
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-600">Database</span>
-                <Badge variant="outline" className="text-green-600 border-green-200">
-                  Healthy
-                </Badge>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-600">API</span>
-                <Badge variant="outline" className="text-green-600 border-green-200">
-                  Online
-                </Badge>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+
     </div>
   );
 }
