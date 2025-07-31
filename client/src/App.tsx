@@ -50,6 +50,7 @@ import Privacy from "@/pages/Privacy";
 import Services from "@/pages/Services";
 import Login from "@/pages/Login";
 import AuthPage from "@/pages/AuthPage";
+import QuickLogin from "@/pages/QuickLogin";
 import Sidebar from "@/components/layout/Sidebar";
 import AppLayout from "@/components/layout/AppLayout";
 import PublicLayout from "@/components/layout/PublicLayout";
@@ -187,12 +188,16 @@ function Router() {
       </Route>
       
       <Route path="/patients">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Patients />
-          </div>
-        </AppLayout>
+        {isAuthenticated ? (
+          <AppLayout>
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Patients />
+            </div>
+          </AppLayout>
+        ) : (
+          <QuickLogin />
+        )}
       </Route>
       
       <Route path="/patient-management">

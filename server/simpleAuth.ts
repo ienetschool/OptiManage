@@ -1,12 +1,18 @@
 import type { Express, RequestHandler } from "express";
 import session from "express-session";
+import MemoryStore from "memorystore";
+
+const MemoryStoreSession = MemoryStore(session);
 
 // Simple authentication for development
 export function setupSimpleAuth(app: Express) {
   app.use(session({
-    secret: 'dev-secret-key',
+    secret: 'dev-secret-key-for-optistore-pro',
     resave: false,
     saveUninitialized: false,
+    store: new MemoryStoreSession({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     cookie: {
       httpOnly: true,
       secure: false,
@@ -48,6 +54,17 @@ export function setupSimpleAuth(app: Express) {
 
   app.get("/api/auth/google/callback", (req, res) => {
     res.redirect("/");
+  });
+
+  // Auth status endpoint
+  app.get('/api/auth/user', (req, res) => {
+    const user = (req.session as any)?.user;
+    
+    if (!user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    res.json(user);
   });
 }
 
