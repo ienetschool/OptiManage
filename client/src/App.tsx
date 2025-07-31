@@ -25,6 +25,13 @@ import Settings from "@/pages/Settings";
 import Support from "@/pages/Support";
 import BookAppointment from "@/pages/BookAppointment";
 import LeaveManagement from "@/pages/LeaveManagement";
+import Home from "@/pages/Home";
+import About from "@/pages/About";
+import Features from "@/pages/Features";
+import Reviews from "@/pages/Reviews";
+import Contact from "@/pages/Contact";
+import Terms from "@/pages/Terms";
+import Privacy from "@/pages/Privacy";
 import Sidebar from "@/components/layout/Sidebar";
 
 function Router() {
@@ -33,7 +40,13 @@ function Router() {
   if (isLoading || !isAuthenticated) {
     return (
       <Switch>
-        <Route path="/" component={Landing} />
+        <Route path="/" component={Home} />
+        <Route path="/about" component={About} />
+        <Route path="/features" component={Features} />
+        <Route path="/reviews" component={Reviews} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/privacy" component={Privacy} />
         <Route component={NotFound} />
       </Switch>
     );
@@ -63,6 +76,12 @@ function Router() {
           <Route path="/support" component={Support} />
           <Route path="/book-appointment" component={BookAppointment} />
           <Route path="/leave-management" component={LeaveManagement} />
+          <Route path="/about" component={About} />
+          <Route path="/features" component={Features} />
+          <Route path="/reviews" component={Reviews} />
+          <Route path="/contact" component={Contact} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
           <Route component={NotFound} />
         </Switch>
       </div>
