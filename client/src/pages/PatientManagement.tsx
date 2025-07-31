@@ -285,7 +285,7 @@ export default function PatientManagement() {
                             <FormItem>
                               <FormLabel>Phone</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -298,7 +298,7 @@ export default function PatientManagement() {
                             <FormItem>
                               <FormLabel>Email</FormLabel>
                               <FormControl>
-                                <Input type="email" {...field} />
+                                <Input type="email" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -313,7 +313,7 @@ export default function PatientManagement() {
                           <FormItem>
                             <FormLabel>Address</FormLabel>
                             <FormControl>
-                              <Textarea {...field} />
+                              <Textarea {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -328,7 +328,7 @@ export default function PatientManagement() {
                             <FormItem>
                               <FormLabel>City</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -341,7 +341,7 @@ export default function PatientManagement() {
                             <FormItem>
                               <FormLabel>State</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -354,7 +354,7 @@ export default function PatientManagement() {
                             <FormItem>
                               <FormLabel>ZIP Code</FormLabel>
                               <FormControl>
-                                <Input {...field} />
+                                <Input {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -369,7 +369,7 @@ export default function PatientManagement() {
                           <FormItem>
                             <FormLabel>Medical Notes</FormLabel>
                             <FormControl>
-                              <Textarea {...field} />
+                              <Textarea {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -461,8 +461,15 @@ export default function PatientManagement() {
                             <FormControl>
                               <Input 
                                 type="datetime-local" 
-                                value={field.value instanceof Date ? field.value.toISOString().slice(0, 16) : field.value}
-                                onChange={(e) => field.onChange(new Date(e.target.value))}
+                                value={
+                                  field.value instanceof Date 
+                                    ? field.value.toISOString().slice(0, 16) 
+                                    : field.value ? new Date(field.value).toISOString().slice(0, 16) : ""
+                                }
+                                onChange={(e) => {
+                                  const dateValue = e.target.value ? new Date(e.target.value) : new Date();
+                                  field.onChange(dateValue);
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -497,12 +504,32 @@ export default function PatientManagement() {
 
                       <FormField
                         control={appointmentForm.control}
+                        name="appointmentFee"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Appointment Fee ($)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01"
+                                placeholder="150.00"
+                                {...field} 
+                                value={field.value || ""} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={appointmentForm.control}
                         name="notes"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Notes</FormLabel>
                             <FormControl>
-                              <Textarea {...field} />
+                              <Textarea {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

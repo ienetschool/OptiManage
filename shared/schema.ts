@@ -136,6 +136,7 @@ export const appointments = pgTable("appointments", {
   appointmentDate: timestamp("appointment_date").notNull(),
   duration: integer("duration").default(60), // minutes
   service: varchar("service").notNull(),
+  appointmentFee: decimal("appointment_fee", { precision: 10, scale: 2 }),
   status: varchar("status").default('scheduled'), // scheduled, completed, cancelled, no-show
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),

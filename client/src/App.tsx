@@ -34,6 +34,7 @@ import Reviews from "@/pages/Reviews";
 import Contact from "@/pages/Contact";
 import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
+import Services from "@/pages/Services";
 import Sidebar from "@/components/layout/Sidebar";
 
 function Router() {
@@ -45,6 +46,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/about" component={About} />
         <Route path="/features" component={Features} />
+        <Route path="/services" component={Services} />
         <Route path="/reviews" component={Reviews} />
         <Route path="/contact" component={Contact} />
         <Route path="/terms" component={Terms} />

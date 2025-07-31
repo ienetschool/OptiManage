@@ -1,0 +1,72 @@
+Fixes & Enhancements for Modern Optical Store Management System
+General UI/UX Fixes
+Header & Footer:
+
+Add consistent header and footer to all inner pages.
+Ensure header/footer are responsive and always visible.
+Menu Bar & Sticky Menu:
+
+Implement a sticky menu bar on all inner pages.
+Ensure the menu is visible and functional on scroll.
+Page-Specific Fixes & Features
+/services
+Fix page loading error; ensure the services page loads and displays content correctly.
+/reviews
+Display reviews as a slider/carousel for better UX.
+/dashboard
+Redesign UI for a more professional look.
+Add hideable sidebar, profile icon, notifications, messages, and webpage management buttons to the top bar.
+Each store should have its own dashboard and display only its data.
+/patients
+Add "Appointment Fee" field when booking an appointment and generate an invoice for the same.
+Fix error when scheduling appointments.
+Ensure action buttons (edit, delete, view, etc.) work in the patient list.
+Update list layout for better usability.
+Implement list filtering, sorting, and search options.
+/sales
+Update sales format to function as a full invoicing system:
+Add multiple products, quantity, tax, and select customer name.
+Print/export full invoice including tax and other info, with QR code and sharing features.
+Update "Quick Sale" to use the same format.
+Display recent transactions with action buttons, using a consistent format across all modules.
+Merge Billing module into Invoice & Sales; make it fully functional.
+/prescriptions
+Allow prescription creation only for patients with scheduled appointments.
+Include basic health details (old medical history, BP, sugar, blood group, etc.).
+Display prescription list with action buttons, using a consistent format across all modules.
+/inventory
+Enhance inventory management with advanced features.
+Display product list with action buttons, using a consistent format.
+/staff
+Add position and department lists for better filtering and management.
+Add fields for qualification, blood group, emergency contact info, photo, and document upload.
+Display staff list with action buttons, using a consistent format.
+/attendance
+Fix page loading error; ensure full functionality.
+Implement attendance by QR code.
+Integrate leave and holiday effects into attendance.
+/leave-management
+Merge leave management with attendance module, with all required actions.
+/payroll
+Redesign payroll module for a more professional look.
+Implement pay scale by designation.
+Add advanced payroll features.
+/stores
+Allow each store to have its own home page, products, and details, accessible via its own domain or subdomain.
+Each store should have individual settings (payment gateways, SMS gateways, SMTP, domain, subdomain, etc.).
+All module data should be store-specific and accessible only within that store’s frontend and admin.
+/reports
+Ensure all custom and standard reports are fully functional.
+Add action buttons and use a consistent format across all modules.
+/settings
+Add store-wise settings for all features.
+Add integration and configuration settings for gateways (payment, SMS, email, etc.).
+
+Fix all listed errors and implement enhancements as described above.
+Ensure all pages have consistent header, footer, and sticky menu.
+Redesign dashboard and all modules for a professional, modern look.
+Make all modules and lists fully functional with action buttons, filtering, sorting, and search.
+Implement store-specific data isolation and settings, including domain/subdomain support.
+Merge and streamline modules as specified (e.g., Billing into Sales/Invoice, Leave into Attendance).
+Ensure all sharing, QR code, and PDF features work as required.
+Provide documentation and sample data for all modules.

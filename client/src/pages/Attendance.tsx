@@ -7,652 +7,559 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  Plus, 
-  Search, 
-  Clock,
-  LogIn,
-  LogOut,
-  User,
-  Calendar,
-  Activity,
-  MapPin,
-  CheckCircle,
-  XCircle,
+  Calendar, 
+  Clock, 
+  QrCode, 
+  CheckCircle, 
+  XCircle, 
   AlertCircle,
-  QrCode
+  UserCheck,
+  Users,
+  Filter,
+  Download,
+  Search,
+  MapPin,
+  Smartphone,
+  Plus,
+  Eye,
+  Edit,
+  Trash2,
+  MoreVertical
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiRequest } from "@/lib/queryClient";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
-import { z } from "zod";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 
-// Define schemas
-const attendanceSchema = z.object({
-  id: z.string(),
-  staffId: z.string(),
-  date: z.string(),
-  checkInTime: z.string().nullable(),
-  checkOutTime: z.string().nullable(),
-  status: z.enum(['present', 'absent', 'late', 'half_day']),
-  totalHours: z.number().nullable(),
-  isLate: z.boolean(),
-  lateMinutes: z.number(),
-  checkInMethod: z.enum(['manual', 'qr', 'biometric']),
-  checkOutMethod: z.enum(['manual', 'qr', 'biometric']),
-  notes: z.string().nullable(),
-});
+interface AttendanceRecord {
+  id: string;
+  staffId: string;
+  staffName: string;
+  date: string;
+  clockIn: string;
+  clockOut?: string;
+  totalHours?: number;
+  status: "present" | "absent" | "late" | "early_leave" | "on_leave";
+  location?: string;
+  method: "manual" | "qr_code" | "biometric";
+  notes?: string;
+}
 
-const insertAttendanceSchema = z.object({
-  staffId: z.string().min(1, "Staff member is required"),
-  date: z.string().min(1, "Date is required"),
-  checkInTime: z.string().nullable(),
-  checkOutTime: z.string().nullable(),
-  status: z.enum(['present', 'absent', 'late', 'half_day']),
-  isLate: z.boolean().default(false),
-  lateMinutes: z.number().default(0),
-  checkInMethod: z.enum(['manual', 'qr', 'biometric']).default('manual'),
-  checkOutMethod: z.enum(['manual', 'qr', 'biometric']).default('manual'),
-  notes: z.string().nullable(),
-});
+interface LeaveRequest {
+  id: string;
+  staffId: string;
+  staffName: string;
+  leaveType: "sick" | "vacation" | "personal" | "emergency";
+  startDate: string;
+  endDate: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  appliedDate: string;
+}
 
-const staffSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  position: z.string(),
-  status: z.enum(['active', 'inactive']),
-});
-
-type Attendance = z.infer<typeof attendanceSchema>;
-type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
-type Staff = z.infer<typeof staffSchema>;
-
-export default function AttendancePage() {
-  const [open, setOpen] = useState(false);
+export default function Attendance() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [selectedStaff, setSelectedStaff] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [activeTab, setActiveTab] = useState("attendance");
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: attendanceList = [], isLoading } = useQuery<Attendance[]>({
-    queryKey: ["/api/attendance", selectedDate, selectedStaff],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (selectedDate) params.append('date', selectedDate);
-      if (selectedStaff) params.append('staffId', selectedStaff);
-      
-      const response = await fetch(`/api/attendance?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch attendance');
-      return response.json();
-    }
+  // Queries
+  const { data: attendanceRecords = [], isLoading: attendanceLoading } = useQuery<AttendanceRecord[]>({
+    queryKey: ["/api/attendance", selectedDate],
   });
 
-  const { data: staffList = [] } = useQuery<Staff[]>({
+  const { data: leaveRequests = [], isLoading: leaveLoading } = useQuery<LeaveRequest[]>({
+    queryKey: ["/api/leave-requests"],
+  });
+
+  const { data: staff = [] } = useQuery({
     queryKey: ["/api/staff"],
   });
 
-  const form = useForm<InsertAttendance>({
-    resolver: zodResolver(insertAttendanceSchema),
-    defaultValues: {
-      date: format(new Date(), 'yyyy-MM-dd'),
-      status: "present",
-      checkInMethod: "manual",
-      checkOutMethod: "manual",
-      isLate: false,
-      lateMinutes: 0,
-      checkInTime: null,
-      checkOutTime: null,
-      notes: null,
-    },
-  });
-
-  const manualAttendanceMutation = useMutation({
-    mutationFn: async (data: InsertAttendance) => {
-      await apiRequest("POST", "/api/attendance", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      setOpen(false);
-      form.reset();
-      toast({
-        title: "Success",
-        description: "Attendance record added successfully.",
+  // Clock In/Out Mutation
+  const clockInOutMutation = useMutation({
+    mutationFn: async (data: { staffId: string; action: "clock_in" | "clock_out"; method?: string; location?: string }) => {
+      return await fetch("/api/attendance/clock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add attendance record.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const checkInMutation = useMutation({
-    mutationFn: async (data: { staffId: string; method?: string; location?: any }) => {
-      await apiRequest("POST", "/api/attendance/check-in", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       toast({
         title: "Success",
-        description: "Check-in recorded successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to record check-in.",
-        variant: "destructive",
+        description: "Attendance recorded successfully.",
       });
     },
   });
 
-  const checkOutMutation = useMutation({
-    mutationFn: async (data: { staffId: string; method?: string }) => {
-      await apiRequest("POST", "/api/attendance/check-out", data);
+  // Leave Request Mutation
+  const leaveRequestMutation = useMutation({
+    mutationFn: async (data: Partial<LeaveRequest>) => {
+      return await fetch("/api/leave-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leave-requests"] });
       toast({
         title: "Success",
-        description: "Check-out recorded successfully.",
+        description: "Leave request submitted successfully.",
       });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to record check-out.",
-        variant: "destructive",
-      });
+      setLeaveDialogOpen(false);
     },
   });
 
-  const onSubmit = (data: InsertAttendance) => {
-    manualAttendanceMutation.mutate(data);
+  // Generate QR Code for Staff
+  const generateQRCode = (staffId: string) => {
+    const qrData = `ATTENDANCE:${staffId}:${Date.now()}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
   };
 
-  const handleQuickCheckIn = (staffId: string) => {
-    checkInMutation.mutate({ staffId, method: 'manual' });
-  };
+  // Filter records
+  const filteredAttendance = attendanceRecords.filter(record => {
+    const searchLower = searchTerm.toLowerCase();
+    return record.staffName.toLowerCase().includes(searchLower) ||
+           record.status.toLowerCase().includes(searchLower);
+  });
 
-  const handleQuickCheckOut = (staffId: string) => {
-    checkOutMutation.mutate({ staffId, method: 'manual' });
-  };
-
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present': return 'bg-green-100 text-green-800';
-      case 'absent': return 'bg-red-100 text-red-800';
-      case 'late': return 'bg-yellow-100 text-yellow-800';
-      case 'half_day': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "present": return "bg-green-100 text-green-800";
+      case "absent": return "bg-red-100 text-red-800";
+      case "late": return "bg-yellow-100 text-yellow-800";
+      case "early_leave": return "bg-orange-100 text-orange-800";
+      case "on_leave": return "bg-blue-100 text-blue-800";
+      default: return "bg-slate-100 text-slate-800";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'present': return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'absent': return <XCircle className="h-4 w-4 text-red-600" />;
-      case 'late': return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      case 'half_day': return <Clock className="h-4 w-4 text-blue-600" />;
-      default: return <AlertCircle className="h-4 w-4 text-gray-600" />;
+      case "present": return <CheckCircle className="h-4 w-4" />;
+      case "absent": return <XCircle className="h-4 w-4" />;
+      case "late": return <AlertCircle className="h-4 w-4" />;
+      case "early_leave": return <Clock className="h-4 w-4" />;
+      case "on_leave": return <Calendar className="h-4 w-4" />;
+      default: return null;
     }
   };
-
-  // Filter for today's attendance
-  const todayAttendance = attendanceList.filter(a => a.date === format(new Date(), 'yyyy-MM-dd'));
-  
-  // Calculate summary stats
-  const totalPresent = todayAttendance.filter(a => a.status === 'present').length;
-  const totalAbsent = todayAttendance.filter(a => a.status === 'absent').length;
-  const totalLate = todayAttendance.filter(a => a.status === 'late').length;
-  const totalStaff = staffList.filter(s => s.status === 'active').length;
-
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading attendance data...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
       <Header 
         title="Attendance Management" 
-        subtitle="Track staff attendance, check-ins, check-outs, and generate attendance reports." 
+        subtitle="Track staff attendance, manage leave requests, and monitor work hours with QR code integration."
       />
       
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Users className="h-8 w-8 text-green-500" />
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Present Today</p>
-                    <p className="text-2xl font-bold text-slate-900">{totalPresent}</p>
-                    <p className="text-xs text-emerald-600 flex items-center mt-1">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Active staff
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="text-green-600 h-6 w-6" />
+                    <p className="text-2xl font-bold">85%</p>
+                    <p className="text-xs text-slate-500">Present Today</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-8 w-8 text-blue-500" />
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Absent Today</p>
-                    <p className="text-2xl font-bold text-slate-900">{totalAbsent}</p>
-                    <p className="text-xs text-slate-500">Missing staff</p>
-                  </div>
-                  <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                    <XCircle className="text-red-600 h-6 w-6" />
+                    <p className="text-2xl font-bold">7.2h</p>
+                    <p className="text-xs text-slate-500">Avg Hours</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-8 w-8 text-yellow-500" />
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Late Today</p>
-                    <p className="text-2xl font-bold text-slate-900">{totalLate}</p>
-                    <p className="text-xs text-amber-600">Late arrivals</p>
-                  </div>
-                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <AlertCircle className="text-amber-600 h-6 w-6" />
+                    <p className="text-2xl font-bold">3</p>
+                    <p className="text-xs text-slate-500">Late Today</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+            
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="h-8 w-8 text-purple-500" />
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Total Staff</p>
-                    <p className="text-2xl font-bold text-slate-900">{totalStaff}</p>
-                    <p className="text-xs text-slate-500">Active employees</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <User className="text-blue-600 h-6 w-6" />
+                    <p className="text-2xl font-bold">5</p>
+                    <p className="text-xs text-slate-500">On Leave</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Quick Actions */}
-          <Card className="border-slate-200">
-            <CardHeader>
-              <CardTitle>Quick Check-In/Out</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {staffList.filter(s => s.status === 'active').map((staff) => {
-                  const todayRecord = todayAttendance.find(a => a.staffId === staff.id);
-                  const hasCheckedIn = todayRecord?.checkInTime;
-                  const hasCheckedOut = todayRecord?.checkOutTime;
-                  
-                  return (
-                    <div key={staff.id} className="p-4 border rounded-lg">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <User className="h-8 w-8 text-slate-400" />
-                        <div>
-                          <p className="font-medium text-sm">{staff.firstName} {staff.lastName}</p>
-                          <p className="text-xs text-slate-500">{staff.position}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant={hasCheckedIn ? "outline" : "default"}
-                          disabled={!!hasCheckedIn || checkInMutation.isPending}
-                          onClick={() => handleQuickCheckIn(staff.id)}
-                          className="flex-1"
-                        >
-                          <LogIn className="h-3 w-3 mr-1" />
-                          {hasCheckedIn ? 'In' : 'Check In'}
-                        </Button>
-                        
-                        <Button
-                          size="sm"
-                          variant={hasCheckedOut ? "outline" : "default"}
-                          disabled={!hasCheckedIn || !!hasCheckedOut || checkOutMutation.isPending}
-                          onClick={() => handleQuickCheckOut(staff.id)}
-                          className="flex-1"
-                        >
-                          <LogOut className="h-3 w-3 mr-1" />
-                          {hasCheckedOut ? 'Out' : 'Check Out'}
-                        </Button>
-                      </div>
-                      
-                      {todayRecord && (
-                        <div className="mt-2 text-xs text-slate-600">
-                          {todayRecord.checkInTime && (
-                            <p>In: {format(new Date(todayRecord.checkInTime), 'HH:mm')}</p>
-                          )}
-                          {todayRecord.checkOutTime && (
-                            <p>Out: {format(new Date(todayRecord.checkOutTime), 'HH:mm')}</p>
-                          )}
-                          {todayRecord.totalHours && (
-                            <p>Hours: {todayRecord.totalHours}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center space-x-4">
+          {/* Action Bar */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between">
+            <div className="flex gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
-                  placeholder="Search staff..."
+                  placeholder="Search staff or status..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-80"
                 />
               </div>
-              
               <Input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-40"
               />
-              
-              <Select value={selectedStaff} onValueChange={setSelectedStaff}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All Staff" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Staff</SelectItem>
-                  {staffList.map((staff) => (
-                    <SelectItem key={staff.id} value={staff.id}>
-                      {staff.firstName} {staff.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Button variant="outline" size="sm">
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
-            
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Manual Entry
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>Add Manual Attendance Entry</DialogTitle>
-                </DialogHeader>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex gap-2">
+              <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <QrCode className="h-4 w-4 mr-2" />
+                    QR Attendance
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>QR Code Attendance</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-600">
+                      Staff can scan their individual QR codes to mark attendance quickly and accurately.
+                    </p>
                     <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="staffId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Staff Member</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select staff member" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {staffList.map((staff) => (
-                                  <SelectItem key={staff.id} value={staff.id}>
-                                    {staff.firstName} {staff.lastName}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {staff.slice(0, 4).map((member: any) => (
+                        <div key={member.id} className="text-center space-y-2">
+                          <img 
+                            src={generateQRCode(member.id)} 
+                            alt={`QR Code for ${member.firstName}`}
+                            className="mx-auto"
+                          />
+                          <p className="text-sm font-medium">{member.firstName} {member.lastName}</p>
+                        </div>
+                      ))}
                     </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="checkInTime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Check In Time</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="datetime-local"
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value || null)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="checkOutTime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Check Out Time</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="datetime-local" 
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(e.target.value || null)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="status"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="present">Present</SelectItem>
-                              <SelectItem value="absent">Absent</SelectItem>
-                              <SelectItem value="late">Late</SelectItem>
-                              <SelectItem value="half_day">Half Day</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Request Leave
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Submit Leave Request</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select staff member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {staff.map((member: any) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.firstName} {member.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     
-                    <div className="flex justify-end space-x-2 pt-4 border-t">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setOpen(false)}
-                      >
+                    <Select>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Leave type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sick">Sick Leave</SelectItem>
+                        <SelectItem value="vacation">Vacation</SelectItem>
+                        <SelectItem value="personal">Personal Leave</SelectItem>
+                        <SelectItem value="emergency">Emergency Leave</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <Input type="date" placeholder="Start date" />
+                      <Input type="date" placeholder="End date" />
+                    </div>
+                    
+                    <Input placeholder="Reason for leave" />
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button variant="outline" onClick={() => setLeaveDialogOpen(false)}>
                         Cancel
                       </Button>
-                      <Button
-                        type="submit"
-                        disabled={manualAttendanceMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {manualAttendanceMutation.isPending ? "Adding..." : "Add Record"}
+                      <Button onClick={() => leaveRequestMutation.mutate({})}>
+                        Submit Request
                       </Button>
                     </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
-          {/* Attendance Table */}
-          <Card className="border-slate-200">
-            <CardHeader>
-              <CardTitle>Attendance Records</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {attendanceList.length === 0 ? (
-                <div className="text-center py-12">
-                  <Clock className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No attendance records</h3>
-                  <p className="text-slate-600 mb-6">No attendance data found for the selected date and filters.</p>
-                  <Button 
-                    onClick={() => setOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Manual Entry
-                  </Button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Staff Member</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Check In</TableHead>
-                        <TableHead>Check Out</TableHead>
-                        <TableHead>Total Hours</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Method</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {attendanceList.map((attendance) => {
-                        const staff = staffList.find(s => s.id === attendance.staffId);
-                        return (
-                          <TableRow key={attendance.id}>
+          {/* Main Content Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="attendance">Attendance Records</TabsTrigger>
+              <TabsTrigger value="leave">Leave Management</TabsTrigger>
+              <TabsTrigger value="reports">Reports</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="attendance">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <UserCheck className="h-5 w-5" />
+                    <span>Daily Attendance - {format(new Date(selectedDate), "MMMM dd, yyyy")}</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Staff Member</TableHead>
+                          <TableHead>Clock In</TableHead>
+                          <TableHead>Clock Out</TableHead>
+                          <TableHead>Total Hours</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Method</TableHead>
+                          <TableHead>Location</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAttendance.map((record) => (
+                          <TableRow key={record.id}>
+                            <TableCell className="font-medium">{record.staffName}</TableCell>
+                            <TableCell>{record.clockIn || "--"}</TableCell>
+                            <TableCell>{record.clockOut || "--"}</TableCell>
+                            <TableCell>{record.totalHours ? `${record.totalHours}h` : "--"}</TableCell>
                             <TableCell>
-                              <div className="flex items-center space-x-3">
-                                <User className="h-8 w-8 text-slate-400" />
-                                <div>
-                                  <p className="font-medium">{staff?.firstName} {staff?.lastName}</p>
-                                  <p className="text-sm text-slate-500">{staff?.position}</p>
+                              <Badge className={getStatusColor(record.status)}>
+                                <div className="flex items-center gap-1">
+                                  {getStatusIcon(record.status)}
+                                  {record.status.replace('_', ' ')}
                                 </div>
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="capitalize">
+                              <div className="flex items-center gap-1">
+                                {record.method === "qr_code" && <QrCode className="h-4 w-4" />}
+                                {record.method === "manual" && <Edit className="h-4 w-4" />}
+                                {record.method === "biometric" && <Smartphone className="h-4 w-4" />}
+                                {record.method.replace('_', ' ')}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center space-x-1">
-                                <Calendar className="h-4 w-4 text-slate-400" />
-                                <span>{format(new Date(attendance.date), 'MMM dd, yyyy')}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              {attendance.checkInTime ? (
-                                <div className="flex items-center space-x-2">
-                                  <LogIn className="h-4 w-4 text-green-600" />
-                                  <span>{format(new Date(attendance.checkInTime), 'HH:mm')}</span>
-                                  {attendance.isLate && (
-                                    <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                                      Late {attendance.lateMinutes}m
-                                    </Badge>
-                                  )}
+                              {record.location && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-4 w-4" />
+                                  {record.location}
                                 </div>
-                              ) : (
-                                <span className="text-slate-400">-</span>
                               )}
                             </TableCell>
                             <TableCell>
-                              {attendance.checkOutTime ? (
-                                <div className="flex items-center space-x-2">
-                                  <LogOut className="h-4 w-4 text-red-600" />
-                                  <span>{format(new Date(attendance.checkOutTime), 'HH:mm')}</span>
-                                </div>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-1">
-                                <Clock className="h-4 w-4 text-slate-400" />
-                                <span>{attendance.totalHours || '0'} hrs</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                {getStatusIcon(attendance.status)}
-                                <Badge className={getStatusBadgeColor(attendance.status)}>
-                                  {attendance.status}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <span className="capitalize">{attendance.checkInMethod}</span>
-                                {attendance.checkInMethod === 'qr' && (
-                                  <div className="flex items-center space-x-1 text-slate-500">
-                                    <QrCode className="h-3 w-3" />
-                                    <span>QR verified</span>
-                                  </div>
-                                )}
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Record
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem className="text-red-600">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Record
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="leave">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Calendar className="h-5 w-5" />
+                    <span>Leave Requests</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Staff Member</TableHead>
+                          <TableHead>Leave Type</TableHead>
+                          <TableHead>Start Date</TableHead>
+                          <TableHead>End Date</TableHead>
+                          <TableHead>Duration</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Applied Date</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {leaveRequests.map((request) => (
+                          <TableRow key={request.id}>
+                            <TableCell className="font-medium">{request.staffName}</TableCell>
+                            <TableCell className="capitalize">{request.leaveType.replace('_', ' ')}</TableCell>
+                            <TableCell>{format(new Date(request.startDate), "MMM dd, yyyy")}</TableCell>
+                            <TableCell>{format(new Date(request.endDate), "MMM dd, yyyy")}</TableCell>
+                            <TableCell>
+                              {Math.ceil((new Date(request.endDate).getTime() - new Date(request.startDate).getTime()) / (1000 * 60 * 60 * 24) + 1)} days
+                            </TableCell>
+                            <TableCell>
+                              <Badge 
+                                variant={
+                                  request.status === "approved" ? "default" :
+                                  request.status === "rejected" ? "destructive" : "secondary"
+                                }
+                              >
+                                {request.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{format(new Date(request.appliedDate), "MMM dd, yyyy")}</TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  {request.status === "pending" && (
+                                    <>
+                                      <DropdownMenuItem className="text-green-600">
+                                        <CheckCircle className="h-4 w-4 mr-2" />
+                                        Approve
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem className="text-red-600">
+                                        <XCircle className="h-4 w-4 mr-2" />
+                                        Reject
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="reports">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Weekly Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Total Present Days</span>
+                        <span className="font-medium">142</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Total Absent Days</span>
+                        <span className="font-medium">8</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Average Hours/Day</span>
+                        <span className="font-medium">7.2h</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>On-Time Percentage</span>
+                        <span className="font-medium">92%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Monthly Trends</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between">
+                        <span>Total Work Hours</span>
+                        <span className="font-medium">1,024h</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Overtime Hours</span>
+                        <span className="font-medium">36h</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Leave Days Used</span>
+                        <span className="font-medium">23</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Attendance Rate</span>
+                        <span className="font-medium">94.5%</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
     </>
