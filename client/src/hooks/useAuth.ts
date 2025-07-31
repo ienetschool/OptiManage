@@ -1,9 +1,13 @@
-// Simple authentication hook without automatic queries to prevent 401 spam
+// Temporary authentication - always authenticated for testing dashboard pages
 export function useAuth() {
-  // Return mock authentication state to prevent infinite queries
   return {
-    user: null,
+    user: {
+      id: "test-user",
+      email: "admin@optistorepro.com",
+      firstName: "Admin",
+      lastName: "User"
+    },
     isLoading: false,
-    isAuthenticated: false,
+    isAuthenticated: true,
   };
 }

@@ -54,19 +54,6 @@ import PatientPortalLayout from "@/components/layout/PatientPortalLayout";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
-  const [location] = useLocation();
-
-  // Define patient portal routes (clean UI without menu/top bar)
-  const patientPortalRoutes = [
-    '/patient-portal',
-    '/patient-portal/settings',
-    '/patient-portal/records', 
-    '/patient-portal/appointments',
-    '/patient-portal/prescriptions',
-    '/patient-portal/invoices'
-  ];
-
-  const isPatientPortal = patientPortalRoutes.some(route => location.startsWith(route));
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">
@@ -74,96 +61,100 @@ function Router() {
     </div>;
   }
 
-  if (!isAuthenticated && !isPatientPortal) {
-    return (
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route>
-          <PublicLayout>
+  return (
+    <Switch>
+      {/* Patient Portal routes (clean UI without menu/top bar) */}
+      <Route path="/patient-portal">
+        <PatientPortalLayout>
+          <Switch>
+            <Route path="/patient-portal" component={Profile} />
+            <Route path="/patient-portal/settings" component={Settings} />
+            <Route path="/patient-portal/records" component={MedicalRecords} />
+            <Route path="/patient-portal/appointments" component={Appointments} />
+            <Route path="/patient-portal/prescriptions" component={Prescriptions} />
+            <Route path="/patient-portal/invoices" component={InvoiceManagement} />
+            <Route component={NotFound} />
+          </Switch>
+        </PatientPortalLayout>
+      </Route>
+
+      {/* Public marketing pages */}
+      <Route path="/login" component={Login} />
+      <Route path="/about">
+        <PublicLayout><About /></PublicLayout>
+      </Route>
+      <Route path="/features">
+        <PublicLayout><Features /></PublicLayout>
+      </Route>
+      <Route path="/services">
+        <PublicLayout><Services /></PublicLayout>
+      </Route>
+      <Route path="/reviews">
+        <PublicLayout><Reviews /></PublicLayout>
+      </Route>
+      <Route path="/contact">
+        <PublicLayout><Contact /></PublicLayout>
+      </Route>
+      <Route path="/terms">
+        <PublicLayout><Terms /></PublicLayout>
+      </Route>
+      <Route path="/privacy">
+        <PublicLayout><Privacy /></PublicLayout>
+      </Route>
+      <Route path="/book-appointment">
+        <PublicLayout><BookAppointment /></PublicLayout>
+      </Route>
+
+      {/* Homepage */}
+      <Route path="/" exact>
+        <PublicLayout><Home /></PublicLayout>
+      </Route>
+
+      {/* Dashboard routes - always accessible for testing */}
+      <Route>
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
             <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/about" component={About} />
-              <Route path="/features" component={Features} />
-              <Route path="/services" component={Services} />
-              <Route path="/services/:serviceType" component={Services} />
-              <Route path="/reviews" component={Reviews} />
-              <Route path="/contact" component={Contact} />
-              <Route path="/terms" component={Terms} />
-              <Route path="/privacy" component={Privacy} />
-              <Route path="/book-appointment" component={BookAppointment} />
+              <Route path="/dashboard" component={Dashboard} />
+              <Route path="/stores" component={Stores} />
+              <Route path="/inventory" component={Inventory} />
+              <Route path="/sales" component={Sales} />
+              <Route path="/appointments" component={Appointments} />
+              <Route path="/customers" component={Customers} />
+              <Route path="/patients" component={Patients} />
+              <Route path="/patient-management" component={PatientManagement} />
+              <Route path="/medical-appointments" component={Appointments} />
+              <Route path="/invoices" component={InvoiceManagement} />
+              <Route path="/prescriptions" component={Prescriptions} />
+              <Route path="/billing" component={Billing} />
+              <Route path="/invoice-management" component={InvoiceManagement} />
+              <Route path="/staff" component={Staff} />
+              <Route path="/attendance" component={Attendance} />
+              <Route path="/payroll" component={Payroll} />
+              <Route path="/notifications" component={Notifications} />
+              <Route path="/reports" component={Reports} />
+              <Route path="/communication" component={Communication} />
+              <Route path="/settings" component={Settings} />
+              <Route path="/support" component={Support} />
+              <Route path="/leave-management" component={LeaveManagement} />
+              <Route path="/analytics" component={Analytics} />
+              <Route path="/store-performance" component={StorePerformance} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/medical-records" component={MedicalRecords} />
+              <Route path="/quick-sale" component={QuickSale} />
+              <Route path="/payments" component={Payments} />
+              <Route path="/store-settings" component={StoreSettings} />
+              <Route path="/pages" component={Pages} />
+              <Route path="/themes" component={Themes} />
+              <Route path="/domains" component={Domains} />
+              <Route path="/seo" component={SEO} />
               <Route component={NotFound} />
             </Switch>
-          </PublicLayout>
-        </Route>
-      </Switch>
-    );
-  }
-
-  // Patient Portal routes (clean UI without menu/top bar) - No authentication required
-  if (isPatientPortal) {
-    return (
-      <PatientPortalLayout>
-        <Switch>
-          <Route path="/patient-portal" component={Profile} />
-          <Route path="/patient-portal/settings" component={Settings} />
-          <Route path="/patient-portal/records" component={MedicalRecords} />
-          <Route path="/patient-portal/appointments" component={Appointments} />
-          <Route path="/patient-portal/prescriptions" component={Prescriptions} />
-          <Route path="/patient-portal/invoices" component={InvoiceManagement} />
-          <Route component={NotFound} />
-        </Switch>
-      </PatientPortalLayout>
-    );
-  }
-
-  return (
-    <AppLayout>
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/stores" component={Stores} />
-          <Route path="/inventory" component={Inventory} />
-          <Route path="/sales" component={InvoiceManagement} />
-          <Route path="/appointments" component={PatientManagement} />
-          <Route path="/customers" component={Customers} />
-          <Route path="/patients" component={PatientManagement} />
-          <Route path="/patient-management" component={PatientManagement} />
-          <Route path="/medical-appointments" component={PatientManagement} />
-          <Route path="/invoices" component={InvoiceManagement} />
-          <Route path="/prescriptions" component={Prescriptions} />
-          <Route path="/billing" component={InvoiceManagement} />
-          <Route path="/invoice-management" component={InvoiceManagement} />
-          <Route path="/staff" component={Staff} />
-          <Route path="/attendance" component={Attendance} />
-          <Route path="/payroll" component={Payroll} />
-          <Route path="/notifications" component={Notifications} />
-          <Route path="/reports" component={Reports} />
-          <Route path="/communication" component={Communication} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/support" component={Support} />
-          <Route path="/book-appointment" component={BookAppointment} />
-          <Route path="/leave-management" component={LeaveManagement} />
-          <Route path="/analytics" component={Analytics} />
-          <Route path="/store-performance" component={StorePerformance} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/medical-records" component={MedicalRecords} />
-          <Route path="/quick-sale">
-            {() => <QuickSale />}
-          </Route>
-          <Route path="/payments" component={Payments} />
-          <Route path="/store-settings" component={StoreSettings} />
-          <Route path="/reports/sales" component={Reports} />
-          <Route path="/reports/financial" component={Reports} />
-          <Route path="/reports/patients" component={Reports} />
-          <Route path="/pages" component={Pages} />
-          <Route path="/themes" component={Themes} />
-          <Route path="/domains" component={Domains} />
-          <Route path="/seo" component={SEO} />
-          <Route component={NotFound} />
-        </Switch>
-      </div>
-    </AppLayout>
+          </div>
+        </AppLayout>
+      </Route>
+    </Switch>
   );
 }
 
