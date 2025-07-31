@@ -57,14 +57,17 @@ export function registerMedicalRoutes(app: Express) {
     }
   });
 
-  app.post("/api/patients", isAuthenticated, async (req, res) => {
+  // Public patient registration endpoint (no authentication required)
+  app.post("/api/patients", async (req, res) => {
     try {
+      console.log("Received patient registration data:", req.body);
       const validatedData = insertPatientSchema.parse(req.body);
       const [patient] = await db.insert(patients).values(validatedData).returning();
+      console.log("Patient created successfully:", patient);
       res.json(patient);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating patient:", error);
-      res.status(500).json({ message: "Failed to create patient" });
+      res.status(500).json({ message: "Failed to create patient", error: error?.message || "Unknown error" });
     }
   });
 

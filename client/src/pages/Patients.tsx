@@ -221,8 +221,9 @@ export default function Patients() {
     
     // Fetch patient history
     try {
-      const response = await apiRequest("GET", `/api/patients/${patient.id}/history`) as PatientHistory[];
-      setPatientHistory(response);
+      const response = await apiRequest("GET", `/api/patients/${patient.id}/history`);
+      const history = response as PatientHistory[];
+      setPatientHistory(history);
     } catch (error) {
       console.error("Error fetching patient history:", error);
       setPatientHistory([]);
@@ -260,6 +261,9 @@ export default function Patients() {
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Register New Patient</DialogTitle>
+              <DialogDescription>
+                Fill out the comprehensive patient registration form with personal, contact, medical, and insurance information.
+              </DialogDescription>
             </DialogHeader>
             
             <Form {...form}>
@@ -318,9 +322,11 @@ export default function Patients() {
                         name="firstName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>First Name</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              First Name <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input placeholder="Enter first name" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -332,9 +338,11 @@ export default function Patients() {
                         name="lastName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Last Name</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              Last Name <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input placeholder="Enter last name" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -348,7 +356,9 @@ export default function Patients() {
                         name="dateOfBirth"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Date of Birth</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              Date of Birth <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
                               <Input type="date" {...field} value={field.value || ""} />
                             </FormControl>
@@ -363,9 +373,23 @@ export default function Patients() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Blood Group</FormLabel>
-                            <FormControl>
-                              <Input {...field} placeholder="e.g., A+, O-, B+, AB+" />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select blood group" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="A+">A+</SelectItem>
+                                <SelectItem value="A-">A-</SelectItem>
+                                <SelectItem value="B+">B+</SelectItem>
+                                <SelectItem value="B-">B-</SelectItem>
+                                <SelectItem value="AB+">AB+</SelectItem>
+                                <SelectItem value="AB-">AB-</SelectItem>
+                                <SelectItem value="O+">O+</SelectItem>
+                                <SelectItem value="O-">O-</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -380,9 +404,11 @@ export default function Patients() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              Phone Number <span className="text-red-500">*</span>
+                            </FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input placeholder="+1 234 567-8900" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -396,7 +422,7 @@ export default function Patients() {
                           <FormItem>
                             <FormLabel>Email Address</FormLabel>
                             <FormControl>
-                              <Input type="email" {...field} />
+                              <Input type="email" placeholder="patient@example.com" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -411,7 +437,7 @@ export default function Patients() {
                         <FormItem>
                           <FormLabel>Address</FormLabel>
                           <FormControl>
-                            <Textarea {...field} />
+                            <Textarea placeholder="Enter full address" {...field} value={field.value || ""} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -426,7 +452,7 @@ export default function Patients() {
                           <FormItem>
                             <FormLabel>Emergency Contact Name</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input placeholder="Contact person's name" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -440,7 +466,7 @@ export default function Patients() {
                           <FormItem>
                             <FormLabel>Emergency Contact Phone</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input placeholder="+1 234 567-8900" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -853,9 +879,23 @@ export default function Patients() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Insurance Provider</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select insurance provider" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="blue_cross">Blue Cross Blue Shield</SelectItem>
+                                <SelectItem value="aetna">Aetna</SelectItem>
+                                <SelectItem value="cigna">Cigna</SelectItem>
+                                <SelectItem value="united">United Healthcare</SelectItem>
+                                <SelectItem value="kaiser">Kaiser Permanente</SelectItem>
+                                <SelectItem value="humana">Humana</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                                <SelectItem value="none">No Insurance</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -868,7 +908,7 @@ export default function Patients() {
                           <FormItem>
                             <FormLabel>Insurance Number</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input placeholder="Policy/Member ID" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -882,10 +922,10 @@ export default function Patients() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Loyalty Tier</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue placeholder="Select loyalty tier" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -1286,7 +1326,7 @@ export default function Patients() {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm">
-                          {format(new Date(patient.createdAt), 'MMM dd, yyyy')}
+                          {patient.createdAt ? format(new Date(patient.createdAt), 'MMM dd, yyyy') : 'N/A'}
                         </span>
                       </TableCell>
                       <TableCell>

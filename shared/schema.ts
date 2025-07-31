@@ -682,7 +682,7 @@ export const staff = pgTable("staff", {
   position: varchar("position", { length: 100 }).notNull(),
   department: varchar("department", { length: 100 }),
   storeId: varchar("store_id").references(() => stores.id),
-  managerId: uuid("manager_id").references(() => staff.id),
+  managerId: uuid("manager_id"),
   
   // Employment dates
   hireDate: date("hire_date").notNull(),
@@ -747,7 +747,7 @@ export const leaveRequests = pgTable("leave_requests", {
   id: uuid("id").primaryKey().defaultRandom(),
   leaveNumber: varchar("leave_number", { length: 20 }).unique().notNull(),
   staffId: uuid("staff_id").references(() => staff.id).notNull(),
-  managerId: uuid("manager_id").references(() => staff.id),
+  managerId: uuid("manager_id"),
   
   // Leave details
   leaveType: varchar("leave_type", { length: 50 }).notNull(), // sick, casual, annual, maternity, emergency
