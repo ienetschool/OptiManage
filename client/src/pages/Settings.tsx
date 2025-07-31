@@ -56,12 +56,27 @@ const emailSettingsSchema = z.object({
   enableSSL: z.boolean(),
 });
 
+const oauthSettingsSchema = z.object({
+  googleClientId: z.string().optional(),
+  googleClientSecret: z.string().optional(),
+  twitterConsumerKey: z.string().optional(),
+  twitterConsumerSecret: z.string().optional(),
+  appleClientId: z.string().optional(),
+  appleTeamId: z.string().optional(),
+  appleKeyId: z.string().optional(),
+  enableGoogleAuth: z.boolean(),
+  enableTwitterAuth: z.boolean(),
+  enableAppleAuth: z.boolean(),
+});
+
 type GeneralSettingsData = z.infer<typeof generalSettingsSchema>;
 type EmailSettingsData = z.infer<typeof emailSettingsSchema>;
+type OAuthSettingsData = z.infer<typeof oauthSettingsSchema>;
 
 interface SystemSettings {
   general: GeneralSettingsData;
   email: EmailSettingsData;
+  oauth: OAuthSettingsData;
   notifications: {
     emailNotifications: boolean;
     smsNotifications: boolean;
@@ -127,6 +142,18 @@ export default function Settings() {
           fromName: "OptiCare Medical Center",
           enableSSL: true,
         },
+        oauth: {
+          googleClientId: "",
+          googleClientSecret: "",
+          twitterConsumerKey: "",
+          twitterConsumerSecret: "",
+          appleClientId: "",
+          appleTeamId: "",
+          appleKeyId: "",
+          enableGoogleAuth: false,
+          enableTwitterAuth: false,
+          enableAppleAuth: false,
+        },
         notifications: {
           emailNotifications: true,
           smsNotifications: false,
@@ -171,6 +198,11 @@ export default function Settings() {
   const emailForm = useForm<EmailSettingsData>({
     resolver: zodResolver(emailSettingsSchema),
     defaultValues: settings?.email,
+  });
+
+  const oauthForm = useForm<OAuthSettingsData>({
+    resolver: zodResolver(oauthSettingsSchema),
+    defaultValues: settings?.oauth,
   });
 
   const updateSettingsMutation = useMutation({
@@ -220,6 +252,10 @@ export default function Settings() {
     updateSettingsMutation.mutate({ section: "email", data });
   };
 
+  const onOAuthSubmit = (data: OAuthSettingsData) => {
+    updateSettingsMutation.mutate({ section: "oauth", data });
+  };
+
   const handleTestEmail = () => {
     const emailData = emailForm.getValues();
     testEmailMutation.mutate(emailData);
@@ -247,7 +283,7 @@ export default function Settings() {
       <main className="flex-1 overflow-y-auto p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="general" className="flex items-center space-x-2">
                 <Building className="h-4 w-4" />
                 <span>General</span>
@@ -255,6 +291,10 @@ export default function Settings() {
               <TabsTrigger value="email" className="flex items-center space-x-2">
                 <Mail className="h-4 w-4" />
                 <span>Email</span>
+              </TabsTrigger>
+              <TabsTrigger value="oauth" className="flex items-center space-x-2">
+                <Key className="h-4 w-4" />
+                <span>OAuth</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center space-x-2">
                 <Bell className="h-4 w-4" />
@@ -595,6 +635,189 @@ export default function Settings() {
                         >
                           <Save className="mr-2 h-4 w-4" />
                           {updateSettingsMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* OAuth Settings */}
+            <TabsContent value="oauth">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Key className="h-5 w-5" />
+                    <span>Social Authentication Setup</span>
+                  </CardTitle>
+                  <p className="text-sm text-slate-600 mt-2">
+                    Configure OAuth credentials for Google, Apple, and Twitter social login options
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  {/* Google OAuth */}
+                  <div className="border rounded-lg p-6 space-y-4">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">G</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Google OAuth</h3>
+                        <p className="text-sm text-slate-600">Allow users to sign in with their Google accounts</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium">Enable Google Sign-In</span>
+                      <Switch />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Google Client ID</Label>
+                        <Input 
+                          placeholder="123456789012-abcdef.apps.googleusercontent.com"
+                          type="text"
+                        />
+                        <p className="text-xs text-slate-500">Get this from Google Cloud Console</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Google Client Secret</Label>
+                        <Input 
+                          placeholder="GOCSPX-abcdef123456789"
+                          type="password"
+                        />
+                        <p className="text-xs text-slate-500">Keep this secret and secure</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Setup Instructions:</h4>
+                      <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                        <li>Go to <a href="https://console.cloud.google.com/" target="_blank" className="underline">Google Cloud Console</a></li>
+                        <li>Create a new project or select existing one</li>
+                        <li>Enable Google+ API</li>
+                        <li>Create OAuth 2.0 credentials</li>
+                        <li>Add your domain to authorized redirect URIs</li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  {/* Twitter OAuth */}
+                  <div className="border rounded-lg p-6 space-y-4">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">𝕏</span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Twitter/X OAuth</h3>
+                        <p className="text-sm text-slate-600">Allow users to sign in with their Twitter/X accounts</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium">Enable Twitter Sign-In</span>
+                      <Switch />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Twitter Consumer Key</Label>
+                        <Input 
+                          placeholder="abcdef123456789"
+                          type="text"
+                        />
+                        <p className="text-xs text-slate-500">Get this from Twitter Developer Portal</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Twitter Consumer Secret</Label>
+                        <Input 
+                          placeholder="abcdef123456789abcdef123456789"
+                          type="password"
+                        />
+                        <p className="text-xs text-slate-500">Keep this secret and secure</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium text-blue-900 mb-2">Setup Instructions:</h4>
+                      <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                        <li>Go to <a href="https://developer.twitter.com/" target="_blank" className="underline">Twitter Developer Portal</a></li>
+                        <li>Create a new app or select existing one</li>
+                        <li>Generate Consumer Keys</li>
+                        <li>Configure app permissions and callback URLs</li>
+                        <li>Enable "Request email from users" if needed</li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  {/* Apple OAuth */}
+                  <div className="border rounded-lg p-6 space-y-4">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
+                        <span className="text-white font-bold text-sm"></span>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold">Apple Sign In</h3>
+                        <p className="text-sm text-slate-600">Allow users to sign in with their Apple ID</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium">Enable Apple Sign-In</span>
+                      <Switch />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>Apple Client ID</Label>
+                        <Input 
+                          placeholder="com.yourapp.service"
+                          type="text"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Apple Team ID</Label>
+                        <Input 
+                          placeholder="ABCDEF1234"
+                          type="text"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Apple Key ID</Label>
+                        <Input 
+                          placeholder="ABCDEF1234"
+                          type="text"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-orange-50 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium text-orange-900 mb-2">Advanced Setup Required:</h4>
+                      <p className="text-sm text-orange-800 mb-2">
+                        Apple Sign-In requires additional setup including private keys and certificates.
+                      </p>
+                      <ol className="text-sm text-orange-800 space-y-1 list-decimal list-inside">
+                        <li>Join Apple Developer Program</li>
+                        <li>Create App ID and Service ID</li>
+                        <li>Generate private key for Sign In</li>
+                        <li>Configure domain verification</li>
+                        <li>Implement frontend JavaScript SDK</li>
+                      </ol>
+                    </div>
+                  </div>
+
+                  <Form {...oauthForm}>
+                    <form onSubmit={oauthForm.handleSubmit(onOAuthSubmit)} className="space-y-6">
+                      <div className="flex justify-end pt-6 border-t">
+                        <Button 
+                          type="submit"
+                          disabled={updateSettingsMutation.isPending}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Save className="mr-2 h-4 w-4" />
+                          {updateSettingsMutation.isPending ? "Saving..." : "Save OAuth Settings"}
                         </Button>
                       </div>
                     </form>
