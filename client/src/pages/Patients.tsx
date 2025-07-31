@@ -122,16 +122,38 @@ export default function Patients() {
 
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
-      await apiRequest("POST", "/api/patients", data);
+      const response = await apiRequest("POST", "/api/patients", data);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newPatient) => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.refetchQueries({ queryKey: ["/api/patients"] });
       toast({
         title: "Success",
         description: "Patient registered successfully.",
       });
       setOpen(false);
-      form.reset();
+      form.reset({
+        patientCode: `PAT-${Date.now().toString().slice(-6)}`,
+        firstName: "",
+        lastName: "",
+        dateOfBirth: "",
+        gender: "male" as const,
+        phone: "",
+        email: "",
+        address: "",
+        emergencyContact: "",
+        emergencyPhone: "",
+        bloodGroup: "",
+        allergies: "",
+        medicalHistory: "",
+        insuranceProvider: "",
+        insuranceNumber: "",
+        isActive: true,
+        loyaltyTier: "bronze" as const,
+        loyaltyPoints: 0,
+        customFields: {},
+      });
     },
     onError: () => {
       toast({
@@ -2009,7 +2031,13 @@ export default function Patients() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewPatient(patient)}
+                            onClick={() => {
+                              setSelectedPatient(patient);
+                              toast({
+                                title: "Patient Details",
+                                description: `Viewing details for ${patient.firstName} ${patient.lastName}`,
+                              });
+                            }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -2025,9 +2053,31 @@ export default function Patients() {
                                 View Details
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
+                                form.reset({
+                                  patientCode: patient.patientCode,
+                                  firstName: patient.firstName,
+                                  lastName: patient.lastName,
+                                  dateOfBirth: patient.dateOfBirth,
+                                  gender: patient.gender,
+                                  phone: patient.phone,
+                                  email: patient.email || "",
+                                  address: patient.address || "",
+                                  emergencyContact: patient.emergencyContact || "",
+                                  emergencyPhone: patient.emergencyPhone || "",
+                                  bloodGroup: patient.bloodGroup || "",
+                                  allergies: patient.allergies || "",
+                                  medicalHistory: patient.medicalHistory || "",
+                                  insuranceProvider: patient.insuranceProvider || "",
+                                  insuranceNumber: patient.insuranceNumber || "",
+                                  isActive: patient.isActive,
+                                  loyaltyTier: patient.loyaltyTier,
+                                  loyaltyPoints: patient.loyaltyPoints || 0,
+                                  customFields: patient.customFields || {},
+                                });
+                                setOpen(true);
                                 toast({
-                                  title: "Edit Patient",
-                                  description: `Opening edit form for ${patient.firstName} ${patient.lastName}`,
+                                  title: "Edit Mode",
+                                  description: `Editing ${patient.firstName} ${patient.lastName}`,
                                 });
                               }}>
                                 <Edit className="mr-2 h-4 w-4" />
@@ -2060,7 +2110,14 @@ export default function Patients() {
                                 <PrinterIcon className="mr-2 h-4 w-4" />
                                 Print Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleGenerateInvoice(patient)}>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatientForInvoice(patient);
+                                setInvoiceDialogOpen(true);
+                                toast({
+                                  title: "Invoice Generation",
+                                  description: `Creating invoice for ${patient.firstName} ${patient.lastName}`,
+                                });
+                              }}>
                                 <Receipt className="mr-2 h-4 w-4" />
                                 Generate Invoice
                               </DropdownMenuItem>
