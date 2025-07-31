@@ -101,8 +101,9 @@ function Router() {
       </Route>
 
       {/* Public marketing pages */}
-      <Route path="/login" component={AuthPage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/login" component={Login} />
+      <Route path="/auth" component={Login} />
+      <Route path="/auth-page" component={AuthPage} />
       <Route path="/about">
         <PublicLayout><About /></PublicLayout>
       </Route>

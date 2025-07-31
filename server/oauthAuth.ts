@@ -90,12 +90,12 @@ export function setupOAuthAuth(app: Express) {
     try {
       const user = emailUsers.get(email);
       if (!user) {
-        return done(null, false, { message: 'User not found' } as any);
+        return done(null, undefined, { message: 'User not found' } as any);
       }
 
       const isValid = await bcrypt.compare(password, user.hashedPassword);
       if (!isValid) {
-        return done(null, false, { message: 'Invalid password' } as any);
+        return done(null, undefined, { message: 'Invalid password' } as any);
       }
 
       return done(null, {

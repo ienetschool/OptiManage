@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupSimpleAuth, isAuthenticated } from "./simpleAuth";
+import { setupOAuthAuth, isAuthenticated } from "./oauthAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
@@ -25,7 +25,7 @@ import { addTestRoutes } from "./testAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  setupSimpleAuth(app);
+  setupOAuthAuth(app);
   
   // Add test routes for debugging
   addTestRoutes(app);
