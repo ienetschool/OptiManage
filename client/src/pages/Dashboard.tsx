@@ -70,18 +70,17 @@ export default function Dashboard() {
     queryKey: ["/api/stores"],
   });
 
-  const { data: dashboardData } = useQuery({
+  const { data: dashboardData, isLoading: isDashboardLoading } = useQuery({
     queryKey: ["/api/dashboard", selectedStore, dateRange],
-    queryFn: () => Promise.resolve({
-      totalSales: 45231,
-      totalRevenue: 152000,
-      totalAppointments: 124,
-      totalPatients: 856,
-      appointmentsToday: 8,
-      lowStockItems: 3,
-      pendingInvoices: 12,
-      systemHealth: 98
-    })
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedStore !== 'all') params.append('storeId', selectedStore);
+      params.append('dateRange', dateRange);
+      
+      const response = await fetch(`/api/dashboard?${params}`);
+      if (!response.ok) throw new Error('Failed to fetch dashboard data');
+      return response.json();
+    }
   });
 
   const recentAppointments = [

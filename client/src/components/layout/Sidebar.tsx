@@ -33,7 +33,8 @@ import {
   Briefcase,
   BookOpen,
   Hospital,
-  Pill
+  Pill,
+  TrendingUp
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -89,6 +90,8 @@ const navigationItems = [
     title: "Reports & Analytics",
     icon: BarChart3,
     items: [
+      { title: "Analytics Dashboard", href: "/analytics", icon: TrendingUp },
+      { title: "Store Performance", href: "/store-performance", icon: Building },
       { title: "Sales Reports", href: "/reports/sales", icon: BarChart3 },
       { title: "Patient Reports", href: "/reports/patients", icon: Users },
       { title: "Financial Reports", href: "/reports/financial", icon: DollarSign },

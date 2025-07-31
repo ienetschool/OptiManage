@@ -73,16 +73,12 @@ export default function Header() {
             </div>
           </div>
           <div className="flex items-center space-x-4 mt-2 sm:mt-0">
-            <Link href="/contact">
-              <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1">
-                Emergency Contact
-              </Button>
-            </Link>
-            <Link href="/api/login">
-              <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1">
-                Patient Portal
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1" asChild>
+              <Link href="/contact">Emergency Contact</Link>
+            </Button>
+            <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1" asChild>
+              <Link href="/api/login">Patient Portal</Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -109,19 +105,19 @@ export default function Header() {
               <NavigationMenu>
                 <NavigationMenuList>
                   <NavigationMenuItem>
-                    <Link href="/">
-                      <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                    <NavigationMenuLink asChild>
+                      <Link href="/" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
                         Home
-                      </NavigationMenuLink>
-                    </Link>
+                      </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
 
                   <NavigationMenuItem>
-                    <Link href="/about">
-                      <NavigationMenuLink className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
+                    <NavigationMenuLink asChild>
+                      <Link href="/about" className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50">
                         About
-                      </NavigationMenuLink>
-                    </Link>
+                      </Link>
+                    </NavigationMenuLink>
                   </NavigationMenuItem>
 
                   <NavigationMenuItem>

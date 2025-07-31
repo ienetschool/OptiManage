@@ -27,6 +27,8 @@ import Settings from "@/pages/Settings";
 import Support from "@/pages/Support";
 import BookAppointment from "@/pages/BookAppointment";
 import LeaveManagement from "@/pages/LeaveManagement";
+import Analytics from "@/pages/Analytics";
+import StorePerformance from "@/pages/StorePerformance";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Features from "@/pages/Features";
@@ -90,6 +92,8 @@ function Router() {
           <Route path="/support" component={Support} />
           <Route path="/book-appointment" component={BookAppointment} />
           <Route path="/leave-management" component={LeaveManagement} />
+          <Route path="/analytics" component={Analytics} />
+          <Route path="/store-performance" component={StorePerformance} />
           <Route component={NotFound} />
         </Switch>
       </div>

@@ -5,6 +5,7 @@ import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
+import { registerDashboardRoutes } from "./routes/dashboardRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -22,6 +23,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register appointment routes
   registerAppointmentRoutes(app);
+  
+  // Register dashboard routes
+  registerDashboardRoutes(app);
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
