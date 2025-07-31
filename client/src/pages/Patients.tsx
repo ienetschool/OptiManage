@@ -273,6 +273,97 @@ export default function Patients() {
     setAppointmentDialogOpen(true);
   };
 
+  // Patient action handlers
+  const handleEditPatient = (patient: Patient) => {
+    form.reset({
+      patientCode: patient.patientCode,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      dateOfBirth: patient.dateOfBirth,
+      gender: patient.gender,
+      phone: patient.phone,
+      email: patient.email || "",
+      address: patient.address || "",
+      emergencyContact: patient.emergencyContact || "",
+      emergencyPhone: patient.emergencyPhone || "",
+      bloodGroup: patient.bloodGroup || "",
+      allergies: patient.allergies || "",
+      medicalHistory: patient.medicalHistory || "",
+      insuranceProvider: patient.insuranceProvider || "",
+      insuranceNumber: patient.insuranceNumber || "",
+      isActive: patient.isActive,
+      loyaltyTier: patient.loyaltyTier,
+      loyaltyPoints: patient.loyaltyPoints || 0,
+      customFields: patient.customFields || {},
+    });
+    setOpen(true);
+    toast({
+      title: "Edit Mode",
+      description: `Editing ${patient.firstName} ${patient.lastName}`,
+    });
+  };
+
+  const handleDeletePatient = async (patientId: string) => {
+    if (confirm("Are you sure you want to delete this patient? This action cannot be undone.")) {
+      try {
+        await apiRequest("DELETE", `/api/patients/${patientId}`);
+        queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+        toast({
+          title: "Patient Deleted",
+          description: "Patient has been permanently deleted.",
+        });
+      } catch (error) {
+        toast({
+          title: "Delete Failed",
+          description: "Failed to delete patient. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handlePrintPatient = (patient: Patient) => {
+    toast({
+      title: "Print Started",
+      description: `Printing patient record for ${patient.firstName} ${patient.lastName}`,
+    });
+    // Print implementation would go here
+  };
+
+  const handleGenerateQRCode = (patient: Patient) => {
+    toast({
+      title: "QR Code Generated",
+      description: `QR code created for ${patient.firstName} ${patient.lastName}`,
+    });
+    // QR code generation would go here
+  };
+
+  const handleSharePatient = (patient: Patient) => {
+    toast({
+      title: "Share Options",
+      description: `Sharing options for ${patient.firstName} ${patient.lastName}`,
+    });
+    // Share implementation would go here
+  };
+
+
+
+  const handleViewMedicalHistory = (patient: Patient) => {
+    toast({
+      title: "Medical History",
+      description: `Loading medical history for ${patient.firstName} ${patient.lastName}`,
+    });
+    // Medical history view would go here
+  };
+
+  const handleViewPrescriptions = (patient: Patient) => {
+    toast({
+      title: "Prescriptions",
+      description: `Loading prescriptions for ${patient.firstName} ${patient.lastName}`,
+    });
+    // Prescriptions view would go here
+  };
+
   const handleAppointmentFormChange = (field: string, value: string) => {
     setAppointmentFormData(prev => ({ ...prev, [field]: value }));
     if (field === "patientId") {
@@ -532,10 +623,7 @@ export default function Patients() {
     }
   };
 
-  const handleGenerateInvoice = (patient: Patient) => {
-    setSelectedPatientForInvoice(patient);
-    setInvoiceDialogOpen(true);
-  };
+
 
   const handlePrintPatientDetails = (patient: Patient) => {
     const printWindow = window.open('', '_blank');
