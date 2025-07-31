@@ -12,7 +12,12 @@ import Inventory from "@/pages/Inventory";
 import Sales from "@/pages/Sales";
 import Appointments from "@/pages/Appointments";
 import Customers from "@/pages/Customers";
+import Patients from "@/pages/Patients";
 import Prescriptions from "@/pages/Prescriptions";
+import Staff from "@/pages/Staff";
+import Attendance from "@/pages/Attendance";
+import Payroll from "@/pages/Payroll";
+import Notifications from "@/pages/Notifications";
 import Reports from "@/pages/Reports";
 import Communication from "@/pages/Communication";
 import Settings from "@/pages/Settings";
@@ -42,7 +47,12 @@ function Router() {
           <Route path="/sales" component={Sales} />
           <Route path="/appointments" component={Appointments} />
           <Route path="/customers" component={Customers} />
+          <Route path="/patients" component={Patients} />
           <Route path="/prescriptions" component={Prescriptions} />
+          <Route path="/staff" component={Staff} />
+          <Route path="/attendance" component={Attendance} />
+          <Route path="/payroll" component={Payroll} />
+          <Route path="/notifications" component={Notifications} />
           <Route path="/reports" component={Reports} />
           <Route path="/communication" component={Communication} />
           <Route path="/settings" component={Settings} />

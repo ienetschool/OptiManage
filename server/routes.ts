@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { registerMedicalRoutes } from "./medicalRoutes";
+import { registerHRRoutes } from "./hrRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -382,6 +383,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register medical practice routes
   registerMedicalRoutes(app);
+  
+  // Register HR management routes
+  registerHRRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;

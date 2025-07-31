@@ -364,16 +364,6 @@ export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
 export type InsertCustomFieldConfig = z.infer<typeof insertCustomFieldConfigSchema>;
 
-// Medical practice insert types
-export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
-export type InsertPatient = z.infer<typeof insertPatientSchema>;
-export type InsertMedicalAppointment = z.infer<typeof insertMedicalAppointmentSchema>;
-export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
-export type InsertPrescriptionItem = z.infer<typeof insertPrescriptionItemSchema>;
-export type InsertMedicalIntervention = z.infer<typeof insertMedicalInterventionSchema>;
-export type InsertMedicalInvoice = z.infer<typeof insertMedicalInvoiceSchema>;
-export type InsertMedicalInvoiceItem = z.infer<typeof insertMedicalInvoiceItemSchema>;
-
 // Doctors table for medical practice
 export const doctors = pgTable("doctors", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -644,3 +634,221 @@ export type InsertPrescriptionItem = z.infer<typeof insertPrescriptionItemSchema
 export type InsertMedicalIntervention = z.infer<typeof insertMedicalInterventionSchema>;
 export type InsertMedicalInvoice = z.infer<typeof insertMedicalInvoiceSchema>;
 export type InsertMedicalInvoiceItem = z.infer<typeof insertMedicalInvoiceItemSchema>;
+
+// HR Management Schema
+export const staff = pgTable("staff", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  staffCode: varchar("staff_code", { length: 20 }).unique().notNull(),
+  employeeId: varchar("employee_id", { length: 50 }).unique(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).unique(),
+  phone: varchar("phone", { length: 20 }),
+  address: text("address"),
+  
+  // Employment details
+  position: varchar("position", { length: 100 }).notNull(),
+  department: varchar("department", { length: 100 }),
+  storeId: varchar("store_id").references(() => stores.id),
+  managerId: uuid("manager_id").references(() => staff.id),
+  
+  // Employment dates
+  hireDate: date("hire_date").notNull(),
+  terminationDate: date("termination_date"),
+  
+  // Status and access
+  status: varchar("status", { length: 20 }).default("active").notNull(), // active, inactive, terminated
+  role: varchar("role", { length: 50 }).default("staff").notNull(), // admin, manager, staff, doctor
+  permissions: jsonb("permissions").default([]), // Array of permission strings
+  
+  // Emergency contact
+  emergencyContactName: varchar("emergency_contact_name", { length: 255 }),
+  emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
+  emergencyContactRelation: varchar("emergency_contact_relation", { length: 100 }),
+  
+  // Profile
+  avatar: varchar("avatar", { length: 500 }),
+  dateOfBirth: date("date_of_birth"),
+  gender: varchar("gender", { length: 10 }),
+  nationality: varchar("nationality", { length: 100 }),
+  
+  // Custom fields for additional data
+  customFields: jsonb("custom_fields").default({}),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Attendance tracking
+export const attendance = pgTable("attendance", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  staffId: uuid("staff_id").references(() => staff.id).notNull(),
+  storeId: varchar("store_id").references(() => stores.id),
+  
+  // Date and time tracking
+  date: date("date").notNull(),
+  checkInTime: timestamp("check_in_time"),
+  checkOutTime: timestamp("check_out_time"),
+  totalHours: decimal("total_hours", { precision: 5, scale: 2 }),
+  
+  // Location and method
+  checkInMethod: varchar("check_in_method", { length: 20 }).default("manual"), // qr, geolocation, manual
+  checkOutMethod: varchar("check_out_method", { length: 20 }).default("manual"),
+  checkInLocation: jsonb("check_in_location"), // {lat, lng, address}
+  checkOutLocation: jsonb("check_out_location"),
+  
+  // Status and notes
+  status: varchar("status", { length: 20 }).default("present"), // present, absent, late, half_day
+  isLate: boolean("is_late").default(false),
+  lateMinutes: integer("late_minutes").default(0),
+  notes: text("notes"),
+  
+  // QR code for verification
+  qrCode: text("qr_code"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Leave management
+export const leaveRequests = pgTable("leave_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  leaveNumber: varchar("leave_number", { length: 20 }).unique().notNull(),
+  staffId: uuid("staff_id").references(() => staff.id).notNull(),
+  managerId: uuid("manager_id").references(() => staff.id),
+  
+  // Leave details
+  leaveType: varchar("leave_type", { length: 50 }).notNull(), // sick, casual, annual, maternity, emergency
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  totalDays: integer("total_days").notNull(),
+  
+  // Request details
+  reason: text("reason").notNull(),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, approved, rejected, cancelled
+  appliedDate: timestamp("applied_date").defaultNow(),
+  reviewedDate: timestamp("reviewed_date"),
+  reviewComments: text("review_comments"),
+  
+  // Supporting documents
+  attachments: jsonb("attachments").default([]), // Array of file URLs
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Payroll system
+export const payroll = pgTable("payroll", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  payrollNumber: varchar("payroll_number", { length: 20 }).unique().notNull(),
+  staffId: uuid("staff_id").references(() => staff.id).notNull(),
+  
+  // Pay period
+  payPeriod: varchar("pay_period", { length: 20 }).notNull(), // monthly, bi-weekly, weekly
+  payMonth: integer("pay_month").notNull(),
+  payYear: integer("pay_year").notNull(),
+  payDate: date("pay_date"),
+  
+  // Salary components
+  basicSalary: decimal("basic_salary", { precision: 10, scale: 2 }).notNull(),
+  allowances: jsonb("allowances").default({}), // {housing: 1000, transport: 500, etc}
+  deductions: jsonb("deductions").default({}), // {tax: 500, insurance: 200, etc}
+  overtime: decimal("overtime", { precision: 10, scale: 2 }).default("0"),
+  bonus: decimal("bonus", { precision: 10, scale: 2 }).default("0"),
+  
+  // Calculated amounts
+  grossSalary: decimal("gross_salary", { precision: 10, scale: 2 }).notNull(),
+  totalDeductions: decimal("total_deductions", { precision: 10, scale: 2 }).default("0"),
+  netSalary: decimal("net_salary", { precision: 10, scale: 2 }).notNull(),
+  
+  // Attendance impact
+  workingDays: integer("working_days").notNull(),
+  presentDays: integer("present_days").notNull(),
+  absentDays: integer("absent_days").default(0),
+  leavesTaken: integer("leaves_taken").default(0),
+  
+  // Status and processing
+  status: varchar("status", { length: 20 }).default("pending"), // pending, processed, paid
+  processedBy: uuid("processed_by").references(() => staff.id),
+  processedDate: timestamp("processed_date"),
+  
+  // Payslip details
+  payslipGenerated: boolean("payslip_generated").default(false),
+  payslipUrl: varchar("payslip_url", { length: 500 }),
+  qrCode: text("qr_code"), // QR code for payslip verification
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Notifications system
+export const notificationsTable = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  recipientId: uuid("recipient_id").references(() => staff.id),
+  recipientType: varchar("recipient_type", { length: 20 }).default("staff"), // staff, customer, all
+  
+  // Notification content
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // hr, appointment, inventory, sales, system
+  priority: varchar("priority", { length: 20 }).default("normal"), // low, normal, high, urgent
+  
+  // Delivery and status
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  sentAt: timestamp("sent_at").defaultNow(),
+  
+  // Related data
+  relatedType: varchar("related_type", { length: 50 }), // payroll, leave, attendance, appointment
+  relatedId: uuid("related_id"),
+  relatedData: jsonb("related_data"), // Additional context data
+  
+  // Delivery channels
+  channels: jsonb("channels").default(["app"]), // app, email, sms, whatsapp
+  deliveryStatus: jsonb("delivery_status").default({}), // Status per channel
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// HR insert schemas
+export const insertStaffSchema = createInsertSchema(staff).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAttendanceSchema = createInsertSchema(attendance).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLeaveRequestSchema = createInsertSchema(leaveRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPayrollSchema = createInsertSchema(payroll).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertNotificationHRSchema = createInsertSchema(notificationsTable).omit({
+  id: true,
+  createdAt: true,
+});
+
+// HR types
+export type Staff = typeof staff.$inferSelect;
+export type Attendance = typeof attendance.$inferSelect;
+export type LeaveRequest = typeof leaveRequests.$inferSelect;
+export type Payroll = typeof payroll.$inferSelect;
+export type NotificationHR = typeof notificationsTable.$inferSelect;
+
+export type InsertStaff = z.infer<typeof insertStaffSchema>;
+export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
+export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
+export type InsertPayroll = z.infer<typeof insertPayrollSchema>;
+export type InsertNotificationHR = z.infer<typeof insertNotificationHRSchema>;

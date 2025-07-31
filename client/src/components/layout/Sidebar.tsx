@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Eye, Home, Store, Package, ShoppingCart, Calendar, Users, FileText, BarChart3, MessageCircle, Settings, HelpCircle, LogOut } from "lucide-react";
+import { Eye, Home, Store, Package, ShoppingCart, Calendar, Users, FileText, BarChart3, MessageCircle, Settings, HelpCircle, LogOut, Clock, DollarSign, Bell, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { User } from "@shared/schema";
+import type { User as UserType } from "@shared/schema";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
@@ -11,7 +11,12 @@ const navigation = [
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Appointments", href: "/appointments", icon: Calendar },
   { name: "Customers", href: "/customers", icon: Users },
+  { name: "Patients", href: "/patients", icon: User },
   { name: "Prescriptions", href: "/prescriptions", icon: FileText },
+  { name: "Staff", href: "/staff", icon: Users },
+  { name: "Attendance", href: "/attendance", icon: Clock },
+  { name: "Payroll", href: "/payroll", icon: DollarSign },
+  { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Communication", href: "/communication", icon: MessageCircle },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -20,7 +25,7 @@ const navigation = [
 
 export default function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth() as { user: User | undefined };
+  const { user } = useAuth() as { user: UserType | undefined };
 
   const handleLogout = () => {
     window.location.href = "/api/logout";
