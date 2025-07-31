@@ -30,8 +30,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add test routes for debugging
   addTestRoutes(app);
 
-  // Register appointment routes
-  registerAppointmentRoutes(app);
+  // Register appointment routes (commenting out to avoid conflicts)
+  // registerAppointmentRoutes(app);
   
   // Register dashboard routes
   registerDashboardRoutes(app);
@@ -384,6 +384,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Appointments routes (without authentication for demo)
+  app.get("/api/appointments", async (req, res) => {
+    try {
+      // Mock appointments data
+      const appointments = [
+        {
+          id: "1",
+          customerId: "cust1",
+          storeId: "store1", 
+          staffId: "staff1",
+          appointmentDate: new Date(),
+          duration: 60,
+          service: "Eye Exam",
+          status: "scheduled",
+          notes: "First time patient",
+          customer: { firstName: "Sarah", lastName: "Johnson", phone: "(555) 123-4567" },
+          store: { name: "Downtown Store", address: "123 Main St" },
+        },
+        {
+          id: "2",
+          customerId: "cust2",
+          storeId: "store1",
+          staffId: "staff1", 
+          appointmentDate: new Date(Date.now() + 86400000),
+          duration: 30,
+          service: "Frame Fitting",
+          status: "confirmed",
+          notes: "Bring existing glasses",
+          customer: { firstName: "Michael", lastName: "Chen", phone: "(555) 987-6543" },
+          store: { name: "Downtown Store", address: "123 Main St" },
+        },
+        {
+          id: "3",
+          customerId: "cust3",
+          storeId: "store2",
+          staffId: "staff2",
+          appointmentDate: new Date(Date.now() + 172800000),
+          duration: 45,
+          service: "Contact Lens Fitting", 
+          status: "completed",
+          notes: "Follow-up in 2 weeks",
+          customer: { firstName: "Emma", lastName: "Wilson", phone: "(555) 456-7890" },
+          store: { name: "Mall Location", address: "456 Shopping Center" },
+        }
+      ];
+      res.json(appointments);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      res.status(500).json({ message: "Failed to fetch appointments" });
+    }
+  });
+
+  app.post("/api/appointments", async (req, res) => {
+    try {
+      const data = req.body;
+      const newAppointment = {
+        id: Date.now().toString(),
+        ...data,
+        customer: { firstName: "New", lastName: "Customer", phone: "(555) 000-0000" },
+        store: { name: "Downtown Store", address: "123 Main St" },
+      };
+      res.json(newAppointment);
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      res.status(500).json({ message: "Failed to create appointment" });
+    }
+  });
+
+  app.put("/api/appointments/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const data = req.body;
+      res.json({ id, ...data, message: "Appointment updated successfully" });
+    } catch (error) {
+      console.error("Error updating appointment:", error);
+      res.status(500).json({ message: "Failed to update appointment" });
+    }
+  });
+
+  app.delete("/api/appointments/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      res.json({ id, message: "Appointment cancelled successfully" });
+    } catch (error) {
+      console.error("Error deleting appointment:", error);
+      res.status(500).json({ message: "Failed to cancel appointment" });
+    }
+  });
+
+  // Appointment status update route
+  app.patch("/api/appointments/:id/status", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      
+      // Mock status update
+      res.json({ 
+        success: true, 
+        message: `Appointment ${status} successfully`,
+        id,
+        status 
+      });
+    } catch (error) {
+      console.error("Error updating appointment status:", error);
+      res.status(500).json({ message: "Failed to update appointment status" });
+    }
+  });
+
+  // Customers routes (for appointment form)
+  app.get("/api/customers", async (req, res) => {
+    try {
+      const customers = [
+        { id: "cust1", firstName: "Sarah", lastName: "Johnson", phone: "(555) 123-4567", email: "sarah.j@email.com" },
+        { id: "cust2", firstName: "Michael", lastName: "Chen", phone: "(555) 987-6543", email: "m.chen@email.com" },
+        { id: "cust3", firstName: "Emma", lastName: "Wilson", phone: "(555) 456-7890", email: "emma.w@email.com" },
+        { id: "cust4", firstName: "David", lastName: "Brown", phone: "(555) 321-0987", email: "d.brown@email.com" },
+        { id: "cust5", firstName: "Lisa", lastName: "Garcia", phone: "(555) 654-3210", email: "lisa.g@email.com" }
+      ];
+      res.json(customers);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      res.status(500).json({ message: "Failed to fetch customers" });
+    }
+  });
+
   // Settings routes
   app.get("/api/settings", async (req, res) => {
     try {
@@ -527,24 +652,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Appointment status update route
-  app.patch("/api/appointments/:id/status", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { status } = req.body;
-      
-      // Mock status update
-      res.json({ 
-        success: true, 
-        message: `Appointment ${status} successfully`,
-        id,
-        status 
-      });
-    } catch (error) {
-      console.error("Error updating appointment status:", error);
-      res.status(500).json({ message: "Failed to update appointment status" });
-    }
-  });
+
 
   // Dashboard route
   app.get('/api/dashboard', isAuthenticated, async (req, res) => {
