@@ -306,6 +306,232 @@ export default function Patients() {
     }
   ];
 
+  const handlePrintAppointmentDetails = (appointment: any) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment Details - ${appointment.patientName}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                line-height: 1.6; 
+                color: #333;
+                background: #fff;
+              }
+              .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+              .header { 
+                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                color: white; 
+                padding: 30px; 
+                text-align: center; 
+                border-radius: 10px 10px 0 0;
+                margin-bottom: 0;
+              }
+              .store-info { 
+                background: #f8fafc; 
+                padding: 15px 30px; 
+                border-left: 4px solid #2563eb;
+                margin-bottom: 30px;
+              }
+              .appointment-card {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                margin-bottom: 20px;
+              }
+              .appointment-header {
+                background: #f1f5f9;
+                padding: 20px;
+                border-bottom: 2px solid #e2e8f0;
+              }
+              .appointment-content {
+                padding: 25px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 30px;
+              }
+              .info-item {
+                display: flex;
+                flex-direction: column;
+                padding: 12px;
+                background: #f8fafc;
+                border-radius: 6px;
+                border-left: 3px solid #2563eb;
+              }
+              .label { 
+                font-weight: 600; 
+                color: #475569; 
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
+              }
+              .value { 
+                font-size: 14px; 
+                color: #1e293b;
+                font-weight: 500;
+              }
+              .status-badge {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+              }
+              .status-scheduled {
+                background: #dbeafe;
+                color: #1e40af;
+              }
+              .status-completed {
+                background: #dcfce7;
+                color: #166534;
+              }
+              .qr-section {
+                text-align: center;
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .qr-placeholder {
+                width: 120px;
+                height: 120px;
+                border: 2px dashed #94a3b8;
+                border-radius: 8px;
+                margin: 0 auto 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: white;
+              }
+              .footer {
+                background: #1e293b;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                margin-top: 30px;
+                border-radius: 0 0 10px 10px;
+              }
+              .print-date {
+                text-align: right;
+                font-size: 12px;
+                color: #64748b;
+                margin-bottom: 20px;
+              }
+              @media print {
+                body { margin: 0; background: white; }
+                .container { max-width: none; margin: 0; padding: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>OptiStore Pro Medical Center</h1>
+                <p>Appointment Details & Information</p>
+              </div>
+              
+              <div class="store-info">
+                <strong>OptiStore Pro - Main Branch</strong><br>
+                📍 123 Medical Plaza, Healthcare District<br>
+                📞 +1 (555) 123-4567 | 📧 info@optistorepro.com<br>
+                🌐 www.optistorepro.com
+              </div>
+
+              <div class="print-date">
+                Generated on: ${new Date().toLocaleString()}
+              </div>
+
+              <div class="appointment-card">
+                <div class="appointment-header">
+                  <h2 style="color: #2563eb; margin-bottom: 5px;">Appointment Confirmation</h2>
+                  <p style="color: #64748b;">Appointment ID: APT-${appointment.id}</p>
+                </div>
+
+                <div class="appointment-content">
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="label">Patient Name</span>
+                      <span class="value">${appointment.patientName}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Patient Code</span>
+                      <span class="value">${appointment.patientCode}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Appointment Date</span>
+                      <span class="value">${new Date(appointment.appointmentDate).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Appointment Time</span>
+                      <span class="value">${appointment.appointmentTime}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Service Type</span>
+                      <span class="value">${appointment.serviceType}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Status</span>
+                      <span class="value">
+                        <span class="status-badge status-${appointment.status}">
+                          ${appointment.status.toUpperCase()}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+
+                  ${appointment.notes ? `
+                    <div style="background: #fef7f0; padding: 20px; border-radius: 8px; border: 1px solid #fed7aa; margin: 20px 0;">
+                      <h3 style="color: #ea580c; margin-bottom: 10px;">📝 Notes</h3>
+                      <p style="color: #1e293b;">${appointment.notes}</p>
+                    </div>
+                  ` : ''}
+
+                  <div class="qr-section">
+                    <h3 style="margin-bottom: 15px; color: #475569;">📱 Appointment QR Code</h3>
+                    <div class="qr-placeholder">
+                      <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 5px;">📅</div>
+                        <div style="font-size: 12px; color: #64748b;">QR Code</div>
+                      </div>
+                    </div>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 10px;">
+                      Scan to access appointment details<br>
+                      Appointment ID: APT-${appointment.id}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="footer">
+                <p><strong>OptiStore Pro Medical Center</strong></p>
+                <p style="font-size: 14px; margin-top: 5px;">
+                  Please arrive 15 minutes before your scheduled appointment time.
+                </p>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   const handleGenerateInvoice = (patient: Patient) => {
     setSelectedPatientForInvoice(patient);
     setInvoiceDialogOpen(true);
@@ -319,44 +545,227 @@ export default function Patients() {
           <head>
             <title>Patient Details - ${patient.firstName} ${patient.lastName}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-              .section { margin-bottom: 20px; }
-              .label { font-weight: bold; }
-              .qr-code { text-align: center; margin: 20px 0; }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                line-height: 1.6; 
+                color: #333;
+                background: #fff;
+              }
+              .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+              .header { 
+                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                color: white; 
+                padding: 30px; 
+                text-align: center; 
+                border-radius: 10px 10px 0 0;
+                margin-bottom: 0;
+              }
+              .store-info { 
+                background: #f8fafc; 
+                padding: 15px 30px; 
+                border-left: 4px solid #2563eb;
+                margin-bottom: 30px;
+              }
+              .patient-card {
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              }
+              .patient-header {
+                background: #f1f5f9;
+                padding: 20px;
+                border-bottom: 2px solid #e2e8f0;
+              }
+              .patient-content {
+                padding: 25px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 30px;
+              }
+              .info-item {
+                display: flex;
+                flex-direction: column;
+                padding: 12px;
+                background: #f8fafc;
+                border-radius: 6px;
+                border-left: 3px solid #2563eb;
+              }
+              .label { 
+                font-weight: 600; 
+                color: #475569; 
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
+              }
+              .value { 
+                font-size: 14px; 
+                color: #1e293b;
+                font-weight: 500;
+              }
+              .medical-section {
+                background: #fef7f0;
+                padding: 20px;
+                border-radius: 8px;
+                border: 1px solid #fed7aa;
+                margin: 20px 0;
+              }
+              .qr-section {
+                text-align: center;
+                padding: 20px;
+                background: #f8fafc;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .qr-placeholder {
+                width: 120px;
+                height: 120px;
+                border: 2px dashed #94a3b8;
+                border-radius: 8px;
+                margin: 0 auto 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: white;
+              }
+              .footer {
+                background: #1e293b;
+                color: white;
+                padding: 20px;
+                text-align: center;
+                margin-top: 30px;
+                border-radius: 0 0 10px 10px;
+              }
+              .print-date {
+                text-align: right;
+                font-size: 12px;
+                color: #64748b;
+                margin-bottom: 20px;
+              }
+              @media print {
+                body { margin: 0; background: white; }
+                .container { max-width: none; margin: 0; padding: 0; }
+              }
             </style>
           </head>
           <body>
-            <div class="header">
-              <h1>OptiStore Pro - Patient Details</h1>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            </div>
-            <div class="section">
-              <h2>Personal Information</h2>
-              <p><span class="label">Patient Code:</span> ${patient.patientCode}</p>
-              <p><span class="label">Name:</span> ${patient.firstName} ${patient.lastName}</p>
-              <p><span class="label">Date of Birth:</span> ${patient.dateOfBirth || 'N/A'}</p>
-              <p><span class="label">Gender:</span> ${patient.gender || 'N/A'}</p>
-              <p><span class="label">Blood Group:</span> ${patient.bloodGroup || 'N/A'}</p>
-            </div>
-            <div class="section">
-              <h2>Contact Information</h2>
-              <p><span class="label">Phone:</span> ${patient.phone || 'N/A'}</p>
-              <p><span class="label">Email:</span> ${patient.email || 'N/A'}</p>
-              <p><span class="label">Address:</span> ${patient.address || 'N/A'}</p>
-            </div>
-            <div class="section">
-              <h2>Medical Information</h2>
-              <p><span class="label">Allergies:</span> ${patient.allergies || 'None reported'}</p>
-              <p><span class="label">Medical History:</span> ${patient.medicalHistory || 'None reported'}</p>
-            </div>
-            <div class="section">
-              <h2>Insurance Information</h2>
-              <p><span class="label">Provider:</span> ${patient.insuranceProvider || 'N/A'}</p>
-              <p><span class="label">Policy Number:</span> ${patient.insuranceNumber || 'N/A'}</p>
-            </div>
-            <div class="qr-code">
-              <p>QR Code: ${patient.id}</p>
+            <div class="container">
+              <div class="header">
+                <h1>OptiStore Pro Medical Center</h1>
+                <p>Patient Medical Record & Information</p>
+              </div>
+              
+              <div class="store-info">
+                <strong>OptiStore Pro - Main Branch</strong><br>
+                📍 123 Medical Plaza, Healthcare District<br>
+                📞 +1 (555) 123-4567 | 📧 info@optistorepro.com<br>
+                🌐 www.optistorepro.com
+              </div>
+
+              <div class="print-date">
+                Generated on: ${new Date().toLocaleString()}
+              </div>
+
+              <div class="patient-card">
+                <div class="patient-header">
+                  <h2 style="color: #2563eb; margin-bottom: 5px;">${patient.firstName} ${patient.lastName}</h2>
+                  <p style="color: #64748b;">Patient ID: ${patient.patientCode}</p>
+                </div>
+
+                <div class="patient-content">
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <span class="label">Full Name</span>
+                      <span class="value">${patient.firstName} ${patient.lastName}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Patient Code</span>
+                      <span class="value">${patient.patientCode}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Date of Birth</span>
+                      <span class="value">${patient.dateOfBirth || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Gender</span>
+                      <span class="value">${patient.gender || 'Not specified'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Phone Number</span>
+                      <span class="value">${patient.phone || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Email Address</span>
+                      <span class="value">${patient.email || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Address</span>
+                      <span class="value">${patient.address || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Blood Group</span>
+                      <span class="value">${patient.bloodGroup || 'Not specified'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Emergency Contact</span>
+                      <span class="value">${patient.emergencyContact || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Emergency Phone</span>
+                      <span class="value">${patient.emergencyPhone || 'Not provided'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Insurance Provider</span>
+                      <span class="value">${patient.insuranceProvider || 'None'}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="label">Loyalty Tier</span>
+                      <span class="value">${patient.loyaltyTier?.toUpperCase() || 'BRONZE'}</span>
+                    </div>
+                  </div>
+
+                  <div class="medical-section">
+                    <h3 style="color: #ea580c; margin-bottom: 15px;">🏥 Medical Information</h3>
+                    <div class="info-grid">
+                      <div class="info-item">
+                        <span class="label">Known Allergies</span>
+                        <span class="value">${patient.allergies || 'None reported'}</span>
+                      </div>
+                      <div class="info-item">
+                        <span class="label">Medical History</span>
+                        <span class="value">${patient.medicalHistory || 'No significant history'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="qr-section">
+                    <h3 style="margin-bottom: 15px; color: #475569;">📱 Patient QR Code</h3>
+                    <div class="qr-placeholder">
+                      <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 5px;">📱</div>
+                        <div style="font-size: 12px; color: #64748b;">QR Code</div>
+                      </div>
+                    </div>
+                    <p style="font-size: 12px; color: #64748b; margin-top: 10px;">
+                      Scan to access patient information<br>
+                      Patient ID: ${patient.patientCode}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="footer">
+                <p><strong>OptiStore Pro Medical Center</strong></p>
+                <p style="font-size: 14px; margin-top: 5px;">
+                  This document contains confidential patient information. Handle according to HIPAA guidelines.
+                </p>
+              </div>
             </div>
           </body>
         </html>
@@ -1527,15 +1936,30 @@ export default function Patients() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Edit Patient",
+                                  description: `Opening edit form for ${patient.firstName} ${patient.lastName}`,
+                                });
+                              }}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Patient
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Medical History",
+                                  description: `Loading medical history for ${patient.firstName} ${patient.lastName}`,
+                                });
+                              }}>
                                 <Stethoscope className="mr-2 h-4 w-4" />
                                 Medical History
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Prescriptions",
+                                  description: `Loading prescriptions for ${patient.firstName} ${patient.lastName}`,
+                                });
+                              }}>
                                 <Pill className="mr-2 h-4 w-4" />
                                 Prescriptions
                               </DropdownMenuItem>
@@ -1557,7 +1981,16 @@ export default function Patients() {
                                 Share Info
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => {
+                                  toast({
+                                    title: "Delete Patient",
+                                    description: `Deletion requested for ${patient.firstName} ${patient.lastName}. This feature requires admin confirmation.`,
+                                    variant: "destructive",
+                                  });
+                                }}
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Delete Patient
                               </DropdownMenuItem>
@@ -2066,7 +2499,16 @@ export default function Patients() {
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              toast({
+                                title: "View Appointment",
+                                description: `Opening details for appointment with ${appointment.patientName}`,
+                              });
+                            }}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <DropdownMenu>
@@ -2076,28 +2518,57 @@ export default function Patients() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Edit Appointment",
+                                  description: `Opening edit form for appointment with ${appointment.patientName}`,
+                                });
+                              }}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Appointment
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handlePrintAppointmentDetails(appointment)}>
                                 <PrinterIcon className="mr-2 h-4 w-4" />
                                 Print Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "QR Code Generated",
+                                  description: `QR code generated for appointment with ${appointment.patientName}`,
+                                });
+                              }}>
                                 <QrCode className="mr-2 h-4 w-4" />
                                 Generate QR Code
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Appointment Shared",
+                                  description: `Sharing appointment details for ${appointment.patientName}`,
+                                });
+                              }}>
                                 <Share2 className="mr-2 h-4 w-4" />
                                 Share Appointment
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Invoice Generated",
+                                  description: `Generating invoice for appointment with ${appointment.patientName}`,
+                                });
+                              }}>
                                 <Receipt className="mr-2 h-4 w-4" />
                                 Generate Invoice
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => {
+                                  toast({
+                                    title: "Appointment Cancelled",
+                                    description: `Cancelled appointment with ${appointment.patientName}`,
+                                    variant: "destructive",
+                                  });
+                                }}
+                              >
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Cancel Appointment
                               </DropdownMenuItem>
