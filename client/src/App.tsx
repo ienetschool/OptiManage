@@ -31,7 +31,7 @@ import LeaveManagement from "@/pages/LeaveManagement";
 import Analytics from "@/pages/Analytics";
 import StorePerformance from "@/pages/StorePerformance";
 import Profile from "@/pages/Profile";
-import MedicalRecords from "@/pages/MedicalRecords";
+
 import QuickSale from "@/pages/QuickSale";
 import Payments from "@/pages/Payments";
 import StoreSettings from "@/pages/StoreSettings";
@@ -82,11 +82,7 @@ function Router() {
           <Patients />
         </PatientPortalLayout>
       </Route>
-      <Route path="/patient-portal/medical-records">
-        <PatientPortalLayout title="Medical Records" description="Access your complete medical history">
-          <MedicalRecords />
-        </PatientPortalLayout>
-      </Route>
+
       <Route path="/patient-portal/prescriptions">
         <PatientPortalLayout title="Prescriptions" description="View your current and past prescriptions">
           <Prescriptions />
@@ -334,14 +330,7 @@ function Router() {
         </AppLayout>
       </Route>
       
-      <Route path="/medical-records">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <MedicalRecords />
-          </div>
-        </AppLayout>
-      </Route>
+
       
       <Route path="/settings">
         <AppLayout>

@@ -344,71 +344,381 @@ export default function Patients() {
 
                   <TabsContent value="medical" className="space-y-4">
                     <div className="grid grid-cols-1 gap-4">
-                      <h3 className="text-lg font-medium text-slate-900 border-b pb-2">Medical Records & History</h3>
+                      <h3 className="text-lg font-medium text-slate-900 border-b pb-2">Complete Medical Records</h3>
                       
-                      <FormField
-                        control={form.control}
-                        name="allergies"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Known Allergies & Drug Reactions</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} placeholder="List any known allergies, drug reactions, or sensitivities (e.g., Penicillin, Latex, etc.)" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="medicalHistory"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Previous Medical History</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} placeholder="Previous medical conditions, surgeries, hospitalizations, chronic conditions, family history" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
+                      {/* Basic Medical Info */}
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Current Medications</Label>
-                          <Textarea placeholder="List current medications, dosages, and frequency" />
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="allergies"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Known Allergies & Drug Reactions</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="List any known allergies, drug reactions, or sensitivities (e.g., Penicillin, Latex, etc.)" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="medicalHistory"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Previous Medical History</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="Previous medical conditions, surgeries, hospitalizations, chronic conditions" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Current Health Status */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="currentMedications"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Current Medications</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="List current medications, dosages, and frequency" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         
-                        <div className="space-y-2">
-                          <Label>Previous Eye Conditions</Label>
-                          <Textarea placeholder="Previous eye conditions, treatments, surgeries (e.g., Cataract surgery, Glaucoma, etc.)" />
+                        <FormField
+                          control={form.control}
+                          name="previousEyeConditions"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Previous Eye Conditions</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="Previous eye conditions, treatments, surgeries (e.g., Cataract surgery, Glaucoma, etc.)" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Vision & Eye Exam Details */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="lastEyeExamDate"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Eye Exam Date</FormLabel>
+                              <FormControl>
+                                <Input type="date" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="currentPrescription"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Current Prescription</FormLabel>
+                              <FormControl>
+                                <Input {...field} value={field.value || ""} placeholder="SPH/CYL/AXIS (if applicable)" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="riskFactors"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Risk Factors</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select risk level" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="low">Low Risk</SelectItem>
+                                  <SelectItem value="moderate">Moderate Risk</SelectItem>
+                                  <SelectItem value="high">High Risk</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Vision Prescription Details */}
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-slate-900">Vision Prescription Details</h4>
+                        <div className="grid grid-cols-4 gap-4">
+                          <div className="col-span-4">
+                            <div className="grid grid-cols-7 gap-2 text-sm">
+                              <div className="font-medium"></div>
+                              <div className="font-medium text-center">Sphere</div>
+                              <div className="font-medium text-center">Cylinder</div>
+                              <div className="font-medium text-center">Axis</div>
+                              <div className="font-medium text-center">PD</div>
+                              <div className="col-span-2"></div>
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-4">
+                            <div className="grid grid-cols-7 gap-2">
+                              <div className="flex items-center font-medium">Right Eye</div>
+                              <FormField
+                                control={form.control}
+                                name="rightEyeSphere"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="+/-0.00" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="rightEyeCylinder"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="+/-0.00" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="rightEyeAxis"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="1-180" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="pupillaryDistance"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="62mm" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="col-span-2"></div>
+                            </div>
+                          </div>
+                          
+                          <div className="col-span-4">
+                            <div className="grid grid-cols-7 gap-2">
+                              <div className="flex items-center font-medium">Left Eye</div>
+                              <FormField
+                                control={form.control}
+                                name="leftEyeSphere"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="+/-0.00" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="leftEyeCylinder"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="+/-0.00" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="leftEyeAxis"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="1-180" />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="col-span-3"></div>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
+                      {/* Lifestyle & Health Factors */}
                       <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label>Last Eye Exam Date</Label>
-                          <Input type="date" />
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="smokingStatus"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Smoking Status</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="never">Never</SelectItem>
+                                  <SelectItem value="former">Former</SelectItem>
+                                  <SelectItem value="current">Current</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         
-                        <div className="space-y-2">
-                          <Label>Current Prescription</Label>
-                          <Input placeholder="SPH/CYL/AXIS (if applicable)" />
-                        </div>
+                        <FormField
+                          control={form.control}
+                          name="alcoholConsumption"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Alcohol Consumption</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select frequency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="none">None</SelectItem>
+                                  <SelectItem value="occasional">Occasional</SelectItem>
+                                  <SelectItem value="moderate">Moderate</SelectItem>
+                                  <SelectItem value="heavy">Heavy</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                         
-                        <div className="space-y-2">
-                          <Label>Risk Factors</Label>
-                          <Select>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select risk level" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="low">Low Risk</SelectItem>
-                              <SelectItem value="moderate">Moderate Risk</SelectItem>
-                              <SelectItem value="high">High Risk</SelectItem>
-                            </SelectContent>
-                          </Select>
+                        <FormField
+                          control={form.control}
+                          name="exerciseFrequency"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Exercise Frequency</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select frequency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="never">Never</SelectItem>
+                                  <SelectItem value="rarely">Rarely</SelectItem>
+                                  <SelectItem value="weekly">Weekly</SelectItem>
+                                  <SelectItem value="daily">Daily</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Family History & Medical Notes */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="familyMedicalHistory"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Family Medical History</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="Family history of eye conditions, diabetes, hypertension, etc." />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="medicalAlerts"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Medical Alerts</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="Important medical alerts or warnings for staff" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {/* Doctor Notes & Follow-up */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="doctorNotes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Doctor Notes</FormLabel>
+                              <FormControl>
+                                <Textarea {...field} value={field.value || ""} placeholder="Clinical observations and recommendations" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <div className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="treatmentPlan"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Treatment Plan</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} value={field.value || ""} placeholder="Recommended treatment and care plan" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="followUpDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Follow-up Date</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       </div>
 
@@ -418,8 +728,9 @@ export default function Patients() {
                           <div>
                             <h4 className="font-medium text-amber-800">Medical Information Notice</h4>
                             <p className="text-sm text-amber-700 mt-1">
-                              All medical information is confidential and HIPAA compliant. This data will be used for treatment, 
-                              payment, and healthcare operations as permitted by law.
+                              All medical information is confidential and HIPAA compliant. This comprehensive medical record 
+                              will be used for treatment, payment, and healthcare operations as permitted by law. This integrated 
+                              system eliminates the need for separate medical records management.
                             </p>
                           </div>
                         </div>

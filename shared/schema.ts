@@ -385,7 +385,7 @@ export const doctors = pgTable("doctors", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Patients table (enhanced customers for medical context)
+// Patients table (enhanced customers for medical context with integrated medical records)
 export const patients = pgTable("patients", {
   id: uuid("id").primaryKey().defaultRandom(),
   patientCode: varchar("patient_code", { length: 20 }).unique().notNull(),
@@ -403,6 +403,33 @@ export const patients = pgTable("patients", {
   medicalHistory: text("medical_history"),
   insuranceProvider: varchar("insurance_provider", { length: 100 }),
   insuranceNumber: varchar("insurance_number", { length: 50 }),
+  
+  // Extended Medical Records Fields (merged from medical records module)
+  currentMedications: text("current_medications"),
+  previousEyeConditions: text("previous_eye_conditions"),
+  lastEyeExamDate: date("last_eye_exam_date"),
+  currentPrescription: varchar("current_prescription", { length: 200 }),
+  riskFactors: varchar("risk_factors", { length: 20 }).default("low"), // low, moderate, high
+  familyMedicalHistory: text("family_medical_history"),
+  smokingStatus: varchar("smoking_status", { length: 20 }), // never, former, current
+  alcoholConsumption: varchar("alcohol_consumption", { length: 20 }), // none, occasional, moderate, heavy
+  exerciseFrequency: varchar("exercise_frequency", { length: 20 }), // never, rarely, weekly, daily
+  
+  // Vision Details
+  rightEyeSphere: varchar("right_eye_sphere", { length: 10 }),
+  rightEyeCylinder: varchar("right_eye_cylinder", { length: 10 }),
+  rightEyeAxis: varchar("right_eye_axis", { length: 10 }),
+  leftEyeSphere: varchar("left_eye_sphere", { length: 10 }),
+  leftEyeCylinder: varchar("left_eye_cylinder", { length: 10 }),
+  leftEyeAxis: varchar("left_eye_axis", { length: 10 }),
+  pupillaryDistance: varchar("pupillary_distance", { length: 10 }),
+  
+  // Medical Notes & Follow-up
+  doctorNotes: text("doctor_notes"),
+  treatmentPlan: text("treatment_plan"),
+  followUpDate: date("follow_up_date"),
+  medicalAlerts: text("medical_alerts"),
+  
   isActive: boolean("is_active").default(true),
   loyaltyTier: varchar("loyalty_tier", { length: 20 }).default("bronze"),
   loyaltyPoints: integer("loyalty_points").default(0),

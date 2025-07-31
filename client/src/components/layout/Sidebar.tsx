@@ -49,8 +49,7 @@ const navigationItems = [
     title: "Patient Management",
     icon: Users,
     items: [
-      { title: "Patients & Appointments", href: "/patients", icon: Calendar },
-      { title: "Medical Records", href: "/medical-records", icon: FileText },
+      { title: "Patient Registration", href: "/patients", icon: Calendar },
       { title: "Prescriptions", href: "/prescriptions", icon: Pill },
     ],
   },
