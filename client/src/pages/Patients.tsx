@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 // Header removed for Patient Portal compatibility
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,7 +32,6 @@ import {
   FileText,
   Trash2,
   MoreVertical,
-  MoreHorizontal,
   Grid,
   List,
   SortAsc,
@@ -45,12 +44,10 @@ import {
   Pill,
   QrCode,
   Share2,
-  Printer,
+  PrinterIcon,
   DollarSign,
   Receipt,
-  MessageSquare,
-  ArrowUp,
-  ArrowDown
+  MessageSquare
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -383,47 +380,12 @@ export default function Patients() {
 
 
 
-  const handleViewDetails = (patient: Patient) => {
-    const patientInfo = `
-Patient Details
-
-Name: ${patient.firstName} ${patient.lastName}
-Patient Code: ${patient.patientCode}
-Age: ${calculateAge(patient.dateOfBirth || '')} years
-Gender: ${patient.gender}
-Phone: ${patient.phone || 'N/A'}
-Email: ${patient.email || 'N/A'}
-Blood Group: ${patient.bloodGroup || 'N/A'}
-Emergency Contact: ${patient.emergencyContact || 'N/A'}
-Emergency Phone: ${patient.emergencyPhone || 'N/A'}
-Insurance: ${patient.insuranceProvider || 'N/A'}
-Allergies: ${patient.allergies || 'None'}
-Medical History: ${patient.medicalHistory || 'None'}
-Status: ${patient.isActive ? 'Active' : 'Inactive'}
-    `;
-    
-    alert(patientInfo);
-    
-    toast({
-      title: "Patient Details",
-      description: `Viewing details for ${patient.firstName} ${patient.lastName}`,
-    });
-  };
-
   const handleViewMedicalHistory = (patient: Patient) => {
     toast({
       title: "Medical History",
       description: `Loading medical history for ${patient.firstName} ${patient.lastName}`,
     });
     // Medical history view would go here
-  };
-
-  const handleGenerateInvoice = (patient: Patient) => {
-    toast({
-      title: "Invoice Generated",
-      description: `Creating invoice for ${patient.firstName} ${patient.lastName}`,
-    });
-    // Invoice generation would go here
   };
 
   const handleViewPrescriptions = (patient: Patient) => {
