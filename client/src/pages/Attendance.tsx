@@ -4,12 +4,9 @@ import Header from "@/components/layout/Header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Plus, 
   Search, 
@@ -22,20 +19,58 @@ import {
   MapPin,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  QrCode
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { 
-  insertAttendanceSchema, 
-  type Attendance, 
-  type InsertAttendance,
-  type Staff
-} from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { z } from "zod";
+
+// Define schemas
+const attendanceSchema = z.object({
+  id: z.string(),
+  staffId: z.string(),
+  date: z.string(),
+  checkInTime: z.string().nullable(),
+  checkOutTime: z.string().nullable(),
+  status: z.enum(['present', 'absent', 'late', 'half_day']),
+  totalHours: z.number().nullable(),
+  isLate: z.boolean(),
+  lateMinutes: z.number(),
+  checkInMethod: z.enum(['manual', 'qr', 'biometric']),
+  checkOutMethod: z.enum(['manual', 'qr', 'biometric']),
+  notes: z.string().nullable(),
+});
+
+const insertAttendanceSchema = z.object({
+  staffId: z.string().min(1, "Staff member is required"),
+  date: z.string().min(1, "Date is required"),
+  checkInTime: z.string().nullable(),
+  checkOutTime: z.string().nullable(),
+  status: z.enum(['present', 'absent', 'late', 'half_day']),
+  isLate: z.boolean().default(false),
+  lateMinutes: z.number().default(0),
+  checkInMethod: z.enum(['manual', 'qr', 'biometric']).default('manual'),
+  checkOutMethod: z.enum(['manual', 'qr', 'biometric']).default('manual'),
+  notes: z.string().nullable(),
+});
+
+const staffSchema = z.object({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  position: z.string(),
+  status: z.enum(['active', 'inactive']),
+});
+
+type Attendance = z.infer<typeof attendanceSchema>;
+type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
+type Staff = z.infer<typeof staffSchema>;
 
 export default function AttendancePage() {
   const [open, setOpen] = useState(false);
@@ -71,6 +106,31 @@ export default function AttendancePage() {
       checkOutMethod: "manual",
       isLate: false,
       lateMinutes: 0,
+      checkInTime: null,
+      checkOutTime: null,
+      notes: null,
+    },
+  });
+
+  const manualAttendanceMutation = useMutation({
+    mutationFn: async (data: InsertAttendance) => {
+      await apiRequest("POST", "/api/attendance", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
+      setOpen(false);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Attendance record added successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to add attendance record.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -82,55 +142,33 @@ export default function AttendancePage() {
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       toast({
         title: "Success",
-        description: "Checked in successfully.",
+        description: "Check-in recorded successfully.",
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message || "Failed to check in.",
+        description: "Failed to record check-in.",
         variant: "destructive",
       });
     },
   });
 
   const checkOutMutation = useMutation({
-    mutationFn: async (data: { staffId: string; method?: string; location?: any }) => {
+    mutationFn: async (data: { staffId: string; method?: string }) => {
       await apiRequest("POST", "/api/attendance/check-out", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
       toast({
         title: "Success",
-        description: "Checked out successfully.",
+        description: "Check-out recorded successfully.",
       });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to check out.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const manualAttendanceMutation = useMutation({
-    mutationFn: async (data: InsertAttendance) => {
-      await apiRequest("POST", "/api/attendance", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/attendance"] });
-      toast({
-        title: "Success",
-        description: "Attendance record added successfully.",
-      });
-      setOpen(false);
-      form.reset();
     },
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to add attendance record.",
+        description: "Failed to record check-out.",
         variant: "destructive",
       });
     },
@@ -148,17 +186,6 @@ export default function AttendancePage() {
     checkOutMutation.mutate({ staffId, method: 'manual' });
   };
 
-  const filteredAttendance = attendanceList.filter(attendance => {
-    const staffMember = staffList.find(s => s.id === attendance.staffId);
-    if (!staffMember) return false;
-    
-    const matchesSearch = staffMember.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         staffMember.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         staffMember.staffCode.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
-
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'present': return 'bg-green-100 text-green-800';
@@ -174,20 +201,36 @@ export default function AttendancePage() {
       case 'present': return <CheckCircle className="h-4 w-4 text-green-600" />;
       case 'absent': return <XCircle className="h-4 w-4 text-red-600" />;
       case 'late': return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      default: return <Clock className="h-4 w-4 text-gray-600" />;
+      case 'half_day': return <Clock className="h-4 w-4 text-blue-600" />;
+      default: return <AlertCircle className="h-4 w-4 text-gray-600" />;
     }
   };
 
+  // Filter for today's attendance
   const todayAttendance = attendanceList.filter(a => a.date === format(new Date(), 'yyyy-MM-dd'));
-  const presentToday = todayAttendance.filter(a => a.status === 'present').length;
-  const lateToday = todayAttendance.filter(a => a.isLate).length;
+  
+  // Calculate summary stats
+  const totalPresent = todayAttendance.filter(a => a.status === 'present').length;
+  const totalAbsent = todayAttendance.filter(a => a.status === 'absent').length;
+  const totalLate = todayAttendance.filter(a => a.status === 'late').length;
   const totalStaff = staffList.filter(s => s.status === 'active').length;
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-slate-600">Loading attendance data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <Header 
         title="Attendance Management" 
-        subtitle="Track staff attendance, check-ins, and working hours." 
+        subtitle="Track staff attendance, check-ins, check-outs, and generate attendance reports." 
       />
       
       <main className="flex-1 overflow-y-auto p-6">
@@ -199,10 +242,10 @@ export default function AttendancePage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Present Today</p>
-                    <p className="text-2xl font-bold text-slate-900">{presentToday}</p>
+                    <p className="text-2xl font-bold text-slate-900">{totalPresent}</p>
                     <p className="text-xs text-emerald-600 flex items-center mt-1">
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Out of {totalStaff} staff
+                      Active staff
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
@@ -216,26 +259,9 @@ export default function AttendancePage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Late Today</p>
-                    <p className="text-2xl font-bold text-slate-900">{lateToday}</p>
-                    <p className="text-xs text-slate-500">Staff members</p>
-                  </div>
-                  <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                    <AlertCircle className="text-yellow-600 h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
                     <p className="text-sm font-medium text-slate-600">Absent Today</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {totalStaff - presentToday}
-                    </p>
-                    <p className="text-xs text-slate-500">Staff members</p>
+                    <p className="text-2xl font-bold text-slate-900">{totalAbsent}</p>
+                    <p className="text-xs text-slate-500">Missing staff</p>
                   </div>
                   <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
                     <XCircle className="text-red-600 h-6 w-6" />
@@ -248,17 +274,27 @@ export default function AttendancePage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Avg. Hours</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {todayAttendance.length > 0 
-                        ? (todayAttendance.reduce((sum, a) => sum + (parseFloat(a.totalHours || '0')), 0) / todayAttendance.length).toFixed(1)
-                        : '0.0'
-                      }
-                    </p>
-                    <p className="text-xs text-slate-500">Hours per person</p>
+                    <p className="text-sm font-medium text-slate-600">Late Today</p>
+                    <p className="text-2xl font-bold text-slate-900">{totalLate}</p>
+                    <p className="text-xs text-amber-600">Late arrivals</p>
+                  </div>
+                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <AlertCircle className="text-amber-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Staff</p>
+                    <p className="text-2xl font-bold text-slate-900">{totalStaff}</p>
+                    <p className="text-xs text-slate-500">Active employees</p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <Clock className="text-blue-600 h-6 w-6" />
+                    <User className="text-blue-600 h-6 w-6" />
                   </div>
                 </div>
               </CardContent>
@@ -291,7 +327,7 @@ export default function AttendancePage() {
                         <Button
                           size="sm"
                           variant={hasCheckedIn ? "outline" : "default"}
-                          disabled={hasCheckedIn || checkInMutation.isPending}
+                          disabled={!!hasCheckedIn || checkInMutation.isPending}
                           onClick={() => handleQuickCheckIn(staff.id)}
                           className="flex-1"
                         >
@@ -302,7 +338,7 @@ export default function AttendancePage() {
                         <Button
                           size="sm"
                           variant={hasCheckedOut ? "outline" : "default"}
-                          disabled={!hasCheckedIn || hasCheckedOut || checkOutMutation.isPending}
+                          disabled={!hasCheckedIn || !!hasCheckedOut || checkOutMutation.isPending}
                           onClick={() => handleQuickCheckOut(staff.id)}
                           className="flex-1"
                         >
@@ -353,10 +389,10 @@ export default function AttendancePage() {
               
               <Select value={selectedStaff} onValueChange={setSelectedStaff}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="All staff" />
+                  <SelectValue placeholder="All Staff" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All staff</SelectItem>
+                  <SelectItem value="">All Staff</SelectItem>
                   {staffList.map((staff) => (
                     <SelectItem key={staff.id} value={staff.id}>
                       {staff.firstName} {staff.lastName}
@@ -370,12 +406,12 @@ export default function AttendancePage() {
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="mr-2 h-4 w-4" />
-                  Manual Entry
+                  Add Manual Entry
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Manual Attendance Entry</DialogTitle>
+                  <DialogTitle>Add Manual Attendance Entry</DialogTitle>
                 </DialogHeader>
                 
                 <Form {...form}>
@@ -390,13 +426,13 @@ export default function AttendancePage() {
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select staff" />
+                                  <SelectValue placeholder="Select staff member" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 {staffList.map((staff) => (
                                   <SelectItem key={staff.id} value={staff.id}>
-                                    {staff.firstName} {staff.lastName} - {staff.position}
+                                    {staff.firstName} {staff.lastName}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -429,11 +465,10 @@ export default function AttendancePage() {
                           <FormItem>
                             <FormLabel>Check In Time</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="datetime-local" 
-                                {...field}
-                                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
-                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                              <Input
+                                type="datetime-local"
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value || null)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -450,9 +485,8 @@ export default function AttendancePage() {
                             <FormControl>
                               <Input 
                                 type="datetime-local" 
-                                {...field}
-                                value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ''}
-                                onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(e.target.value || null)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -513,32 +547,25 @@ export default function AttendancePage() {
               <CardTitle>Attendance Records</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredAttendance.length === 0 ? (
+              {attendanceList.length === 0 ? (
                 <div className="text-center py-12">
                   <Clock className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No attendance records found</h3>
-                  <p className="text-slate-600 mb-6">
-                    {searchTerm ? "Try adjusting your search criteria." : "No attendance data for the selected date."}
-                  </p>
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No attendance records</h3>
+                  <p className="text-slate-600 mb-6">No attendance data found for the selected date and filters.</p>
+                  <Button 
+                    onClick={() => setOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Manual Entry
+                  </Button>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Staff</TableHead>
+                        <TableHead>Staff Member</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Check In</TableHead>
                         <TableHead>Check Out</TableHead>
@@ -548,18 +575,15 @@ export default function AttendancePage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredAttendance.map((attendance) => {
+                      {attendanceList.map((attendance) => {
                         const staff = staffList.find(s => s.id === attendance.staffId);
-                        
                         return (
                           <TableRow key={attendance.id}>
                             <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <User className="h-4 w-4 text-slate-400" />
+                              <div className="flex items-center space-x-3">
+                                <User className="h-8 w-8 text-slate-400" />
                                 <div>
-                                  <span className="font-medium">
-                                    {staff?.firstName} {staff?.lastName}
-                                  </span>
+                                  <p className="font-medium">{staff?.firstName} {staff?.lastName}</p>
                                   <p className="text-sm text-slate-500">{staff?.position}</p>
                                 </div>
                               </div>
@@ -612,10 +636,10 @@ export default function AttendancePage() {
                             <TableCell>
                               <div className="text-sm">
                                 <span className="capitalize">{attendance.checkInMethod}</span>
-                                {attendance.checkInLocation && (
+                                {attendance.checkInMethod === 'qr' && (
                                   <div className="flex items-center space-x-1 text-slate-500">
-                                    <MapPin className="h-3 w-3" />
-                                    <span>Location tracked</span>
+                                    <QrCode className="h-3 w-3" />
+                                    <span>QR verified</span>
                                   </div>
                                 )}
                               </div>
