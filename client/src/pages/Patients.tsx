@@ -19,7 +19,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Plus, Search, Eye, Edit, Calendar, Phone, Mail, MapPin, 
   MoreVertical, QrCode, Share2, Printer, DollarSign, Trash2, ArrowUpDown
@@ -37,10 +36,6 @@ export default function Patients() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("name");
-  const [viewPatientOpen, setViewPatientOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [qrCodeOpen, setQrCodeOpen] = useState(false);
-  const [qrCodeData, setQrCodeData] = useState("");
 
   // Fetch patients data
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
@@ -103,8 +98,6 @@ export default function Patients() {
 
   // Action handlers
   const handleViewPatient = (patient: Patient) => {
-    setSelectedPatient(patient);
-    setViewPatientOpen(true);
     toast({
       title: "Patient Details",
       description: `Viewing details for ${patient.firstName} ${patient.lastName}`,
@@ -120,267 +113,46 @@ export default function Patients() {
     });
   };
 
-  const handlePrintPatient = async (patient: Patient, asPDF = false) => {
+  const handlePrintPatient = (patient: Patient) => {
     const printContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Patient Details - ${patient.firstName} ${patient.lastName}</title>
-        <style>
-          @page { 
-            size: A4; 
-            margin: 20mm; 
-          }
-          body { 
-            font-family: 'Arial', sans-serif; 
-            line-height: 1.6; 
-            color: #333; 
-            margin: 0;
-            padding: 0;
-          }
-          .header { 
-            text-align: center; 
-            border-bottom: 3px solid #2563eb; 
-            padding-bottom: 20px; 
-            margin-bottom: 30px; 
-          }
-          .logo { 
-            font-size: 24px; 
-            font-weight: bold; 
-            color: #2563eb; 
-            margin-bottom: 10px; 
-          }
-          .clinic-name { 
-            font-size: 18px; 
-            color: #666; 
-          }
-          .patient-info { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 20px; 
-            margin-bottom: 30px; 
-          }
-          .info-section { 
-            background: #f8fafc; 
-            padding: 20px; 
-            border-radius: 8px; 
-            border-left: 4px solid #2563eb; 
-          }
-          .section-title { 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #2563eb; 
-            margin-bottom: 15px; 
-            text-transform: uppercase; 
-          }
-          .info-row { 
-            display: flex; 
-            margin-bottom: 10px; 
-          }
-          .label { 
-            font-weight: bold; 
-            width: 140px; 
-            color: #374151; 
-          }
-          .value { 
-            flex: 1; 
-            color: #6b7280; 
-          }
-          .medical-section { 
-            grid-column: 1 / -1; 
-          }
-          .footer { 
-            margin-top: 40px; 
-            padding-top: 20px; 
-            border-top: 1px solid #e5e7eb; 
-            text-align: center; 
-            font-size: 12px; 
-            color: #9ca3af; 
-          }
-          .qr-code { 
-            text-align: center; 
-            margin: 20px 0; 
-          }
-          @media print {
-            body { -webkit-print-color-adjust: exact; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="logo">OptiStore Pro Medical Center</div>
-          <div class="clinic-name">Patient Medical Record</div>
-        </div>
-        
-        <div class="patient-info">
-          <div class="info-section">
-            <div class="section-title">Personal Information</div>
-            <div class="info-row">
-              <span class="label">Patient ID:</span>
-              <span class="value">${patient.patientCode}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Full Name:</span>
-              <span class="value">${patient.firstName} ${patient.lastName}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Date of Birth:</span>
-              <span class="value">${patient.dateOfBirth || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Age:</span>
-              <span class="value">${calculateAge(patient.dateOfBirth || '')} years</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Gender:</span>
-              <span class="value">${patient.gender || 'Not specified'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Blood Group:</span>
-              <span class="value">${patient.bloodGroup || 'Not specified'}</span>
-            </div>
-          </div>
-          
-          <div class="info-section">
-            <div class="section-title">Contact Information</div>
-            <div class="info-row">
-              <span class="label">Phone:</span>
-              <span class="value">${patient.phone || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Email:</span>
-              <span class="value">${patient.email || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Address:</span>
-              <span class="value">${patient.address || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Emergency Contact:</span>
-              <span class="value">${patient.emergencyContact || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Emergency Phone:</span>
-              <span class="value">${patient.emergencyPhone || 'Not provided'}</span>
-            </div>
-          </div>
-          
-          <div class="info-section medical-section">
-            <div class="section-title">Medical Information</div>
-            <div class="info-row">
-              <span class="label">Allergies:</span>
-              <span class="value">${patient.allergies || 'None reported'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Medical History:</span>
-              <span class="value">${patient.medicalHistory || 'No history recorded'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Insurance Provider:</span>
-              <span class="value">${patient.insuranceProvider || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Insurance Number:</span>
-              <span class="value">${patient.insuranceNumber || 'Not provided'}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Status:</span>
-              <span class="value">${patient.isActive ? 'Active' : 'Inactive'}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="footer">
-          <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
-          <p>OptiStore Pro Medical Center - Confidential Patient Information</p>
-        </div>
-      </body>
-      </html>
+      <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h2>Patient Details</h2>
+        <p><strong>Name:</strong> ${patient.firstName} ${patient.lastName}</p>
+        <p><strong>Patient Code:</strong> ${patient.patientCode}</p>
+        <p><strong>Phone:</strong> ${patient.phone}</p>
+        <p><strong>Email:</strong> ${patient.email}</p>
+      </div>
     `;
     
-    if (asPDF) {
-      // For PDF generation, we'll use the browser's built-in PDF functionality
-      const printWindow = window.open('', '', 'height=600,width=800');
-      printWindow?.document.write(printContent);
-      printWindow?.document.close();
-      
-      // Wait for content to load then trigger PDF save
-      setTimeout(() => {
-        printWindow?.print();
-      }, 500);
-      
-      toast({
-        title: "PDF Generation",
-        description: `PDF for ${patient.firstName} ${patient.lastName} is being generated`,
-      });
-    } else {
-      const printWindow = window.open('', '', 'height=600,width=800');
-      printWindow?.document.write(printContent);
-      printWindow?.document.close();
-      printWindow?.print();
-      
-      toast({
-        title: "Print Initiated",
-        description: `Printing details for ${patient.firstName} ${patient.lastName}`,
-      });
-    }
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow?.document.write(printContent);
+    printWindow?.document.close();
+    printWindow?.print();
+    
+    toast({
+      title: "Print Initiated",
+      description: `Printing details for ${patient.firstName} ${patient.lastName}`,
+    });
   };
 
   const handleGenerateQRCode = (patient: Patient) => {
-    const patientData = {
-      id: patient.id,
-      name: `${patient.firstName} ${patient.lastName}`,
-      code: patient.patientCode,
-      phone: patient.phone,
-      email: patient.email,
-      dateOfBirth: patient.dateOfBirth,
-      bloodGroup: patient.bloodGroup
-    };
-    
-    setQrCodeData(JSON.stringify(patientData, null, 2));
-    setQrCodeOpen(true);
-    
     toast({
       title: "QR Code Generated",
       description: `QR code created for ${patient.firstName} ${patient.lastName}`,
     });
   };
 
-  const handleSharePatient = async (patient: Patient) => {
-    const shareText = `🏥 Patient Information\n\n👤 Name: ${patient.firstName} ${patient.lastName}\n🆔 Patient ID: ${patient.patientCode}\n📞 Phone: ${patient.phone || 'Not provided'}\n📧 Email: ${patient.email || 'Not provided'}\n🩸 Blood Group: ${patient.bloodGroup || 'Not specified'}\n📅 DOB: ${patient.dateOfBirth || 'Not provided'}\n\n🏥 OptiStore Pro Medical Center`;
+  const handleSharePatient = (patient: Patient) => {
+    const shareText = `Patient: ${patient.firstName} ${patient.lastName}\nCode: ${patient.patientCode}`;
     
     if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Patient Info - ${patient.firstName} ${patient.lastName}`,
-          text: shareText,
-        });
-        toast({
-          title: "Shared Successfully",
-          description: "Patient information shared successfully",
-        });
-      } catch (error) {
-        // Fallback to clipboard if sharing fails
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          title: "Info Copied",
-          description: "Patient information copied to clipboard",
-        });
-      }
+      navigator.share({ title: `Patient Info`, text: shareText });
     } else {
-      try {
-        await navigator.clipboard.writeText(shareText);
-        toast({
-          title: "Info Copied",
-          description: "Patient information copied to clipboard",
-        });
-      } catch (error) {
-        toast({
-          title: "Share Failed",
-          description: "Unable to share patient information",
-          variant: "destructive",
-        });
-      }
+      navigator.clipboard.writeText(shareText);
+      toast({
+        title: "Info Copied",
+        description: "Patient information copied to clipboard",
+      });
     }
   };
 
@@ -823,8 +595,7 @@ export default function Patients() {
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[600px] w-full">
-              <div className="space-y-4">
+            <div className="space-y-4">
               {filteredPatients.map((patient) => (
                 <div key={patient.id} className="border border-slate-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
@@ -885,10 +656,6 @@ export default function Patients() {
                             <Printer className="mr-2 h-4 w-4" />
                             Print Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handlePrintPatient(patient, true)}>
-                            <DollarSign className="mr-2 h-4 w-4" />
-                            Save as PDF
-                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleGenerateQRCode(patient)}>
                             <QrCode className="mr-2 h-4 w-4" />
                             Generate QR Code
@@ -911,180 +678,14 @@ export default function Patients() {
                 </div>
               ))}
               
-                {filteredPatients.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-slate-500">No patients found matching your criteria.</p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
+              {filteredPatients.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-slate-500">No patients found matching your criteria.</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
-
-        {/* Patient Details Dialog */}
-        <Dialog open={viewPatientOpen} onOpenChange={setViewPatientOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Patient Details</DialogTitle>
-            </DialogHeader>
-            
-            {selectedPatient && (
-              <div className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarFallback className="bg-blue-100 text-blue-700 text-lg">
-                      {selectedPatient.firstName?.charAt(0)}{selectedPatient.lastName?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900">
-                      {selectedPatient.firstName} {selectedPatient.lastName}
-                    </h2>
-                    <p className="text-slate-600">Patient ID: {selectedPatient.patientCode}</p>
-                    <Badge 
-                      variant={selectedPatient.isActive ? "default" : "secondary"}
-                      className={selectedPatient.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
-                    >
-                      {selectedPatient.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Personal Information</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Date of Birth:</span>
-                        <span>{selectedPatient.dateOfBirth || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Age:</span>
-                        <span>{calculateAge(selectedPatient.dateOfBirth || '')} years</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Gender:</span>
-                        <span>{selectedPatient.gender || 'Not specified'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Blood Group:</span>
-                        <span>{selectedPatient.bloodGroup || 'Not specified'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Contact Information</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Phone:</span>
-                        <span>{selectedPatient.phone || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Email:</span>
-                        <span>{selectedPatient.email || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Address:</span>
-                        <span>{selectedPatient.address || 'Not provided'}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 md:col-span-2">
-                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Medical Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="font-medium">Allergies:</span>
-                        <p className="text-slate-600 mt-1">{selectedPatient.allergies || 'None reported'}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Medical History:</span>
-                        <p className="text-slate-600 mt-1">{selectedPatient.medicalHistory || 'No history recorded'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 md:col-span-2">
-                    <h3 className="text-lg font-semibold text-slate-900 border-b pb-2">Insurance Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Provider:</span>
-                        <span>{selectedPatient.insuranceProvider || 'Not provided'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Policy Number:</span>
-                        <span>{selectedPatient.insuranceNumber || 'Not provided'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-4 pt-4">
-                  <Button variant="outline" onClick={() => handlePrintPatient(selectedPatient)}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print
-                  </Button>
-                  <Button variant="outline" onClick={() => handleGenerateQRCode(selectedPatient)}>
-                    <QrCode className="mr-2 h-4 w-4" />
-                    QR Code
-                  </Button>
-                  <Button variant="outline" onClick={() => handleSharePatient(selectedPatient)}>
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Share
-                  </Button>
-                  <Button onClick={() => handleEditPatient(selectedPatient)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Patient
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* QR Code Dialog */}
-        <Dialog open={qrCodeOpen} onOpenChange={setQrCodeOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Patient QR Code</DialogTitle>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <div className="bg-white p-4 rounded-lg border-2 border-slate-200">
-                  <div className="w-48 h-48 bg-slate-100 flex items-center justify-center rounded">
-                    <div className="text-center">
-                      <QrCode className="h-12 w-12 mx-auto mb-2 text-slate-400" />
-                      <p className="text-sm text-slate-500">QR Code</p>
-                      <p className="text-xs text-slate-400 mt-2">
-                        Scan to view patient info
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm text-slate-600 mb-4">
-                  Patient data encoded in QR code
-                </p>
-                <div className="bg-slate-50 p-3 rounded text-xs text-left overflow-auto max-h-32">
-                  <pre>{qrCodeData}</pre>
-                </div>
-              </div>
-
-              <div className="flex justify-center space-x-4">
-                <Button variant="outline" onClick={() => navigator.clipboard.writeText(qrCodeData)}>
-                  Copy Data
-                </Button>
-                <Button onClick={() => setQrCodeOpen(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
