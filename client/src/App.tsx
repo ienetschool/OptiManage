@@ -67,7 +67,13 @@ function Router() {
 
   const isPatientPortal = patientPortalRoutes.some(route => location.startsWith(route));
 
-  if (isLoading || (!isAuthenticated && !isPatientPortal)) {
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+    </div>;
+  }
+
+  if (!isAuthenticated && !isPatientPortal) {
     return (
       <PublicLayout>
         <Switch>
@@ -136,7 +142,9 @@ function Router() {
           <Route path="/store-performance" component={StorePerformance} />
           <Route path="/profile" component={Profile} />
           <Route path="/medical-records" component={MedicalRecords} />
-          <Route path="/quick-sale" component={QuickSale} />
+          <Route path="/quick-sale">
+            {() => <QuickSale />}
+          </Route>
           <Route path="/payments" component={Payments} />
           <Route path="/store-settings" component={StoreSettings} />
           <Route path="/reports/sales" component={Reports} />
