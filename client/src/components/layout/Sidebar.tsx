@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Eye, Home, Store, Package, ShoppingCart, Calendar, Users, BarChart3, MessageCircle, Settings, HelpCircle, LogOut } from "lucide-react";
+import { Eye, Home, Store, Package, ShoppingCart, Calendar, Users, FileText, BarChart3, MessageCircle, Settings, HelpCircle, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@shared/schema";
@@ -11,6 +11,7 @@ const navigation = [
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Appointments", href: "/appointments", icon: Calendar },
   { name: "Customers", href: "/customers", icon: Users },
+  { name: "Prescriptions", href: "/prescriptions", icon: FileText },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Communication", href: "/communication", icon: MessageCircle },
   { name: "Settings", href: "/settings", icon: Settings },

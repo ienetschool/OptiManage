@@ -10,6 +10,7 @@ import {
   decimal,
   boolean,
   date,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -333,6 +334,8 @@ export const insertCustomFieldConfigSchema = createInsertSchema(customFieldsConf
   createdAt: true,
 });
 
+// Medical practice insert schemas will be added at the end
+
 // Types
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -361,6 +364,283 @@ export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
 export type InsertCustomFieldConfig = z.infer<typeof insertCustomFieldConfigSchema>;
 
+// Medical practice insert types
+export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
+export type InsertPatient = z.infer<typeof insertPatientSchema>;
+export type InsertMedicalAppointment = z.infer<typeof insertMedicalAppointmentSchema>;
+export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
+export type InsertPrescriptionItem = z.infer<typeof insertPrescriptionItemSchema>;
+export type InsertMedicalIntervention = z.infer<typeof insertMedicalInterventionSchema>;
+export type InsertMedicalInvoice = z.infer<typeof insertMedicalInvoiceSchema>;
+export type InsertMedicalInvoiceItem = z.infer<typeof insertMedicalInvoiceItemSchema>;
+
+// Doctors table for medical practice
+export const doctors = pgTable("doctors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("user_id").references(() => users.id), // Link to users table for authentication
+  doctorCode: varchar("doctor_code", { length: 20 }).unique().notNull(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  specialization: varchar("specialization", { length: 100 }),
+  licenseNumber: varchar("license_number", { length: 50 }),
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 255 }),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Patients table (enhanced customers for medical context)
+export const patients = pgTable("patients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientCode: varchar("patient_code", { length: 20 }).unique().notNull(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  dateOfBirth: date("date_of_birth"),
+  gender: varchar("gender", { length: 10 }), // male, female, other
+  phone: varchar("phone", { length: 20 }),
+  email: varchar("email", { length: 255 }),
+  address: text("address"),
+  emergencyContact: varchar("emergency_contact", { length: 100 }),
+  emergencyPhone: varchar("emergency_phone", { length: 20 }),
+  bloodGroup: varchar("blood_group", { length: 5 }),
+  allergies: text("allergies"),
+  medicalHistory: text("medical_history"),
+  insuranceProvider: varchar("insurance_provider", { length: 100 }),
+  insuranceNumber: varchar("insurance_number", { length: 50 }),
+  isActive: boolean("is_active").default(true),
+  loyaltyTier: varchar("loyalty_tier", { length: 20 }).default("bronze"),
+  loyaltyPoints: integer("loyalty_points").default(0),
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Medical appointments (enhanced appointments)
+export const medicalAppointments = pgTable("medical_appointments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  appointmentNumber: varchar("appointment_number", { length: 20 }).unique().notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  doctorId: uuid("doctor_id").references(() => doctors.id).notNull(),
+  storeId: varchar("store_id").references(() => stores.id),
+  appointmentDate: timestamp("appointment_date").notNull(),
+  appointmentType: varchar("appointment_type", { length: 50 }).notNull(), // checkup, follow-up, emergency
+  status: varchar("status", { length: 20 }).default("scheduled"), // scheduled, completed, cancelled, no-show
+  notes: text("notes"),
+  symptoms: text("symptoms"),
+  diagnosis: text("diagnosis"),
+  treatment: text("treatment"),
+  nextFollowUp: date("next_follow_up"),
+  duration: integer("duration").default(30), // minutes
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Prescriptions table
+export const prescriptions = pgTable("prescriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  prescriptionNumber: varchar("prescription_number", { length: 20 }).unique().notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  doctorId: uuid("doctor_id").references(() => doctors.id).notNull(),
+  appointmentId: uuid("appointment_id").references(() => medicalAppointments.id),
+  storeId: varchar("store_id").references(() => stores.id),
+  prescriptionDate: timestamp("prescription_date").defaultNow(),
+  prescriptionType: varchar("prescription_type", { length: 50 }).notNull(), // glasses, contact_lenses, medication
+  
+  // Visual Acuity
+  visualAcuityRightEye: varchar("visual_acuity_right_eye", { length: 20 }),
+  visualAcuityLeftEye: varchar("visual_acuity_left_eye", { length: 20 }),
+  
+  // Right Eye Values
+  sphereRight: decimal("sphere_right", { precision: 4, scale: 2 }),
+  cylinderRight: decimal("cylinder_right", { precision: 4, scale: 2 }),
+  axisRight: integer("axis_right"),
+  addRight: decimal("add_right", { precision: 4, scale: 2 }),
+  
+  // Left Eye Values
+  sphereLeft: decimal("sphere_left", { precision: 4, scale: 2 }),
+  cylinderLeft: decimal("cylinder_left", { precision: 4, scale: 2 }),
+  axisLeft: integer("axis_left"),
+  addLeft: decimal("add_left", { precision: 4, scale: 2 }),
+  
+  // Pupillary Distance
+  pdDistance: decimal("pd_distance", { precision: 4, scale: 1 }),
+  pdNear: decimal("pd_near", { precision: 4, scale: 1 }),
+  pdFar: decimal("pd_far", { precision: 4, scale: 1 }),
+  
+  // Medical Information
+  diagnosis: text("diagnosis"),
+  treatment: text("treatment"),
+  advice: text("advice"),
+  nextFollowUp: date("next_follow_up"),
+  
+  // Additional Notes and Custom Fields
+  notes: text("notes"),
+  customFields: jsonb("custom_fields"),
+  
+  // Status and Verification
+  status: varchar("status", { length: 20 }).default("active"), // active, filled, expired
+  qrCode: varchar("qr_code", { length: 255 }), // QR code for verification
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Prescription items (linked products/interventions)
+export const prescriptionItems = pgTable("prescription_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id).notNull(),
+  productId: varchar("product_id").references(() => products.id),
+  itemType: varchar("item_type", { length: 50 }).notNull(), // product, intervention, medication
+  itemName: varchar("item_name", { length: 255 }).notNull(),
+  quantity: integer("quantity").default(1),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Medical interventions/services
+export const medicalInterventions = pgTable("medical_interventions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: varchar("code", { length: 20 }).unique().notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 100 }).notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  duration: integer("duration"), // minutes
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Medical invoices (enhanced billing)
+export const medicalInvoices = pgTable("medical_invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  invoiceNumber: varchar("invoice_number", { length: 20 }).unique().notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  doctorId: uuid("doctor_id").references(() => doctors.id),
+  appointmentId: uuid("appointment_id").references(() => medicalAppointments.id),
+  prescriptionId: uuid("prescription_id").references(() => prescriptions.id),
+  storeId: varchar("store_id").references(() => stores.id),
+  
+  invoiceDate: timestamp("invoice_date").defaultNow(),
+  dueDate: date("due_date"),
+  
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  
+  paymentStatus: varchar("payment_status", { length: 20 }).default("pending"), // pending, partial, paid, overdue
+  paymentMethod: varchar("payment_method", { length: 20 }), // cash, card, insurance, check
+  paymentDate: timestamp("payment_date"),
+  
+  notes: text("notes"),
+  qrCode: varchar("qr_code", { length: 255 }),
+  customFields: jsonb("custom_fields"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Invoice items
+export const medicalInvoiceItems = pgTable("medical_invoice_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  invoiceId: uuid("invoice_id").references(() => medicalInvoices.id).notNull(),
+  itemType: varchar("item_type", { length: 50 }).notNull(), // product, intervention, consultation
+  itemId: uuid("item_id"), // Reference to product, intervention, or service
+  itemName: varchar("item_name", { length: 255 }).notNull(),
+  description: text("description"),
+  quantity: integer("quantity").default(1),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Patient history tracking
+export const patientHistory = pgTable("patient_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
+  doctorId: uuid("doctor_id").references(() => doctors.id),
+  recordType: varchar("record_type", { length: 50 }).notNull(), // appointment, prescription, invoice, intervention
+  recordId: uuid("record_id").notNull(),
+  recordDate: timestamp("record_date").defaultNow(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  metadata: jsonb("metadata"), // Additional data specific to record type
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Additional type definitions
 export type SaleItem = typeof saleItems.$inferSelect;
 export type StoreInventory = typeof storeInventory.$inferSelect;
+
+// Medical practice types
+export type Doctor = typeof doctors.$inferSelect;
+export type Patient = typeof patients.$inferSelect;
+export type MedicalAppointment = typeof medicalAppointments.$inferSelect;
+export type Prescription = typeof prescriptions.$inferSelect;
+export type PrescriptionItem = typeof prescriptionItems.$inferSelect;
+export type MedicalIntervention = typeof medicalInterventions.$inferSelect;
+export type MedicalInvoice = typeof medicalInvoices.$inferSelect;
+export type MedicalInvoiceItem = typeof medicalInvoiceItems.$inferSelect;
+export type PatientHistory = typeof patientHistory.$inferSelect;
+
+// Medical practice insert schemas
+export const insertDoctorSchema = createInsertSchema(doctors).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPatientSchema = createInsertSchema(patients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMedicalAppointmentSchema = createInsertSchema(medicalAppointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPrescriptionItemSchema = createInsertSchema(prescriptionItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMedicalInterventionSchema = createInsertSchema(medicalInterventions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMedicalInvoiceSchema = createInsertSchema(medicalInvoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMedicalInvoiceItemSchema = createInsertSchema(medicalInvoiceItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Medical practice insert types
+export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
+export type InsertPatient = z.infer<typeof insertPatientSchema>;
+export type InsertMedicalAppointment = z.infer<typeof insertMedicalAppointmentSchema>;
+export type InsertPrescription = z.infer<typeof insertPrescriptionSchema>;
+export type InsertPrescriptionItem = z.infer<typeof insertPrescriptionItemSchema>;
+export type InsertMedicalIntervention = z.infer<typeof insertMedicalInterventionSchema>;
+export type InsertMedicalInvoice = z.infer<typeof insertMedicalInvoiceSchema>;
+export type InsertMedicalInvoiceItem = z.infer<typeof insertMedicalInvoiceItemSchema>;

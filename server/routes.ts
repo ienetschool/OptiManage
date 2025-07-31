@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { registerMedicalRoutes } from "./medicalRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -378,6 +379,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to delete custom field" });
     }
   });
+
+  // Register medical practice routes
+  registerMedicalRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
