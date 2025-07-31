@@ -50,6 +50,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register analytics routes
   registerAnalyticsRoutes(app);
+  
+  // Database backup download endpoint
+  app.get('/api/download/database-backup', (req, res) => {
+    const backupFile = 'database_backup_complete.sql';
+    const fs = require('fs');
+    const path = require('path');
+    
+    const filePath = path.join(process.cwd(), backupFile);
+    
+    if (fs.existsSync(filePath)) {
+      const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const downloadName = `optistore_backup_${timestamp}.sql`;
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadName}"`);
+      res.setHeader('Content-Type', 'application/sql');
+      res.setHeader('Cache-Control', 'no-cache');
+      
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+    } else {
+      res.status(404).json({ error: 'Backup file not found' });
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
