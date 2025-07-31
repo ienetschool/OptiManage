@@ -193,7 +193,7 @@ function Router() {
           <AppLayout>
             <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
-              <Patients />
+              <PatientManagement />
             </div>
           </AppLayout>
         ) : (
