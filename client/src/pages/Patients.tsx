@@ -124,28 +124,29 @@ export default function Patients() {
 
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
-      await apiRequest("POST", "/api/patients", data);
+      return await apiRequest("POST", "/api/patients", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      toast({
-        title: "Success",
-        description: "Patient registered successfully.",
-      });
-      setOpen(false);
-      form.reset();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to register patient.",
-        variant: "destructive",
-      });
     },
   });
 
-  const onSubmit = (data: InsertPatient) => {
-    createPatientMutation.mutate(data);
+  const onSubmit = async (data: InsertPatient) => {
+    try {
+      await createPatientMutation.mutateAsync(data);
+      toast({
+        title: "Success",
+        description: "Patient registered successfully!",
+      });
+      form.reset();
+      setOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to register patient. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredPatients = patients

@@ -13,6 +13,8 @@ import {
   customFieldsConfig,
   emailTemplates,
   communicationLog,
+  patients,
+  patientHistory,
   type User,
   type UpsertUser,
   type Store,
@@ -35,6 +37,9 @@ import {
   type InsertSystemSettings,
   type CustomFieldConfig,
   type InsertCustomFieldConfig,
+  type Patient,
+  type InsertPatient,
+  type PatientHistory,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, and, or } from "drizzle-orm";
@@ -110,6 +115,14 @@ export interface IStorage {
   createCustomFieldConfig(config: InsertCustomFieldConfig): Promise<CustomFieldConfig>;
   updateCustomFieldConfig(id: string, config: Partial<InsertCustomFieldConfig>): Promise<CustomFieldConfig>;
   deleteCustomFieldConfig(id: string): Promise<void>;
+
+  // Patient operations
+  getPatients(): Promise<Patient[]>;
+  getPatient(id: string): Promise<Patient | undefined>;
+  createPatient(patient: InsertPatient): Promise<Patient>;
+  updatePatient(id: string, patient: Partial<InsertPatient>): Promise<Patient>;
+  deletePatient(id: string): Promise<void>;
+  getPatientHistory(patientId: string): Promise<PatientHistory[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -472,6 +485,44 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomFieldConfig(id: string): Promise<void> {
     await db.delete(customFieldsConfig).where(eq(customFieldsConfig.id, id));
+  }
+
+  // Patient operations
+  async getPatients(): Promise<Patient[]> {
+    return await db.select().from(patients).orderBy(patients.firstName, patients.lastName);
+  }
+
+  async getPatient(id: string): Promise<Patient | undefined> {
+    const [patient] = await db.select().from(patients).where(eq(patients.id, id));
+    return patient;
+  }
+
+  async createPatient(patient: InsertPatient): Promise<Patient> {
+    // Generate patient code if not provided
+    const patientData = {
+      ...patient,
+      patientCode: patient.patientCode || `PAT-${Date.now().toString().slice(-6)}`,
+    };
+    
+    const [newPatient] = await db.insert(patients).values(patientData).returning();
+    return newPatient;
+  }
+
+  async updatePatient(id: string, patient: Partial<InsertPatient>): Promise<Patient> {
+    const [updatedPatient] = await db
+      .update(patients)
+      .set({ ...patient, updatedAt: new Date() })
+      .where(eq(patients.id, id))
+      .returning();
+    return updatedPatient;
+  }
+
+  async deletePatient(id: string): Promise<void> {
+    await db.delete(patients).where(eq(patients.id, id));
+  }
+
+  async getPatientHistory(patientId: string): Promise<PatientHistory[]> {
+    return await db.select().from(patientHistory).where(eq(patientHistory.patientId, patientId)).orderBy(desc(patientHistory.recordDate));
   }
 }
 
