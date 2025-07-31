@@ -83,19 +83,20 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
     },
     onSuccess: () => {
       toast({
-        title: "Sale Completed",
-        description: "Sale has been processed successfully.",
+        title: "Sale Processed",
+        description: "Sale has been successfully processed.",
       });
       setCart([]);
       setSelectedCustomer("");
       setDiscountValue(0);
-      if (onClose) onClose();
       queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      if (onClose) onClose();
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Sale Failed",
-        description: "Failed to process sale. Please try again.",
+        description: error.message || "Failed to process sale.",
         variant: "destructive",
       });
     },

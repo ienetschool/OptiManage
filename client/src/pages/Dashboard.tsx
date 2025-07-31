@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,8 @@ import {
   BarChart3
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
+import QuickSale from "./QuickSale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const salesData = [
   { name: 'Jan', sales: 4000, revenue: 2400 },
@@ -65,6 +68,8 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 export default function Dashboard() {
   const [selectedStore, setSelectedStore] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('7d');
+  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
     queryKey: ["/api/stores"],
@@ -151,28 +156,28 @@ export default function Dashboard() {
       title: "Schedule Appointment",
       description: "Book new patient visit",
       icon: CalendarPlus,
-      action: () => {},
+      action: () => navigate("/appointments"),
       color: "bg-blue-500 hover:bg-blue-600"
     },
     {
       title: "Add Patient",
       description: "Register new patient",
       icon: UserPlus, 
-      action: () => {},
+      action: () => navigate("/patients"),
       color: "bg-green-500 hover:bg-green-600"
     },
     {
       title: "Process Sale",
       description: "Quick sale transaction",
       icon: Receipt,
-      action: () => {},
+      action: () => setQuickSaleOpen(true),
       color: "bg-purple-500 hover:bg-purple-600"
     },
     {
       title: "Medical Record",
       description: "Update patient record",
       icon: Stethoscope,
-      action: () => {},
+      action: () => navigate("/medical-records"),
       color: "bg-orange-500 hover:bg-orange-600"
     }
   ];
@@ -414,7 +419,7 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mb-2">
               {dashboardData?.lowStockItems || 0} items running low
             </p>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => navigate("/inventory")}>
               View Inventory
             </Button>
           </CardContent>
@@ -431,7 +436,7 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mb-2">
               {dashboardData?.pendingInvoices || 0} invoices awaiting payment
             </p>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => navigate("/billing")}>
               Manage Billing
             </Button>
           </CardContent>
@@ -448,12 +453,22 @@ export default function Dashboard() {
             <p className="text-sm text-muted-foreground mb-2">
               {dashboardData?.appointmentsToday || 0} appointments scheduled
             </p>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => navigate("/appointments")}>
               View Calendar
             </Button>
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Sale Modal */}
+      <Dialog open={quickSaleOpen} onOpenChange={setQuickSaleOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Quick Sale</DialogTitle>
+          </DialogHeader>
+          <QuickSale onClose={() => setQuickSaleOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
