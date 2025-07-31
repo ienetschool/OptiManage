@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -24,7 +26,22 @@ import {
   Phone,
   Mail,
   MapPin,
-  Activity
+  Activity,
+  Filter,
+  Download,
+  FileText,
+  Trash2,
+  MoreVertical,
+  Grid,
+  List,
+  SortAsc,
+  SortDesc,
+  RefreshCw,
+  CheckSquare,
+  Square,
+  UserPlus,
+  Stethoscope,
+  Pill
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,6 +61,15 @@ export default function Patients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [patientHistory, setPatientHistory] = useState<PatientHistory[]>([]);
+  const [filterGender, setFilterGender] = useState("all");
+  const [filterBloodGroup, setFilterBloodGroup] = useState("all");
+  const [filterLoyaltyTier, setFilterLoyaltyTier] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("firstName");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [viewMode, setViewMode] = useState("table");
+  const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -102,12 +128,93 @@ export default function Patients() {
     createPatientMutation.mutate(data);
   };
 
-  const filteredPatients = patients.filter(patient =>
-    `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.patientCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPatients = patients
+    .filter(patient => {
+      const matchesSearch = `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.patientCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesGender = filterGender === "all" || patient.gender === filterGender;
+      const matchesBloodGroup = filterBloodGroup === "all" || patient.bloodGroup === filterBloodGroup;
+      const matchesLoyaltyTier = filterLoyaltyTier === "all" || patient.loyaltyTier === filterLoyaltyTier;
+      const matchesStatus = filterStatus === "all" || 
+        (filterStatus === "active" && patient.isActive) ||
+        (filterStatus === "inactive" && !patient.isActive);
+      
+      return matchesSearch && matchesGender && matchesBloodGroup && matchesLoyaltyTier && matchesStatus;
+    })
+    .sort((a, b) => {
+      let aValue = a[sortBy as keyof Patient] || "";
+      let bValue = b[sortBy as keyof Patient] || "";
+      
+      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
+      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
+      
+      if (sortOrder === "asc") {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+
+  const handleSelectAll = () => {
+    if (selectedPatients.length === filteredPatients.length) {
+      setSelectedPatients([]);
+    } else {
+      setSelectedPatients(filteredPatients.map(p => p.id));
+    }
+  };
+
+  const handleSelectPatient = (patientId: string) => {
+    setSelectedPatients(prev => 
+      prev.includes(patientId) 
+        ? prev.filter(id => id !== patientId)
+        : [...prev, patientId]
+    );
+  };
+
+  const handleBulkAction = async (action: string) => {
+    if (selectedPatients.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select patients to perform bulk actions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      switch (action) {
+        case "export":
+          toast({
+            title: "Export Started",
+            description: `Exporting ${selectedPatients.length} patient records...`,
+          });
+          break;
+        case "deactivate":
+          toast({
+            title: "Patients Deactivated",
+            description: `${selectedPatients.length} patients have been deactivated.`,
+          });
+          setSelectedPatients([]);
+          break;
+        case "delete":
+          toast({
+            title: "Patients Deleted", 
+            description: `${selectedPatients.length} patients have been deleted.`,
+          });
+          setSelectedPatients([]);
+          break;
+      }
+    } catch (error) {
+      toast({
+        title: "Action Failed",
+        description: "Failed to perform bulk action. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleViewPatient = async (patient: Patient) => {
     setSelectedPatient(patient);
@@ -890,24 +997,183 @@ export default function Patients() {
         </Card>
       </div>
 
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search patients..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
-            />
+      {/* Action Bar with Search, Filters, and Bulk Actions */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+          <div className="flex flex-1 gap-4 items-center">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+              <Input
+                placeholder="Search patients by name, code, phone, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(!showFilters)}
+              className={showFilters ? "bg-blue-50 border-blue-200" : ""}
+            >
+              <Filter className="mr-2 h-4 w-4" />
+              Filters
+            </Button>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setViewMode(viewMode === "table" ? "cards" : "table")}
+              >
+                {viewMode === "table" ? <Grid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              >
+                {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex gap-2">
+            {selectedPatients.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Bulk Actions ({selectedPatients.length})
+                    <MoreVertical className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => handleBulkAction("export")}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export Selected
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleBulkAction("deactivate")}>
+                    <User className="mr-2 h-4 w-4" />
+                    Deactivate Selected
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => handleBulkAction("delete")}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Selected
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export All
+            </Button>
+            
+            <Button className="bg-green-600 hover:bg-green-700">
+              <Calendar className="mr-2 h-4 w-4" />
+              Book Appointment
+            </Button>
           </div>
         </div>
-        
-        <Button className="bg-green-600 hover:bg-green-700">
-          <Calendar className="mr-2 h-4 w-4" />
-          Book Appointment
-        </Button>
+
+        {/* Advanced Filters Panel */}
+        {showFilters && (
+          <Card className="border-slate-200">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <Label htmlFor="gender-filter" className="text-sm font-medium">Gender</Label>
+                  <Select value={filterGender} onValueChange={setFilterGender}>
+                    <SelectTrigger id="gender-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Genders</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="blood-filter" className="text-sm font-medium">Blood Group</Label>
+                  <Select value={filterBloodGroup} onValueChange={setFilterBloodGroup}>
+                    <SelectTrigger id="blood-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Blood Groups</SelectItem>
+                      <SelectItem value="A+">A+</SelectItem>
+                      <SelectItem value="A-">A-</SelectItem>
+                      <SelectItem value="B+">B+</SelectItem>
+                      <SelectItem value="B-">B-</SelectItem>
+                      <SelectItem value="AB+">AB+</SelectItem>
+                      <SelectItem value="AB-">AB-</SelectItem>
+                      <SelectItem value="O+">O+</SelectItem>
+                      <SelectItem value="O-">O-</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="loyalty-filter" className="text-sm font-medium">Loyalty Tier</Label>
+                  <Select value={filterLoyaltyTier} onValueChange={setFilterLoyaltyTier}>
+                    <SelectTrigger id="loyalty-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Tiers</SelectItem>
+                      <SelectItem value="bronze">🥉 Bronze</SelectItem>
+                      <SelectItem value="silver">🥈 Silver</SelectItem>
+                      <SelectItem value="gold">🥇 Gold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="status-filter" className="text-sm font-medium">Status</Label>
+                  <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger id="status-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                <div className="text-sm text-slate-600">
+                  Showing {filteredPatients.length} of {patients.length} patients
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      setFilterGender("all");
+                      setFilterBloodGroup("all");
+                      setFilterLoyaltyTier("all");
+                      setFilterStatus("all");
+                    }}
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Patients Table */}
@@ -950,6 +1216,12 @@ export default function Patients() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedPatients.length === filteredPatients.length && filteredPatients.length > 0}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Patient Code</TableHead>
                     <TableHead>Name</TableHead>
                     <TableHead>Age/Gender</TableHead>
@@ -961,7 +1233,13 @@ export default function Patients() {
                 </TableHeader>
                 <TableBody>
                   {filteredPatients.map((patient) => (
-                    <TableRow key={patient.id}>
+                    <TableRow key={patient.id} className={selectedPatients.includes(patient.id) ? "bg-blue-50" : ""}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedPatients.includes(patient.id)}
+                          onCheckedChange={() => handleSelectPatient(patient.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <span className="font-mono text-sm">{patient.patientCode}</span>
                       </TableCell>
@@ -1020,9 +1298,40 @@ export default function Patients() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => handleViewPatient(patient)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Patient
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Stethoscope className="mr-2 h-4 w-4" />
+                                Medical History
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Pill className="mr-2 h-4 w-4" />
+                                Prescriptions
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Book Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Patient
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
