@@ -1,515 +1,448 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Header from "@/components/layout/Header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  DollarSign, 
-  Calendar, 
-  Users, 
+import { Progress } from "@/components/ui/progress";
+import {
+  Activity,
+  Calendar,
+  DollarSign,
+  Eye,
   Package,
   TrendingUp,
-  TrendingDown,
-  Eye,
-  Heart,
-  Activity,
-  AlertCircle,
-  CheckCircle,
+  Users,
+  AlertTriangle,
   Clock,
   MapPin,
-  Bell,
-  Settings,
+  ChevronRight,
   Plus,
-  BarChart3,
-  PieChart,
-  LineChart,
+  Search,
   Filter,
-  Download,
-  RefreshCw,
-  Store,
-  UserCheck,
-  FileText,
-  Stethoscope
+  CalendarPlus,
+  UserPlus,
+  Receipt,
+  Stethoscope,
+  Heart,
+  Brain,
+  Building,
+  BarChart3
 } from "lucide-react";
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart as RechartsPieChart, Cell, Pie } from "recharts";
-
-interface DashboardKPIs {
-  dailySales: number;
-  appointmentsToday: number;
-  totalPatients: number;
-  lowStockItems: number;
-  monthlyRevenue: number;
-  appointmentsThisWeek: number;
-  newPatientsThisMonth: number;
-  prescriptionsPending: number;
-}
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 
 const salesData = [
-  { name: 'Mon', sales: 1200, appointments: 8 },
-  { name: 'Tue', sales: 1800, appointments: 12 },
-  { name: 'Wed', sales: 1500, appointments: 10 },
-  { name: 'Thu', sales: 2200, appointments: 15 },
-  { name: 'Fri', sales: 2800, appointments: 18 },
-  { name: 'Sat', sales: 3200, appointments: 22 },
-  { name: 'Sun', sales: 1800, appointments: 14 },
+  { name: 'Jan', sales: 4000, revenue: 2400 },
+  { name: 'Feb', sales: 3000, revenue: 1398 },
+  { name: 'Mar', sales: 2000, revenue: 9800 },
+  { name: 'Apr', sales: 2780, revenue: 3908 },
+  { name: 'May', sales: 1890, revenue: 4800 },
+  { name: 'Jun', sales: 2390, revenue: 3800 },
 ];
 
-const appointmentTypes = [
+const appointmentData = [
+  { name: 'Mon', appointments: 12 },
+  { name: 'Tue', appointments: 19 },
+  { name: 'Wed', appointments: 3 },
+  { name: 'Thu', appointments: 5 },
+  { name: 'Fri', appointments: 2 },
+  { name: 'Sat', appointments: 8 },
+  { name: 'Sun', appointments: 1 },
+];
+
+const serviceData = [
   { name: 'Eye Exams', value: 45, color: '#0088FE' },
-  { name: 'Contact Fittings', value: 25, color: '#00C49F' },
-  { name: 'Follow-ups', value: 20, color: '#FFBB28' },
-  { name: 'Emergencies', value: 10, color: '#FF8042' },
+  { name: 'Glasses', value: 30, color: '#00C49F' },
+  { name: 'Contacts', value: 20, color: '#FFBB28' },
+  { name: 'Surgery', value: 5, color: '#FF8042' },
 ];
 
-const recentActivities = [
-  {
-    id: 1,
-    type: 'appointment',
-    title: 'New appointment scheduled',
-    description: 'Sarah Johnson - Eye Exam',
-    time: '5 minutes ago',
-    icon: Calendar,
-    color: 'text-blue-500'
-  },
-  {
-    id: 2,
-    type: 'sale',
-    title: 'Sale completed',
-    description: 'Designer frames - $299',
-    time: '12 minutes ago',
-    icon: DollarSign,
-    color: 'text-green-500'
-  },
-  {
-    id: 3,
-    type: 'patient',
-    title: 'New patient registered',
-    description: 'Michael Chen added to system',
-    time: '25 minutes ago',
-    icon: Users,
-    color: 'text-purple-500'
-  },
-  {
-    id: 4,
-    type: 'inventory',
-    title: 'Low stock alert',
-    description: 'Contact lens solution - 5 units left',
-    time: '1 hour ago',
-    icon: Package,
-    color: 'text-orange-500'
-  },
-  {
-    id: 5,
-    type: 'prescription',
-    title: 'Prescription ready',
-    description: 'Emily Rodriguez - Progressive lenses',
-    time: '2 hours ago',
-    icon: FileText,
-    color: 'text-indigo-500'
-  }
-];
-
-const quickActions = [
-  { title: 'New Appointment', icon: Calendar, color: 'bg-blue-500', action: '/patients' },
-  { title: 'Add Patient', icon: Users, color: 'bg-green-500', action: '/patients' },
-  { title: 'Quick Sale', icon: DollarSign, color: 'bg-purple-500', action: '/invoices' },
-  { title: 'View Inventory', icon: Package, color: 'bg-orange-500', action: '/inventory' },
-  { title: 'Staff Check-in', icon: UserCheck, color: 'bg-teal-500', action: '/attendance' },
-  { title: 'New Prescription', icon: Stethoscope, color: 'bg-pink-500', action: '/prescriptions' },
-];
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 export default function Dashboard() {
-  const [selectedTimeRange, setSelectedTimeRange] = useState("7d");
-  const [selectedStore, setSelectedStore] = useState("all");
+  const [selectedStore, setSelectedStore] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('7d');
 
-  const { data: kpis, isLoading: kpisLoading } = useQuery<DashboardKPIs>({
-    queryKey: ["/api/dashboard/kpis"],
+  const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
+    queryKey: ["/api/stores"],
   });
 
-  const { data: recentAppointments = [] } = useQuery({
-    queryKey: ["/api/appointments", { limit: 5, recent: true }],
+  const { data: dashboardData } = useQuery({
+    queryKey: ["/api/dashboard", selectedStore, dateRange],
+    queryFn: () => Promise.resolve({
+      totalSales: 45231,
+      totalRevenue: 152000,
+      totalAppointments: 124,
+      totalPatients: 856,
+      appointmentsToday: 8,
+      lowStockItems: 3,
+      pendingInvoices: 12,
+      systemHealth: 98
+    })
   });
 
-  const { data: recentSales = [] } = useQuery({
-    queryKey: ["/api/sales", { limit: 5, recent: true }],
-  });
+  const recentAppointments = [
+    {
+      id: "1",
+      patient: "Sarah Johnson",
+      time: "10:00 AM",
+      service: "Eye Exam",
+      doctor: "Dr. Smith",
+      status: "confirmed"
+    },
+    {
+      id: "2", 
+      patient: "Michael Chen",
+      time: "2:00 PM",
+      service: "Contact Fitting",
+      doctor: "Dr. Rodriguez",
+      status: "pending"
+    },
+    {
+      id: "3",
+      patient: "Emma Wilson",
+      time: "3:30 PM", 
+      service: "Follow-up",
+      doctor: "Dr. Smith",
+      status: "completed"
+    }
+  ];
 
-  const { data: lowStockItems = [] } = useQuery({
-    queryKey: ["/api/inventory/low-stock"],
-  });
+  const recentSales = [
+    {
+      id: "1",
+      customer: "John Doe",
+      amount: 299.99,
+      items: "Prescription Glasses",
+      timestamp: "2 hours ago"
+    },
+    {
+      id: "2",
+      customer: "Jane Smith", 
+      amount: 89.99,
+      items: "Contact Lenses",
+      timestamp: "4 hours ago"
+    },
+    {
+      id: "3",
+      customer: "Bob Johnson",
+      amount: 450.00,
+      items: "Designer Frames",
+      timestamp: "6 hours ago"
+    }
+  ];
 
-  if (kpisLoading) {
-    return (
-      <>
-        <Header title="Dashboard" subtitle="Welcome back! Here's your practice overview." />
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardContent className="p-6">
-                    <div className="h-16 bg-slate-200 rounded"></div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </main>
-      </>
-    );
-  }
+  const quickActions = [
+    {
+      title: "Schedule Appointment",
+      description: "Book new patient visit",
+      icon: CalendarPlus,
+      action: () => {},
+      color: "bg-blue-500 hover:bg-blue-600"
+    },
+    {
+      title: "Add Patient",
+      description: "Register new patient",
+      icon: UserPlus, 
+      action: () => {},
+      color: "bg-green-500 hover:bg-green-600"
+    },
+    {
+      title: "Process Sale",
+      description: "Quick sale transaction",
+      icon: Receipt,
+      action: () => {},
+      color: "bg-purple-500 hover:bg-purple-600"
+    },
+    {
+      title: "Medical Record",
+      description: "Update patient record",
+      icon: Stethoscope,
+      action: () => {},
+      color: "bg-orange-500 hover:bg-orange-600"
+    }
+  ];
 
   return (
-    <>
-      <Header 
-        title="Dashboard" 
-        subtitle="Welcome back! Here's your practice overview and key metrics."
-      />
-      
-      <main className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-6">
-          {/* Top Controls */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div className="flex flex-wrap items-center gap-4">
-              <select 
-                className="px-3 py-2 border border-slate-300 rounded-md text-sm"
-                value={selectedStore}
-                onChange={(e) => setSelectedStore(e.target.value)}
-              >
-                <option value="all">All Stores</option>
-                <option value="downtown">Downtown Clinic</option>
-                <option value="westside">Westside Branch</option>
-                <option value="family">Family Center</option>
-              </select>
-              
-              <select 
-                className="px-3 py-2 border border-slate-300 rounded-md text-sm"
-                value={selectedTimeRange}
-                onChange={(e) => setSelectedTimeRange(e.target.value)}
-              >
-                <option value="1d">Last 24 Hours</option>
-                <option value="7d">Last 7 Days</option>
-                <option value="30d">Last 30 Days</option>
-                <option value="90d">Last 90 Days</option>
-              </select>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Customize
-              </Button>
-            </div>
-          </div>
-
-          {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-l-4 border-l-blue-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Today's Revenue</p>
-                    <p className="text-2xl font-bold">${(kpis?.dailySales || 0).toLocaleString()}</p>
-                    <div className="flex items-center mt-2">
-                      <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">+12.5% from yesterday</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <DollarSign className="h-6 w-6 text-blue-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-green-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Today's Appointments</p>
-                    <p className="text-2xl font-bold">{kpis?.appointmentsToday || 0}</p>
-                    <div className="flex items-center mt-2">
-                      <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                      <span className="text-sm text-green-600">+8.3% from yesterday</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-green-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-purple-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Total Patients</p>
-                    <p className="text-2xl font-bold">{(kpis?.totalPatients || 0).toLocaleString()}</p>
-                    <div className="flex items-center mt-2">
-                      <Users className="h-4 w-4 text-purple-500 mr-1" />
-                      <span className="text-sm text-slate-600">{kpis?.newPatientsThisMonth || 0} new this month</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Users className="h-6 w-6 text-purple-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-orange-500">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Low Stock Items</p>
-                    <p className="text-2xl font-bold">{kpis?.lowStockItems || 0}</p>
-                    <div className="flex items-center mt-2">
-                      <AlertCircle className="h-4 w-4 text-orange-500 mr-1" />
-                      <span className="text-sm text-orange-600">Requires attention</span>
-                    </div>
-                  </div>
-                  <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <Package className="h-6 w-6 text-orange-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Activity className="h-5 w-5" />
-                <span>Quick Actions</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {quickActions.map((action, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="h-20 flex flex-col items-center space-y-2 hover:shadow-md transition-shadow"
-                    onClick={() => window.location.href = action.action}
-                  >
-                    <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${action.color}`}>
-                      <action.icon className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="text-xs text-center">{action.title}</span>
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Charts and Analytics */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Sales Trend */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <LineChart className="h-5 w-5" />
-                  <span>Sales & Appointments Trend</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsLineChart data={salesData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="sales" 
-                      stroke="#3B82F6" 
-                      strokeWidth={2}
-                      name="Sales ($)"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="appointments" 
-                      stroke="#10B981" 
-                      strokeWidth={2}
-                      name="Appointments"
-                    />
-                  </RechartsLineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            {/* Appointment Types */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <PieChart className="h-5 w-5" />
-                  <span>Appointment Distribution</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={appointmentTypes}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({name, percent}: {name: string; percent: number}) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {appointmentTypes.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Recent Activity and Alerts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Recent Activity</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-3">
-                      <div className={`h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center`}>
-                        <activity.icon className={`h-4 w-4 ${activity.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-900">{activity.title}</p>
-                        <p className="text-sm text-slate-500">{activity.description}</p>
-                        <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Alerts and Notifications */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Bell className="h-5 w-5" />
-                  <span>Alerts & Notifications</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3 p-3 bg-orange-50 rounded-lg">
-                    <AlertCircle className="h-5 w-5 text-orange-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-orange-900">Low Stock Alert</p>
-                      <p className="text-sm text-orange-700">{kpis?.lowStockItems || 0} items need restocking</p>
-                      <Button variant="link" size="sm" className="p-0 h-auto text-orange-600">
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg">
-                    <Calendar className="h-5 w-5 text-blue-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-900">Upcoming Appointments</p>
-                      <p className="text-sm text-blue-700">{kpis?.appointmentsToday || 0} appointments scheduled for today</p>
-                      <Button variant="link" size="sm" className="p-0 h-auto text-blue-600">
-                        View Schedule
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3 p-3 bg-green-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-green-900">System Status</p>
-                      <p className="text-sm text-green-700">All systems operational</p>
-                      <Button variant="link" size="sm" className="p-0 h-auto text-green-600">
-                        View Health
-                      </Button>
-                    </div>
-                  </div>
-
-                  {kpis?.prescriptionsPending && kpis.prescriptionsPending > 0 && (
-                    <div className="flex items-start space-x-3 p-3 bg-purple-50 rounded-lg">
-                      <FileText className="h-5 w-5 text-purple-500 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-purple-900">Pending Prescriptions</p>
-                        <p className="text-sm text-purple-700">{kpis.prescriptionsPending} prescriptions awaiting review</p>
-                        <Button variant="link" size="sm" className="p-0 h-auto text-purple-600">
-                          Review Now
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Performance Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Monthly Revenue</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600 mb-2">
-                  ${(kpis?.monthlyRevenue || 0).toLocaleString()}
-                </div>
-                <Progress value={75} className="mb-2" />
-                <p className="text-sm text-slate-500">75% of monthly goal ($50K)</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Patient Satisfaction</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600 mb-2">4.9/5.0</div>
-                <Progress value={98} className="mb-2" />
-                <p className="text-sm text-slate-500">Based on 247 reviews this month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Appointment Efficiency</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-purple-600 mb-2">92%</div>
-                <Progress value={92} className="mb-2" />
-                <p className="text-sm text-slate-500">On-time appointments this week</p>
-              </CardContent>
-            </Card>
-          </div>
+    <div className="flex-1 space-y-6 p-6 overflow-auto bg-slate-50">
+      {/* Header */}
+      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+          <p className="text-slate-600">Welcome back! Here's what's happening at your practice.</p>
         </div>
-      </main>
-    </>
+        
+        <div className="flex items-center space-x-2">
+          <Select value={selectedStore} onValueChange={setSelectedStore}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select store" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stores</SelectItem>
+              {stores.map((store) => (
+                <SelectItem key={store.id} value={store.id}>
+                  {store.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1d">Today</SelectItem>
+              <SelectItem value="7d">7 Days</SelectItem>
+              <SelectItem value="30d">30 Days</SelectItem>
+              <SelectItem value="90d">90 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${dashboardData?.totalRevenue?.toLocaleString() || '0'}</div>
+            <p className="text-xs text-muted-foreground">
+              <TrendingUp className="inline h-3 w-3 mr-1" />
+              +20.1% from last month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData?.totalAppointments || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {dashboardData?.appointmentsToday || 0} scheduled today
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Patients</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData?.totalPatients || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              +12% from last month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">System Health</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData?.systemHealth || 0}%</div>
+            <Progress value={dashboardData?.systemHealth || 0} className="mt-2" />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Frequently used functions for faster workflow</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {quickActions.map((action, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                className={`h-24 flex flex-col items-center justify-center space-y-2 hover:bg-slate-50 border-2 hover:border-slate-300 transition-all`}
+                onClick={action.action}
+              >
+                <action.icon className="h-8 w-8 text-slate-600" />
+                <div className="text-center">
+                  <div className="font-medium text-sm">{action.title}</div>
+                  <div className="text-xs text-slate-500">{action.description}</div>
+                </div>
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Charts */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Revenue Overview</CardTitle>
+            <CardDescription>Monthly revenue and sales trends</CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={salesData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Area type="monotone" dataKey="revenue" stackId="1" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Service Distribution</CardTitle>
+            <CardDescription>Breakdown of services provided</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={350}>
+              <PieChart>
+                <Pie
+                  data={serviceData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {serviceData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Appointments</CardTitle>
+            <CardDescription>Today's scheduled appointments</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentAppointments.map((appointment) => (
+                <div key={appointment.id} className="flex items-center space-x-4">
+                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">{appointment.patient}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {appointment.time} • {appointment.service}
+                    </p>
+                  </div>
+                  <Badge variant={
+                    appointment.status === 'confirmed' ? 'default' :
+                    appointment.status === 'pending' ? 'secondary' : 'outline'
+                  }>
+                    {appointment.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Sales</CardTitle>
+            <CardDescription>Latest transactions and purchases</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentSales.map((sale) => (
+                <div key={sale.id} className="flex items-center space-x-4">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src="/api/placeholder/36/36" />
+                    <AvatarFallback>{sale.customer.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">{sale.customer}</p>
+                    <p className="text-sm text-muted-foreground">{sale.items}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">${sale.amount}</p>
+                    <p className="text-xs text-muted-foreground">{sale.timestamp}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Alerts & Notifications */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-orange-500 mr-2" />
+              Low Stock Alert
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-2">
+              {dashboardData?.lowStockItems || 0} items running low
+            </p>
+            <Button variant="outline" size="sm">
+              View Inventory
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Receipt className="h-5 w-5 text-blue-500 mr-2" />
+              Pending Invoices
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-2">
+              {dashboardData?.pendingInvoices || 0} invoices awaiting payment
+            </p>
+            <Button variant="outline" size="sm">
+              Manage Billing
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Clock className="h-5 w-5 text-green-500 mr-2" />
+              Today's Schedule
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-2">
+              {dashboardData?.appointmentsToday || 0} appointments scheduled
+            </p>
+            <Button variant="outline" size="sm">
+              View Calendar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

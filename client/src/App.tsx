@@ -36,6 +36,7 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Services from "@/pages/Services";
 import Sidebar from "@/components/layout/Sidebar";
+import AppLayout from "@/components/layout/AppLayout";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -57,23 +58,20 @@ function Router() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <AppLayout>
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Switch>
           <Route path="/" component={Dashboard} />
           <Route path="/stores" component={Stores} />
           <Route path="/inventory" component={Inventory} />
-          <Route path="/sales" component={Sales} />
-          <Route path="/appointments" component={Appointments} />
+          <Route path="/sales" component={InvoiceManagement} />
+          <Route path="/appointments" component={PatientManagement} />
           <Route path="/customers" component={Customers} />
           <Route path="/patients" component={PatientManagement} />
-          <Route path="/patient-management" component={PatientManagement} />
-          <Route path="/appointments" component={PatientManagement} />
-          <Route path="/sales" component={InvoiceManagement} />
           <Route path="/invoices" component={InvoiceManagement} />
           <Route path="/prescriptions" component={Prescriptions} />
-          <Route path="/billing" component={Billing} />
+          <Route path="/billing" component={InvoiceManagement} />
           <Route path="/staff" component={Staff} />
           <Route path="/attendance" component={Attendance} />
           <Route path="/payroll" component={Payroll} />
@@ -84,16 +82,10 @@ function Router() {
           <Route path="/support" component={Support} />
           <Route path="/book-appointment" component={BookAppointment} />
           <Route path="/leave-management" component={LeaveManagement} />
-          <Route path="/about" component={About} />
-          <Route path="/features" component={Features} />
-          <Route path="/reviews" component={Reviews} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/terms" component={Terms} />
-          <Route path="/privacy" component={Privacy} />
           <Route component={NotFound} />
         </Switch>
       </div>
-    </div>
+    </AppLayout>
   );
 }
 

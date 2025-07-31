@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
 import { 
@@ -18,6 +19,9 @@ import { z } from "zod";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Register appointment routes
+  registerAppointmentRoutes(app);
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {

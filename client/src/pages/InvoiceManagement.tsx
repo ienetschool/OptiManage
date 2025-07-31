@@ -130,7 +130,7 @@ export default function InvoiceManagement() {
     queryKey: ["/api/products"],
   });
 
-  const { data: stores = [] } = useQuery({
+  const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
     queryKey: ["/api/stores"],
   });
 

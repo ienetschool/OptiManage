@@ -1,96 +1,280 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Eye, Home, Store, Package, ShoppingCart, Calendar, CalendarPlus, Users, FileText, BarChart3, MessageCircle, Settings, HelpCircle, LogOut, Clock, DollarSign, Bell, User, UserCheck, Pill, Stethoscope } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { User as UserType } from "@shared/schema";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  LayoutDashboard,
+  Store,
+  Package,
+  DollarSign,
+  Calendar,
+  Users,
+  UserCheck,
+  FileText,
+  Receipt,
+  ClipboardList,
+  Settings,
+  HelpCircle,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Eye,
+  Stethoscope,
+  Building,
+  UserCog,
+  CreditCard,
+  BarChart3,
+  MessageSquare,
+  Bell,
+  ChevronDown,
+  Briefcase,
+  BookOpen,
+  Hospital,
+  Pill
+} from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Patient Management", href: "/patients", icon: Users },
-  { name: "Invoice & Sales", href: "/sales", icon: ShoppingCart },
-  { name: "Prescriptions", href: "/prescriptions", icon: Pill },
-  { name: "Billing", href: "/billing", icon: DollarSign },
-  { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Staff", href: "/staff", icon: UserCheck },
-  { name: "Attendance", href: "/attendance", icon: Clock },
-  { name: "Leave Management", href: "/leave-management", icon: Calendar },
-  { name: "Payroll", href: "/payroll", icon: DollarSign },
-  { name: "Stores", href: "/stores", icon: Store },
-  { name: "Notifications", href: "/notifications", icon: Bell },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Communication", href: "/communication", icon: MessageCircle },
-  { name: "Settings", href: "/settings", icon: Settings },
-  { name: "Help & Support", href: "/support", icon: HelpCircle },
+const navigationItems = [
+  {
+    title: "Dashboard",
+    href: "/",
+    icon: LayoutDashboard,
+    badge: null,
+  },
+  {
+    title: "Patient Management",
+    icon: Users,
+    items: [
+      { title: "Patients & Appointments", href: "/patients", icon: Calendar },
+      { title: "Medical Records", href: "/medical-records", icon: FileText },
+      { title: "Prescriptions", href: "/prescriptions", icon: Pill },
+    ],
+  },
+  {
+    title: "Sales & Billing",
+    icon: DollarSign,
+    items: [
+      { title: "Invoices & Sales", href: "/invoices", icon: Receipt },
+      { title: "Payment History", href: "/payments", icon: CreditCard },
+      { title: "Quick Sale", href: "/quick-sale", icon: DollarSign },
+    ],
+  },
+  {
+    title: "Inventory",
+    href: "/inventory",
+    icon: Package,
+    badge: { text: "Low Stock", variant: "destructive" as const },
+  },
+  {
+    title: "Store Management",
+    icon: Building,
+    items: [
+      { title: "All Stores", href: "/stores", icon: Store },
+      { title: "Store Settings", href: "/store-settings", icon: Settings },
+    ],
+  },
+  {
+    title: "Staff & HR",
+    icon: UserCog,
+    items: [
+      { title: "Staff Management", href: "/staff", icon: Users },
+      { title: "Attendance", href: "/attendance", icon: UserCheck },
+      { title: "Payroll", href: "/payroll", icon: Briefcase },
+    ],
+  },
+  {
+    title: "Reports & Analytics",
+    icon: BarChart3,
+    items: [
+      { title: "Sales Reports", href: "/reports/sales", icon: BarChart3 },
+      { title: "Patient Reports", href: "/reports/patients", icon: Users },
+      { title: "Financial Reports", href: "/reports/financial", icon: DollarSign },
+    ],
+  },
+  {
+    title: "Communication",
+    href: "/communication",
+    icon: MessageSquare,
+    badge: { text: "3", variant: "default" as const },
+  },
+  {
+    title: "Notifications",
+    href: "/notifications",
+    icon: Bell,
+    badge: { text: "5", variant: "secondary" as const },
+  },
+  {
+    title: "Settings",
+    href: "/settings",
+    icon: Settings,
+  },
+  {
+    title: "Support",
+    href: "/support",
+    icon: HelpCircle,
+  },
 ];
 
 export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
-  const { user } = useAuth() as { user: UserType | undefined };
+  const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Sales & Billing"]);
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const toggleExpanded = (title: string) => {
+    setExpandedItems(prev =>
+      prev.includes(title)
+        ? prev.filter(item => item !== title)
+        : [...prev, title]
+    );
+  };
+
+  const isActiveItem = (href: string) => {
+    if (href === "/") return location === "/";
+    return location.startsWith(href);
+  };
+
+  const isParentActive = (items?: Array<{ href: string }>) => {
+    return items?.some(item => isActiveItem(item.href)) || false;
   };
 
   return (
-    <div className="w-64 bg-slate-900 text-white flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b border-slate-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-            <Eye className="text-white text-lg" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold">OptiCare</h1>
-            <p className="text-slate-400 text-sm">Medical Center</p>
-          </div>
+    <div className={cn(
+      "flex flex-col bg-white border-r border-slate-200 transition-all duration-300",
+      collapsed ? "w-16" : "w-64"
+    )}>
+      {/* Sidebar Header */}
+      <div className="p-4 border-b border-slate-200">
+        <div className="flex items-center justify-between">
+          {!collapsed && (
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <Eye className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-900">OptiStore Pro</h2>
+                <p className="text-xs text-slate-500">Medical Practice</p>
+              </div>
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-8 w-8 p-0"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const isActive = location === item.href;
-          
-          return (
-            <Link key={item.name} href={item.href}>
-              <a
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-300 hover:text-white hover:bg-slate-800"
-                }`}
-              >
-                <Icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </a>
-            </Link>
-          );
-        })}
-      </nav>
+      <ScrollArea className="flex-1 px-3 py-4">
+        <nav className="space-y-2">
+          {navigationItems.map((item) => {
+            if (item.items) {
+              // Group with subitems
+              const isExpanded = expandedItems.includes(item.title);
+              const isActive = isParentActive(item.items);
 
-      {/* User Profile */}
-      <div className="p-4 border-t border-slate-700">
-        <div className="flex items-center space-x-3">
-          <Avatar className="w-10 h-10">
-            <AvatarImage src={user?.profileImageUrl || ""} alt={user?.firstName || "User"} />
-            <AvatarFallback>
-              {user?.firstName?.[0]}{user?.lastName?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <p className="text-sm font-medium">
-              {user?.firstName} {user?.lastName}
-            </p>
-            <p className="text-xs text-slate-400 capitalize">{user?.role || "Staff"}</p>
+              return (
+                <Collapsible key={item.title} open={isExpanded} onOpenChange={() => toggleExpanded(item.title)}>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant={isActive ? "secondary" : "ghost"}
+                      className={cn(
+                        "w-full justify-start h-10",
+                        collapsed && "px-2 justify-center"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      {!collapsed && (
+                        <>
+                          <span className="ml-3 flex-1 text-left">{item.title}</span>
+                          <ChevronDown className={cn(
+                            "h-4 w-4 transition-transform",
+                            isExpanded && "rotate-180"
+                          )} />
+                        </>
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  {!collapsed && (
+                    <CollapsibleContent className="mt-1">
+                      <div className="pl-4 space-y-1">
+                        {item.items.map((subItem) => (
+                          <Link key={subItem.href} href={subItem.href}>
+                            <Button
+                              variant={isActiveItem(subItem.href) ? "secondary" : "ghost"}
+                              size="sm"
+                              className="w-full justify-start h-8"
+                            >
+                              <subItem.icon className="h-3 w-3 flex-shrink-0" />
+                              <span className="ml-3">{subItem.title}</span>
+                            </Button>
+                          </Link>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  )}
+                </Collapsible>
+              );
+            } else {
+              // Single item
+              return (
+                <Link key={item.href} href={item.href!}>
+                  <Button
+                    variant={isActiveItem(item.href!) ? "secondary" : "ghost"}
+                    className={cn(
+                      "w-full justify-start h-10",
+                      collapsed && "px-2 justify-center"
+                    )}
+                  >
+                    <item.icon className="h-4 w-4 flex-shrink-0" />
+                    {!collapsed && (
+                      <>
+                        <span className="ml-3 flex-1 text-left">{item.title}</span>
+                        {item.badge && (
+                          <Badge variant={item.badge.variant} className="ml-auto text-xs">
+                            {item.badge.text}
+                          </Badge>
+                        )}
+                      </>
+                    )}
+                  </Button>
+                </Link>
+              );
+            }
+          })}
+        </nav>
+      </ScrollArea>
+
+      {/* Sidebar Footer */}
+      <div className="p-3 border-t border-slate-200">
+        {!collapsed && (
+          <div className="bg-blue-50 rounded-lg p-3">
+            <div className="flex items-center space-x-2 mb-2">
+              <Heart className="h-4 w-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-900">System Health</span>
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-600">Database</span>
+                <Badge variant="outline" className="text-green-600 border-green-200">
+                  Healthy
+                </Badge>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-600">API</span>
+                <Badge variant="outline" className="text-green-600 border-green-200">
+                  Online
+                </Badge>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-slate-400 hover:text-white transition-colors"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
-        </div>
+        )}
       </div>
     </div>
   );
