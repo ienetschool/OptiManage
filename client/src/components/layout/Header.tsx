@@ -73,12 +73,16 @@ export default function Header() {
             </div>
           </div>
           <div className="flex items-center space-x-4 mt-2 sm:mt-0">
-            <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1">
-              <Link href="/contact">Emergency Contact</Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1">
-              <Link href="/api/login">Patient Portal</Link>
-            </Button>
+            <Link href="/contact">
+              <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1">
+                Emergency Contact
+              </Button>
+            </Link>
+            <Link href="/api/login">
+              <Button variant="ghost" size="sm" className="text-white hover:text-blue-200 h-auto p-1">
+                Patient Portal
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

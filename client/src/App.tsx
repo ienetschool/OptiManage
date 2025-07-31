@@ -50,10 +50,12 @@ function Router() {
           <Route path="/about" component={About} />
           <Route path="/features" component={Features} />
           <Route path="/services" component={Services} />
+          <Route path="/services/:serviceType" component={Services} />
           <Route path="/reviews" component={Reviews} />
           <Route path="/contact" component={Contact} />
           <Route path="/terms" component={Terms} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/book-appointment" component={BookAppointment} />
           <Route component={NotFound} />
         </Switch>
       </PublicLayout>
@@ -72,9 +74,12 @@ function Router() {
           <Route path="/appointments" component={PatientManagement} />
           <Route path="/customers" component={Customers} />
           <Route path="/patients" component={PatientManagement} />
+          <Route path="/patient-management" component={PatientManagement} />
+          <Route path="/medical-appointments" component={PatientManagement} />
           <Route path="/invoices" component={InvoiceManagement} />
           <Route path="/prescriptions" component={Prescriptions} />
           <Route path="/billing" component={InvoiceManagement} />
+          <Route path="/invoice-management" component={InvoiceManagement} />
           <Route path="/staff" component={Staff} />
           <Route path="/attendance" component={Attendance} />
           <Route path="/payroll" component={Payroll} />
