@@ -46,7 +46,16 @@ export default function AttendancePage() {
   const queryClient = useQueryClient();
 
   const { data: attendanceList = [], isLoading } = useQuery<Attendance[]>({
-    queryKey: ["/api/attendance", { date: selectedDate, staffId: selectedStaff }],
+    queryKey: ["/api/attendance", selectedDate, selectedStaff],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedDate) params.append('date', selectedDate);
+      if (selectedStaff) params.append('staffId', selectedStaff);
+      
+      const response = await fetch(`/api/attendance?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch attendance');
+      return response.json();
+    }
   });
 
   const { data: staffList = [] } = useQuery<Staff[]>({

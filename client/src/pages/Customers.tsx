@@ -183,8 +183,8 @@ export default function Customers() {
   return (
     <>
       <Header 
-        title="Customer Management" 
-        subtitle="Manage customer profiles, loyalty programs, and purchase history." 
+        title="Patient & Customer Management" 
+        subtitle="Manage patient profiles, medical history, appointments, and customer relationships." 
       />
       
       <main className="flex-1 overflow-y-auto p-6">
@@ -199,18 +199,19 @@ export default function Customers() {
           <TabsContent value="customers" className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">All Customers ({customers.length})</h3>
-                <p className="text-sm text-slate-600">Manage customer profiles and information</p>
+                <h3 className="text-lg font-semibold text-slate-900">All Patients/Customers ({customers.length})</h3>
+                <p className="text-sm text-slate-600">Manage patient profiles, medical history, and customer information</p>
               </div>
               
-              <Dialog open={open} onOpenChange={handleOpenChange}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Customer
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+              <div className="flex space-x-2">
+                <Dialog open={open} onOpenChange={handleOpenChange}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Patient/Customer
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>
                       {editingCustomer ? "Edit Customer" : "Add New Customer"}
@@ -387,8 +388,13 @@ export default function Customers() {
                       </div>
                     </form>
                   </Form>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+                <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Book Appointment
+                </Button>
+              </div>
             </div>
 
             {/* Search */}

@@ -1,0 +1,95 @@
+/
+├── Home
+├── Login
+├── Dashboard
+│   ├── Sales Overview
+│   ├── Inventory Overview
+│   ├── Appointments Overview
+│   ├── Notifications
+│   └── Quick Actions
+├── Stores
+│   ├── Store List
+│   ├── Add Store
+│   ├── Store Details
+│   │   ├── Staff List
+│   │   ├── Inventory
+│   │   ├── Sales
+│   │   └── Appointments
+├── Inventory
+│   ├── Product List
+│   ├── Add/Edit Product
+│   ├── Stock by Store
+│   ├── Low Stock Alerts
+│   ├── Suppliers
+│   └── Reorder Requests
+├── Sales (Invoicing)
+│   ├── New Sale/Invoice
+│   ├── Sales/Invoice History
+│   ├── Invoice Details (PDF/QR/Share)
+│   ├── Returns/Refunds
+│   └── Discounts/Promotions
+├── Appointments
+│   ├── Calendar View
+│   ├── Book Appointment
+│   ├── Appointment List
+│   └── Patient/Customer History
+│       ├── Doctor List (actions: View, Add Prescription, View History)
+│       └── Detailed Info (all visits, prescriptions, billing, interventions)
+├── Customers (Patients)
+│   ├── Customer List
+│   ├── Add Customer (+Appointment)
+│   ├── Customer Profile
+│   │   ├── Purchase/Medical History
+│   │   ├── Prescriptions
+│   │   ├── Loyalty Points
+│   │   └── Complete History
+├── Prescriptions
+│   ├── Prescription List
+│   ├── Add/Edit Prescription
+│   └── Prescription Details (PDF/QR/Share)
+├── Billing
+│   ├── Invoice List
+│   ├── New Invoice
+│   ├── Payment Status
+│   └── Invoice Details (PDF/QR/Share)
+├── Attendance
+│   ├── Staff Attendance List
+│   ├── Check-in/Check-out (QR/manual)
+│   ├── Attendance Calendar
+│   └── Attendance Reports
+├── Employees (HR)
+│   ├── Employee List
+│   ├── Add/Edit Employee
+│   ├── Employee Profile (position, department, qualification, photo, ID card/QR)
+│   ├── Leave Management
+│   ├── Payroll Management
+│   │   ├── Salary Structure
+│   │   ├── Payroll History
+│   │   ├── Payslip (PDF/QR)
+│   │   └── Export to Accounting
+│   └── Attendance Integration
+├── Reports
+│   ├── Sales Reports
+│   ├── Inventory Reports
+│   ├── Appointment Reports
+│   ├── Customer Reports
+│   ├── HR/Payroll Reports
+│   └── Export (Excel/PDF)
+├── Notifications
+│   ├── System Alerts
+│   ├── Low Stock Alerts
+│   └── Appointment Reminders
+├── Settings
+│   ├── Store Settings
+│   ├── Branding/Logo
+│   ├── Tax & Currency
+│   ├── Integrations (SMS, Email, WhatsApp, Payment)
+│   ├── Theme
+│   ├── Backup/Restore
+│   ├── Audit Logs
+│   ├── HR/Payroll Settings
+│   └── User/Role Management
+├── Help
+│   ├── User Guide
+│   ├── Video Tutorials
+│   └── Contact Support

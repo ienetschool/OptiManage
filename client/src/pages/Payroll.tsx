@@ -31,7 +31,16 @@ export default function PayrollPage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const { data: payrollList = [], isLoading } = useQuery<Payroll[]>({
-    queryKey: ["/api/payroll", { month: selectedMonth, year: selectedYear }],
+    queryKey: ["/api/payroll", selectedMonth, selectedYear],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.append('month', selectedMonth.toString());
+      params.append('year', selectedYear.toString());
+      
+      const response = await fetch(`/api/payroll?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch payroll');
+      return response.json();
+    }
   });
 
   const { data: staffList = [] } = useQuery<Staff[]>({

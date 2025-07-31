@@ -14,6 +14,7 @@ import Appointments from "@/pages/Appointments";
 import Customers from "@/pages/Customers";
 import Patients from "@/pages/Patients";
 import Prescriptions from "@/pages/Prescriptions";
+import Billing from "@/pages/Billing";
 import Staff from "@/pages/Staff";
 import Attendance from "@/pages/Attendance";
 import Payroll from "@/pages/Payroll";
@@ -47,8 +48,9 @@ function Router() {
           <Route path="/sales" component={Sales} />
           <Route path="/appointments" component={Appointments} />
           <Route path="/customers" component={Customers} />
-          <Route path="/patients" component={Patients} />
+          <Route path="/patients" component={Customers} />
           <Route path="/prescriptions" component={Prescriptions} />
+          <Route path="/billing" component={Billing} />
           <Route path="/staff" component={Staff} />
           <Route path="/attendance" component={Attendance} />
           <Route path="/payroll" component={Payroll} />
