@@ -35,12 +35,19 @@ export function setupSimpleAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {
-  // For development, always allow access to API endpoints
+  const user = (req.session as any)?.user;
+  
+  if (!user) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  // Add user to request for other routes to use
   (req as any).user = {
     claims: {
-      sub: "45761289",
-      email: "admin@optistorepro.com"
+      sub: user.id,
+      email: user.email
     }
   };
+  
   return next();
 };
