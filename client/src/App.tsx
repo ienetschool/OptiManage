@@ -66,23 +66,72 @@ function Router() {
       {/* Patient Portal routes (clean UI without menu/top bar) */}
       <Route path="/patient-portal">
         <PatientPortalLayout>
-          <Switch>
-            <Route path="/patient-portal" component={Profile} />
-            <Route path="/patient-portal/settings" component={Settings} />
-            <Route path="/patient-portal/patients" component={Patients} />
-            <Route path="/patient-portal/medical-records" component={MedicalRecords} />
-            <Route path="/patient-portal/prescriptions" component={Prescriptions} />
-            <Route path="/patient-portal/invoices" component={InvoiceManagement} />
-            <Route path="/patient-portal/inventory" component={Inventory} />
-            <Route path="/patient-portal/stores" component={Stores} />
-            <Route path="/patient-portal/store-settings" component={StoreSettings} />
-            <Route path="/patient-portal/staff" component={Staff} />
-            <Route path="/patient-portal/attendance" component={Attendance} />
-            <Route path="/patient-portal/payroll" component={Payroll} />
-            <Route path="/patient-portal/communication" component={Communication} />
-            <Route path="/patient-portal/notifications" component={Notifications} />
-            <Route component={NotFound} />
-          </Switch>
+          <Profile />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/settings">
+        <PatientPortalLayout>
+          <Settings />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/patients">
+        <PatientPortalLayout>
+          <Patients />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/medical-records">
+        <PatientPortalLayout>
+          <MedicalRecords />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/prescriptions">
+        <PatientPortalLayout>
+          <Prescriptions />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/invoices">
+        <PatientPortalLayout>
+          <InvoiceManagement />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/inventory">
+        <PatientPortalLayout>
+          <Inventory />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/stores">
+        <PatientPortalLayout>
+          <Stores />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/store-settings">
+        <PatientPortalLayout>
+          <StoreSettings />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/staff">
+        <PatientPortalLayout>
+          <Staff />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/attendance">
+        <PatientPortalLayout>
+          <Attendance />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/payroll">
+        <PatientPortalLayout>
+          <Payroll />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/communication">
+        <PatientPortalLayout>
+          <Communication />
+        </PatientPortalLayout>
+      </Route>
+      <Route path="/patient-portal/notifications">
+        <PatientPortalLayout>
+          <Notifications />
         </PatientPortalLayout>
       </Route>
 
