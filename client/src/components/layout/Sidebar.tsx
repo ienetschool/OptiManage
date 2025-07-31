@@ -1,21 +1,23 @@
 import { Link, useLocation } from "wouter";
-import { Eye, Home, Store, Package, ShoppingCart, Calendar, Users, FileText, BarChart3, MessageCircle, Settings, HelpCircle, LogOut, Clock, DollarSign, Bell, User } from "lucide-react";
+import { Eye, Home, Store, Package, ShoppingCart, Calendar, CalendarPlus, Users, FileText, BarChart3, MessageCircle, Settings, HelpCircle, LogOut, Clock, DollarSign, Bell, User, UserCheck, Pill, Stethoscope } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: Home },
-  { name: "Stores", href: "/stores", icon: Store },
+  { name: "Patients", href: "/customers", icon: Users },
+  { name: "Book Appointment", href: "/book-appointment", icon: CalendarPlus },
+  { name: "Appointments", href: "/appointments", icon: Calendar },
+  { name: "Prescriptions", href: "/prescriptions", icon: Pill },
+  { name: "Billing", href: "/billing", icon: DollarSign },
   { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Sales", href: "/sales", icon: ShoppingCart },
-  { name: "Appointments", href: "/appointments", icon: Calendar },
-  { name: "Patients/Customers", href: "/customers", icon: Users },
-  { name: "Prescriptions", href: "/prescriptions", icon: FileText },
-  { name: "Billing", href: "/billing", icon: DollarSign },
-  { name: "Staff", href: "/staff", icon: Users },
+  { name: "Staff", href: "/staff", icon: UserCheck },
   { name: "Attendance", href: "/attendance", icon: Clock },
+  { name: "Leave Management", href: "/leave-management", icon: Calendar },
   { name: "Payroll", href: "/payroll", icon: DollarSign },
+  { name: "Stores", href: "/stores", icon: Store },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Communication", href: "/communication", icon: MessageCircle },
@@ -40,8 +42,8 @@ export default function Sidebar() {
             <Eye className="text-white text-lg" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">OptiStore Pro</h1>
-            <p className="text-slate-400 text-sm">Multi-Store Management</p>
+            <h1 className="text-xl font-bold">OptiCare</h1>
+            <p className="text-slate-400 text-sm">Medical Center</p>
           </div>
         </div>
       </div>

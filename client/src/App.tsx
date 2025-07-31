@@ -23,6 +23,8 @@ import Reports from "@/pages/Reports";
 import Communication from "@/pages/Communication";
 import Settings from "@/pages/Settings";
 import Support from "@/pages/Support";
+import BookAppointment from "@/pages/BookAppointment";
+import LeaveManagement from "@/pages/LeaveManagement";
 import Sidebar from "@/components/layout/Sidebar";
 
 function Router() {
@@ -59,6 +61,8 @@ function Router() {
           <Route path="/communication" component={Communication} />
           <Route path="/settings" component={Settings} />
           <Route path="/support" component={Support} />
+          <Route path="/book-appointment" component={BookAppointment} />
+          <Route path="/leave-management" component={LeaveManagement} />
           <Route component={NotFound} />
         </Switch>
       </div>
