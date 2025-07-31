@@ -12,8 +12,8 @@ import Inventory from "@/pages/Inventory";
 import Sales from "@/pages/Sales";
 import Appointments from "@/pages/Appointments";
 import Customers from "@/pages/Customers";
-import Patients from "@/pages/Patients";
 import PatientManagement from "@/pages/PatientManagement";
+import Patients from "@/pages/Patients";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import Prescriptions from "@/pages/Prescriptions";
 import Billing from "@/pages/Billing";
@@ -193,7 +193,7 @@ function Router() {
           <AppLayout>
             <Sidebar />
             <div className="flex-1 flex flex-col overflow-hidden">
-              <Patients />
+              <PatientManagement />
             </div>
           </AppLayout>
         ) : (
