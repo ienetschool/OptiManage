@@ -170,17 +170,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <a href="/pages">Manage Pages</a>
+              <DropdownMenuItem asChild>
+                <Link href="/pages">Manage Pages</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <a href="/themes">Themes & Design</a>
+              <DropdownMenuItem asChild>
+                <Link href="/themes">Themes & Design</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <a href="/domains">Domain Settings</a>
+              <DropdownMenuItem asChild>
+                <Link href="/domains">Domain Settings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <a href="/seo">SEO & Analytics</a>
+              <DropdownMenuItem asChild>
+                <Link href="/seo">SEO & Analytics</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -203,13 +203,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <User className="h-4 w-4 mr-2" />
-                <a href="/profile">Profile Settings</a>
+              <DropdownMenuItem asChild>
+                <Link href="/profile">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile Settings
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="h-4 w-4 mr-2" />
-                <a href="/settings">System Settings</a>
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <Settings className="h-4 w-4 mr-2" />
+                  System Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.location.href = "/api/logout"}>
                 <LogOut className="h-4 w-4 mr-2" />
@@ -225,26 +229,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {children}
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 px-6 py-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <p className="text-sm text-slate-600">
-              © 2025 OptiStore Pro. All rights reserved.
-            </p>
-            <div className="hidden sm:flex items-center space-x-4 text-sm text-slate-500">
-              <Link href="/privacy" className="hover:text-slate-700">Privacy Policy</Link>
-              <Link href="/terms" className="hover:text-slate-700">Terms of Service</Link>
-              <Link href="/support" className="hover:text-slate-700">Support</Link>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4 mt-2 sm:mt-0">
-            <Badge variant="outline" className="text-xs">
-              v2.1.0
-            </Badge>
-            <Badge variant="outline" className="text-xs text-green-600">
-              System Healthy
-            </Badge>
+      {/* Simple Footer for CRM */}
+      <footer className="bg-white border-t border-slate-200 px-6 py-2">
+        <div className="flex justify-between items-center text-xs text-slate-500">
+          <span>© 2025 OptiStore Pro</span>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className="text-xs">v2.1.0</Badge>
+            <Badge variant="outline" className="text-xs text-green-600">Online</Badge>
           </div>
         </div>
       </footer>
