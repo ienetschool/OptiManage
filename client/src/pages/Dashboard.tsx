@@ -121,7 +121,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Today's Revenue</p>
-                    <p className="text-2xl font-bold text-slate-900">${kpis.todayRevenue.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-slate-900">${kpis?.todayRevenue?.toLocaleString() || '0'}</p>
                     <p className="text-xs text-emerald-600 flex items-center mt-1">
                       <TrendingUp className="h-3 w-3 mr-1" />
                       +12% from yesterday
@@ -139,10 +139,10 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Appointments Today</p>
-                    <p className="text-2xl font-bold text-slate-900">{kpis.appointmentsToday}</p>
+                    <p className="text-2xl font-bold text-slate-900">{kpis?.appointmentsToday || 0}</p>
                     <p className="text-xs text-blue-600 flex items-center mt-1">
                       <Clock className="h-3 w-3 mr-1" />
-                      {kpis.pendingAppointments} pending
+                      {kpis?.pendingAppointments || 0} pending
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -157,7 +157,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Total Patients</p>
-                    <p className="text-2xl font-bold text-slate-900">{kpis.totalPatients.toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-slate-900">{kpis?.totalPatients?.toLocaleString() || '0'}</p>
                     <p className="text-xs text-purple-600 flex items-center mt-1">
                       <Heart className="h-3 w-3 mr-1" />
                       Active patients
@@ -175,7 +175,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Staff Present</p>
-                    <p className="text-2xl font-bold text-slate-900">{kpis.staffPresent}</p>
+                    <p className="text-2xl font-bold text-slate-900">{kpis?.staffPresent || 0}</p>
                     <p className="text-xs text-emerald-600 flex items-center mt-1">
                       <UserCheck className="h-3 w-3 mr-1" />
                       On duty today
@@ -196,7 +196,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Prescriptions Issued</p>
-                    <p className="text-2xl font-bold text-slate-900">{kpis.totalPrescriptions}</p>
+                    <p className="text-2xl font-bold text-slate-900">{kpis?.totalPrescriptions || 0}</p>
                     <p className="text-xs text-teal-600">This month</p>
                   </div>
                   <div className="w-12 h-12 bg-teal-100 rounded-xl flex items-center justify-center">
@@ -238,7 +238,7 @@ export default function Dashboard() {
           </div>
 
           {/* Alert Cards */}
-          {kpis.lowStockItems > 0 && (
+          {(kpis?.lowStockItems || 0) > 0 && (
             <Card className="border-amber-200 bg-amber-50">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-4">
@@ -248,7 +248,7 @@ export default function Dashboard() {
                   <div className="flex-1">
                     <h3 className="font-semibold text-amber-900">Inventory Alert</h3>
                     <p className="text-amber-700">
-                      {kpis.lowStockItems} items are running low on stock. Review inventory levels.
+                      {kpis?.lowStockItems || 0} items are running low on stock. Review inventory levels.
                     </p>
                   </div>
                   <Button variant="outline" className="border-amber-300 text-amber-700 hover:bg-amber-100">
