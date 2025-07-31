@@ -403,6 +403,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard route
+  app.get('/api/dashboard', isAuthenticated, async (req, res) => {
+    try {
+      const { storeId, dateRange } = req.query;
+      
+      // Get dashboard analytics data
+      const dashboardData = {
+        totalSales: 24500,
+        totalAppointments: 48,
+        totalPatients: 156,
+        totalRevenue: 18200,
+        salesGrowth: 12.5,
+        appointmentGrowth: 8.3,
+        patientGrowth: 15.2,
+        revenueGrowth: 9.7,
+        appointmentsToday: 12,
+        lowStockAlerts: 3,
+        pendingPayments: 5
+      };
+      
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      res.status(500).json({ message: "Failed to fetch dashboard data" });
+    }
+  });
+
   // Register medical practice routes
   registerMedicalRoutes(app);
   

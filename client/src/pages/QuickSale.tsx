@@ -229,7 +229,7 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold">${product.price.toFixed(2)}</p>
+                  <p className="font-bold">${(typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0).toFixed(2)}</p>
                   <Button size="sm" variant="outline">
                     <Plus className="h-4 w-4" />
                   </Button>

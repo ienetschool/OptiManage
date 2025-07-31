@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Header from "@/components/layout/Header";
+// Header removed for Patient Portal compatibility
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,7 +84,7 @@ export default function Patients() {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       toast({
         title: "Success",
-        description: "Patient created successfully.",
+        description: "Patient registered successfully.",
       });
       setOpen(false);
       form.reset();
@@ -92,7 +92,7 @@ export default function Patients() {
     onError: () => {
       toast({
         title: "Error",
-        description: "Failed to create patient.",
+        description: "Failed to register patient.",
         variant: "destructive",
       });
     },
@@ -102,15 +102,12 @@ export default function Patients() {
     createPatientMutation.mutate(data);
   };
 
-  const filteredPatients = patients.filter(patient => {
-    const matchesSearch = patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         patient.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         patient.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         patient.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+  const filteredPatients = patients.filter(patient =>
+    `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.patientCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleViewPatient = async (patient: Patient) => {
     setSelectedPatient(patient);
@@ -138,596 +135,555 @@ export default function Patients() {
   };
 
   return (
-    <>
-      <Header 
-        title="Patient Management" 
-        subtitle="Manage patient records, medical history, and personal information securely." 
-      />
-      
-      <main className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Total Patients</p>
-                    <p className="text-2xl font-bold text-slate-900">{patients.length}</p>
-                    <p className="text-xs text-emerald-600 flex items-center mt-1">
-                      <Activity className="h-3 w-3 mr-1" />
-                      Active records
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <User className="text-blue-600 h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">New This Month</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {patients.filter(p => {
-                        const date = new Date(p.createdAt);
-                        const now = new Date();
-                        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-                      }).length}
-                    </p>
-                    <p className="text-xs text-slate-500">New registrations</p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <Calendar className="text-green-600 h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">With Allergies</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {patients.filter(p => p.allergies && p.allergies.trim().length > 0).length}
-                    </p>
-                    <p className="text-xs text-amber-600 flex items-center mt-1">
-                      <AlertTriangle className="h-3 w-3 mr-1" />
-                      Requires attention
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <AlertTriangle className="text-amber-600 h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Gold Members</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      {patients.filter(p => p.loyaltyTier === 'gold').length}
-                    </p>
-                    <p className="text-xs text-emerald-600">Loyalty program</p>
-                  </div>
-                  <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
-                    <Heart className="text-yellow-600 h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Controls */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                <Input
-                  placeholder="Search patients..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-64"
-                />
-              </div>
-            </div>
-            
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Patient
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Register New Patient</DialogTitle>
-                </DialogHeader>
-                
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <Tabs defaultValue="personal" className="w-full">
-                      <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="personal">Personal Info</TabsTrigger>
-                        <TabsTrigger value="contact">Contact Details</TabsTrigger>
-                        <TabsTrigger value="medical">Medical Info</TabsTrigger>
-                        <TabsTrigger value="insurance">Insurance & Loyalty</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="personal" className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="patientCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Patient Code</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="gender"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Gender</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="male">Male</SelectItem>
-                                    <SelectItem value="female">Female</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="firstName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>First Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="lastName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Last Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="dateOfBirth"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Date of Birth</FormLabel>
-                                <FormControl>
-                                  <Input type="date" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="bloodGroup"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Blood Group</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="A+, B-, O+, etc." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="contact" className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="phone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Phone Number</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email Address</FormLabel>
-                                <FormControl>
-                                  <Input type="email" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Address</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Enter complete address..."
-                                  className="min-h-[80px]"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="emergencyContact"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Emergency Contact Name</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="emergencyPhone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Emergency Contact Phone</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="medical" className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="allergies"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Allergies</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="List any known allergies..."
-                                  className="min-h-[100px]"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="medicalHistory"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Medical History</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Enter relevant medical history..."
-                                  className="min-h-[120px]"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </TabsContent>
-
-                      <TabsContent value="insurance" className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="insuranceProvider"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Insurance Provider</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="insuranceNumber"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Insurance Number</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="loyaltyTier"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Loyalty Tier</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="bronze">🥉 Bronze</SelectItem>
-                                    <SelectItem value="silver">🥈 Silver</SelectItem>
-                                    <SelectItem value="gold">🥇 Gold</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="loyaltyPoints"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Initial Loyalty Points</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    type="number" 
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </TabsContent>
-                    </Tabs>
-                    
-                    <div className="flex justify-end space-x-2 pt-4 border-t">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={createPatientMutation.isPending}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        {createPatientMutation.isPending ? "Creating..." : "Register Patient"}
-                      </Button>
-                    </div>
-                  </form>
-                </Form>
-              </DialogContent>
-            </Dialog>
-          </div>
-
-          {/* Patients Table */}
-          <Card className="border-slate-200">
-            <CardHeader>
-              <CardTitle>Patient Records</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredPatients.length === 0 ? (
-                <div className="text-center py-12">
-                  <User className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No patients found</h3>
-                  <p className="text-slate-600 mb-6">
-                    {searchTerm ? "Try adjusting your search criteria." : "Register your first patient to get started."}
-                  </p>
-                  {!searchTerm && (
-                    <Button 
-                      onClick={() => setOpen(true)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Register Patient
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Patient Code</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Age/Gender</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Loyalty Tier</TableHead>
-                        <TableHead>Registration Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPatients.map((patient) => (
-                        <TableRow key={patient.id}>
-                          <TableCell>
-                            <span className="font-mono text-sm">{patient.patientCode}</span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <User className="h-4 w-4 text-slate-400" />
-                              <span className="font-medium">{patient.firstName} {patient.lastName}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <span>{calculateAge(patient.dateOfBirth || '')} years</span>
-                              <span className="text-slate-500 capitalize"> • {patient.gender}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {patient.phone && (
-                                <div className="flex items-center space-x-1 text-sm">
-                                  <Phone className="h-3 w-3 text-slate-400" />
-                                  <span>{patient.phone}</span>
-                                </div>
-                              )}
-                              {patient.email && (
-                                <div className="flex items-center space-x-1 text-sm">
-                                  <Mail className="h-3 w-3 text-slate-400" />
-                                  <span>{patient.email}</span>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={
-                                patient.loyaltyTier === 'gold' 
-                                  ? 'bg-yellow-100 text-yellow-800' 
-                                  : patient.loyaltyTier === 'silver'
-                                  ? 'bg-gray-100 text-gray-800'
-                                  : 'bg-orange-100 text-orange-800'
-                              }
-                            >
-                              {patient.loyaltyTier === 'gold' ? '🥇' : patient.loyaltyTier === 'silver' ? '🥈' : '🥉'} {patient.loyaltyTier}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">
-                              {format(new Date(patient.createdAt), 'MMM dd, yyyy')}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewPatient(patient)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+    <div className="space-y-6 p-6">
+      {/* Page Header */}
+      <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Patient Management</h1>
+          <p className="text-slate-600">Manage patient records, medical history, and personal information securely.</p>
         </div>
-      </main>
-
-      {/* Patient View Dialog */}
-      {selectedPatient && (
-        <Dialog open={!!selectedPatient} onOpenChange={() => setSelectedPatient(null)}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="mr-2 h-4 w-4" />
+              Register Patient
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                <span>Patient Profile - {selectedPatient.firstName} {selectedPatient.lastName}</span>
-                <Badge className="ml-2">
-                  {selectedPatient.patientCode}
-                </Badge>
-              </DialogTitle>
+              <DialogTitle>Register New Patient</DialogTitle>
             </DialogHeader>
             
-            <Tabs defaultValue="profile" className="w-full">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Tabs defaultValue="personal" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="personal">Personal Info</TabsTrigger>
+                    <TabsTrigger value="contact">Contact Details</TabsTrigger>
+                    <TabsTrigger value="medical">Medical Info</TabsTrigger>
+                    <TabsTrigger value="insurance">Insurance & Loyalty</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="personal" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="patientCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Patient Code</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date of Birth</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="bloodGroup"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Blood Group</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="e.g., A+, O-, B+, AB+" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="contact" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email Address</FormLabel>
+                            <FormControl>
+                              <Input type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Address</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="emergencyContact"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Emergency Contact Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="emergencyPhone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Emergency Contact Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="medical" className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="allergies"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Known Allergies</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="List any known allergies or sensitivities" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="medicalHistory"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Medical History</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Previous medical conditions, surgeries, treatments" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="insurance" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="insuranceProvider"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Insurance Provider</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="insuranceNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Insurance Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="loyaltyTier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Loyalty Tier</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="bronze">🥉 Bronze</SelectItem>
+                              <SelectItem value="silver">🥈 Silver</SelectItem>
+                              <SelectItem value="gold">🥇 Gold</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                </Tabs>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={createPatientMutation.isPending}>
+                    {createPatientMutation.isPending ? "Registering..." : "Register Patient"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-slate-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Total Patients</p>
+                <p className="text-2xl font-bold text-slate-900">{patients.length}</p>
+                <p className="text-xs text-emerald-600 flex items-center mt-1">
+                  <Activity className="h-3 w-3 mr-1" />
+                  Active records
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                <User className="text-blue-600 h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">New This Month</p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {patients.filter(p => {
+                    const date = new Date(p.createdAt);
+                    const now = new Date();
+                    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                  }).length}
+                </p>
+                <p className="text-xs text-slate-500">New registrations</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                <Calendar className="text-green-600 h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">With Allergies</p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {patients.filter(p => p.allergies && p.allergies.trim().length > 0).length}
+                </p>
+                <p className="text-xs text-amber-600 flex items-center mt-1">
+                  <AlertTriangle className="h-3 w-3 mr-1" />
+                  Requires attention
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="text-amber-600 h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Loyalty Members</p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {patients.filter(p => p.loyaltyTier === 'gold' || p.loyaltyTier === 'silver').length}
+                </p>
+                <p className="text-xs text-purple-600 flex items-center mt-1">
+                  <Heart className="h-3 w-3 mr-1" />
+                  Premium members
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                <Heart className="text-purple-600 h-6 w-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder="Search patients..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+        </div>
+        
+        <Button className="bg-green-600 hover:bg-green-700">
+          <Calendar className="mr-2 h-4 w-4" />
+          Book Appointment
+        </Button>
+      </div>
+
+      {/* Patients Table */}
+      <Card className="border-slate-200">
+        <CardHeader>
+          <CardTitle>Patient Records</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="animate-pulse flex space-x-4">
+                  <div className="h-4 bg-slate-200 rounded w-1/6"></div>
+                  <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-1/6"></div>
+                  <div className="h-4 bg-slate-200 rounded w-1/6"></div>
+                </div>
+              ))}
+            </div>
+          ) : filteredPatients.length === 0 ? (
+            <div className="text-center py-12">
+              <User className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No patients found</h3>
+              <p className="text-slate-600 mb-6">
+                {searchTerm ? "Try adjusting your search criteria." : "Register your first patient to get started."}
+              </p>
+              {!searchTerm && (
+                <Button 
+                  onClick={() => setOpen(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Register Patient
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Patient Code</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Age/Gender</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Loyalty Tier</TableHead>
+                    <TableHead>Registration Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredPatients.map((patient) => (
+                    <TableRow key={patient.id}>
+                      <TableCell>
+                        <span className="font-mono text-sm">{patient.patientCode}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <User className="h-4 w-4 text-slate-400" />
+                          <span className="font-medium">{patient.firstName} {patient.lastName}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <span>{calculateAge(patient.dateOfBirth || '')} years</span>
+                          <span className="text-slate-500 capitalize"> • {patient.gender}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {patient.phone && (
+                            <div className="flex items-center space-x-1 text-sm">
+                              <Phone className="h-3 w-3 text-slate-400" />
+                              <span>{patient.phone}</span>
+                            </div>
+                          )}
+                          {patient.email && (
+                            <div className="flex items-center space-x-1 text-sm">
+                              <Mail className="h-3 w-3 text-slate-400" />
+                              <span>{patient.email}</span>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={
+                            patient.loyaltyTier === 'gold' 
+                              ? 'bg-yellow-100 text-yellow-800' 
+                              : patient.loyaltyTier === 'silver'
+                              ? 'bg-gray-100 text-gray-800'
+                              : 'bg-orange-100 text-orange-800'
+                          }
+                        >
+                          {patient.loyaltyTier === 'gold' ? '🥇' : patient.loyaltyTier === 'silver' ? '🥈' : '🥉'} {patient.loyaltyTier}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">
+                          {format(new Date(patient.createdAt), 'MMM dd, yyyy')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewPatient(patient)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Patient Details Dialog */}
+      {selectedPatient && (
+        <Dialog open={!!selectedPatient} onOpenChange={() => setSelectedPatient(null)}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Patient Details - {selectedPatient.firstName} {selectedPatient.lastName}</DialogTitle>
+            </DialogHeader>
+
+            <Tabs defaultValue="overview" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="medical">Medical Info</TabsTrigger>
                 <TabsTrigger value="history">History</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="profile" className="space-y-6">
+              <TabsContent value="overview" className="space-y-6">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <h4 className="font-semibold text-slate-900">Personal Information</h4>
@@ -881,6 +837,6 @@ export default function Patients() {
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </div>
   );
 }
