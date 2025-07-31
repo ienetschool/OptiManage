@@ -264,7 +264,7 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
                 <SelectValue placeholder="Select customer or leave blank" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Walk-in Customer</SelectItem>
+                <SelectItem value="walk-in">Walk-in Customer</SelectItem>
                 {customers.map((customer) => (
                   <SelectItem key={customer.id} value={customer.id}>
                     {customer.firstName} {customer.lastName}

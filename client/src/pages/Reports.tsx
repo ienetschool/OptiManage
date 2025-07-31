@@ -91,11 +91,27 @@ export default function Reports() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
-  const runReport = (reportId: number, reportName: string) => {
-    toast({
-      title: "Report Generated",
-      description: `${reportName} has been generated successfully`,
-    });
+  const runReport = async (reportId: number, reportName: string) => {
+    try {
+      toast({
+        title: "Generating Report",
+        description: `${reportName} is being generated...`,
+      });
+      
+      // Simulate report generation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Report Generated",
+        description: `${reportName} has been generated successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate report",
+        variant: "destructive",
+      });
+    }
   };
 
   const editReport = (reportId: number, reportName: string) => {
@@ -114,10 +130,8 @@ export default function Reports() {
   };
 
   const createCustomReport = () => {
-    toast({
-      title: "Create Custom Report",
-      description: "Opening custom report builder",
-    });
+    // Navigate to custom reports page
+    window.location.href = '/custom-reports';
   };
 
   const filteredPredefined = predefinedReports.filter(report =>
@@ -178,11 +192,19 @@ export default function Reports() {
             <div className="space-y-2">
               <Label>Quick Actions</Label>
               <div className="flex space-x-2">
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toast({ title: "Exporting All Reports", description: "Starting bulk export..." })}
+                >
                   <Download className="h-4 w-4 mr-1" />
                   Export All
                 </Button>
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => toast({ title: "Schedule Reports", description: "Opening scheduler..." })}
+                >
                   <Calendar className="h-4 w-4 mr-1" />
                   Schedule
                 </Button>

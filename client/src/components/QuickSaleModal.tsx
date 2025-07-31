@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import QuickSale from "@/pages/QuickSale";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface QuickSaleModalProps {
   open: boolean;
@@ -10,16 +9,12 @@ interface QuickSaleModalProps {
 export default function QuickSaleModal({ open, onOpenChange }: QuickSaleModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] w-full h-full p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle>Quick Sale</DialogTitle>
-          <DialogDescription>
-            Process a quick sale transaction
-          </DialogDescription>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Quick Sale - Point of Sale</DialogTitle>
+          <DialogDescription>Process sales transactions quickly and efficiently</DialogDescription>
         </DialogHeader>
-        <div className="p-6 pt-0 h-full overflow-auto">
-          <QuickSale onClose={() => onOpenChange(false)} />
-        </div>
+        <QuickSale onClose={() => onOpenChange(false)} />
       </DialogContent>
     </Dialog>
   );
