@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Header from "@/components/layout/Header";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,11 +155,6 @@ export default function Attendance() {
 
   return (
     <>
-      <Header 
-        title="Attendance Management" 
-        subtitle="Track staff attendance, manage leave requests, and monitor work hours with QR code integration."
-      />
-      
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           {/* Quick Stats */}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Header from "@/components/layout/Header";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,11 +179,6 @@ export default function Support() {
 
   return (
     <>
-      <Header 
-        title="Support & Help" 
-        subtitle="Get help, documentation, and technical support for the system." 
-      />
-      
       <main className="flex-1 overflow-y-auto p-6">
         <Tabs defaultValue="faq" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">

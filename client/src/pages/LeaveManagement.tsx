@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Header from "@/components/layout/Header";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -283,11 +283,6 @@ export default function LeaveManagement() {
 
   return (
     <>
-      <Header 
-        title="Leave Management" 
-        subtitle="Manage staff leave requests, approvals, and leave balances." 
-      />
-      
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           {/* Summary Cards */}

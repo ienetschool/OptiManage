@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Header from "@/components/layout/Header";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -133,11 +133,6 @@ export default function Reviews() {
 
   return (
     <>
-      <Header 
-        title="Patient Reviews" 
-        subtitle="Read what our patients say about their vision care experience with us."
-      />
-      
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-8">
           {/* Statistics Section */}
