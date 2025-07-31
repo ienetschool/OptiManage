@@ -83,7 +83,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/api/login" className="text-slate-300 hover:text-white transition-colors text-sm">
+                <Link href="/login" className="text-slate-300 hover:text-white transition-colors text-sm">
                   Patient Portal
                 </Link>
               </li>

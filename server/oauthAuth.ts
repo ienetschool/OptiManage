@@ -53,7 +53,7 @@ export function setupOAuthAuth(app: Express) {
         };
         return done(null, user);
       } catch (error) {
-        return done(error, null);
+        return done(error as Error, undefined);
       }
     }));
   }
@@ -77,7 +77,7 @@ export function setupOAuthAuth(app: Express) {
         };
         return done(null, user);
       } catch (error) {
-        return done(error, null);
+        return done(error as Error, undefined);
       }
     }));
   }
@@ -107,7 +107,7 @@ export function setupOAuthAuth(app: Express) {
         provider: 'email'
       });
     } catch (error) {
-      return done(error);
+      return done(error as Error);
     }
   }));
 
@@ -185,12 +185,22 @@ export function setupOAuthAuth(app: Express) {
   });
 
   // Email login
-  app.post('/api/auth/login',
-    passport.authenticate('local', { failureRedirect: '/login' }),
-    (req, res) => {
-      res.json({ success: true, message: 'Login successful' });
-    }
-  );
+  app.post('/api/auth/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        return res.status(500).json({ message: 'Authentication error' });
+      }
+      if (!user) {
+        return res.status(401).json({ message: info?.message || 'Invalid credentials' });
+      }
+      req.login(user, (err) => {
+        if (err) {
+          return res.status(500).json({ message: 'Login error' });
+        }
+        res.json({ success: true, message: 'Login successful' });
+      });
+    })(req, res, next);
+  });
 
   // Simple login endpoint (for testing)
   app.get("/api/login", (req, res) => {

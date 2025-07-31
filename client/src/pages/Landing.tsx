@@ -4,7 +4,7 @@ import { Eye, Stethoscope, Users, Calendar, FileText, Shield, Activity, Heart } 
 
 export default function Landing() {
   const handleLogin = () => {
-    window.location.href = "/api/login";
+    window.location.href = "/login";
   };
 
   const features = [
