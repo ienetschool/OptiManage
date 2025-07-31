@@ -113,56 +113,181 @@ function Router() {
         <PublicLayout><BookAppointment /></PublicLayout>
       </Route>
 
-      {/* Homepage */}
-      <Route path="/">
-        <PublicLayout><Home /></PublicLayout>
-      </Route>
-
       {/* Dashboard routes - always accessible for testing */}
-      <Route>
+      <Route path="/dashboard">
         <AppLayout>
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Switch>
-              <Route path="/dashboard" component={Dashboard} />
-              <Route path="/stores" component={Stores} />
-              <Route path="/inventory" component={Inventory} />
-              <Route path="/sales" component={Sales} />
-              <Route path="/appointments" component={Appointments} />
-              <Route path="/customers" component={Customers} />
-              <Route path="/patients" component={Patients} />
-              <Route path="/patient-management" component={PatientManagement} />
-              <Route path="/medical-appointments" component={Appointments} />
-              <Route path="/invoices" component={InvoiceManagement} />
-              <Route path="/prescriptions" component={Prescriptions} />
-              <Route path="/billing" component={Billing} />
-              <Route path="/invoice-management" component={InvoiceManagement} />
-              <Route path="/staff" component={Staff} />
-              <Route path="/attendance" component={Attendance} />
-              <Route path="/payroll" component={Payroll} />
-              <Route path="/notifications" component={Notifications} />
-              <Route path="/reports" component={Reports} />
-              <Route path="/communication" component={Communication} />
-              <Route path="/settings" component={Settings} />
-              <Route path="/support" component={Support} />
-              <Route path="/leave-management" component={LeaveManagement} />
-              <Route path="/analytics" component={Analytics} />
-              <Route path="/store-performance" component={StorePerformance} />
-              <Route path="/profile" component={Profile} />
-              <Route path="/medical-records" component={MedicalRecords} />
-              <Route path="/quick-sale">
-                {() => <QuickSale />}
-              </Route>
-              <Route path="/payments" component={Payments} />
-              <Route path="/store-settings" component={StoreSettings} />
-              <Route path="/pages" component={Pages} />
-              <Route path="/themes" component={Themes} />
-              <Route path="/domains" component={Domains} />
-              <Route path="/seo" component={SEO} />
-              <Route component={NotFound} />
-            </Switch>
+            <Dashboard />
           </div>
         </AppLayout>
+      </Route>
+      
+      <Route path="/stores">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Stores />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/inventory">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Inventory />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/sales">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Sales />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/appointments">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Appointments />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/customers">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Customers />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/patients">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Patients />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/staff">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Staff />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/attendance">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Attendance />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/payroll">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Payroll />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/notifications">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Notifications />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/communication">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Communication />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/settings">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Settings />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/medical-records">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <MedicalRecords />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/prescriptions">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Prescriptions />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/invoices">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <InvoiceManagement />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/store-settings">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <StoreSettings />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/quick-sale">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <QuickSale />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/payments">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Payments />
+          </div>
+        </AppLayout>
+      </Route>
+
+      {/* Homepage - Must be last for catch-all */}
+      <Route path="/">
+        <PublicLayout><Home /></PublicLayout>
       </Route>
     </Switch>
   );
