@@ -33,7 +33,9 @@ import {
   Share2,
   Printer,
   Receipt,
-  CalendarPlus
+  CalendarPlus,
+  FileText,
+  MessageSquare
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,6 +57,7 @@ export default function Patients() {
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
   const [medicalHistoryOpen, setMedicalHistoryOpen] = useState(false);
   const [prescriptionsOpen, setPrescriptionsOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -96,12 +99,14 @@ export default function Patients() {
   });
 
   // Fetch patients
-  const { data: patients = [], isLoading } = useQuery({
+  const { data: patients = [], isLoading, refetch: refetchPatients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
+    staleTime: 0,
+    cacheTime: 0,
   });
 
   // Fetch appointments
-  const { data: appointments = [] } = useQuery({
+  const { data: appointments = [] } = useQuery<any[]>({
     queryKey: ["/api/appointments"],
   });
 
@@ -112,6 +117,7 @@ export default function Patients() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      refetchPatients();
       setOpen(false);
       form.reset();
       toast({
@@ -185,7 +191,25 @@ export default function Patients() {
         setViewPatientOpen(true);
         break;
       case 'edit':
-        form.reset(patient);
+        form.reset({
+          ...patient,
+          dateOfBirth: patient.dateOfBirth || "",
+          gender: patient.gender || "male",
+          phone: patient.phone || "",
+          email: patient.email || "",
+          address: patient.address || "",
+          emergencyContact: patient.emergencyContact || "",
+          emergencyPhone: patient.emergencyPhone || "",
+          bloodGroup: patient.bloodGroup || "",
+          allergies: patient.allergies || "",
+          medicalHistory: patient.medicalHistory || "",
+          insuranceProvider: patient.insuranceProvider || "",
+          insuranceNumber: patient.insuranceNumber || "",
+          isActive: patient.isActive ?? true,
+          loyaltyTier: patient.loyaltyTier || "bronze",
+          loyaltyPoints: patient.loyaltyPoints || 0,
+          customFields: {},
+        });
         setOpen(true);
         break;
       case 'medical-history':
@@ -266,27 +290,10 @@ export default function Patients() {
         });
         break;
       case 'share':
-        if (navigator.share) {
-          navigator.share({
-            title: `Patient: ${patient.firstName} ${patient.lastName}`,
-            text: `Patient Code: ${patient.patientCode}\nPhone: ${patient.phone}`,
-          });
-        } else {
-          // Fallback for browsers that don't support Web Share API
-          const shareText = `Patient: ${patient.firstName} ${patient.lastName}\nCode: ${patient.patientCode}\nPhone: ${patient.phone}`;
-          navigator.clipboard.writeText(shareText);
-          toast({
-            title: "Copied to Clipboard",
-            description: "Patient information copied to clipboard",
-          });
-        }
+        setShareModalOpen(true);
         break;
       case 'invoice':
-        toast({
-          title: "Generate Invoice",
-          description: `Creating invoice for ${patient.firstName} ${patient.lastName}`,
-        });
-        // Here you would typically navigate to invoice generation or open invoice modal
+        generateInvoice(patient);
         break;
       case 'book-appointment':
         setAppointmentForm(prev => ({ ...prev, patientId: patient.id }));
@@ -304,14 +311,243 @@ export default function Patients() {
     }
   };
 
+  // Generate invoice function
+  const generateInvoice = (patient: Patient) => {
+    const invoiceWindow = window.open('', '_blank');
+    if (invoiceWindow) {
+      const invoiceDate = new Date().toLocaleDateString();
+      const invoiceNumber = `INV-${Date.now()}`;
+      
+      invoiceWindow.document.write(`
+        <html>
+          <head>
+            <title>Invoice - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+              .invoice-details { display: flex; justify-content: space-between; margin-bottom: 30px; }
+              .patient-info { background: #f5f5f5; padding: 15px; margin-bottom: 20px; }
+              .services { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+              .services th, .services td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+              .services th { background: #333; color: white; }
+              .total { text-align: right; font-size: 18px; font-weight: bold; }
+              .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>OptiStore Pro</h1>
+              <h2>Medical Services Invoice</h2>
+            </div>
+            
+            <div class="invoice-details">
+              <div>
+                <strong>Invoice #:</strong> ${invoiceNumber}<br>
+                <strong>Date:</strong> ${invoiceDate}
+              </div>
+              <div>
+                <strong>Bill To:</strong><br>
+                ${patient.firstName} ${patient.lastName}<br>
+                ${patient.address || 'Address not provided'}<br>
+                Phone: ${patient.phone || 'N/A'}
+              </div>
+            </div>
+
+            <div class="patient-info">
+              <strong>Patient Information:</strong><br>
+              Patient Code: ${patient.patientCode}<br>
+              Date of Birth: ${patient.dateOfBirth}<br>
+              Blood Group: ${patient.bloodGroup || 'N/A'}
+            </div>
+
+            <table class="services">
+              <thead>
+                <tr>
+                  <th>Service</th>
+                  <th>Description</th>
+                  <th>Quantity</th>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Eye Examination</td>
+                  <td>Comprehensive eye examination and consultation</td>
+                  <td>1</td>
+                  <td>$150.00</td>
+                  <td>$150.00</td>
+                </tr>
+                <tr>
+                  <td>Vision Test</td>
+                  <td>Complete vision assessment</td>
+                  <td>1</td>
+                  <td>$50.00</td>
+                  <td>$50.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="total">
+              <p>Subtotal: $200.00</p>
+              <p>Tax (8%): $16.00</p>
+              <p><strong>Total Amount: $216.00</strong></p>
+            </div>
+
+            <div class="footer">
+              <p>Thank you for choosing OptiStore Pro for your eye care needs.</p>
+              <p>Payment is due within 30 days. Please contact us with any questions.</p>
+            </div>
+          </body>
+        </html>
+      `);
+      invoiceWindow.document.close();
+      invoiceWindow.print();
+    }
+    
+    toast({
+      title: "Invoice Generated",
+      description: `Invoice created for ${patient.firstName} ${patient.lastName}`,
+    });
+  };
+
+  // Share functions
+  const shareViaEmail = (patient: Patient) => {
+    const subject = `Patient Information - ${patient.firstName} ${patient.lastName}`;
+    const body = `Patient Details:
+    
+Name: ${patient.firstName} ${patient.lastName}
+Patient Code: ${patient.patientCode}
+Phone: ${patient.phone}
+Email: ${patient.email || 'N/A'}
+Date of Birth: ${patient.dateOfBirth}
+Blood Group: ${patient.bloodGroup || 'N/A'}
+Address: ${patient.address || 'N/A'}
+
+Generated from OptiStore Pro Medical System`;
+
+    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink);
+    
+    toast({
+      title: "Email Sharing",
+      description: "Email client opened with patient information",
+    });
+  };
+
+  const shareViaWhatsApp = (patient: Patient) => {
+    const message = `*Patient Information*
+
+*Name:* ${patient.firstName} ${patient.lastName}
+*Patient Code:* ${patient.patientCode}
+*Phone:* ${patient.phone}
+*Date of Birth:* ${patient.dateOfBirth}
+*Blood Group:* ${patient.bloodGroup || 'N/A'}
+
+_Generated from OptiStore Pro Medical System_`;
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl);
+    
+    toast({
+      title: "WhatsApp Sharing",
+      description: "WhatsApp opened with patient information",
+    });
+  };
+
+  const generatePatientPDF = (patient: Patient) => {
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.document.write(`
+        <html>
+          <head>
+            <title>Patient Report - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+              .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #333; padding-bottom: 20px; }
+              .section { margin-bottom: 25px; }
+              .section h3 { background: #f0f0f0; padding: 10px; margin-bottom: 15px; }
+              .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+              .info-item { margin-bottom: 10px; }
+              .label { font-weight: bold; color: #333; }
+              @media print { 
+                body { margin: 0; }
+                .no-print { display: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>OptiStore Pro</h1>
+              <h2>Comprehensive Patient Report</h2>
+              <p>Generated on ${new Date().toLocaleDateString()}</p>
+            </div>
+
+            <div class="section">
+              <h3>Patient Information</h3>
+              <div class="info-grid">
+                <div>
+                  <div class="info-item"><span class="label">Full Name:</span> ${patient.firstName} ${patient.lastName}</div>
+                  <div class="info-item"><span class="label">Patient Code:</span> ${patient.patientCode}</div>
+                  <div class="info-item"><span class="label">Date of Birth:</span> ${patient.dateOfBirth}</div>
+                  <div class="info-item"><span class="label">Age:</span> ${calculateAge(patient.dateOfBirth)} years</div>
+                  <div class="info-item"><span class="label">Gender:</span> ${patient.gender}</div>
+                  <div class="info-item"><span class="label">Blood Group:</span> ${patient.bloodGroup || 'N/A'}</div>
+                </div>
+                <div>
+                  <div class="info-item"><span class="label">Phone:</span> ${patient.phone}</div>
+                  <div class="info-item"><span class="label">Email:</span> ${patient.email || 'N/A'}</div>
+                  <div class="info-item"><span class="label">Address:</span> ${patient.address || 'N/A'}</div>
+                  <div class="info-item"><span class="label">Emergency Contact:</span> ${patient.emergencyContact || 'N/A'}</div>
+                  <div class="info-item"><span class="label">Emergency Phone:</span> ${patient.emergencyPhone || 'N/A'}</div>
+                  <div class="info-item"><span class="label">Status:</span> ${patient.isActive ? 'Active' : 'Inactive'}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <h3>Medical Information</h3>
+              <div class="info-item"><span class="label">Allergies:</span> ${patient.allergies || 'None recorded'}</div>
+              <div class="info-item"><span class="label">Medical History:</span> ${patient.medicalHistory || 'None recorded'}</div>
+            </div>
+
+            <div class="section">
+              <h3>Insurance & Loyalty</h3>
+              <div class="info-grid">
+                <div>
+                  <div class="info-item"><span class="label">Insurance Provider:</span> ${patient.insuranceProvider || 'N/A'}</div>
+                  <div class="info-item"><span class="label">Policy Number:</span> ${patient.insuranceNumber || 'N/A'}</div>
+                </div>
+                <div>
+                  <div class="info-item"><span class="label">Loyalty Tier:</span> ${patient.loyaltyTier || 'Bronze'}</div>
+                  <div class="info-item"><span class="label">Loyalty Points:</span> ${patient.loyaltyPoints || 0}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="no-print" style="text-align: center; margin-top: 30px;">
+              <button onclick="window.print()" style="background: #333; color: white; padding: 10px 20px; border: none; cursor: pointer;">Print PDF</button>
+            </div>
+          </body>
+        </html>
+      `);
+      pdfWindow.document.close();
+    }
+    
+    toast({
+      title: "PDF Generated",
+      description: `Patient PDF report generated for ${patient.firstName} ${patient.lastName}`,
+    });
+  };
+
   const filteredPatients = patients.filter((patient: Patient) =>
     patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone.includes(searchTerm)
+    (patient.phone && patient.phone.includes(searchTerm))
   );
 
-  const calculateAge = (dateOfBirth: string) => {
+  const calculateAge = (dateOfBirth: string | null) => {
     if (!dateOfBirth) return 'N/A';
     const today = new Date();
     const birthDate = new Date(dateOfBirth);
@@ -412,7 +648,7 @@ export default function Patients() {
                             <FormItem>
                               <FormLabel>Date of Birth *</FormLabel>
                               <FormControl>
-                                <Input type="date" {...field} />
+                                <Input type="date" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -425,7 +661,7 @@ export default function Patients() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Gender *</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value || "male"}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select gender" />
@@ -496,7 +732,7 @@ export default function Patients() {
                             <FormItem>
                               <FormLabel>Phone Number *</FormLabel>
                               <FormControl>
-                                <Input {...field} placeholder="Enter phone number" />
+                                <Input {...field} value={field.value || ""} placeholder="Enter phone number" />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -636,7 +872,7 @@ export default function Patients() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Loyalty Tier</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select onValueChange={field.onChange} value={field.value || "bronze"}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select tier" />
@@ -681,7 +917,7 @@ export default function Patients() {
                               <FormLabel>Active Status</FormLabel>
                               <div className="flex items-center space-x-2 mt-2">
                                 <Checkbox
-                                  checked={field.value}
+                                  checked={field.value ?? true}
                                   onCheckedChange={field.onChange}
                                 />
                                 <Label className="text-sm">Patient is active</Label>
@@ -1147,6 +1383,77 @@ export default function Patients() {
                   <p className="text-slate-600">No prescription history available</p>
                 </CardContent>
               </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Share Modal */}
+      <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Patient Information</DialogTitle>
+            <DialogDescription>
+              Choose how you'd like to share {selectedPatient?.firstName} {selectedPatient?.lastName}'s information
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center space-y-2"
+                  onClick={() => {
+                    shareViaEmail(selectedPatient);
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <Mail className="h-6 w-6" />
+                  <span className="text-sm">Email</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center space-y-2"
+                  onClick={() => {
+                    shareViaWhatsApp(selectedPatient);
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <MessageSquare className="h-6 w-6" />
+                  <span className="text-sm">WhatsApp</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center space-y-2"
+                  onClick={() => {
+                    generatePatientPDF(selectedPatient);
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <FileText className="h-6 w-6" />
+                  <span className="text-sm">PDF Report</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-16 flex flex-col items-center space-y-2"
+                  onClick={() => {
+                    const shareText = `Patient: ${selectedPatient.firstName} ${selectedPatient.lastName}\nCode: ${selectedPatient.patientCode}\nPhone: ${selectedPatient.phone}`;
+                    navigator.clipboard.writeText(shareText);
+                    toast({
+                      title: "Copied",
+                      description: "Patient information copied to clipboard",
+                    });
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <Share2 className="h-6 w-6" />
+                  <span className="text-sm">Copy Info</span>
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
