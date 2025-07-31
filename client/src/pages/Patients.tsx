@@ -171,7 +171,7 @@ export default function Patients() {
 
   const onAppointmentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!appointmentForm.patientId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime) {
+    if (!appointmentForm.patientId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime || !appointmentForm.serviceType) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -179,7 +179,21 @@ export default function Patients() {
       });
       return;
     }
-    createAppointmentMutation.mutate(appointmentForm);
+
+    // Combine date and time into appointmentDate timestamp
+    const appointmentDateTime = new Date(`${appointmentForm.appointmentDate}T${appointmentForm.appointmentTime}`);
+    
+    // Map form data to match database schema
+    const appointmentData = {
+      patientId: appointmentForm.patientId,
+      storeId: "5ff902af-3849-4ea6-945b-4d49175d6638", // Use the existing store from database
+      appointmentDate: appointmentDateTime,
+      service: appointmentForm.serviceType, // Map serviceType to service
+      notes: appointmentForm.notes || "",
+      status: "scheduled"
+    };
+
+    createAppointmentMutation.mutate(appointmentData);
   };
 
   // Patient action handlers
