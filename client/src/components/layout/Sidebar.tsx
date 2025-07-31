@@ -91,6 +91,7 @@ const navigationItems = [
     icon: BarChart3,
     items: [
       { title: "Analytics Dashboard", href: "/analytics", icon: TrendingUp },
+      { title: "Advanced Reports", href: "/advanced-reports", icon: FileText },
       { title: "Store Performance", href: "/store-performance", icon: Building },
       { title: "Sales Reports", href: "/reports/sales", icon: BarChart3 },
       { title: "Patient Reports", href: "/reports/patients", icon: Users },

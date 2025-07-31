@@ -10,6 +10,7 @@ import { registerProfileRoutes } from "./routes/profileRoutes";
 import { registerMedicalRecordsRoutes } from "./routes/medicalRoutes";
 import { registerPaymentRoutes } from "./routes/paymentRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
+import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -46,6 +47,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register store settings routes
   registerStoreSettingsRoutes(app);
+  
+  // Register analytics routes
+  registerAnalyticsRoutes(app);
 
   // Additional API routes can be added here
 

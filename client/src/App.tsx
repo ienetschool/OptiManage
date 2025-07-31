@@ -38,6 +38,7 @@ import Pages from "@/pages/Pages";
 import Themes from "@/pages/Themes";
 import Domains from "@/pages/Domains";
 import SEO from "@/pages/SEO";
+import AdvancedReports from "@/pages/AdvancedReports";
 import Home from "@/pages/Home";
 import About from "@/pages/About";
 import Features from "@/pages/Features";
@@ -444,6 +445,15 @@ function Router() {
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <SEO />
+          </div>
+        </AppLayout>
+      </Route>
+
+      <Route path="/advanced-reports">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <AdvancedReports />
           </div>
         </AppLayout>
       </Route>
