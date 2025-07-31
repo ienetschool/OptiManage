@@ -47,6 +47,7 @@ import Terms from "@/pages/Terms";
 import Privacy from "@/pages/Privacy";
 import Services from "@/pages/Services";
 import Login from "@/pages/Login";
+import AuthPage from "@/pages/AuthPage";
 import Sidebar from "@/components/layout/Sidebar";
 import AppLayout from "@/components/layout/AppLayout";
 import PublicLayout from "@/components/layout/PublicLayout";
@@ -136,7 +137,8 @@ function Router() {
       </Route>
 
       {/* Public marketing pages */}
-      <Route path="/login" component={Login} />
+      <Route path="/login" component={AuthPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/about">
         <PublicLayout><About /></PublicLayout>
       </Route>
@@ -172,7 +174,7 @@ function Router() {
             </div>
           </AppLayout>
         ) : (
-          <Login />
+          <AuthPage />
         )}
       </Route>
       

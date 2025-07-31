@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupSimpleAuth, isAuthenticated } from "./simpleAuth";
+import { setupOAuthAuth, isAuthenticated } from "./oauthAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
@@ -24,7 +24,7 @@ import { addTestRoutes } from "./testAuth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  setupSimpleAuth(app);
+  setupOAuthAuth(app);
   
   // Add test routes for debugging
   addTestRoutes(app);
@@ -47,16 +47,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register store settings routes
   registerStoreSettingsRoutes(app);
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const user = (req.session as any).user;
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Additional API routes can be added here
 
   // Dashboard KPIs
   app.get('/api/dashboard/kpis', isAuthenticated, async (req, res) => {
