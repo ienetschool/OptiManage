@@ -20,7 +20,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, like, gte, lte } from "drizzle-orm";
-import { isAuthenticated } from "./simpleAuth";
+import { isAuthenticated } from "./oauthAuth";
 import QRCode from "qrcode";
 
 export function registerMedicalRoutes(app: Express) {
