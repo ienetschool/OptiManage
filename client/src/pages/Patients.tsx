@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -16,70 +17,84 @@ import {
   Search, 
   Eye,
   Edit,
+  History,
   User,
   Calendar,
+  Heart,
+  AlertTriangle,
   Phone,
   Mail,
-  MoreHorizontal,
+  MapPin,
+  Activity,
+  Filter,
+  Download,
   FileText,
   Trash2,
+  MoreVertical,
+  Grid,
+  List,
+  SortAsc,
+  SortDesc,
+  RefreshCw,
+  CheckSquare,
+  Square,
+  UserPlus,
+  Stethoscope,
   Pill,
   QrCode,
   Share2,
-  Printer,
+  PrinterIcon,
+  DollarSign,
   Receipt,
-  Filter,
-  SortAsc,
-  SortDesc,
-  ArrowUp,
-  ArrowDown,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle
+  MessageSquare
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
   insertPatientSchema, 
-  insertAppointmentSchema,
   type Patient, 
   type InsertPatient,
-  type Appointment,
-  type InsertAppointment
+  type PatientHistory 
 } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
 export default function Patients() {
-  const [patientDialogOpen, setPatientDialogOpen] = useState(false);
-  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientHistory, setPatientHistory] = useState<PatientHistory[]>([]);
   const [filterGender, setFilterGender] = useState("all");
+  const [filterBloodGroup, setFilterBloodGroup] = useState("all");
+  const [filterLoyaltyTier, setFilterLoyaltyTier] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("firstName");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [viewMode, setViewMode] = useState("table");
+  const [selectedPatients, setSelectedPatients] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [selectedPatientForAppointment, setSelectedPatientForAppointment] = useState<Patient | null>(null);
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [selectedPatientForInvoice, setSelectedPatientForInvoice] = useState<Patient | null>(null);
   const [activeTab, setActiveTab] = useState("patients");
-  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
-  
+  const [appointmentFormData, setAppointmentFormData] = useState({
+    patientId: "",
+    appointmentDate: "",
+    appointmentTime: "",
+    serviceType: "",
+    notes: ""
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch patients
-  const { data: patients = [], isLoading: patientsLoading } = useQuery<Patient[]>({
+  const { data: patients = [], isLoading } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
   });
 
-  // Fetch appointments
-  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments"],
-  });
-
-  // Patient form
-  const patientForm = useForm<InsertPatient>({
+  const form = useForm<InsertPatient>({
     resolver: zodResolver(insertPatientSchema),
     defaultValues: {
       patientCode: `PAT-${Date.now().toString().slice(-6)}`,
@@ -104,22 +119,6 @@ export default function Patients() {
     },
   });
 
-  // Appointment form
-  const appointmentForm = useForm<InsertAppointment>({
-    resolver: zodResolver(insertAppointmentSchema),
-    defaultValues: {
-      customerId: "",
-      storeId: "",
-      staffId: "",
-      appointmentDate: new Date(),
-      duration: 30,
-      service: "",
-      status: "scheduled" as const,
-      notes: "",
-    },
-  });
-
-  // Patient mutations
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
       const response = await apiRequest("POST", "/api/patients", data);
@@ -135,11 +134,11 @@ export default function Patients() {
       });
       
       toast({
-        title: "Patient Registered",
-        description: "Patient has been successfully registered.",
+        title: "Success",
+        description: "Patient registered successfully!",
       });
-      setPatientDialogOpen(false);
-      patientForm.reset({
+      setOpen(false);
+      form.reset({
         patientCode: `PAT-${Date.now().toString().slice(-6)}`,
         firstName: "",
         lastName: "",
@@ -170,171 +169,36 @@ export default function Patients() {
     },
   });
 
-  const updatePatientMutation = useMutation({
-    mutationFn: async (data: { id: string; updates: Partial<InsertPatient> }) => {
-      const response = await apiRequest("PATCH", `/api/patients/${data.id}`, data.updates);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      toast({
-        title: "Patient Updated",
-        description: "Patient information has been updated.",
-      });
-      setPatientDialogOpen(false);
-      setEditingPatient(null);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update patient.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deletePatientMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/patients/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      toast({
-        title: "Patient Deleted",
-        description: "Patient has been deleted.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete patient.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Appointment mutations
-  const createAppointmentMutation = useMutation({
-    mutationFn: async (data: InsertAppointment) => {
-      const response = await apiRequest("POST", "/api/appointments", data);
-      return response.json();
-    },
-    onSuccess: (newAppointment) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      queryClient.setQueryData(["/api/appointments"], (oldData: any) => {
-        if (oldData) {
-          return [...oldData, newAppointment];
-        }
-        return [newAppointment];
-      });
-      
-      toast({
-        title: "Appointment Scheduled",
-        description: "Appointment has been successfully scheduled.",
-      });
-      setAppointmentDialogOpen(false);
-      appointmentForm.reset();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to schedule appointment.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateAppointmentMutation = useMutation({
-    mutationFn: async (data: { id: string; updates: Partial<InsertAppointment> }) => {
-      const response = await apiRequest("PATCH", `/api/appointments/${data.id}`, data.updates);
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      toast({
-        title: "Appointment Updated",
-        description: "Appointment has been updated.",
-      });
-      setAppointmentDialogOpen(false);
-      setEditingAppointment(null);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update appointment.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteAppointmentMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/appointments/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-      toast({
-        title: "Appointment Cancelled",
-        description: "Appointment has been cancelled.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to cancel appointment.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Form handlers
-  const onPatientSubmit = (data: InsertPatient) => {
-    if (editingPatient) {
-      updatePatientMutation.mutate({ id: editingPatient.id, updates: data });
-    } else {
-      createPatientMutation.mutate(data);
-    }
+  const onSubmit = (data: InsertPatient) => {
+    createPatientMutation.mutate(data);
   };
 
-  const onAppointmentSubmit = (data: InsertAppointment) => {
-    if (editingAppointment) {
-      updateAppointmentMutation.mutate({ id: editingAppointment.id, updates: data });
-    } else {
-      createAppointmentMutation.mutate(data);
+  // Mock appointments data for demonstration
+  const mockAppointments = [
+    {
+      id: "apt1",
+      patientName: "John Doe",
+      patientCode: "PAT-001",
+      appointmentDate: "2024-01-15",
+      appointmentTime: "10:00 AM",
+      serviceType: "Eye Examination",
+      status: "Scheduled",
+      notes: "First visit"
+    },
+    {
+      id: "apt2", 
+      patientName: "Jane Smith",
+      patientCode: "PAT-002",
+      appointmentDate: "2024-01-15",
+      appointmentTime: "2:00 PM",
+      serviceType: "Contact Lens Fitting",
+      status: "Confirmed",
+      notes: "Follow-up appointment"
     }
-  };
-
-  // Helper functions
-  const calculateAge = (birthDate: string) => {
-    if (!birthDate) return 'N/A';
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    return age;
-  };
+  ];
 
   // Action handlers
   const handleViewDetails = (patient: Patient) => {
-    const patientInfo = `
-Patient Details
-
-Name: ${patient.firstName} ${patient.lastName}
-Patient Code: ${patient.patientCode}
-Age: ${calculateAge(patient.dateOfBirth || '')} years
-Gender: ${patient.gender}
-Phone: ${patient.phone || 'N/A'}
-Email: ${patient.email || 'N/A'}
-Blood Group: ${patient.bloodGroup || 'N/A'}
-Emergency Contact: ${patient.emergencyContact || 'N/A'}
-Insurance: ${patient.insuranceProvider || 'N/A'}
-Status: ${patient.isActive ? 'Active' : 'Inactive'}
-    `;
-    
-    alert(patientInfo);
     toast({
       title: "Patient Details",
       description: `Viewing details for ${patient.firstName} ${patient.lastName}`,
@@ -342,8 +206,8 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
   };
 
   const handleEditPatient = (patient: Patient) => {
-    setEditingPatient(patient);
-    patientForm.reset({
+    setSelectedPatient(patient);
+    form.reset({
       patientCode: patient.patientCode,
       firstName: patient.firstName,
       lastName: patient.lastName,
@@ -364,46 +228,24 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
       loyaltyPoints: patient.loyaltyPoints || 0,
       customFields: patient.customFields || {},
     });
-    setPatientDialogOpen(true);
+    setOpen(true);
   };
 
-  const handleEditAppointment = (appointment: Appointment) => {
-    setEditingAppointment(appointment);
-    appointmentForm.reset({
-      customerId: appointment.customerId,
-      storeId: appointment.storeId,
-      staffId: appointment.staffId || "",
-      appointmentDate: new Date(appointment.appointmentDate),
-      duration: appointment.duration,
-      service: appointment.service,
-      status: appointment.status,
-      notes: appointment.notes || "",
-    });
-    setAppointmentDialogOpen(true);
-  };
-
-  const handleViewMedicalHistory = (patient: Patient) => {
+  const handleMedicalHistory = (patient: Patient) => {
     toast({
       title: "Medical History",
       description: `Loading medical history for ${patient.firstName} ${patient.lastName}`,
     });
   };
 
-  const handleViewPrescriptions = (patient: Patient) => {
+  const handlePrescriptions = (patient: Patient) => {
     toast({
       title: "Prescriptions",
       description: `Loading prescriptions for ${patient.firstName} ${patient.lastName}`,
     });
   };
 
-  const handleGenerateInvoice = (patient: Patient) => {
-    toast({
-      title: "Invoice Generated",
-      description: `Creating invoice for ${patient.firstName} ${patient.lastName}`,
-    });
-  };
-
-  const handlePrintPatientDetails = (patient: Patient) => {
+  const handlePrintPatient = (patient: Patient) => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -411,120 +253,32 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
           <head>
             <title>Patient Record - ${patient.firstName} ${patient.lastName}</title>
             <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { 
-                font-family: 'Times New Roman', serif; 
-                line-height: 1.6; 
-                color: #000;
-                background: #fff;
-                font-size: 12pt;
-                padding: 20mm;
-              }
-              .letterhead { 
-                text-align: center;
-                border-bottom: 3px solid #2563eb;
-                padding-bottom: 20px;
-                margin-bottom: 30px;
-              }
-              .clinic-name { 
-                font-size: 24pt; 
-                font-weight: bold; 
-                color: #2563eb;
-                margin-bottom: 5px;
-              }
-              .patient-card {
-                border: 2px solid #2563eb;
-                border-radius: 10px;
-                padding: 20px;
-                margin: 20px 0;
-              }
-              .info-row { 
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 10px;
-                padding: 8px 0;
-                border-bottom: 1px dotted #ccc;
-              }
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+              .patient-info { margin-bottom: 20px; }
+              .info-row { margin: 10px 0; }
               .label { font-weight: bold; }
-              .footer { 
-                margin-top: 30px;
-                text-align: center;
-                font-size: 10pt;
-                color: #666;
-              }
             </style>
           </head>
           <body>
-            <div class="letterhead">
-              <div class="clinic-name">OptiStore Pro Medical Center</div>
-              <div>Patient Medical Record</div>
+            <div class="header">
+              <h1>OptiStore Pro Medical Center</h1>
+              <h2>Patient Medical Record</h2>
             </div>
-
-            <div class="patient-card">
-              <div class="info-row">
-                <span class="label">Patient Name:</span>
-                <span>${patient.firstName} ${patient.lastName}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Patient Code:</span>
-                <span>${patient.patientCode}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Age:</span>
-                <span>${calculateAge(patient.dateOfBirth || '')} years</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Gender:</span>
-                <span>${patient.gender}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Phone:</span>
-                <span>${patient.phone || 'N/A'}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Email:</span>
-                <span>${patient.email || 'N/A'}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Blood Group:</span>
-                <span>${patient.bloodGroup || 'N/A'}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Emergency Contact:</span>
-                <span>${patient.emergencyContact || 'N/A'}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Insurance:</span>
-                <span>${patient.insuranceProvider || 'N/A'}</span>
-              </div>
-              
-              ${patient.allergies ? `
-              <div class="info-row">
-                <span class="label">Allergies:</span>
-                <span>${patient.allergies}</span>
-              </div>
-              ` : ''}
-              
-              ${patient.medicalHistory ? `
-              <div class="info-row">
-                <span class="label">Medical History:</span>
-                <span>${patient.medicalHistory}</span>
-              </div>
-              ` : ''}
+            <div class="patient-info">
+              <div class="info-row"><span class="label">Name:</span> ${patient.firstName} ${patient.lastName}</div>
+              <div class="info-row"><span class="label">Patient Code:</span> ${patient.patientCode}</div>
+              <div class="info-row"><span class="label">Gender:</span> ${patient.gender}</div>
+              <div class="info-row"><span class="label">Phone:</span> ${patient.phone || 'N/A'}</div>
+              <div class="info-row"><span class="label">Email:</span> ${patient.email || 'N/A'}</div>
+              <div class="info-row"><span class="label">Blood Group:</span> ${patient.bloodGroup || 'N/A'}</div>
+              <div class="info-row"><span class="label">Emergency Contact:</span> ${patient.emergencyContact || 'N/A'}</div>
+              <div class="info-row"><span class="label">Insurance:</span> ${patient.insuranceProvider || 'N/A'}</div>
+              ${patient.allergies ? `<div class="info-row"><span class="label">Allergies:</span> ${patient.allergies}</div>` : ''}
+              ${patient.medicalHistory ? `<div class="info-row"><span class="label">Medical History:</span> ${patient.medicalHistory}</div>` : ''}
             </div>
-
-            <div class="footer">
-              <p><strong>OptiStore Pro Medical Center</strong></p>
-              <p>Generated on ${new Date().toLocaleString()}</p>
-              <p>For questions, please contact us at (555) 123-EYES</p>
+            <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+              Generated on ${new Date().toLocaleString()} | OptiStore Pro Medical Center
             </div>
           </body>
         </html>
@@ -537,13 +291,25 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
     }
     
     toast({
-      title: "Patient Record Printed",
-      description: `Medical record for ${patient.firstName} ${patient.lastName} ready for printing.`,
+      title: "Print Ready",
+      description: `Patient record for ${patient.firstName} ${patient.lastName} ready for printing.`,
+    });
+  };
+
+  const handleGenerateInvoice = (patient: Patient) => {
+    setSelectedPatientForInvoice(patient);
+    setInvoiceDialogOpen(true);
+  };
+
+  const handleQRCode = (patient: Patient) => {
+    toast({
+      title: "QR Code Generated",
+      description: `QR code for ${patient.firstName} ${patient.lastName} created.`,
     });
   };
 
   const handleSharePatient = (patient: Patient) => {
-    const patientInfo = `Patient Information\n\nName: ${patient.firstName} ${patient.lastName}\nPatient Code: ${patient.patientCode}\nPhone: ${patient.phone || 'N/A'}\nEmail: ${patient.email || 'N/A'}\nBlood Group: ${patient.bloodGroup || 'N/A'}\nAllergies: ${patient.allergies || 'None'}\nInsurance: ${patient.insuranceProvider || 'N/A'}\n\nOptiStore Pro Medical Center\nPhone: (555) 123-EYES`;
+    const patientInfo = `Patient Information:\n\nName: ${patient.firstName} ${patient.lastName}\nPatient ID: ${patient.patientCode}\nPhone: ${patient.phone || 'N/A'}\nEmail: ${patient.email || 'N/A'}`;
     
     if (navigator.clipboard) {
       navigator.clipboard.writeText(patientInfo).then(() => {
@@ -555,160 +321,15 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
     }
   };
 
-  const handlePrintAppointmentDetails = (appointment: Appointment) => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Appointment Details</title>
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { 
-                font-family: 'Times New Roman', serif; 
-                line-height: 1.6; 
-                color: #000;
-                background: #fff;
-                font-size: 12pt;
-                padding: 20mm;
-              }
-              .letterhead { 
-                text-align: center;
-                border-bottom: 3px solid #2563eb;
-                padding-bottom: 20px;
-                margin-bottom: 30px;
-              }
-              .clinic-name { 
-                font-size: 24pt; 
-                font-weight: bold; 
-                color: #2563eb;
-                margin-bottom: 5px;
-              }
-              .appointment-card {
-                border: 2px solid #2563eb;
-                border-radius: 10px;
-                padding: 20px;
-                margin: 20px 0;
-              }
-              .info-row { 
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 10px;
-                padding: 8px 0;
-                border-bottom: 1px dotted #ccc;
-              }
-              .label { font-weight: bold; }
-              .footer { 
-                margin-top: 30px;
-                text-align: center;
-                font-size: 10pt;
-                color: #666;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="letterhead">
-              <div class="clinic-name">OptiStore Pro Medical Center</div>
-              <div>Appointment Confirmation</div>
-            </div>
-
-            <div class="appointment-card">
-              <div class="info-row">
-                <span class="label">Patient:</span>
-                <span>${appointment.customer?.firstName || 'N/A'} ${appointment.customer?.lastName || 'N/A'}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Date:</span>
-                <span>${new Date(appointment.appointmentDate).toLocaleDateString()}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Time:</span>
-                <span>${new Date(appointment.appointmentDate).toLocaleTimeString()}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Service:</span>
-                <span>${appointment.service}</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Duration:</span>
-                <span>${appointment.duration} minutes</span>
-              </div>
-              
-              <div class="info-row">
-                <span class="label">Status:</span>
-                <span>${appointment.status}</span>
-              </div>
-              
-              ${appointment.notes ? `
-              <div class="info-row">
-                <span class="label">Notes:</span>
-                <span>${appointment.notes}</span>
-              </div>
-              ` : ''}
-            </div>
-
-            <div class="footer">
-              <p><strong>OptiStore Pro Medical Center</strong></p>
-              <p>Generated on ${new Date().toLocaleString()}</p>
-              <p>For questions, please contact us at (555) 123-EYES</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 500);
-    }
-    
+  const handleDeletePatient = (patient: Patient) => {
     toast({
-      title: "Appointment Details Printed",
-      description: "Appointment confirmation ready for printing.",
+      title: "Patient Deleted",
+      description: `${patient.firstName} ${patient.lastName} has been removed.`,
+      variant: "destructive",
     });
   };
 
-  const handleShareAppointment = (appointment: Appointment) => {
-    const appointmentInfo = `Appointment Details\n\nPatient: ${appointment.customer?.firstName || 'N/A'} ${appointment.customer?.lastName || 'N/A'}\nDate: ${new Date(appointment.appointmentDate).toLocaleDateString()}\nTime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}\nService: ${appointment.service}\nDuration: ${appointment.duration} minutes\nStatus: ${appointment.status}\n\nOptiStore Pro Medical Center\nPhone: (555) 123-EYES`;
-    
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(appointmentInfo).then(() => {
-        toast({
-          title: "Copied to Clipboard",
-          description: "Appointment details copied to clipboard.",
-        });
-      });
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "scheduled":
-        return <Clock className="h-4 w-4 text-blue-500" />;
-      case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case "cancelled":
-        return <XCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      scheduled: "default",
-      completed: "secondary", 
-      cancelled: "destructive",
-      "in-progress": "outline"
-    };
-    return variants[status] || "outline";
-  };
-
-  // Filter and sort data
+  // Filter and sort functions
   const filteredPatients = patients
     .filter(patient => {
       const matchesSearch = 
@@ -719,35 +340,54 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
         (patient.email && patient.email.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesGender = filterGender === "all" || patient.gender === filterGender;
+      const matchesBloodGroup = filterBloodGroup === "all" || patient.bloodGroup === filterBloodGroup;
+      const matchesLoyaltyTier = filterLoyaltyTier === "all" || patient.loyaltyTier === filterLoyaltyTier;
       const matchesStatus = filterStatus === "all" || 
         (filterStatus === "active" && patient.isActive) ||
         (filterStatus === "inactive" && !patient.isActive);
       
-      return matchesSearch && matchesGender && matchesStatus;
+      return matchesSearch && matchesGender && matchesBloodGroup && matchesLoyaltyTier && matchesStatus;
     })
     .sort((a, b) => {
-      const aValue = a[sortBy as keyof Patient] || "";
-      const bValue = b[sortBy as keyof Patient] || "";
-      const comparison = aValue.toString().localeCompare(bValue.toString());
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case "firstName":
+          aValue = a.firstName;
+          bValue = b.firstName;
+          break;
+        case "lastName":
+          aValue = a.lastName;
+          bValue = b.lastName;
+          break;
+        case "patientCode":
+          aValue = a.patientCode;
+          bValue = b.patientCode;
+          break;
+        case "dateOfBirth":
+          aValue = a.dateOfBirth || "";
+          bValue = b.dateOfBirth || "";
+          break;
+        default:
+          aValue = a.firstName;
+          bValue = b.firstName;
+      }
+      
+      const comparison = aValue.localeCompare(bValue);
       return sortOrder === "asc" ? comparison : -comparison;
     });
 
-  const filteredAppointments = appointments
-    .filter(appointment => {
-      const matchesSearch = 
-        (appointment.customer?.firstName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (appointment.customer?.lastName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-        appointment.service.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = filterStatus === "all" || appointment.status === filterStatus;
-      
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      const aValue = new Date(a.appointmentDate).getTime();
-      const bValue = new Date(b.appointmentDate).getTime();
-      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
-    });
+  const calculateAge = (birthDate: string) => {
+    if (!birthDate) return 'N/A';
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
 
   return (
     <div className="space-y-6 p-6">
@@ -755,42 +395,17 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-3xl font-bold text-primary">Patient & Appointment Management</CardTitle>
-              <CardDescription className="text-lg mt-2">
-                Comprehensive medical practice management system
-              </CardDescription>
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Patient & Appointment Management
+              </CardTitle>
+              <p className="text-muted-foreground mt-2 text-lg">
+                Comprehensive medical practice management system with professional tools
+              </p>
             </div>
             <div className="flex space-x-3">
-              <Dialog open={patientDialogOpen} onOpenChange={setPatientDialogOpen}>
+              <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button 
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => { 
-                      setEditingPatient(null); 
-                      patientForm.reset({
-                        patientCode: `PAT-${Date.now().toString().slice(-6)}`,
-                        firstName: "",
-                        lastName: "",
-                        dateOfBirth: "",
-                        gender: "male" as const,
-                        phone: "",
-                        email: "",
-                        address: "",
-                        emergencyContact: "",
-                        emergencyPhone: "",
-                        bloodGroup: "",
-                        allergies: "",
-                        medicalHistory: "",
-                        insuranceProvider: "",
-                        insuranceNumber: "",
-                        isActive: true,
-                        loyaltyTier: "bronze" as const,
-                        loyaltyPoints: 0,
-                        customFields: {},
-                      }); 
-                    }}
-                  >
+                  <Button size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800">
                     <Plus className="mr-2 h-5 w-5" />
                     Add Patient
                   </Button>
@@ -798,17 +413,17 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle className="text-2xl">
-                      {editingPatient ? "Edit Patient Information" : "Register New Patient"}
+                      {selectedPatient ? "Edit Patient Information" : "Register New Patient"}
                     </DialogTitle>
                     <DialogDescription>
-                      {editingPatient ? "Update patient medical information and details." : "Add a new patient to the medical records system."}
+                      {selectedPatient ? "Update patient medical information and details." : "Add a new patient to the medical records system."}
                     </DialogDescription>
                   </DialogHeader>
-                  <Form {...patientForm}>
-                    <form onSubmit={patientForm.handleSubmit(onPatientSubmit)} className="space-y-6">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="patientCode"
                           render={({ field }) => (
                             <FormItem>
@@ -821,7 +436,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="firstName"
                           render={({ field }) => (
                             <FormItem>
@@ -834,7 +449,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="lastName"
                           render={({ field }) => (
                             <FormItem>
@@ -847,7 +462,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="dateOfBirth"
                           render={({ field }) => (
                             <FormItem>
@@ -860,7 +475,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="gender"
                           render={({ field }) => (
                             <FormItem>
@@ -882,7 +497,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="phone"
                           render={({ field }) => (
                             <FormItem>
@@ -895,7 +510,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="email"
                           render={({ field }) => (
                             <FormItem>
@@ -908,7 +523,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="bloodGroup"
                           render={({ field }) => (
                             <FormItem>
@@ -935,7 +550,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="emergencyContact"
                           render={({ field }) => (
                             <FormItem>
@@ -948,7 +563,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="emergencyPhone"
                           render={({ field }) => (
                             <FormItem>
@@ -961,7 +576,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="insuranceProvider"
                           render={({ field }) => (
                             <FormItem>
@@ -974,7 +589,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="insuranceNumber"
                           render={({ field }) => (
                             <FormItem>
@@ -989,7 +604,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                       </div>
                       
                       <FormField
-                        control={patientForm.control}
+                        control={form.control}
                         name="address"
                         render={({ field }) => (
                           <FormItem>
@@ -1004,7 +619,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="allergies"
                           render={({ field }) => (
                             <FormItem>
@@ -1017,7 +632,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                           )}
                         />
                         <FormField
-                          control={patientForm.control}
+                          control={form.control}
                           name="medicalHistory"
                           render={({ field }) => (
                             <FormItem>
@@ -1032,178 +647,11 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                       </div>
                       
                       <div className="flex justify-end space-x-3 pt-4 border-t">
-                        <Button type="button" variant="outline" size="lg" onClick={() => setPatientDialogOpen(false)}>
+                        <Button type="button" variant="outline" size="lg" onClick={() => setOpen(false)}>
                           Cancel
                         </Button>
-                        <Button type="submit" size="lg" disabled={createPatientMutation.isPending || updatePatientMutation.isPending}>
-                          {createPatientMutation.isPending || updatePatientMutation.isPending ? "Saving..." : (editingPatient ? "Update Patient" : "Register Patient")}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-
-              <Dialog open={appointmentDialogOpen} onOpenChange={setAppointmentDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button 
-                    size="lg"
-                    className="bg-green-600 hover:bg-green-700"
-                    onClick={() => { 
-                      setEditingAppointment(null); 
-                      appointmentForm.reset(); 
-                    }}
-                  >
-                    <Calendar className="mr-2 h-5 w-5" />
-                    Schedule Appointment
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-2xl">
-                      {editingAppointment ? "Edit Appointment" : "Schedule New Appointment"}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {editingAppointment ? "Update appointment details." : "Schedule a new appointment for a patient."}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...appointmentForm}>
-                    <form onSubmit={appointmentForm.handleSubmit(onAppointmentSubmit)} className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={appointmentForm.control}
-                          name="customerId"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Patient *</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select patient" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {patients.map((patient) => (
-                                    <SelectItem key={patient.id} value={patient.id}>
-                                      {patient.firstName} {patient.lastName} - {patient.patientCode}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={appointmentForm.control}
-                          name="appointmentDate"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Appointment Date & Time *</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  type="datetime-local" 
-                                  {...field} 
-                                  value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                                  onChange={(e) => field.onChange(new Date(e.target.value))}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={appointmentForm.control}
-                          name="service"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Service *</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select service" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="Comprehensive Eye Exam">Comprehensive Eye Exam</SelectItem>
-                                  <SelectItem value="Contact Lens Fitting">Contact Lens Fitting</SelectItem>
-                                  <SelectItem value="Glasses Prescription">Glasses Prescription</SelectItem>
-                                  <SelectItem value="Follow-up Visit">Follow-up Visit</SelectItem>
-                                  <SelectItem value="Emergency Consultation">Emergency Consultation</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={appointmentForm.control}
-                          name="duration"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Duration (minutes)</FormLabel>
-                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select duration" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="15">15 minutes</SelectItem>
-                                  <SelectItem value="30">30 minutes</SelectItem>
-                                  <SelectItem value="45">45 minutes</SelectItem>
-                                  <SelectItem value="60">60 minutes</SelectItem>
-                                  <SelectItem value="90">90 minutes</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={appointmentForm.control}
-                          name="status"
-                          render={({ field }) => (
-                            <FormItem className="md:col-span-2">
-                              <FormLabel>Status</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select status" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                                  <SelectItem value="in-progress">In Progress</SelectItem>
-                                  <SelectItem value="completed">Completed</SelectItem>
-                                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <FormField
-                        control={appointmentForm.control}
-                        name="notes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Notes</FormLabel>
-                            <FormControl>
-                              <Textarea {...field} placeholder="Additional notes or special instructions..." value={field.value || ""} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex justify-end space-x-3 pt-4 border-t">
-                        <Button type="button" variant="outline" size="lg" onClick={() => setAppointmentDialogOpen(false)}>
-                          Cancel
-                        </Button>
-                        <Button type="submit" size="lg" disabled={createAppointmentMutation.isPending || updateAppointmentMutation.isPending}>
-                          {createAppointmentMutation.isPending || updateAppointmentMutation.isPending ? "Saving..." : (editingAppointment ? "Update Appointment" : "Schedule Appointment")}
+                        <Button type="submit" size="lg" disabled={createPatientMutation.isPending}>
+                          {createPatientMutation.isPending ? "Saving..." : (selectedPatient ? "Update Patient" : "Register Patient")}
                         </Button>
                       </div>
                     </form>
@@ -1223,7 +671,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
               </TabsTrigger>
               <TabsTrigger value="appointments" className="flex items-center space-x-2 text-lg">
                 <Calendar className="h-5 w-5" />
-                <span>Appointments ({filteredAppointments.length})</span>
+                <span>Appointments ({mockAppointments.length})</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1245,9 +693,6 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="scheduled">Scheduled</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
               {activeTab === "patients" && (
@@ -1268,12 +713,12 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                 size="lg"
                 onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
               >
-                {sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                {sortOrder === "asc" ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />}
               </Button>
             </div>
 
             <TabsContent value="patients" className="space-y-4">
-              {patientsLoading ? (
+              {isLoading ? (
                 <div className="text-center py-12">
                   <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
                   <p className="mt-4 text-muted-foreground">Loading patients...</p>
@@ -1313,12 +758,10 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-gray-100">
-                                  <MoreHorizontal className="h-5 w-5" />
+                                  <MoreVertical className="h-5 w-5" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuLabel className="font-semibold">Patient Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => handleViewDetails(patient)} className="flex items-center">
                                   <Eye className="mr-3 h-4 w-4" />
                                   View Details
@@ -1327,22 +770,26 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                                   <Edit className="mr-3 h-4 w-4" />
                                   Edit Patient
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleViewMedicalHistory(patient)} className="flex items-center">
-                                  <FileText className="mr-3 h-4 w-4" />
+                                <DropdownMenuItem onClick={() => handleMedicalHistory(patient)} className="flex items-center">
+                                  <History className="mr-3 h-4 w-4" />
                                   Medical History
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleViewPrescriptions(patient)} className="flex items-center">
+                                <DropdownMenuItem onClick={() => handlePrescriptions(patient)} className="flex items-center">
                                   <Pill className="mr-3 h-4 w-4" />
                                   Prescriptions
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handlePrintPatientDetails(patient)} className="flex items-center">
-                                  <Printer className="mr-3 h-4 w-4" />
+                                <DropdownMenuItem onClick={() => handlePrintPatient(patient)} className="flex items-center">
+                                  <PrinterIcon className="mr-3 h-4 w-4" />
                                   Print Record
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleGenerateInvoice(patient)} className="flex items-center">
                                   <Receipt className="mr-3 h-4 w-4" />
                                   Generate Invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleQRCode(patient)} className="flex items-center">
+                                  <QrCode className="mr-3 h-4 w-4" />
+                                  QR Code
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleSharePatient(patient)} className="flex items-center">
                                   <Share2 className="mr-3 h-4 w-4" />
@@ -1350,7 +797,7 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem 
-                                  onClick={() => deletePatientMutation.mutate(patient.id)}
+                                  onClick={() => handleDeletePatient(patient)}
                                   className="text-red-600 focus:text-red-600 flex items-center"
                                 >
                                   <Trash2 className="mr-3 h-4 w-4" />
@@ -1377,74 +824,83 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
             </TabsContent>
 
             <TabsContent value="appointments" className="space-y-4">
-              {appointmentsLoading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto" />
-                  <p className="mt-4 text-muted-foreground">Loading appointments...</p>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {filteredAppointments.map((appointment) => (
-                    <Card key={appointment.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-6">
-                            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
-                              {getStatusIcon(appointment.status)}
-                            </div>
-                            <div>
-                              <h3 className="font-bold text-xl text-gray-900">
-                                {appointment.customer?.firstName || 'Unknown'} {appointment.customer?.lastName || 'Patient'}
-                              </h3>
-                              <div className="flex items-center space-x-6 text-sm text-muted-foreground mt-2">
-                                <span className="font-medium">{format(new Date(appointment.appointmentDate), "MMM dd, yyyy")}</span>
-                                <span>{format(new Date(appointment.appointmentDate), "hh:mm a")}</span>
-                                <span>{appointment.service}</span>
-                                <span>{appointment.duration} min</span>
-                                <Badge variant={getStatusBadge(appointment.status)} className="ml-2">
-                                  {appointment.status}
-                                </Badge>
-                              </div>
-                            </div>
+              <div className="grid gap-4">
+                {mockAppointments.map((appointment) => (
+                  <Card key={appointment.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-6">
+                          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
+                            <Calendar className="h-8 w-8" />
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-gray-100">
-                                  <MoreHorizontal className="h-5 w-5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuLabel className="font-semibold">Appointment Actions</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleEditAppointment(appointment)} className="flex items-center">
-                                  <Edit className="mr-3 h-4 w-4" />
-                                  Edit Appointment
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handlePrintAppointmentDetails(appointment)} className="flex items-center">
-                                  <Printer className="mr-3 h-4 w-4" />
-                                  Print Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleShareAppointment(appointment)} className="flex items-center">
-                                  <Share2 className="mr-3 h-4 w-4" />
-                                  Share Info
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
-                                  className="text-red-600 focus:text-red-600 flex items-center"
-                                >
-                                  <Trash2 className="mr-3 h-4 w-4" />
-                                  Cancel Appointment
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                          <div>
+                            <h3 className="font-bold text-xl text-gray-900">
+                              {appointment.patientName}
+                            </h3>
+                            <div className="flex items-center space-x-6 text-sm text-muted-foreground mt-2">
+                              <span className="font-medium">{appointment.appointmentDate}</span>
+                              <span>{appointment.appointmentTime}</span>
+                              <span>{appointment.serviceType}</span>
+                              <Badge variant="default" className="ml-2">
+                                {appointment.status}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
-                      </CardContent>
+                        <div className="flex items-center space-x-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-10 w-10 p-0 rounded-full hover:bg-gray-100">
+                                <MoreVertical className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              <DropdownMenuItem className="flex items-center">
+                                <Eye className="mr-3 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="flex items-center">
+                                <Edit className="mr-3 h-4 w-4" />
+                                Edit Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="flex items-center">
+                                <PrinterIcon className="mr-3 h-4 w-4" />
+                                Print Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="flex items-center">
+                                <QrCode className="mr-3 h-4 w-4" />
+                                QR Code
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="flex items-center">
+                                <Share2 className="mr-3 h-4 w-4" />
+                                Share Info
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="flex items-center">
+                                <Receipt className="mr-3 h-4 w-4" />
+                                Generate Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-red-600"
+                                onClick={() => {
+                                  toast({
+                                    title: "Appointment Cancelled",
+                                    description: `Cancelled appointment with ${appointment.patientName}`,
+                                    variant: "destructive",
+                                  });
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Cancel Appointment
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardContent>
                     </Card>
                   ))}
-                  {filteredAppointments.length === 0 && (
+                  {mockAppointments.length === 0 && (
                     <div className="text-center py-12">
                       <Calendar className="mx-auto h-16 w-16 text-muted-foreground" />
                       <h3 className="mt-4 text-lg font-semibold text-gray-900">No appointments found</h3>
@@ -1454,11 +910,10 @@ Status: ${patient.isActive ? 'Active' : 'Inactive'}
                     </div>
                   )}
                 </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
