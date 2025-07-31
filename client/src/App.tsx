@@ -69,10 +69,18 @@ function Router() {
           <Switch>
             <Route path="/patient-portal" component={Profile} />
             <Route path="/patient-portal/settings" component={Settings} />
-            <Route path="/patient-portal/records" component={MedicalRecords} />
-            <Route path="/patient-portal/appointments" component={Appointments} />
+            <Route path="/patient-portal/patients" component={Patients} />
+            <Route path="/patient-portal/medical-records" component={MedicalRecords} />
             <Route path="/patient-portal/prescriptions" component={Prescriptions} />
             <Route path="/patient-portal/invoices" component={InvoiceManagement} />
+            <Route path="/patient-portal/inventory" component={Inventory} />
+            <Route path="/patient-portal/stores" component={Stores} />
+            <Route path="/patient-portal/store-settings" component={StoreSettings} />
+            <Route path="/patient-portal/staff" component={Staff} />
+            <Route path="/patient-portal/attendance" component={Attendance} />
+            <Route path="/patient-portal/payroll" component={Payroll} />
+            <Route path="/patient-portal/communication" component={Communication} />
+            <Route path="/patient-portal/notifications" component={Notifications} />
             <Route component={NotFound} />
           </Switch>
         </PatientPortalLayout>
@@ -106,7 +114,7 @@ function Router() {
       </Route>
 
       {/* Homepage */}
-      <Route path="/" exact>
+      <Route path="/">
         <PublicLayout><Home /></PublicLayout>
       </Route>
 
@@ -142,7 +150,9 @@ function Router() {
               <Route path="/store-performance" component={StorePerformance} />
               <Route path="/profile" component={Profile} />
               <Route path="/medical-records" component={MedicalRecords} />
-              <Route path="/quick-sale" component={QuickSale} />
+              <Route path="/quick-sale">
+                {() => <QuickSale />}
+              </Route>
               <Route path="/payments" component={Payments} />
               <Route path="/store-settings" component={StoreSettings} />
               <Route path="/pages" component={Pages} />

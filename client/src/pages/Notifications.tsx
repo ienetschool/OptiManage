@@ -63,6 +63,32 @@ export default function NotificationsPage() {
     markAsReadMutation.mutate(notificationId);
   };
 
+  const handleNotificationClick = (notification: NotificationHR) => {
+    // Mark as read when clicked
+    if (!notification.isRead) {
+      handleMarkAsRead(notification.id);
+    }
+    
+    // Navigate to relevant page based on notification type
+    const navigationMap: { [key: string]: string } = {
+      'hr': '/staff',
+      'appointment': '/appointments',
+      'inventory': '/inventory',
+      'sales': '/sales',
+      'system': '/settings',
+      'billing': '/invoices',
+      'communication': '/communication'
+    };
+    
+    const targetPath = navigationMap[notification.type] || '/dashboard';
+    window.location.href = targetPath;
+    
+    toast({
+      title: "Navigating",
+      description: `Opening ${notification.type} management...`,
+    });
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'hr': return <User className="h-5 w-5 text-blue-600" />;
@@ -106,6 +132,7 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const todayCount = notifications.filter(n => {
+    if (!n.sentAt) return false;
     const notificationDate = new Date(n.sentAt);
     const today = new Date();
     return notificationDate.toDateString() === today.toDateString();
@@ -113,10 +140,7 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <Header 
-        title="Notifications" 
-        subtitle="Stay updated with system alerts, HR notifications, and important updates." 
-      />
+      <Header />
       
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
@@ -248,9 +272,10 @@ export default function NotificationsPage() {
                       {filteredNotifications.map((notification) => (
                         <div 
                           key={notification.id} 
-                          className={`p-6 hover:bg-slate-50 transition-colors ${
+                          className={`p-6 hover:bg-slate-50 transition-colors cursor-pointer ${
                             !notification.isRead ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                           }`}
+                          onClick={() => handleNotificationClick(notification)}
                         >
                           <div className="flex items-start space-x-4">
                             <div className="flex-shrink-0">
@@ -275,9 +300,9 @@ export default function NotificationsPage() {
                                   
                                   <div className="flex items-center space-x-4 mt-3">
                                     <div className="flex items-center space-x-2">
-                                      <Badge className={getPriorityBadgeColor(notification.priority)}>
-                                        {getPriorityIcon(notification.priority)}
-                                        <span className="ml-1 capitalize">{notification.priority}</span>
+                                      <Badge className={getPriorityBadgeColor(notification.priority || 'medium')}>
+                                        {getPriorityIcon(notification.priority || 'medium')}
+                                        <span className="ml-1 capitalize">{notification.priority || 'medium'}</span>
                                       </Badge>
                                       
                                       <Badge variant="outline" className="capitalize">
@@ -287,7 +312,7 @@ export default function NotificationsPage() {
                                     
                                     <div className="flex items-center space-x-1 text-xs text-slate-500">
                                       <Clock className="h-3 w-3" />
-                                      <span>{formatDistanceToNow(new Date(notification.sentAt), { addSuffix: true })}</span>
+                                      <span>{notification.sentAt ? formatDistanceToNow(new Date(notification.sentAt), { addSuffix: true }) : 'Unknown time'}</span>
                                     </div>
                                   </div>
                                 </div>
