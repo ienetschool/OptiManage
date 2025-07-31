@@ -131,6 +131,23 @@ The system is designed to scale across multiple store locations while maintainin
 
 ## Recent Changes (January 2025)
 
+✓ **ADVANCED REPORTING & CUSTOM REPORTS IMPLEMENTATION (January 31, 2025)**
+- **Comprehensive Advanced Analytics**: Complete reporting system with Sales, Patients, Inventory, Financial, and Staff analytics
+- **Interactive Data Visualization**: Professional charts using Recharts with line charts, bar charts, pie charts, and area charts
+- **Multi-Format Export**: PDF, Excel, and CSV export functionality with proper file naming and download handling
+- **Dynamic Filtering**: Date range selection, store filtering, report type switching with real-time updates
+- **Custom Report Builder**: Full SQL-based custom report creation with query editor, parameter handling, and scheduling
+- **Professional UI Components**: Tabbed interfaces, KPI cards, loading states, error handling, and responsive design
+- **Backend API Integration**: Complete analytics endpoints with authentication, data processing, and export generation
+- **Patient Portal Layout**: Clean UI implementation without headers/navigation for all patient portal pages with HIPAA compliance messaging
+
+✓ **REPORTS SYSTEM FIXES & ENHANCEMENTS (January 31, 2025)**
+- **Fixed 404 Errors**: Created missing Reports.tsx page with predefined and custom report management
+- **Standard Reports Page**: Comprehensive report management with search, filtering, scheduling, and execution capabilities
+- **Custom Reports Integration**: Added Custom Reports page to sidebar navigation under Reports & Analytics section
+- **Patient Portal UI Cleanup**: Removed website headers and navigation from all /patient-portal/* routes using PatientPortalLayout
+- **Professional Patient Experience**: Clean, medical-focused interface with HIPAA security badges and contact information
+
 ✓ **COMPLETE STORE SETTINGS IMPLEMENTATION (January 31, 2025)**
 - **Comprehensive Store Settings**: Fully implemented store-specific configuration system with 6 main categories
 - **Domain Management**: Individual domain configuration for each store with SSL and DNS status tracking

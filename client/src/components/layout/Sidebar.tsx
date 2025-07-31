@@ -92,10 +92,9 @@ const navigationItems = [
     items: [
       { title: "Analytics Dashboard", href: "/analytics", icon: TrendingUp },
       { title: "Advanced Reports", href: "/advanced-reports", icon: FileText },
+      { title: "Custom Reports", href: "/custom-reports", icon: Settings },
       { title: "Store Performance", href: "/store-performance", icon: Building },
-      { title: "Sales Reports", href: "/reports/sales", icon: BarChart3 },
-      { title: "Patient Reports", href: "/reports/patients", icon: Users },
-      { title: "Financial Reports", href: "/reports/financial", icon: DollarSign },
+      { title: "Standard Reports", href: "/reports", icon: FileText },
     ],
   },
   {

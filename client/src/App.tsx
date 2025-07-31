@@ -22,6 +22,7 @@ import Attendance from "@/pages/Attendance";
 import Payroll from "@/pages/Payroll";
 import Notifications from "@/pages/Notifications";
 import Reports from "@/pages/Reports";
+import CustomReports from "@/pages/CustomReports";
 import Communication from "@/pages/Communication";
 import Settings from "@/pages/Settings";
 import Support from "@/pages/Support";
@@ -67,73 +68,38 @@ function Router() {
     <Switch>
       {/* Patient Portal routes (clean UI without menu/top bar) */}
       <Route path="/patient-portal">
-        <PatientPortalLayout>
+        <PatientPortalLayout title="Patient Portal" description="Access your medical information and services">
           <Profile />
         </PatientPortalLayout>
       </Route>
       <Route path="/patient-portal/settings">
-        <PatientPortalLayout>
+        <PatientPortalLayout title="Settings" description="Manage your account preferences">
           <Settings />
         </PatientPortalLayout>
       </Route>
       <Route path="/patient-portal/patients">
-        <PatientPortalLayout>
+        <PatientPortalLayout title="Patient Information" description="View and update your patient details">
           <Patients />
         </PatientPortalLayout>
       </Route>
       <Route path="/patient-portal/medical-records">
-        <PatientPortalLayout>
+        <PatientPortalLayout title="Medical Records" description="Access your complete medical history">
           <MedicalRecords />
         </PatientPortalLayout>
       </Route>
       <Route path="/patient-portal/prescriptions">
-        <PatientPortalLayout>
+        <PatientPortalLayout title="Prescriptions" description="View your current and past prescriptions">
           <Prescriptions />
         </PatientPortalLayout>
       </Route>
       <Route path="/patient-portal/invoices">
-        <PatientPortalLayout>
+        <PatientPortalLayout title="Invoices & Billing" description="View and manage your medical invoices">
           <InvoiceManagement />
         </PatientPortalLayout>
       </Route>
-      <Route path="/patient-portal/inventory">
-        <PatientPortalLayout>
-          <Inventory />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/stores">
-        <PatientPortalLayout>
-          <Stores />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/store-settings">
-        <PatientPortalLayout>
-          <StoreSettings />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/staff">
-        <PatientPortalLayout>
-          <Staff />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/attendance">
-        <PatientPortalLayout>
-          <Attendance />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/payroll">
-        <PatientPortalLayout>
-          <Payroll />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/communication">
-        <PatientPortalLayout>
-          <Communication />
-        </PatientPortalLayout>
-      </Route>
-      <Route path="/patient-portal/notifications">
-        <PatientPortalLayout>
-          <Notifications />
+      <Route path="/patient-portal/appointments">
+        <PatientPortalLayout title="Appointments" description="Schedule and manage your appointments">
+          <Appointments />
         </PatientPortalLayout>
       </Route>
 
@@ -310,6 +276,15 @@ function Router() {
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Reports />
+          </div>
+        </AppLayout>
+      </Route>
+
+      <Route path="/custom-reports">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <CustomReports />
           </div>
         </AppLayout>
       </Route>
