@@ -58,6 +58,7 @@ export default function PrescriptionsFixed() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [currentServiceType, setCurrentServiceType] = useState("eye_examination");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -129,10 +130,50 @@ export default function PrescriptionsFixed() {
 
   // Form submit handlers
   const onCreateSubmit = (data: InsertPrescription) => {
-    createPrescriptionMutation.mutate(data);
+    console.log('Submitting prescription data:', data);
+    
+    // Ensure required fields are present
+    if (!data.patientId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a patient",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!data.prescriptionNumber) {
+      data.prescriptionNumber = `RX-${Date.now().toString().slice(-6)}`;
+    }
+    
+    // Clean up the data - remove empty strings and convert to null where appropriate
+    const cleanedData = {
+      ...data,
+      axisRight: data.axisRight || null,
+      axisLeft: data.axisLeft || null,
+      doctorId: data.doctorId || null,
+      appointmentId: data.appointmentId || null,
+    };
+    
+    createPrescriptionMutation.mutate(cleanedData);
   };
 
   const onQuickSubmit = (data: InsertPrescription) => {
+    console.log('Submitting quick prescription data:', data);
+    
+    if (!data.patientId) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a patient",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!data.prescriptionNumber) {
+      data.prescriptionNumber = `QRX-${Date.now().toString().slice(-6)}`;
+    }
+    
     createPrescriptionMutation.mutate(data);
   };
 
@@ -246,24 +287,62 @@ OptiStore Pro Team`;
     const shareUrl = `${window.location.origin}/prescriptions/${prescription.id}`;
     const shareText = `Prescription ${prescription.prescriptionNumber} - ${getPatientName(prescription.patientId)}`;
     
-    if (navigator.share) {
-      navigator.share({
-        title: 'Prescription Details',
-        text: shareText,
-        url: shareUrl,
-      });
-    } else {
-      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+    try {
+      if (navigator.share && typeof navigator.canShare === 'function' && navigator.canShare({ url: shareUrl })) {
+        navigator.share({
+          title: 'Prescription Details',
+          text: shareText,
+          url: shareUrl,
+        }).catch((error) => {
+          console.log('Share failed:', error);
+          // Fallback to clipboard
+          handleClipboardShare(shareText, shareUrl);
+        });
+      } else {
+        handleClipboardShare(shareText, shareUrl);
+      }
+    } catch (error) {
+      handleClipboardShare(shareText, shareUrl);
+    }
+  };
+
+  const handleClipboardShare = (shareText: string, shareUrl: string) => {
+    const shareContent = `${shareText}\n${shareUrl}`;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareContent).then(() => {
         toast({
           title: "Link Copied",
           description: "Prescription link copied to clipboard",
         });
       }).catch(() => {
+        // Final fallback - show the URL
         toast({
           title: "Share Link",
           description: shareUrl,
+          duration: 10000,
         });
       });
+    } else {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = shareContent;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast({
+          title: "Link Copied",
+          description: "Prescription link copied to clipboard",
+        });
+      } catch (err) {
+        toast({
+          title: "Share Link",
+          description: shareUrl,
+          duration: 10000,
+        });
+      }
+      document.body.removeChild(textArea);
     }
   };
 
@@ -293,20 +372,15 @@ OptiStore Pro Team`;
     });
   };
 
-  const handleCreatePrescriptionFromAppointment = (prescription: Prescription) => {
-    const patient = patients.find(p => p.id === prescription.patientId);
-    if (patient) {
-      // Auto-populate the create form with patient data
-      createForm.reset({
-        prescriptionNumber: `RX-${Date.now()}`,
-        patientId: patient.id,
-        prescriptionType: prescription.prescriptionType || 'eye_examination',
-        storeId: prescription.storeId,
-        status: 'active',
-        diagnosis: '',
-        treatment: '',
-        advice: '',
-        notes: '',
+  const handleServiceTypeChange = (serviceType: string) => {
+    setCurrentServiceType(serviceType);
+    // Reset form fields that might be service-type specific
+    const currentValues = createForm.getValues();
+    createForm.reset({
+      ...currentValues,
+      prescriptionType: serviceType,
+      // Clear vision fields for non-vision services
+      ...(serviceType !== 'eye_examination' && serviceType !== 'fitting_glasses' ? {
         visualAcuityRightEye: '',
         visualAcuityLeftEye: '',
         sphereRight: '',
@@ -320,15 +394,81 @@ OptiStore Pro Team`;
         pdDistance: '',
         pdNear: '',
         pdFar: '',
-        nextFollowUp: ''
-      });
-      
-      setCreateOpen(true);
-      
-      toast({
-        title: "Create Prescription",
-        description: `Auto-filled form for ${patient.firstName} ${patient.lastName}`,
-      });
+      } : {})
+    });
+  };
+
+  const handleCreatePrescriptionFromAppointment = async (prescription: Prescription) => {
+    const patient = patients.find(p => p.id === prescription.patientId);
+    if (patient) {
+      // Find appointment data for this patient to get the assigned doctor
+      try {
+        const appointmentsResponse = await fetch('/api/appointments');
+        const appointments = await appointmentsResponse.json();
+        const patientAppointment = appointments.find((app: any) => 
+          app.patientId === patient.id && app.serviceType === prescription.prescriptionType
+        );
+        
+        const assignedDoctorId = patientAppointment?.assignedDoctorId || prescription.doctorId || "";
+        
+        // Auto-populate the create form with patient and appointment data
+        createForm.reset({
+          prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
+          patientId: patient.id,
+          doctorId: assignedDoctorId,
+          prescriptionType: prescription.prescriptionType || 'eye_examination',
+          storeId: prescription.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+          status: 'active',
+          diagnosis: '',
+          treatment: '',
+          advice: '',
+          notes: '',
+          visualAcuityRightEye: '',
+          visualAcuityLeftEye: '',
+          sphereRight: '',
+          cylinderRight: '',
+          axisRight: null,
+          addRight: '',
+          sphereLeft: '',
+          cylinderLeft: '',
+          axisLeft: null,
+          addLeft: '',
+          pdDistance: '',
+          pdNear: '',
+          pdFar: '',
+          nextFollowUp: ''
+        });
+        
+        setCurrentServiceType(prescription.prescriptionType || 'eye_examination');
+        setCreateOpen(true);
+        
+        const doctorName = assignedDoctorId ? 
+          `Dr. ${staff.find(s => s.id === assignedDoctorId)?.firstName || 'Unknown'}` : 
+          'No doctor assigned';
+        
+        toast({
+          title: "Create Prescription",
+          description: `Auto-filled form for ${patient.firstName} ${patient.lastName} - ${doctorName}`,
+        });
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        // Fallback without appointment data
+        createForm.reset({
+          prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
+          patientId: patient.id,
+          doctorId: prescription.doctorId || "",
+          prescriptionType: prescription.prescriptionType || 'eye_examination',
+          storeId: prescription.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+          status: 'active',
+        });
+        
+        setCreateOpen(true);
+        
+        toast({
+          title: "Create Prescription",
+          description: `Auto-filled form for ${patient.firstName} ${patient.lastName}`,
+        });
+      }
     }
   };
 
@@ -783,7 +923,11 @@ OptiStore Pro Team`;
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Service Type</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={(value) => {
+                              field.onChange(value);
+                              // Reset form sections when service type changes
+                              handleServiceTypeChange(value);
+                            }} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue />
@@ -791,10 +935,10 @@ OptiStore Pro Team`;
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                                <SelectItem value="contact_lens">Contact Lens</SelectItem>
+                                <SelectItem value="contact_lens">Contact Lens Fitting</SelectItem>
                                 <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                                <SelectItem value="fitting_followup">Follow-up</SelectItem>
-                                <SelectItem value="visit_consultation">Consultation</SelectItem>
+                                <SelectItem value="fitting_followup">Follow-up Visit</SelectItem>
+                                <SelectItem value="visit_consultation">General Consultation</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -832,37 +976,174 @@ OptiStore Pro Team`;
 
                 <TabsContent value="vision" className="space-y-6">
                   <div className="space-y-6">
-                    <h3 className="text-lg font-semibold">Vision Prescription Details</h3>
-                    
-                    {/* Visual Acuity */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={createForm.control}
-                        name="visualAcuityRightEye"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Visual Acuity - Right Eye</FormLabel>
-                            <FormControl>
-                              <Input placeholder="20/20" {...field} value={field.value || ""} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={createForm.control}
-                        name="visualAcuityLeftEye"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Visual Acuity - Left Eye</FormLabel>
-                            <FormControl>
-                              <Input placeholder="20/25" {...field} value={field.value || ""} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">
+                        {currentServiceType === 'eye_examination' ? 'Vision Prescription Details' :
+                         currentServiceType === 'contact_lens' ? 'Contact Lens Prescription' :
+                         currentServiceType === 'fitting_glasses' ? 'Glasses Fitting Details' :
+                         currentServiceType === 'fitting_followup' ? 'Follow-up Assessment' :
+                         'Consultation Notes'}
+                      </h3>
+                      <Badge variant="outline" className="capitalize">
+                        {currentServiceType.replace('_', ' ')}
+                      </Badge>
                     </div>
+                    
+                    {/* Service-type specific content */}
+                    {currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses' ? (
+                      <>
+                        {/* Visual Acuity */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={createForm.control}
+                            name="visualAcuityRightEye"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Visual Acuity - Right Eye</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="20/20" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={createForm.control}
+                            name="visualAcuityLeftEye"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Visual Acuity - Left Eye</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="20/25" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </>
+                    ) : currentServiceType === 'contact_lens' ? (
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <h4 className="font-medium mb-4">Contact Lens Specifications</h4>
+                        <div className="grid grid-cols-3 gap-4">
+                          <FormField
+                            control={createForm.control}
+                            name="diagnosis"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Lens Brand</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Acuvue Oasys" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={createForm.control}
+                            name="treatment"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Base Curve</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="8.4 mm" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={createForm.control}
+                            name="advice"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Diameter</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="14.0 mm" {...field} value={field.value || ""} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    ) : currentServiceType === 'fitting_followup' ? (
+                      <div className="bg-yellow-50 rounded-lg p-4">
+                        <h4 className="font-medium mb-4">Follow-up Assessment</h4>
+                        <FormField
+                          control={createForm.control}
+                          name="diagnosis"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Current Status & Progress</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Patient progress, comfort level, any adjustments needed..." 
+                                  className="h-24" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <h4 className="font-medium mb-4">Consultation Notes</h4>
+                        <FormField
+                          control={createForm.control}
+                          name="diagnosis"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Discussion & Recommendations</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Patient concerns, consultation findings, recommendations..." 
+                                  className="h-24" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {/* Show vision prescription fields only for eye examination and glasses fitting */}
+                    {(currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses') && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="visualAcuityRightEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Right Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/20" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="visualAcuityLeftEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Left Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/25" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
 
                     {/* Right Eye Prescription */}
                     <div className="bg-blue-50 rounded-lg p-4">
