@@ -152,10 +152,23 @@ export default function PrescriptionsFixed() {
     const cleanedData = {
       ...data,
       doctorId: null, // Always set to null to avoid FK constraint issues
-      prescriptionDate: data.prescriptionDate || new Date(),
+      prescriptionDate: data.prescriptionDate || new Date().toISOString(),
       storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
       status: data.status || "active",
+      // Clean up empty date fields that cause database errors
+      nextFollowUp: data.nextFollowUp || null,
+      expirationDate: data.expirationDate || null,
+      // Ensure numeric fields are properly formatted
+      axisRight: data.axisRight ? parseInt(data.axisRight.toString()) : null,
+      axisLeft: data.axisLeft ? parseInt(data.axisLeft.toString()) : null,
     };
+
+    // Remove any empty string values that could cause database errors
+    Object.keys(cleanedData).forEach(key => {
+      if (cleanedData[key] === "" || cleanedData[key] === undefined) {
+        cleanedData[key] = null;
+      }
+    });
     
     console.log('Cleaned data for submission:', cleanedData);
     createPrescriptionMutation.mutate(cleanedData);
@@ -176,8 +189,24 @@ export default function PrescriptionsFixed() {
     if (!data.prescriptionNumber) {
       data.prescriptionNumber = `QRX-${Date.now().toString().slice(-6)}`;
     }
+
+    // Clean up quick form data too
+    const cleanedQuickData = {
+      ...data,
+      doctorId: null,
+      prescriptionDate: data.prescriptionDate || new Date().toISOString(),
+      storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+      status: data.status || "active",
+    };
+
+    // Remove empty strings
+    Object.keys(cleanedQuickData).forEach(key => {
+      if (cleanedQuickData[key] === "" || cleanedQuickData[key] === undefined) {
+        cleanedQuickData[key] = null;
+      }
+    });
     
-    createPrescriptionMutation.mutate(data);
+    createPrescriptionMutation.mutate(cleanedQuickData);
   };
 
   // Filter prescriptions
