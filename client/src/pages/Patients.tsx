@@ -2377,7 +2377,7 @@ export default function Patients() {
                   </SelectTrigger>
                   <SelectContent>
                     {(staff as any[]).filter((member: any) => member.position === 'Doctor' || member.role === 'doctor').map((doctor: any) => (
-                      <SelectItem key={doctor.id} value={doctor.id}>
+                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
                         Dr. {doctor.firstName} {doctor.lastName} - {doctor.department || doctor.position}
                       </SelectItem>
                     ))}
