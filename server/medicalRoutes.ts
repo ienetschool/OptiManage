@@ -106,16 +106,11 @@ export function registerMedicalRoutes(app: Express) {
 
   app.post("/api/prescriptions", isAuthenticated, async (req, res) => {
     try {
+      console.log("Received prescription data:", JSON.stringify(req.body, null, 2));
       const validatedData = insertPrescriptionSchema.parse(req.body);
+      console.log("Validated prescription data:", JSON.stringify(validatedData, null, 2));
       
-      // Generate QR code for the prescription
-      const qrCodeData = `${req.protocol}://${req.hostname}/verify/prescription/${validatedData.prescriptionNumber}`;
-      const qrCodeUrl = await QRCode.toDataURL(qrCodeData);
-      
-      const [prescription] = await db.insert(prescriptions).values({
-        ...validatedData,
-        qrCode: qrCodeUrl
-      }).returning();
+      const [prescription] = await db.insert(prescriptions).values(validatedData).returning();
 
       // Create patient history entry
       await db.insert(patientHistory).values({

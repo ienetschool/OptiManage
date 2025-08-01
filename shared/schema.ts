@@ -535,7 +535,7 @@ export const prescriptions = pgTable("prescriptions", {
   id: uuid("id").primaryKey().defaultRandom(),
   prescriptionNumber: varchar("prescription_number", { length: 20 }).unique().notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
-  doctorId: uuid("doctor_id").references(() => doctors.id).notNull(),
+  doctorId: uuid("doctor_id").references(() => doctors.id),
   appointmentId: uuid("appointment_id").references(() => medicalAppointments.id),
   storeId: varchar("store_id").references(() => stores.id),
   prescriptionDate: timestamp("prescription_date").defaultNow(),

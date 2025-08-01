@@ -325,10 +325,35 @@ export default function Prescriptions() {
                 <Button 
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => {
+                    // Reset form for new prescription
+                    form.reset({
+                      prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
+                      patientId: "",
+                      doctorId: "",
+                      appointmentId: "",
+                      storeId: "",
+                      prescriptionType: "glasses",
+                      visualAcuityRightEye: "",
+                      visualAcuityLeftEye: "",
+                      sphereRight: "0",
+                      cylinderRight: "0",
+                      axisRight: 0,
+                      addRight: "0",
+                      sphereLeft: "0",
+                      cylinderLeft: "0",
+                      axisLeft: 0,
+                      addLeft: "0",
+                      pdDistance: "0",
+                      diagnosis: "",
+                      treatment: "",
+                      advice: "",
+                      notes: "",
+                      status: "active",
+                    });
                     setOpen(true);
                     toast({
                       title: "Quick Prescription",
-                      description: "Opening prescription form",
+                      description: "Opening new prescription form",
                     });
                   }}
                 >
@@ -351,7 +376,7 @@ export default function Prescriptions() {
                   <div className="space-y-4">
                     {appointments.map((appointment) => {
                       const patient = patients.find(p => p.id === appointment.patientId);
-                      const doctor = doctors.find(d => d.id === (appointment.doctorId || appointment.staffId));
+                      const doctor = doctors.find(d => d.id === (appointment.assignedDoctorId || appointment.doctorId || appointment.staffId));
                       
                       return (
                         <div key={appointment.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
@@ -414,7 +439,7 @@ export default function Prescriptions() {
                                   // Set patient and appointment in prescription form
                                   form.setValue('patientId', appointment.patientId);
                                   form.setValue('appointmentId', appointment.id);
-                                  form.setValue('doctorId', appointment.doctorId || appointment.staffId || '');
+                                  form.setValue('doctorId', appointment.assignedDoctorId || appointment.doctorId || appointment.staffId || '');
                                   setOpen(true);
                                   toast({
                                     title: "Prescription Form",
@@ -430,7 +455,7 @@ export default function Prescriptions() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  const doctor = doctors.find(d => d.id === (appointment.doctorId || appointment.staffId));
+                                  const doctor = doctors.find(d => d.id === (appointment.assignedDoctorId || appointment.doctorId || appointment.staffId));
                                   const detailedInstructions = `
 APPOINTMENT DETAILS REPORT
 ═══════════════════════════════════════
@@ -481,7 +506,7 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                                     id: appointment.id,
                                     patientId: appointment.patientId,
                                     appointmentId: appointment.id,
-                                    doctorId: appointment.doctorId || appointment.staffId || '',
+                                    doctorId: appointment.assignedDoctorId || appointment.doctorId || appointment.staffId || '',
                                     prescriptionType: 'appointment_details',
                                     medications: [],
                                     instructions: detailedInstructions,
