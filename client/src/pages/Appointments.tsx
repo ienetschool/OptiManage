@@ -795,7 +795,7 @@ export default function Appointments() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Status</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Select status" />
@@ -914,14 +914,14 @@ export default function Appointments() {
                           <div className="flex items-center space-x-3">
                             <Avatar className="h-8 w-8">
                               <AvatarFallback className="text-xs">
-                                {appointment.customer.firstName[0]}{appointment.customer.lastName[0]}
+                                {patients.find(p => p.id === appointment.patientId)?.firstName?.[0] || 'P'}{patients.find(p => p.id === appointment.patientId)?.lastName?.[0] || 'A'}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <div className="font-medium text-gray-900">
-                                {appointment.customer.firstName} {appointment.customer.lastName}
+                                {patients.find(p => p.id === appointment.patientId)?.firstName || 'Unknown'} {patients.find(p => p.id === appointment.patientId)?.lastName || 'Patient'}
                               </div>
-                              <div className="text-sm text-gray-500">{appointment.customer.phone}</div>
+                              <div className="text-sm text-gray-500">{patients.find(p => p.id === appointment.patientId)?.phone || 'No phone'}</div>
                             </div>
                           </div>
                         </td>
