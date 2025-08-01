@@ -226,8 +226,12 @@ export default function Appointments() {
     handleEdit(appointment);
   };
 
-  // Mock appointments for demo
-  const mockAppointments = [
+  // Use real appointments data or mock for demo  
+  const displayAppointments = appointments.length > 0 ? appointments.map(apt => ({
+    ...apt,
+    customer: { firstName: apt.customerId?.slice(0,8) || 'Unknown', lastName: 'Patient', phone: '(555) 123-4567' },
+    store: { name: 'Main Store', address: '123 Healthcare Ave' }
+  })) : [
     {
       id: "1",
       customerId: "cust1",
@@ -269,7 +273,7 @@ export default function Appointments() {
     }
   ];
 
-  const filteredAppointments = mockAppointments.filter(appointment => {
+  const filteredAppointments = displayAppointments.filter(appointment => {
     const matchesSearch = 
       appointment.customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       appointment.customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -362,7 +366,7 @@ export default function Appointments() {
           <TabsContent value="appointments" className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-slate-900">All Appointments ({mockAppointments.length})</h3>
+                <h3 className="text-lg font-semibold text-slate-900">All Appointments ({displayAppointments.length})</h3>
                 <p className="text-sm text-slate-600">Manage appointments across all store locations</p>
               </div>
               
@@ -846,7 +850,7 @@ export default function Appointments() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-slate-900">
-                    {mockAppointments.filter(apt => isSameDay(apt.appointmentDate, new Date())).length}
+                    {displayAppointments.filter(apt => isSameDay(apt.appointmentDate, new Date())).length}
                   </p>
                 </CardContent>
               </Card>
@@ -856,7 +860,7 @@ export default function Appointments() {
                   <CardTitle className="text-sm font-medium text-slate-600">This Week</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-slate-900">{mockAppointments.length}</p>
+                  <p className="text-2xl font-bold text-slate-900">{displayAppointments.length}</p>
                 </CardContent>
               </Card>
 
@@ -866,7 +870,7 @@ export default function Appointments() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-emerald-600">
-                    {Math.round((mockAppointments.filter(apt => apt.status === 'completed').length / mockAppointments.length) * 100)}%
+                    {displayAppointments.length > 0 ? Math.round((displayAppointments.filter(apt => apt.status === 'completed').length / displayAppointments.length) * 100) : 0}%
                   </p>
                 </CardContent>
               </Card>

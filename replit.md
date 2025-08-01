@@ -6,13 +6,16 @@ OptiStore Pro is a comprehensive multi-store management system designed for opti
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
-## Recent Updates (January 31, 2025)
-- **NEW: Redesigned /patients page** - Combined patients and appointment management with all action buttons
-- **NEW: Multi-tab patient registration form** - Old format with 5 tabs (Basic Info, Contact, Medical, Insurance, Loyalty)
-- **NEW: Multi-tab appointment booking form** - Comprehensive appointment scheduling with patient selection
-- **NEW: Complete action button integration** - All dropdown actions working (View, Edit, Medical History, Prescriptions, Print, QR Code, Share, Invoice, Book Appointment, Delete)
-- Enhanced professional print formats with store branding and QR codes  
-- Improved statistics cards showing patient and appointment counts
+## Recent Updates (August 1, 2025)
+- **ENHANCED: Patient QR Code positioning** - Repositioned QR code in print report header for better layout and professional appearance
+- **NEW: Invoice QR code integration** - Added QR codes to all invoice templates for quick payment processing
+- **IMPROVED: Print report header design** - Reduced header size, improved alignment, and enhanced visual hierarchy for professional medical reports
+- **ENHANCED: Appointment management system** - Full functionality with status changes, action buttons, and comprehensive workflow management
+- **NEW: Advanced appointment status tracking** - Added check-in, in-progress, completion, and cancellation status management
+- **NEW: Real-time appointment data integration** - Connected appointment system to live database with fallback display options
+- **ENHANCED: Action dropdown menus** - Comprehensive action buttons for view, edit, status changes, print, QR codes, sharing, and invoicing
+- **IMPROVED: Professional medical interface** - Enhanced patient portal with proper medical practice workflow and documentation
+- **NEW: Status-based quick actions** - Smart action buttons that appear based on appointment status (scheduled → check-in → start → complete)
 - Added comprehensive toast notifications for all user actions
 - Professional medical practice interface with proper authentication flow
 
