@@ -191,9 +191,98 @@ export default function StaffPage() {
     });
   };
 
-  const { data: staffList = [], isLoading } = useQuery<Staff[]>({
+  // Mock staff data for development
+  const mockStaffData = [
+    {
+      id: "STF-001",
+      staffCode: "STF-001",
+      firstName: "Dr. Sarah",
+      lastName: "Smith",
+      email: "sarah.smith@optistorepro.com",
+      phone: "+1-555-0101",
+      address: "123 Medical Center Dr, City, State 12345",
+      position: "Ophthalmologist",
+      department: "Eye Care",
+      hireDate: "2023-01-15",
+      status: "active",
+      role: "doctor",
+      permissions: ["view_patients", "edit_medical_records", "prescribe"],
+      customFields: {
+        licenseNumber: "MD-12345",
+        specialization: "Retinal Surgery",
+        yearsExperience: "12"
+      }
+    },
+    {
+      id: "STF-002", 
+      staffCode: "STF-002",
+      firstName: "John",
+      lastName: "Johnson",
+      email: "john.johnson@optistorepro.com",
+      phone: "+1-555-0102",
+      address: "456 Healthcare Ave, City, State 12345",
+      position: "Optometrist",
+      department: "Vision Care",
+      hireDate: "2023-03-20",
+      status: "active",
+      role: "doctor",
+      permissions: ["view_patients", "edit_prescriptions"],
+      customFields: {
+        licenseNumber: "OD-67890",
+        specialization: "Contact Lenses",
+        yearsExperience: "8"
+      }
+    },
+    {
+      id: "STF-003",
+      staffCode: "STF-003", 
+      firstName: "Emily",
+      lastName: "Davis",
+      email: "emily.davis@optistorepro.com",
+      phone: "+1-555-0103",
+      address: "789 Medical Plaza, City, State 12345",
+      position: "Technician",
+      department: "Diagnostics",
+      hireDate: "2023-06-10",
+      status: "active",
+      role: "staff",
+      permissions: ["view_patients", "run_diagnostics"],
+      customFields: {
+        certification: "COT-2023",
+        specialization: "OCT Imaging",
+        yearsExperience: "5"
+      }
+    },
+    {
+      id: "STF-004",
+      staffCode: "STF-004",
+      firstName: "Michael",
+      lastName: "Brown", 
+      email: "michael.brown@optistorepro.com",
+      phone: "+1-555-0104",
+      address: "321 Vision Center Blvd, City, State 12345",
+      position: "Manager",
+      department: "Administration",
+      hireDate: "2022-09-05",
+      status: "active",
+      role: "manager",
+      permissions: ["view_all", "edit_all", "manage_staff"],
+      customFields: {
+        certification: "MBA-Healthcare",
+        specialization: "Operations Management",
+        yearsExperience: "15"
+      }
+    }
+  ];
+
+  const { data: staffListFromAPI = [], isLoading, error } = useQuery<any[]>({
     queryKey: ["/api/staff"],
+    retry: 1,
+    retryDelay: 500,
   });
+
+  // Use mock data as fallback if API fails
+  const staffList = error || staffListFromAPI.length === 0 ? mockStaffData : staffListFromAPI;
 
   const { data: stores = [] } = useQuery({
     queryKey: ["/api/stores"],

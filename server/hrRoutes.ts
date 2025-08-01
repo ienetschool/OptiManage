@@ -13,7 +13,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, like, gte, lte, sql } from "drizzle-orm";
-import { isAuthenticated } from "./simpleAuth";
+import { isAuthenticated } from "./oauthAuth";
 import QRCode from "qrcode";
 import { format } from "date-fns";
 

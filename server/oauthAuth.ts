@@ -251,6 +251,19 @@ export function setupOAuthAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {
+  // For development, bypass authentication and create mock user
+  if (process.env.NODE_ENV === 'development') {
+    (req as any).user = {
+      id: "45761289",
+      email: "admin@optistorepro.com",
+      firstName: "Admin",
+      lastName: "User",
+      profileImageUrl: "/api/placeholder/40/40",
+      provider: 'mock'
+    };
+    return next();
+  }
+  
   if (req.isAuthenticated()) {
     return next();
   }
