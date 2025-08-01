@@ -988,7 +988,6 @@ export default function Appointments() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          {/* View and Edit */}
                           <DropdownMenuItem onClick={() => handleViewDetails(appointment)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
@@ -997,93 +996,10 @@ export default function Appointments() {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Appointment
                           </DropdownMenuItem>
-                          
                           <DropdownMenuSeparator />
-                          
-                          {/* Status Actions */}
-                          {appointment.status === "scheduled" && (
-                            <>
-                              <DropdownMenuItem onClick={() => handleConfirm(appointment)}>
-                                <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                                Confirm Appointment
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleCheckIn(appointment)}>
-                                <UserCheck className="mr-2 h-4 w-4 text-blue-600" />
-                                Check In Patient
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          
-                          {appointment.status === "confirmed" && (
-                            <DropdownMenuItem onClick={() => handleCheckIn(appointment)}>
-                              <UserCheck className="mr-2 h-4 w-4 text-blue-600" />
-                              Check In Patient
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {appointment.status === "checked-in" && (
-                            <DropdownMenuItem onClick={() => handleStartConsultation(appointment)}>
-                              <Clock className="mr-2 h-4 w-4 text-blue-600" />
-                              Start Consultation
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {appointment.status === "in-progress" && (
-                            <DropdownMenuItem onClick={() => handleComplete(appointment)}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-purple-600" />
-                              Complete Appointment
-                            </DropdownMenuItem>
-                          )}
-                          
-                          <DropdownMenuItem onClick={() => handleReschedule(appointment)}>
-                            <Calendar className="mr-2 h-4 w-4 text-orange-600" />
-                            Reschedule
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuSeparator />
-                          
-                          {/* Print and Documents */}
-                          <DropdownMenuItem onClick={() => generateAppointmentReport(appointment)}>
-                            <Printer className="mr-2 h-4 w-4" />
-                            Print Report
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateAppointmentQR(appointment)}>
-                            <QrCode className="mr-2 h-4 w-4" />
-                            Generate QR Code
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => generateAppointmentInvoice(appointment)}>
-                            <Receipt className="mr-2 h-4 w-4" />
-                            Generate Invoice
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuSeparator />
-                          
-                          {/* Communication */}
-                          <DropdownMenuItem onClick={() => shareByEmail(appointment)}>
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share via Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleSendReminder(appointment)}>
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Send Reminder
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuSeparator />
-                          
-                          {/* Danger Actions */}
-                          <DropdownMenuItem 
-                            onClick={() => handleCancel(appointment)}
-                            className="text-red-600 focus:text-red-600"
-                          >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Cancel Appointment
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(appointment.id)}
-                            className="text-red-600 focus:text-red-600"
-                          >
+                          <DropdownMenuItem onClick={() => handleCancel(appointment)} className="text-red-600">
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Delete Appointment
+                            Cancel
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
