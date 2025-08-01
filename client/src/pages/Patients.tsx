@@ -1827,13 +1827,24 @@ export default function Patients() {
                     </div>
                   </div>
                   
-                  {/* QR Code in Header */}
+                  {/* QR Code in Header - Compact version for scanning */}
                   <div className="bg-white p-3 rounded-lg shadow-sm border-2 border-blue-200">
                     <div className="text-center">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
-                        <QrCode className="h-16 w-16 text-blue-600" />
+                      <div 
+                        className="w-16 h-16 mx-auto mb-2"
+                        ref={(el) => {
+                          if (el && selectedPatient) {
+                            import('qrcode').then((QRCode) => {
+                              const patientData = `Patient: ${selectedPatient.firstName} ${selectedPatient.lastName}, ID: ${selectedPatient.patientCode}, Phone: ${selectedPatient.phone}`;
+                              const canvas = el.querySelector('canvas') || el.appendChild(document.createElement('canvas'));
+                              QRCode.default.toCanvas(canvas, patientData, { width: 64, height: 64, margin: 0 });
+                            });
+                          }
+                        }}
+                      >
+                        <canvas className="w-full h-full rounded"></canvas>
                       </div>
-                      <p className="text-xs font-medium text-blue-700">Scan for Details</p>
+                      <p className="text-xs font-medium text-blue-700">Scan Info</p>
                     </div>
                   </div>
                 </div>
@@ -1855,29 +1866,7 @@ export default function Patients() {
                 </Button>
               </div>
 
-              {/* QR Code Section */}
-              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
-                <CardContent className="p-6 text-center">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Patient QR Code</h4>
-                  <div className="inline-block p-4 bg-white rounded-lg shadow-sm border">
-                    <div 
-                      id="patient-qr-code" 
-                      className="w-32 h-32 mx-auto mb-3"
-                      ref={(el) => {
-                        if (el && selectedPatient) {
-                          import('qrcode').then((QRCode) => {
-                            const patientData = `Patient: ${selectedPatient.firstName} ${selectedPatient.lastName}, ID: ${selectedPatient.patientCode}, Phone: ${selectedPatient.phone}`;
-                            QRCode.default.toCanvas(el.querySelector('canvas') || el.appendChild(document.createElement('canvas')), patientData, { width: 128, height: 128, margin: 1 });
-                          });
-                        }
-                      }}
-                    >
-                      <canvas className="w-full h-full"></canvas>
-                    </div>
-                    <p className="text-sm text-gray-600">Scan for patient info</p>
-                  </div>
-                </CardContent>
-              </Card>
+
 
               {/* Detailed Information Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

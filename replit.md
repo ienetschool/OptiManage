@@ -7,6 +7,9 @@ OptiStore Pro is a comprehensive multi-store management system designed for opti
 Preferred communication style: Simple, everyday language.
 
 ## Recent Updates (August 1, 2025)
+- **COMPLETED: Patient QR Code Repositioning** - Removed large QR code section from patient view popup and added compact QR code in header for better layout and scanning accessibility
+- **COMPLETED: Enhanced Staff Module** - Added comprehensive Payroll & Documents tab with photo upload, qualification documents, salary management, leave tracking, and Staff ID card generation with QR codes
+- **COMPLETED: Professional Positions Dropdown** - Implemented role-based position selection (Doctor, Optometrist, Nurse, Technician, etc.) for proper medical practice hierarchy
 - **COMPLETED: Action Button Consistency** - Applied exact same action dropdown structure from Patients module to Appointments module (View Details, Edit, Cancel)
 - **COMPLETED: MySQL Database Migration** - Successfully migrated entire project from PostgreSQL to MySQL for server compatibility with phpMyAdmin access
 - **NEW: MySQL Schema Creation** - Created complete MySQL-compatible schema with all tables, relationships, and data types properly converted
