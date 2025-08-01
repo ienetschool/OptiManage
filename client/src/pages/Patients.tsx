@@ -62,6 +62,7 @@ export default function Patients() {
   const [createPrescriptionOpen, setCreatePrescriptionOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editPatientOpen, setEditPatientOpen] = useState(false);
+  const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -2365,7 +2366,7 @@ export default function Patients() {
 
               <div>
                 <Label>Select Doctor</Label>
-                <Select>
+                <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a doctor" />
                   </SelectTrigger>
@@ -2405,12 +2406,39 @@ export default function Patients() {
                 <Button variant="outline" onClick={() => setForwardToDoctorOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Appointment Forwarded",
-                    description: "Appointment has been assigned to the selected doctor",
-                  });
-                  setForwardToDoctorOpen(false);
+                <Button onClick={async () => {
+                  const selectedDoctor = selectedDoctorId;
+                  if (!selectedDoctor || !selectedAppointment) return;
+
+                  try {
+                    // Update the appointment with doctor assignment
+                    await apiRequest("PUT", `/api/appointments/${selectedAppointment.id}`, {
+                      ...selectedAppointment,
+                      doctorId: selectedDoctor,
+                      staffId: selectedDoctor,
+                      status: "assigned_to_doctor",
+                      assignedToDoctor: true,
+                      doctorNotes: "Appointment forwarded for medical consultation"
+                    });
+
+                    // Refresh appointments data
+                    queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/medical-appointments"] });
+
+                    toast({
+                      title: "Appointment Forwarded",
+                      description: "Appointment has been assigned to the selected doctor",
+                    });
+                    setForwardToDoctorOpen(false);
+                    setSelectedAppointment(null);
+                    setSelectedDoctorId("");
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to assign doctor to appointment",
+                      variant: "destructive",
+                    });
+                  }
                 }}>
                   Assign Doctor
                 </Button>

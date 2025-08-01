@@ -63,9 +63,20 @@ export default function Prescriptions() {
     queryKey: ["/api/doctors"],
   });
 
-  const { data: appointments = [] } = useQuery<MedicalAppointment[]>({
+  // Get both medical appointments and regular appointments
+  const { data: medicalAppointments = [] } = useQuery<MedicalAppointment[]>({
     queryKey: ["/api/medical-appointments"],
   });
+
+  const { data: regularAppointments = [] } = useQuery({
+    queryKey: ["/api/appointments"],
+  });
+
+  // Combine appointments that have doctors assigned
+  const appointments = [
+    ...medicalAppointments,
+    ...regularAppointments.filter(apt => apt.doctorId || apt.staffId)
+  ];
 
   const form = useForm<InsertPrescription>({
     resolver: zodResolver(insertPrescriptionSchema),
@@ -224,7 +235,7 @@ export default function Prescriptions() {
                     <div>
                       <p className="text-sm font-medium text-slate-600">Pending Consultations</p>
                       <p className="text-2xl font-bold text-slate-900">
-                        {appointments.filter(apt => apt.status === 'scheduled' || apt.status === 'confirmed').length}
+                        {appointments.filter(apt => apt.status === 'scheduled' || apt.status === 'confirmed' || apt.status === 'assigned_to_doctor').length}
                       </p>
                       <p className="text-xs text-amber-600">Awaiting consultation</p>
                     </div>
@@ -262,7 +273,7 @@ export default function Prescriptions() {
                       <p className="text-sm font-medium text-slate-600">Completed Today</p>
                       <p className="text-2xl font-bold text-slate-900">
                         {appointments.filter(apt => apt.status === 'completed' && 
-                          apt.appointmentDate?.split('T')[0] === new Date().toISOString().split('T')[0]).length}
+                          (apt.appointmentDate ? apt.appointmentDate.split('T')[0] === new Date().toISOString().split('T')[0] : false)).length}
                       </p>
                       <p className="text-xs text-emerald-600">Consultations done</p>
                     </div>
@@ -309,7 +320,7 @@ export default function Prescriptions() {
                   <div className="space-y-4">
                     {appointments.map((appointment) => {
                       const patient = patients.find(p => p.id === appointment.patientId);
-                      const doctor = doctors.find(d => d.id === appointment.doctorId);
+                      const doctor = doctors.find(d => d.id === (appointment.doctorId || appointment.staffId));
                       
                       return (
                         <div key={appointment.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
@@ -326,29 +337,40 @@ export default function Prescriptions() {
                                   <Badge className={
                                     appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
                                     appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                                    appointment.status === 'assigned_to_doctor' ? 'bg-purple-100 text-purple-800' :
                                     appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
                                     'bg-gray-100 text-gray-800'
                                   }>
-                                    {appointment.status}
+                                    {appointment.status === 'assigned_to_doctor' ? 'Assigned to Doctor' : appointment.status}
                                   </Badge>
+                                  {doctor && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Dr. {doctor.firstName} {doctor.lastName}
+                                    </Badge>
+                                  )}
                                 </div>
                                 <div className="grid grid-cols-3 gap-4 text-sm text-slate-600">
                                   <div className="flex items-center">
                                     <Calendar className="h-4 w-4 mr-2" />
-                                    {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                                    {appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMM dd, yyyy') : 'Date TBD'}
                                   </div>
                                   <div className="flex items-center">
                                     <Clock className="h-4 w-4 mr-2" />
-                                    {appointment.appointmentTime}
+                                    {appointment.appointmentTime || appointment.time || 'Time TBD'}
                                   </div>
                                   <div className="flex items-center">
                                     <Stethoscope className="h-4 w-4 mr-2" />
-                                    {appointment.appointmentType}
+                                    {appointment.appointmentType || appointment.service || 'General Consultation'}
                                   </div>
                                 </div>
-                                {appointment.reason && (
+                                {(appointment.reason || appointment.notes) && (
                                   <p className="text-sm text-slate-600 mt-2">
-                                    <strong>Reason:</strong> {appointment.reason}
+                                    <strong>Reason:</strong> {appointment.reason || appointment.notes}
+                                  </p>
+                                )}
+                                {appointment.doctorNotes && (
+                                  <p className="text-sm text-blue-600 mt-1">
+                                    <strong>Doctor Notes:</strong> {appointment.doctorNotes}
                                   </p>
                                 )}
                               </div>
@@ -362,6 +384,7 @@ export default function Prescriptions() {
                                   // Set patient and appointment in prescription form
                                   form.setValue('patientId', appointment.patientId);
                                   form.setValue('appointmentId', appointment.id);
+                                  form.setValue('doctorId', appointment.doctorId || appointment.staffId || '');
                                   setOpen(true);
                                 }}
                                 className="text-blue-600 hover:bg-blue-50"
