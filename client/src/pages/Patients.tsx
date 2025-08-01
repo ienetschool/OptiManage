@@ -51,6 +51,7 @@ export default function Patients() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [editPatientOpen, setEditPatientOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -196,12 +197,12 @@ export default function Patients() {
               @page { size: A4; margin: 10mm; }
               body { font-family: 'Arial', sans-serif; line-height: 1.3; color: #2c3e50; margin: 0; padding: 0; font-size: 9pt; background: #ffffff; }
               .document-container { max-width: 210mm; margin: 0 auto; background: white; height: 297mm; overflow: hidden; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: center; height: 60mm; display: flex; flex-direction: column; justify-content: center; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px; text-align: center; height: 50mm; display: flex; flex-direction: column; justify-content: center; }
               .clinic-logo { font-size: 24pt; font-weight: 900; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
               .clinic-subtitle { font-size: 12pt; margin-bottom: 5px; opacity: 0.9; }
               .report-meta { font-size: 8pt; margin-top: 8px; opacity: 0.8; }
               .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; margin-top: 5px; font-weight: bold; font-size: 9pt; }
-              .content { padding: 15px; height: 180mm; overflow: hidden; }
+              .content { padding: 15px; height: 190mm; overflow: hidden; }
               .patient-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; padding: 12px; margin-bottom: 15px; border-left: 4px solid #667eea; }
               .patient-name { font-size: 16pt; font-weight: 700; color: #2d3748; margin-bottom: 5px; }
               .patient-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 8pt; }
@@ -248,18 +249,21 @@ export default function Patients() {
           <body>
             <div class="document-container">
               <div class="header">
-                <div class="clinic-logo">🏥 OptiStore Pro</div>
-                <div class="clinic-subtitle">Advanced Medical Center & Eye Care Specialists</div>
-                <div class="patient-id-badge">Patient ID: ${patient.patientCode}</div>
-                <div class="report-meta">
-                  📅 Generated: ${new Date().toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                <div style="display: flex; justify-content: space-between; align-items: center; height: 100%;">
+                  <div style="flex: 1; text-align: left;">
+                    <div class="clinic-logo">🏥 OptiStore Pro</div>
+                    <div class="clinic-subtitle">Advanced Medical Center & Eye Care Specialists</div>
+                    <div class="patient-id-badge">Patient ID: ${patient.patientCode}</div>
+                    <div class="report-meta">📅 ${new Date().toLocaleDateString()}</div>
+                  </div>
+                  <div style="flex: 0 0 auto; text-align: center;">
+                    <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 8px;">
+                      <div style="background: white; width: 50px; height: 50px; border-radius: 5px; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center;">
+                        <canvas id="header-qr-canvas" style="width: 45px; height: 45px;"></canvas>
+                      </div>
+                      <p style="font-size: 6pt; color: rgba(255,255,255,0.9); margin: 0; font-weight: 600;">Digital Patient Record</p>
+                    </div>
+                  </div>
                 </div>
               </div>
               
@@ -380,18 +384,12 @@ export default function Patients() {
                   </div>
                 </div>
 
-                <div class="qr-section">
-                  <h4 style="margin-top: 0; color: #4a5568; font-size: 9pt;">Digital Patient Record</h4>
-                  <div class="qr-code" id="qr-code-container">
-                    <canvas id="qr-canvas"></canvas>
-                  </div>
-                  <p style="font-size: 7pt; color: #718096; margin: 0;">Scan to access: ${patient.patientCode}</p>
-                </div>
                 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
                 <script>
-                  const canvas = document.getElementById('qr-canvas');
+                  // Header QR Code
+                  const headerCanvas = document.getElementById('header-qr-canvas');
                   const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}';
-                  QRCode.toCanvas(canvas, patientData, { width: 60, height: 60, margin: 1 }, function (error) {
+                  QRCode.toCanvas(headerCanvas, patientData, { width: 45, height: 45, margin: 1 }, function (error) {
                     if (error) console.error(error);
                   });
                 </script>
@@ -530,12 +528,12 @@ export default function Patients() {
               <p class="total-amount">Total Amount: $352.63</p>
             </div>
 
-            <div class="qr-section" style="margin-top: 30px;">
-              <h4 style="margin-top: 0; color: #4a5568;">Quick Pay QR Code</h4>
-              <div class="qr-code" id="invoice-qr-container">
-                <canvas id="invoice-qr-canvas"></canvas>
+            <div style="margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; text-align: center; border: 1px dashed #cbd5e0;">
+              <h4 style="margin-top: 0; color: #4a5568; font-size: 12pt;">Quick Pay QR Code</h4>
+              <div style="width: 80px; height: 80px; background: white; border-radius: 5px; margin: 10px auto; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
+                <canvas id="invoice-qr-canvas" style="width: 75px; height: 75px;"></canvas>
               </div>
-              <p style="font-size: 9pt; color: #718096; margin: 5px 0;">Scan to pay invoice: INV-${Date.now()}</p>
+              <p style="font-size: 10pt; color: #718096; margin: 5px 0; font-weight: 600;">Scan to pay: INV-${Date.now()}</p>
             </div>
 
             <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 8px;">
@@ -548,7 +546,7 @@ export default function Patients() {
             <script>
               const invoiceCanvas = document.getElementById('invoice-qr-canvas');
               const invoiceData = 'Invoice: INV-${Date.now()}, Patient: ${patient.firstName} ${patient.lastName}, Amount: $352.63';
-              QRCode.toCanvas(invoiceCanvas, invoiceData, { width: 80, height: 80, margin: 1 }, function (error) {
+              QRCode.toCanvas(invoiceCanvas, invoiceData, { width: 75, height: 75, margin: 1 }, function (error) {
                 if (error) console.error(error);
               });
             </script>
@@ -1168,7 +1166,10 @@ export default function Patients() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatient(patient);
+                                setEditPatientOpen(true);
+                              }}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Patient
                               </DropdownMenuItem>
@@ -1838,6 +1839,35 @@ export default function Patients() {
                 <p className="text-sm text-gray-600 text-center">
                   All sharing options comply with HIPAA privacy regulations
                 </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Patient Modal */}
+      <Dialog open={editPatientOpen} onOpenChange={setEditPatientOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Patient Information</DialogTitle>
+            <DialogDescription>
+              Update patient details for {selectedPatient?.firstName} {selectedPatient?.lastName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPatient && (
+            <div className="space-y-6">
+              <p className="text-center text-gray-600">
+                Edit Patient functionality will be implemented with a comprehensive form similar to the registration form.
+                For now, you can view and manage patient details through the "View Details" option.
+              </p>
+              <div className="flex justify-end space-x-3">
+                <Button variant="outline" onClick={() => setEditPatientOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => setEditPatientOpen(false)}>
+                  Save Changes
+                </Button>
               </div>
             </div>
           )}
