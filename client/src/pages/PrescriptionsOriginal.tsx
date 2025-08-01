@@ -1,34 +1,37 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import {
-  Plus,
-  Search,
-  FileText,
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Plus, 
+  Search, 
+  Eye,
   Download,
   Send,
-  Eye,
-  User,
+  QrCode,
+  FileText,
   Calendar,
-  Clock,
+  User,
+  Stethoscope,
+  Pill,
   Activity,
   AlertCircle,
   CheckCircle,
+  Clock,
   MoreHorizontal,
   Edit,
   Trash2,
-  QrCode,
   Share,
-  FileDown,
-  Mail
+  Mail,
+  FileDown
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -116,6 +119,7 @@ export default function Prescriptions() {
       advice: "",
       notes: "",
       status: "active",
+      nextFollowUp: null,
     },
   });
 
@@ -254,798 +258,620 @@ export default function Prescriptions() {
   };
 
   const renderServiceSpecificFields = () => {
-    switch (serviceType) {
-      case "eye_examination":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">👁️ Eye Examination Fields</h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="visualAcuityRightEye"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visual Acuity - Right Eye</FormLabel>
-                    <FormControl>
-                      <Input placeholder="20/20" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="visualAcuityLeftEye"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visual Acuity - Left Eye</FormLabel>
-                    <FormControl>
-                      <Input placeholder="20/20" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    return (
+      <div className="space-y-6">
+        {/* Patient & Appointment Info Section */}
+        <div className="bg-slate-50 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-slate-900 mb-4">Patient & Appointment Info</h3>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Patient:</Label>
+              <p className="text-base font-medium">{selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : 'Select patient...'}</p>
             </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="sphereRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sphere (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cylinder (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="axisRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Axis (Right)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="180" 
-                        placeholder="90" 
-                        {...field} 
-                        value={field.value || 0} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Service:</Label>
+              <p className="text-base font-medium">{serviceType.replace('_', '-')}</p>
             </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="sphereLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sphere (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cylinder (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="axisLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Axis (Left)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="180" 
-                        placeholder="90" 
-                        {...field} 
-                        value={field.value || 0} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
-                      />
-                    </FormControl>
-                    <FormMessage />  
-                  </FormItem>
-                )}
-              />
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Date:</Label>
+              <p className="text-base">{format(new Date(), 'dd/MM/yyyy')}</p>
             </div>
+            <div>
+              <Label className="text-sm font-medium text-slate-700">Appointment ID:</Label>
+              <p className="text-base text-slate-600">{form.watch('appointmentId') || 'Not assigned'}</p>
+            </div>
+          </div>
+        </div>
 
+        {/* Prescription Code */}
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Prescription Code</Label>
+            <Input 
+              value={form.watch('prescriptionNumber')} 
+              onChange={(e) => form.setValue('prescriptionNumber', e.target.value)}
+              className="font-mono"
+            />
+          </div>
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Doctor</Label>
             <FormField
               control={form.control}
-              name="diagnosis"
+              name="doctorId"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Eye Examination Findings</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Enter detailed eye examination findings and diagnosis..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <Select onValueChange={field.onChange} value={field.value || ""}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select prescribing doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {doctors.map((doctor) => (
+                      <SelectItem key={doctor.id} value={doctor.id}>
+                        Dr. {doctor.firstName} {doctor.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
             />
           </div>
-        );
+        </div>
 
-      case "contact_lens":
-        return (
+        {/* Vision Prescription Section */}
+        {(serviceType === 'eye_examination' || serviceType === 'contact_lens' || serviceType === 'fitting_glasses') && (
           <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">🔍 Contact Lens Prescription</h4>
+            <h3 className="text-lg font-semibold text-slate-900">Vision Prescription</h3>
             
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="diagnosis"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Lens Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Daily, Weekly, Monthly..." {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="treatment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand & Material</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Acuvue, Biofinity, etc." {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+            {/* Right Eye */}
             <div className="grid grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="sphereRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Power (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="sphereLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Power (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Base Curve</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" placeholder="8.4" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Diameter</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" placeholder="14.2" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Sphere</Label>
+                <FormField
+                  control={form.control}
+                  name="sphereRight"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.25" 
+                      placeholder="-2.25" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Cylinder</Label>
+                <FormField
+                  control={form.control}
+                  name="cylinderRight"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.25" 
+                      placeholder="-0.50" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Axis</Label>
+                <FormField
+                  control={form.control}
+                  name="axisRight"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      min="0" 
+                      max="180" 
+                      placeholder="90°" 
+                      {...field} 
+                      value={field.value || 0} 
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Add</Label>
+                <FormField
+                  control={form.control}
+                  name="addRight"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.25" 
+                      placeholder="+1.00" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
             </div>
 
-            <FormField
-              control={form.control}
-              name="advice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Lens Care Instructions</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Wear time, cleaning instructions, replacement schedule..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
-      case "fitting_glasses":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">👓 Glasses Fitting</h4>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="pdDistance"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pupillary Distance (mm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" placeholder="62.0" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="pdNear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PD Near (mm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" placeholder="59.0" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="pdFar"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PD Far (mm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" placeholder="65.0" {...field} value={field.value || ""} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Left Eye */}
+            <div className="grid grid-cols-4 gap-4">
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Sphere</Label>
+                <FormField
+                  control={form.control}
+                  name="sphereLeft"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.25" 
+                      placeholder="-2.00" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Cylinder</Label>
+                <FormField
+                  control={form.control}
+                  name="cylinderLeft"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.25" 
+                      placeholder="-0.75" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Axis</Label>
+                <FormField
+                  control={form.control}
+                  name="axisLeft"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      min="0" 
+                      max="180" 
+                      placeholder="85°" 
+                      {...field} 
+                      value={field.value || 0} 
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Add</Label>
+                <FormField
+                  control={form.control}
+                  name="addLeft"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.25" 
+                      placeholder="+1.00" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
             </div>
 
+            {/* Pupillary Distance & Prescription Type */}
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Pupillary Distance</Label>
+                <FormField
+                  control={form.control}
+                  name="pdDistance"
+                  render={({ field }) => (
+                    <Input 
+                      type="number" 
+                      step="0.5" 
+                      placeholder="62 mm" 
+                      {...field} 
+                      value={field.value || ""} 
+                    />
+                  )}
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-slate-700 block mb-2">Prescription Type</Label>
+                <Select value={serviceType} onValueChange={setServiceType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="eye_examination">Eye Examination</SelectItem>
+                    <SelectItem value="contact_lens">Contact Lens</SelectItem>
+                    <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
+                    <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
+                    <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clinical Fields */}
+        <div className="space-y-4">
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Diagnosis</Label>
             <FormField
               control={form.control}
               name="diagnosis"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frame Selection & Measurements</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Frame style, size, bridge width, temple length..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="treatment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lens Options & Coatings</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Anti-glare, UV protection, blue light filter, progressive, bifocal..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <Textarea 
+                  placeholder="Patient diagnosis and findings..." 
+                  className="min-h-[120px]" 
+                  {...field} 
+                  value={field.value || ""} 
+                />
               )}
             />
           </div>
-        );
 
-      case "fitting_followup":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">📋 Fitting Follow-up</h4>
-            
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Status Assessment</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Comfort level, vision clarity, fit assessment..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Treatment Plan</Label>
             <FormField
               control={form.control}
               name="treatment"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Adjustments Made</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Frame adjustments, nose pad alignment, temple adjustment..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="advice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Next Steps & Recommendations</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Further adjustments needed, wear schedule, next appointment..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <Textarea 
+                  placeholder="Recommended treatment and follow-up..." 
+                  className="min-h-[120px]" 
+                  {...field} 
+                  value={field.value || ""} 
+                />
               )}
             />
           </div>
-        );
 
-      case "visit_consultation":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">💬 Visit Consultation</h4>
-            
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chief Complaint & Symptoms</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Patient's main concerns, symptoms, duration..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="treatment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Clinical Assessment</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Examination findings, observations, measurements..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="advice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Treatment Plan & Recommendations</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Recommended treatment, lifestyle changes, precautions..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Additional Notes</Label>
             <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Any additional observations, patient history, special instructions..." className="min-h-[100px]" {...field} value={field.value || ""} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <Textarea 
+                  placeholder="Any additional instructions or notes..." 
+                  className="min-h-[120px]" 
+                  {...field} 
+                  value={field.value || ""} 
+                />
               )}
             />
           </div>
-        );
+        </div>
 
-      default:
-        return (
-          <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
-            <p className="text-slate-600">Please select a service type to see relevant prescription fields</p>
+        {/* Follow-up Date & Status */}
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Follow-up Date</Label>
+            <FormField
+              control={form.control}
+              name="nextFollowUp"
+              render={({ field }) => (
+                <Input 
+                  type="date" 
+                  {...field} 
+                  value={field.value ? format(new Date(field.value), 'yyyy-MM-dd') : ''} 
+                  onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)} 
+                />
+              )}
+            />
           </div>
-        );
-    }
+          <div>
+            <Label className="text-sm font-medium text-slate-700 block mb-2">Prescription Status</Label>
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="filled">Filled</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Prescription Management</h1>
-        <p className="text-slate-600 mt-2">Create and manage patient prescriptions with service-specific formats</p>
-      </header>
-
-      <main className="space-y-8">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search prescriptions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
-              />
-            </div>
-            
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="filled">Filled</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                <SelectItem value="contact_lens">Contact Lens</SelectItem>
-                <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
-                <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button 
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => setOpen(true)}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            New Prescription
-          </Button>
+    <div className="container mx-auto p-6 space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Prescriptions</h1>
+          <p className="text-gray-600 mt-2">Manage and create patient prescriptions</p>
         </div>
+        <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Plus className="mr-2 h-4 w-4" />
+          New Prescription
+        </Button>
+      </div>
 
-        <Card className="border-slate-200">
-          <CardHeader>
-            <CardTitle>Prescription Records</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="animate-pulse flex space-x-4">
-                    <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                    <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                    <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                    <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                    <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredPrescriptions.length === 0 ? (
-              <div className="text-center py-12">
-                <FileText className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">No prescriptions found</h3>
-                <p className="text-slate-600 mb-6">
-                  {searchTerm ? "Try adjusting your search criteria." : "Create your first prescription to get started."}
-                </p>
-                {!searchTerm && (
-                  <Button 
-                    onClick={() => setOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Prescription
-                  </Button>
-                )}
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Prescription #</TableHead>
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Service Type</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPrescriptions.map((prescription) => (
-                      <TableRow key={prescription.id}>
-                        <TableCell className="font-medium">{prescription.prescriptionNumber}</TableCell>
-                        <TableCell>{getPatientName(prescription.patientId)}</TableCell>
-                        <TableCell>{getDoctorName(prescription.doctorId)}</TableCell>
-                        <TableCell>
-                          <span className="capitalize">{prescription.prescriptionType?.replace('_', ' ')}</span>
-                        </TableCell>
-                        <TableCell>{format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            prescription.status === 'active' ? 'bg-green-100 text-green-800' :
-                            prescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {prescription.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem onClick={() => handleViewDetails(prescription)}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditPrescription(prescription)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleDownloadPDF(prescription)}>
-                                <FileDown className="mr-2 h-4 w-4" />
-                                Download PDF
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSendEmail(prescription)}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Send Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleGenerateQR(prescription)}>
-                                <QrCode className="mr-2 h-4 w-4" />
-                                QR Code
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleSharePrescription(prescription)}>
-                                <Share className="mr-2 h-4 w-4" />
-                                Share
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={() => handleDeletePrescription(prescription)}
-                                className="text-red-600"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+      {/* Filters */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search prescriptions..."
+              className="pl-10 w-64"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="filled">Filled</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedType} onValueChange={setSelectedType}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="eye_examination">Eye Examination</SelectItem>
+              <SelectItem value="contact_lens">Contact Lens</SelectItem>
+              <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
+              <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
+              <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <Tabs defaultValue="prescriptions" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="prescriptions">All Prescriptions</TabsTrigger>
+          <TabsTrigger value="recent">Recent Activity</TabsTrigger>
+          <TabsTrigger value="pending">Pending Review</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="prescriptions">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <FileText className="mr-2 h-5 w-5" />
+                Prescription Records
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="animate-pulse flex space-x-4">
+                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : filteredPrescriptions.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No prescriptions found</h3>
+                  <p className="text-gray-600 mb-6">
+                    {searchTerm ? "Try adjusting your search criteria." : "Create your first prescription to get started."}
+                  </p>
+                  {!searchTerm && (
+                    <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Prescription
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Prescription #</TableHead>
+                        <TableHead>Patient</TableHead>
+                        <TableHead>Doctor</TableHead>
+                        <TableHead>Service Type</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPrescriptions.map((prescription) => (
+                        <TableRow key={prescription.id}>
+                          <TableCell className="font-medium">{prescription.prescriptionNumber}</TableCell>
+                          <TableCell>{getPatientName(prescription.patientId)}</TableCell>
+                          <TableCell>{getDoctorName(prescription.doctorId)}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {prescription.prescriptionType?.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}</TableCell>
+                          <TableCell>
+                            <Badge className={
+                              prescription.status === 'active' ? 'bg-green-100 text-green-800' :
+                              prescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {prescription.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => handleViewDetails(prescription)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditPrescription(prescription)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleDownloadPDF(prescription)}>
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendEmail(prescription)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Send Email
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleGenerateQR(prescription)}>
+                                  <QrCode className="mr-2 h-4 w-4" />
+                                  QR Code
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSharePrescription(prescription)}>
+                                  <Share className="mr-2 h-4 w-4" />
+                                  Share
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => handleDeletePrescription(prescription)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="recent">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">Recent prescription activities will be displayed here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pending">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Review</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">Prescriptions pending review will be displayed here.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Create/Edit Prescription Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create Service-Specific Prescription</DialogTitle>
+            <DialogTitle>Create New Prescription</DialogTitle>
           </DialogHeader>
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="service">Service Details</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="basic" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="prescriptionNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prescription Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="prescriptionType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Service Type</FormLabel>
-                          <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            setServiceType(value);
-                          }} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select service type..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="eye_examination">👁️ Eye Examination</SelectItem>
-                              <SelectItem value="contact_lens">🔍 Contact Lens</SelectItem>
-                              <SelectItem value="fitting_glasses">👓 Fitting Glasses</SelectItem>
-                              <SelectItem value="fitting_followup">📋 Fitting Follow-up</SelectItem>
-                              <SelectItem value="visit_consultation">💬 Visit Consultation</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="patientId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Patient</FormLabel>
-                          <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            const patient = patients.find(p => p.id === value);
-                            setSelectedPatient(patient || null);
-                          }} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select patient..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {patients.map((patient) => (
-                                <SelectItem key={patient.id} value={patient.id}>
-                                  {patient.firstName} {patient.lastName} ({patient.patientCode})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="doctorId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Doctor (Optional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ""}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select doctor..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {doctors.map((doctor) => (
-                                <SelectItem key={doctor.id} value={doctor.id}>
-                                  Dr. {doctor.firstName} {doctor.lastName}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  {/* Patient Information Display */}
-                  {selectedPatient && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-blue-900 mb-3">Patient Information</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium text-blue-700">Name:</span> {selectedPatient.firstName} {selectedPatient.lastName}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Patient ID:</span> {selectedPatient.patientCode}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Age:</span> {selectedPatient.dateOfBirth ? new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Gender:</span> {selectedPatient.gender || 'Not specified'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Phone:</span> {selectedPatient.phone || 'Not provided'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Email:</span> {selectedPatient.email || 'Not provided'}
-                        </div>
-                      </div>
-                    </div>
+              {/* Patient Selection */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="patientId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Select Patient</FormLabel>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        const patient = patients.find(p => p.id === value);
+                        setSelectedPatient(patient || null);
+                      }} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose patient..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {patients.map((patient) => (
+                            <SelectItem key={patient.id} value={patient.id}>
+                              {patient.firstName} {patient.lastName} ({patient.patientCode})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </TabsContent>
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="prescriptionType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Type</FormLabel>
+                      <Select onValueChange={(value) => {
+                        field.onChange(value);
+                        setServiceType(value);
+                      }} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select service..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="eye_examination">Eye Examination</SelectItem>
+                          <SelectItem value="contact_lens">Contact Lens</SelectItem>
+                          <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
+                          <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
+                          <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                <TabsContent value="service" className="space-y-4">
-                  {renderServiceSpecificFields()}
-                </TabsContent>
-              </Tabs>
+              {/* Service-Specific Fields */}
+              {serviceType && renderServiceSpecificFields()}
               
-              <div className="flex justify-end space-x-2 pt-4 border-t">
+              <div className="flex justify-end space-x-3 pt-6 border-t">
                 <Button
                   type="button"
                   variant="outline"
