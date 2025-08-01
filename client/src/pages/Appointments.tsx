@@ -879,152 +879,97 @@ export default function Appointments() {
               </Select>
             </div>
 
-          {/* Appointments List */}
-          <div className="grid gap-6">
-            {filteredAppointments.map((appointment) => (
-              <Card key={appointment.id} className="border hover:shadow-lg transition-all duration-200">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start space-x-4">
-                      <Avatar className="h-16 w-16">
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg font-semibold">
-                          {appointment.customer.firstName[0]}{appointment.customer.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-3">
-                          <h3 className="text-xl font-semibold text-gray-900">
-                            {appointment.customer.firstName} {appointment.customer.lastName}
-                          </h3>
-                          <Badge className={getStatusColor(appointment.status)}>
-                            {getStatusIcon(appointment.status)}
-                            <span className="ml-1 capitalize">{appointment.status}</span>
+          {/* Appointments Table - Same format as Patients */}
+          <Card>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b border-gray-200">
+                  <tr>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Appointment #</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient Name</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Service</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Date & Time</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAppointments.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-12">
+                        <div className="text-gray-500">
+                          <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                          <h3 className="text-lg font-medium mb-2">No appointments scheduled</h3>
+                          <p>Start by scheduling your first appointment</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredAppointments.map((appointment) => (
+                      <tr key={appointment.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-4 px-6">
+                          <div className="font-medium text-blue-600">APT-{appointment.id.slice(0, 8)}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="text-xs">
+                                {appointment.customer.firstName[0]}{appointment.customer.lastName[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium text-gray-900">
+                                {appointment.customer.firstName} {appointment.customer.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">{appointment.customer.phone}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm text-gray-900">{appointment.service}</div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm">
+                            <div className="text-gray-900">{format(appointment.appointmentDate, 'MMM dd, yyyy')}</div>
+                            <div className="text-gray-500">{format(appointment.appointmentDate, 'HH:mm')}</div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
+                            {appointment.status}
                           </Badge>
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center space-x-2">
-                            <Calendar className="h-4 w-4 text-blue-500" />
-                            <span className="font-medium">{format(appointment.appointmentDate, 'MMM dd, yyyy')}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Clock className="h-4 w-4 text-green-500" />
-                            <span className="font-medium">{format(appointment.appointmentDate, 'HH:mm')} ({appointment.duration} min)</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Phone className="h-4 w-4 text-purple-500" />
-                            <span className="font-medium">{appointment.customer.phone}</span>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                          <div className="flex items-center space-x-2">
-                            <User className="h-4 w-4 text-orange-500" />
-                            <span className="font-medium">{appointment.service}</span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <MapPin className="h-4 w-4 text-red-500" />
-                            <span className="font-medium">{appointment.store.name}</span>
-                          </div>
-                        </div>
-
-                        {appointment.notes && (
-                          <div className="flex items-start space-x-2 mt-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
-                            <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-yellow-800 font-medium">{appointment.notes}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-1">
-                      {/* Status-based quick actions */}
-                      {appointment.status === "scheduled" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCheckIn(appointment)}
-                          title="Check In Patient"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <UserCheck className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      {appointment.status === "checked-in" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleStartConsultation(appointment)}
-                          title="Start Consultation"
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                        >
-                          <Clock className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      {appointment.status === "in-progress" && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleComplete(appointment)}
-                          title="Complete Appointment"
-                          className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      {/* Action Dropdown Menu - Same as Patients */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            className="h-8 w-8 p-0 hover:bg-gray-100"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem onClick={() => handleViewDetails(appointment)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(appointment)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit Appointment
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleCancel(appointment)} className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Cancel
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {filteredAppointments.length === 0 && (
-            <Card className="border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No appointments found</h3>
-                <p className="text-gray-600 text-center mb-6">
-                  {searchTerm ? "No appointments match your search criteria." : "Get started by scheduling your first appointment."}
-                </p>
-                <Button onClick={() => setOpen(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Schedule Appointment
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+                        </td>
+                        <td className="py-4 px-6">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleViewDetails(appointment)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleEdit(appointment)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Appointment
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleCancel(appointment)} className="text-red-600">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Cancel
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </TabsContent>
 
         {/* Calendar View Tab */}
