@@ -106,9 +106,7 @@ export function registerMedicalRoutes(app: Express) {
 
   app.post("/api/prescriptions", isAuthenticated, async (req, res) => {
     try {
-      console.log("Received prescription data:", JSON.stringify(req.body, null, 2));
       const validatedData = insertPrescriptionSchema.parse(req.body);
-      console.log("Validated prescription data:", JSON.stringify(validatedData, null, 2));
       
       const [prescription] = await db.insert(prescriptions).values(validatedData).returning();
 
