@@ -333,8 +333,8 @@ export default function Prescriptions() {
                       appointmentId: "",
                       storeId: "",
                       prescriptionType: "glasses",
-                      visualAcuityRightEye: "",
-                      visualAcuityLeftEye: "",
+                      visualAcuityRightEye: null,
+                      visualAcuityLeftEye: null,
                       sphereRight: "0",
                       cylinderRight: "0",
                       axisRight: 0,
@@ -344,10 +344,10 @@ export default function Prescriptions() {
                       axisLeft: 0,
                       addLeft: "0",
                       pdDistance: "0",
-                      diagnosis: "",
-                      treatment: "",
-                      advice: "",
-                      notes: "",
+                      diagnosis: null,
+                      treatment: null,
+                      advice: null,
+                      notes: null,
                       status: "active",
                     });
                     setOpen(true);
@@ -462,7 +462,7 @@ APPOINTMENT DETAILS REPORT
 
 Patient Information:
 • Name: ${patient?.firstName} ${patient?.lastName}
-• Age: ${patient?.age ? patient.age + ' years' : 'Not specified'}
+• Age: ${patient?.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
 • Gender: ${patient?.gender || 'Not specified'}
 • Phone: ${patient?.phone || 'Not provided'}
 • Email: ${patient?.email || 'Not provided'}
@@ -504,16 +504,37 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                                   
                                   setViewPrescription({
                                     id: appointment.id,
+                                    prescriptionNumber: `APT-${appointment.id.slice(-8)}`,
                                     patientId: appointment.patientId,
                                     appointmentId: appointment.id,
-                                    doctorId: appointment.assignedDoctorId || appointment.doctorId || appointment.staffId || '',
+                                    doctorId: appointment.assignedDoctorId || appointment.doctorId || appointment.staffId,
+                                    storeId: null,
+                                    prescriptionDate: new Date(),
                                     prescriptionType: 'appointment_details',
-                                    medications: [],
-                                    instructions: detailedInstructions,
+                                    diagnosis: detailedInstructions,
+                                    treatment: appointment.treatmentPlan || null,
+                                    advice: appointment.followUpInstructions || null,
+                                    notes: appointment.notes || null,
                                     status: 'active',
-                                    createdAt: new Date().toISOString(),
-                                    updatedAt: new Date().toISOString()
-                                  } as Prescription);
+                                    visualAcuityRightEye: null,
+                                    visualAcuityLeftEye: null,
+                                    sphereRight: null,
+                                    cylinderRight: null,
+                                    axisRight: null,
+                                    addRight: null,
+                                    sphereLeft: null,
+                                    cylinderLeft: null,
+                                    axisLeft: null,
+                                    addLeft: null,
+                                    pdDistance: null,
+                                    pdNear: null,
+                                    pdFar: null,
+                                    nextFollowUp: null,
+                                    customFields: null,
+                                    qrCode: null,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                  });
                                   
                                   toast({
                                     title: "Appointment Details",
