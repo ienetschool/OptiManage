@@ -950,18 +950,40 @@ export default function Appointments() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setSelectedAppointment(appointment)}>
                                   <Eye className="mr-2 h-4 w-4" />
                                   View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditingAppointment(appointment)}>
                                   <Edit className="mr-2 h-4 w-4" />
-                                  Edit Appointment
+                                  Edit Patient
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => generateAppointmentReport(appointment)}>
+                                  <Printer className="mr-2 h-4 w-4" />
+                                  Print Report
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => generateAppointmentInvoice(appointment)}>
+                                  <Receipt className="mr-2 h-4 w-4" />
+                                  Generate Invoice
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => shareByEmail(appointment)}>
+                                  <Share2 className="mr-2 h-4 w-4" />
+                                  Share by Email
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => shareByQREmail(appointment)}>
+                                  <QrCode className="mr-2 h-4 w-4" />
+                                  QR Code Email
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => shareByWhatsApp(appointment)}>
+                                  <MessageSquare className="mr-2 h-4 w-4" />
+                                  Share WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600">
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Cancel
+                                  Delete Patient
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
