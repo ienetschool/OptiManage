@@ -794,100 +794,213 @@ OptiStore Pro Team`;
                 </TabsContent>
 
                 <TabsContent value="vision" className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Vision Prescription</h3>
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold">Vision Prescription Details</h3>
                     
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-medium mb-3">Right Eye</h4>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-sm">Sphere</Label>
-                            <FormField
-                              control={createForm.control}
-                              name="sphereRight"
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  step="0.25" 
-                                  placeholder="-2.25" 
-                                  {...field} 
-                                  value={field.value || ""} 
-                                />
-                              )}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-sm">Cylinder</Label>
-                            <FormField
-                              control={createForm.control}
-                              name="cylinderRight"
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  step="0.25" 
-                                  placeholder="-0.50" 
-                                  {...field} 
-                                  value={field.value || ""} 
-                                />
-                              )}
-                            />
-                          </div>
-                        </div>
-                      </div>
+                    {/* Visual Acuity */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={createForm.control}
+                        name="visualAcuityRightEye"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Visual Acuity - Right Eye</FormLabel>
+                            <FormControl>
+                              <Input placeholder="20/20" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={createForm.control}
+                        name="visualAcuityLeftEye"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Visual Acuity - Left Eye</FormLabel>
+                            <FormControl>
+                              <Input placeholder="20/25" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                      <div>
-                        <h4 className="font-medium mb-3">Left Eye</h4>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <Label className="text-sm">Sphere</Label>
-                            <FormField
-                              control={createForm.control}
-                              name="sphereLeft"
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  step="0.25" 
-                                  placeholder="-2.00" 
-                                  {...field} 
-                                  value={field.value || ""} 
-                                />
-                              )}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-sm">Cylinder</Label>
-                            <FormField
-                              control={createForm.control}
-                              name="cylinderLeft"
-                              render={({ field }) => (
-                                <Input 
-                                  type="number" 
-                                  step="0.25" 
-                                  placeholder="-0.75" 
-                                  {...field} 
-                                  value={field.value || ""} 
-                                />
-                              )}
-                            />
-                          </div>
-                        </div>
+                    {/* Right Eye Prescription */}
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h4 className="font-medium mb-4">Right Eye (OD)</h4>
+                      <div className="grid grid-cols-4 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="sphereRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (SPH)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.25" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="cylinderRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (CYL)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-0.50" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="axisRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="1" max="180" placeholder="90" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="addRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Add</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="+1.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                       </div>
+                    </div>
+
+                    {/* Left Eye Prescription */}
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <h4 className="font-medium mb-4">Left Eye (OS)</h4>
+                      <div className="grid grid-cols-4 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="sphereLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (SPH)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="cylinderLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (CYL)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-0.75" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="axisLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="1" max="180" placeholder="85" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="addLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Add</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="+1.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Pupillary Distance */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={createForm.control}
+                        name="pdDistance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>PD Distance (mm)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="62.0" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={createForm.control}
+                        name="pdNear"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>PD Near (mm)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="58.0" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={createForm.control}
+                        name="pdFar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>PD Far (mm)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="64.0" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     </div>
                   </div>
                 </TabsContent>
 
                 <TabsContent value="clinical" className="space-y-6">
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <FormField
                       control={createForm.control}
                       name="diagnosis"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Diagnosis</FormLabel>
+                          <FormLabel>Clinical Diagnosis</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Patient diagnosis and findings..." 
+                              placeholder="Patient diagnosis, findings, and clinical observations..." 
                               className="h-32" 
                               {...field} 
                               value={field.value || ""} 
@@ -903,11 +1016,48 @@ OptiStore Pro Team`;
                       name="treatment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Treatment Plan</FormLabel>
+                          <FormLabel>Treatment Plan & Recommendations</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Recommended treatment and follow-up..." 
+                              placeholder="Recommended treatment, medications, and follow-up instructions..." 
                               className="h-32" 
+                              {...field} 
+                              value={field.value || ""} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={createForm.control}
+                      name="advice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Patient Advice & Instructions</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Care instructions, lifestyle recommendations, and patient guidance..." 
+                              className="h-24" 
+                              {...field} 
+                              value={field.value || ""} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={createForm.control}
+                      name="nextFollowUp"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Next Follow-up Date</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="date" 
                               {...field} 
                               value={field.value || ""} 
                             />
@@ -988,211 +1138,262 @@ OptiStore Pro Team`;
         </DialogContent>
       </Dialog>
 
-      {/* View Prescription Dialog */}
+      {/* A4 Print-Ready Prescription View Dialog */}
       {viewPrescription && (
         <Dialog open={!!viewPrescription} onOpenChange={() => setViewPrescription(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center justify-between">
-                <span>Prescription Details - {viewPrescription.prescriptionNumber}</span>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadPDF(viewPrescription)}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSendEmail(viewPrescription)}
-                  >
-                    <Send className="h-4 w-4 mr-2" />
-                    Email
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleSharePrescription(viewPrescription)}
-                  >
-                    <Share className="h-4 w-4 mr-2" />
-                    Share
-                  </Button>
-                </div>
-              </DialogTitle>
-            </DialogHeader>
+          <DialogContent className="max-w-[210mm] max-h-[90vh] overflow-y-auto p-0">
+            <div className="sticky top-0 bg-white z-10 p-4 border-b flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Prescription Details</h3>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Print
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadPDF(viewPrescription)}
+                >
+                  <FileDown className="h-4 w-4 mr-2" />
+                  PDF
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendEmail(viewPrescription)}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  Email
+                </Button>
+              </div>
+            </div>
             
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="patient">Patient Details</TabsTrigger>
-                <TabsTrigger value="vision">Vision Data</TabsTrigger>
-                <TabsTrigger value="clinical">Clinical Notes</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <Card className="p-4">
-                    <h4 className="font-semibold mb-3">Prescription Information</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Number:</span>
-                        <span className="font-mono">{viewPrescription.prescriptionNumber}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Date:</span>
-                        <span>{format(new Date(viewPrescription.createdAt || ''), 'MMMM dd, yyyy')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Service:</span>
-                        <Badge variant="outline" className="capitalize">
-                          {viewPrescription.prescriptionType?.replace('_', ' ')}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Status:</span>
-                        <Badge className={
-                          viewPrescription.status === 'active' ? 'bg-green-100 text-green-800' :
-                          viewPrescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
-                          'bg-red-100 text-red-800'
-                        }>
-                          {viewPrescription.status}
-                        </Badge>
-                      </div>
+            {/* A4 Formatted Content */}
+            <div className="w-[210mm] min-h-[297mm] bg-white p-8 print:p-6 print:shadow-none" style={{ fontSize: '12px', lineHeight: '1.4' }}>
+              {/* Header */}
+              <div className="border-b-2 border-blue-600 pb-4 mb-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h1 className="text-2xl font-bold text-blue-800">OptiStore Pro</h1>
+                    <p className="text-gray-600">Medical Prescription</p>
+                    <p className="text-sm text-gray-500">Professional Eye Care Services</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="w-20 h-20 border border-gray-300 flex items-center justify-center">
+                      <QRCode value={`prescription:${viewPrescription.prescriptionNumber}`} size={75} />
                     </div>
-                  </Card>
+                    <p className="text-xs text-gray-500 mt-1">Scan for verification</p>
+                  </div>
+                </div>
+              </div>
 
-                  <Card className="p-4">
-                    <h4 className="font-semibold mb-3">Medical Team</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Patient:</span>
-                        <span className="font-semibold">{getPatientName(viewPrescription.patientId)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Doctor:</span>
-                        <span className="font-semibold">{getDoctorName(viewPrescription.doctorId)}</span>
-                      </div>
+              {/* Prescription Info */}
+              <div className="grid grid-cols-2 gap-8 mb-6">
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Prescription Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Prescription No:</span>
+                      <span className="font-mono font-semibold">{viewPrescription.prescriptionNumber}</span>
                     </div>
-                  </Card>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Date Issued:</span>
+                      <span>{format(new Date(viewPrescription.createdAt || ''), 'dd/MM/yyyy')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Service Type:</span>
+                      <span className="capitalize">{viewPrescription.prescriptionType?.replace('_', ' ')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      <span className="capitalize font-semibold text-green-600">{viewPrescription.status}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Prescribing Doctor:</span>
+                      <span className="font-semibold">{getDoctorName(viewPrescription.doctorId)}</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex justify-center">
-                  <Card className="p-6">
-                    <h4 className="font-semibold text-center mb-4">QR Code</h4>
-                    <QRCode value={`prescription:${viewPrescription.prescriptionNumber}`} size={150} />
-                    <p className="text-xs text-gray-500 text-center mt-2">Scan for quick access</p>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="patient" className="space-y-6">
-                {(() => {
-                  const patient = patients.find(p => p.id === viewPrescription.patientId);
-                  return (
-                    <Card className="p-4">
-                      <h4 className="font-semibold mb-3">Patient Information</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-lg font-medium text-blue-600">
-                              {patient ? `${patient.firstName?.[0]}${patient.lastName?.[0]}` : 'UN'}
-                            </span>
-                          </div>
-                          <div>
-                            <p className="font-semibold">{patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}</p>
-                            <p className="text-sm text-gray-600">{patient?.patientCode || 'No code'}</p>
-                          </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Patient Information</h3>
+                  {(() => {
+                    const patient = patients.find(p => p.id === viewPrescription.patientId);
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Name:</span>
+                          <span className="font-semibold">{patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <Label className="text-gray-600">Email</Label>
-                            <p>{patient?.email || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <Label className="text-gray-600">Phone</Label>
-                            <p>{patient?.phone || 'Not provided'}</p>
-                          </div>
-                          <div>
-                            <Label className="text-gray-600">Gender</Label>
-                            <p>{patient?.gender || 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <Label className="text-gray-600">Blood Group</Label>
-                            <p>{patient?.bloodGroup || 'Not specified'}</p>
-                          </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Patient ID:</span>
+                          <span className="font-mono">{patient?.patientCode || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Phone:</span>
+                          <span>{patient?.phone || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Email:</span>
+                          <span className="text-sm">{patient?.email || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Gender:</span>
+                          <span className="capitalize">{patient?.gender || 'Not specified'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Blood Group:</span>
+                          <span>{patient?.bloodGroup || 'Not specified'}</span>
                         </div>
                       </div>
-                    </Card>
-                  );
-                })()}
-              </TabsContent>
+                    );
+                  })()}
+                </div>
+              </div>
 
-              <TabsContent value="vision" className="space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  <Card className="p-4">
-                    <h4 className="font-semibold mb-3">Right Eye</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Sphere:</span>
-                        <span className="font-mono">{viewPrescription.sphereRight || 'Not recorded'}</span>
+              {/* Vision Prescription */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Vision Prescription</h3>
+                
+                {/* Visual Acuity */}
+                {(viewPrescription.visualAcuityRightEye || viewPrescription.visualAcuityLeftEye) && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Visual Acuity</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <span className="text-gray-600">Right Eye (OD)</span>
+                        <p className="font-mono text-lg">{viewPrescription.visualAcuityRightEye || 'N/A'}</p>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cylinder:</span>
-                        <span className="font-mono">{viewPrescription.cylinderRight || 'Not recorded'}</span>
+                      <div className="text-center">
+                        <span className="text-gray-600">Left Eye (OS)</span>
+                        <p className="font-mono text-lg">{viewPrescription.visualAcuityLeftEye || 'N/A'}</p>
                       </div>
                     </div>
-                  </Card>
+                  </div>
+                )}
 
-                  <Card className="p-4">
-                    <h4 className="font-semibold mb-3">Left Eye</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Sphere:</span>
-                        <span className="font-mono">{viewPrescription.sphereLeft || 'Not recorded'}</span>
+                {/* Prescription Table */}
+                <div className="border border-gray-300 rounded">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="p-2 text-left border-r border-gray-300">Eye</th>
+                        <th className="p-2 text-center border-r border-gray-300">Sphere (SPH)</th>
+                        <th className="p-2 text-center border-r border-gray-300">Cylinder (CYL)</th>
+                        <th className="p-2 text-center border-r border-gray-300">Axis</th>
+                        <th className="p-2 text-center">Add</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-gray-300">
+                        <td className="p-2 font-medium border-r border-gray-300">Right Eye (OD)</td>
+                        <td className="p-2 text-center font-mono border-r border-gray-300">{viewPrescription.sphereRight || '-'}</td>
+                        <td className="p-2 text-center font-mono border-r border-gray-300">{viewPrescription.cylinderRight || '-'}</td>
+                        <td className="p-2 text-center font-mono border-r border-gray-300">{viewPrescription.axisRight || '-'}°</td>
+                        <td className="p-2 text-center font-mono">{viewPrescription.addRight || '-'}</td>
+                      </tr>
+                      <tr className="border-t border-gray-300">
+                        <td className="p-2 font-medium border-r border-gray-300">Left Eye (OS)</td>
+                        <td className="p-2 text-center font-mono border-r border-gray-300">{viewPrescription.sphereLeft || '-'}</td>
+                        <td className="p-2 text-center font-mono border-r border-gray-300">{viewPrescription.cylinderLeft || '-'}</td>
+                        <td className="p-2 text-center font-mono border-r border-gray-300">{viewPrescription.axisLeft || '-'}°</td>
+                        <td className="p-2 text-center font-mono">{viewPrescription.addLeft || '-'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pupillary Distance */}
+                {(viewPrescription.pdDistance || viewPrescription.pdNear || viewPrescription.pdFar) && (
+                  <div className="mt-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Pupillary Distance (PD)</h4>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <span className="text-gray-600 text-sm">Distance</span>
+                        <p className="font-mono">{viewPrescription.pdDistance || 'N/A'} mm</p>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Cylinder:</span>
-                        <span className="font-mono">{viewPrescription.cylinderLeft || 'Not recorded'}</span>
+                      <div>
+                        <span className="text-gray-600 text-sm">Near</span>
+                        <p className="font-mono">{viewPrescription.pdNear || 'N/A'} mm</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 text-sm">Far</span>
+                        <p className="font-mono">{viewPrescription.pdFar || 'N/A'} mm</p>
                       </div>
                     </div>
-                  </Card>
+                  </div>
+                )}
+              </div>
+
+              {/* Clinical Information */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Clinical Information</h3>
+                
+                {viewPrescription.diagnosis && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Diagnosis</h4>
+                    <div className="bg-gray-50 p-3 rounded border">
+                      <pre className="whitespace-pre-wrap text-sm">{viewPrescription.diagnosis}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {viewPrescription.treatment && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Treatment Plan</h4>
+                    <div className="bg-gray-50 p-3 rounded border">
+                      <pre className="whitespace-pre-wrap text-sm">{viewPrescription.treatment}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {viewPrescription.advice && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Patient Advice</h4>
+                    <div className="bg-gray-50 p-3 rounded border">
+                      <pre className="whitespace-pre-wrap text-sm">{viewPrescription.advice}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {viewPrescription.notes && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Additional Notes</h4>
+                    <div className="bg-gray-50 p-3 rounded border">
+                      <pre className="whitespace-pre-wrap text-sm">{viewPrescription.notes}</pre>
+                    </div>
+                  </div>
+                )}
+
+                {viewPrescription.nextFollowUp && (
+                  <div className="mb-4">
+                    <h4 className="font-medium text-gray-700 mb-2">Next Follow-up</h4>
+                    <p className="text-sm">{format(new Date(viewPrescription.nextFollowUp), 'dd/MM/yyyy')}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-gray-300 pt-4 mt-8">
+                <div className="grid grid-cols-2 gap-8 text-xs text-gray-600">
+                  <div>
+                    <p className="font-semibold">OptiStore Pro</p>
+                    <p>Professional Eye Care Services</p>
+                    <p>Phone: +1 (555) 123-4567</p>
+                    <p>Email: info@optistorepro.com</p>
+                  </div>
+                  <div className="text-right">
+                    <p>This prescription is valid for 12 months from the date of issue.</p>
+                    <p>For any queries, please contact our office.</p>
+                    <p className="mt-2 font-medium">Doctor's Signature: ________________________</p>
+                  </div>
                 </div>
-              </TabsContent>
-
-              <TabsContent value="clinical" className="space-y-6">
-                <div className="space-y-4">
-                  {viewPrescription.diagnosis && (
-                    <Card className="p-4">
-                      <h4 className="font-semibold mb-3">Diagnosis</h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <pre className="whitespace-pre-wrap text-sm">{viewPrescription.diagnosis}</pre>
-                      </div>
-                    </Card>
-                  )}
-
-                  {viewPrescription.treatment && (
-                    <Card className="p-4">
-                      <h4 className="font-semibold mb-3">Treatment Plan</h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <pre className="whitespace-pre-wrap text-sm">{viewPrescription.treatment}</pre>
-                      </div>
-                    </Card>
-                  )}
-
-                  {viewPrescription.notes && (
-                    <Card className="p-4">
-                      <h4 className="font-semibold mb-3">Additional Notes</h4>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <pre className="whitespace-pre-wrap text-sm">{viewPrescription.notes}</pre>
-                      </div>
-                    </Card>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       )}
