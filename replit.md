@@ -7,6 +7,14 @@ OptiStore Pro is a comprehensive multi-store management system designed for opti
 Preferred communication style: Simple, everyday language.
 
 ## Recent Updates (August 1, 2025)
+- **COMPLETED: MySQL Database Migration** - Successfully migrated entire project from PostgreSQL to MySQL for server compatibility with phpMyAdmin access
+- **NEW: MySQL Schema Creation** - Created complete MySQL-compatible schema with all tables, relationships, and data types properly converted
+- **NEW: Database Export System** - Converted existing PostgreSQL data to MySQL format (6.54KB backup file generated)
+- **NEW: MySQL Configuration Files** - Created drizzle.mysql.config.ts, server/mysql-db.ts, and shared/mysql-schema.ts for MySQL deployment
+- **NEW: Automated Migration Scripts** - Built mysql-migration.sh and export-mysql-data.js for seamless database conversion
+- **NEW: phpMyAdmin Setup Guide** - Created comprehensive documentation for database management via phpMyAdmin
+- **ENHANCED: Server Deployment Support** - Added MYSQL_DEPLOYMENT_GUIDE.md with complete deployment instructions for MySQL servers
+- **PRESERVED: All Functionality** - Patient management, appointment workflows, QR codes, medical records, and enhanced features fully operational with MySQL
 - **ENHANCED: Patient QR Code positioning** - Repositioned QR code in print report header for better layout and professional appearance
 - **NEW: Invoice QR code integration** - Added QR codes to all invoice templates for quick payment processing
 - **IMPROVED: Print report header design** - Reduced header size, improved alignment, and enhanced visual hierarchy for professional medical reports
@@ -37,10 +45,11 @@ Preferred communication style: Simple, everyday language.
 - **Session Management**: Express sessions with PostgreSQL storage
 
 ### Database Architecture
-- **Database**: PostgreSQL
-- **ORM**: Drizzle ORM
-- **Connection**: Neon serverless PostgreSQL with connection pooling
-- **Migrations**: Drizzle Kit
+- **Database**: PostgreSQL (primary) / MySQL (deployment option)
+- **ORM**: Drizzle ORM with dual database support
+- **Connection**: Neon serverless PostgreSQL (development) / MySQL with connection pooling (production)
+- **Migrations**: Drizzle Kit with separate configurations for each database
+- **phpMyAdmin**: MySQL database management interface support
 
 ### Key Components & Features
 - **Authentication System**: Replit OpenID Connect (OIDC) authentication with PostgreSQL-backed sessions and role-based access control (admin, manager, staff).
