@@ -24,7 +24,8 @@ import {
   Pill,
   Activity,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Clock
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -59,8 +60,8 @@ export default function Prescriptions() {
     queryKey: ["/api/patients"],
   });
 
-  const { data: doctors = [] } = useQuery<Doctor[]>({
-    queryKey: ["/api/doctors"],
+  const { data: doctors = [] } = useQuery<any[]>({
+    queryKey: ["/api/staff"],
   });
 
   // Get both medical appointments and regular appointments
@@ -68,14 +69,14 @@ export default function Prescriptions() {
     queryKey: ["/api/medical-appointments"],
   });
 
-  const { data: regularAppointments = [] } = useQuery({
+  const { data: regularAppointments = [] } = useQuery<any[]>({
     queryKey: ["/api/appointments"],
   });
 
   // Combine appointments that have doctors assigned
   const appointments = [
     ...medicalAppointments,
-    ...regularAppointments.filter(apt => apt.doctorId || apt.staffId)
+    ...regularAppointments.filter((apt: any) => apt.doctorId || apt.staffId)
   ];
 
   const form = useForm<InsertPrescription>({
@@ -89,15 +90,15 @@ export default function Prescriptions() {
       prescriptionType: "glasses",
       visualAcuityRightEye: "",
       visualAcuityLeftEye: "",
-      sphereRight: 0,
-      cylinderRight: 0,
+      sphereRight: "0",
+      cylinderRight: "0",
       axisRight: 0,
-      addRight: 0,
-      sphereLeft: 0,
-      cylinderLeft: 0,
+      addRight: "0",
+      sphereLeft: "0",
+      cylinderLeft: "0",
       axisLeft: 0,
-      addLeft: 0,
-      pdDistance: 0,
+      addLeft: "0",
+      pdDistance: "0",
       diagnosis: "",
       treatment: "",
       advice: "",
@@ -254,7 +255,7 @@ export default function Prescriptions() {
                       <p className="text-2xl font-bold text-slate-900">
                         {prescriptions.filter(p => {
                           const today = new Date().toISOString().split('T')[0];
-                          return p.createdAt?.split('T')[0] === today;
+                          return p.createdAt && new Date(p.createdAt).toISOString().split('T')[0] === today;
                         }).length}
                       </p>
                       <p className="text-xs text-emerald-600">Today</p>
@@ -478,6 +479,7 @@ export default function Prescriptions() {
                     <p className="text-sm font-medium text-slate-600">This Month</p>
                     <p className="text-2xl font-bold text-slate-900">
                       {prescriptions.filter(p => {
+                        if (!p.createdAt) return false;
                         const date = new Date(p.createdAt);
                         const now = new Date();
                         return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
@@ -632,9 +634,9 @@ export default function Prescriptions() {
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {doctors.map((doctor) => (
+                                    {doctors.filter(d => d.position === 'Doctor' || d.role === 'doctor').map((doctor) => (
                                       <SelectItem key={doctor.id} value={doctor.id}>
-                                        Dr. {doctor.firstName} {doctor.lastName} ({doctor.specialization})
+                                        Dr. {doctor.firstName} {doctor.lastName} ({doctor.department})
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
