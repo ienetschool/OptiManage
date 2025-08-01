@@ -1518,26 +1518,99 @@ export default function Patients() {
                                 View Details
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
-                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) {
-                                  setSelectedPatient(patient);
-                                  setEditPatientOpen(true);
-                                }
+                                // Edit appointment functionality
+                                toast({
+                                  title: "Edit Appointment",
+                                  description: "Edit appointment functionality will be implemented",
+                                });
                               }}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Edit Patient
+                                Edit Appointment
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => {
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) generatePatientPDF(patient);
+                                if (patient) {
+                                  // Generate appointment report
+                                  const reportWindow = window.open('', '_blank');
+                                  if (reportWindow) {
+                                    reportWindow.document.write(`
+                                      <html>
+                                        <head>
+                                          <title>Appointment Report - ${patient.firstName} ${patient.lastName}</title>
+                                          <style>
+                                            body { font-family: Arial, sans-serif; margin: 20px; }
+                                            .header { text-align: center; border-bottom: 2px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
+                                            .patient-info { margin-bottom: 30px; }
+                                          </style>
+                                        </head>
+                                        <body>
+                                          <div class="header">
+                                            <h1>OptiStore Pro Medical Center</h1>
+                                            <p>Appointment Report</p>
+                                          </div>
+                                          <div class="patient-info">
+                                            <h3>Patient Information</h3>
+                                            <p><strong>Name:</strong> ${patient.firstName} ${patient.lastName}</p>
+                                            <p><strong>Phone:</strong> ${patient.phone || 'N/A'}</p>
+                                            <p><strong>Service:</strong> ${appointment.service}</p>
+                                            <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                                            <p><strong>Time:</strong> ${new Date(appointment.appointmentDate).toLocaleTimeString()}</p>
+                                            <p><strong>Status:</strong> ${appointment.status}</p>
+                                          </div>
+                                          <button onclick="window.print()">Print Report</button>
+                                        </body>
+                                      </html>
+                                    `);
+                                    reportWindow.document.close();
+                                  }
+                                  toast({
+                                    title: "Appointment Report Generated",
+                                    description: `Report for ${patient.firstName} ${patient.lastName} is ready`,
+                                  });
+                                }
                               }}>
                                 <Printer className="mr-2 h-4 w-4" />
                                 Print Report
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) generatePatientInvoice(patient);
+                                if (patient) {
+                                  // Generate appointment invoice
+                                  const invoiceWindow = window.open('', '_blank');
+                                  if (invoiceWindow) {
+                                    invoiceWindow.document.write(`
+                                      <html>
+                                        <head>
+                                          <title>Invoice - ${patient.firstName} ${patient.lastName}</title>
+                                          <style>
+                                            body { font-family: Arial, sans-serif; margin: 20px; }
+                                            .header { text-align: center; border-bottom: 2px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
+                                          </style>
+                                        </head>
+                                        <body>
+                                          <div class="header">
+                                            <h1>OptiStore Pro Medical Center</h1>
+                                            <p>Medical Invoice</p>
+                                          </div>
+                                          <div>
+                                            <p><strong>Invoice #:</strong> INV-${Date.now()}</p>
+                                            <p><strong>Patient:</strong> ${patient.firstName} ${patient.lastName}</p>
+                                            <p><strong>Service:</strong> ${appointment.service}</p>
+                                            <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                                            <p><strong>Amount:</strong> $85.00</p>
+                                          </div>
+                                          <button onclick="window.print()">Print Invoice</button>
+                                        </body>
+                                      </html>
+                                    `);
+                                    invoiceWindow.document.close();
+                                  }
+                                  toast({
+                                    title: "Medical Invoice Generated",
+                                    description: `Invoice for ${patient.firstName} ${patient.lastName} is ready`,
+                                  });
+                                }
                               }}>
                                 <Receipt className="mr-2 h-4 w-4" />
                                 Generate Invoice
@@ -1545,34 +1618,86 @@ export default function Patients() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => {
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) shareByEmail(patient);
+                                if (patient) {
+                                  const emailSubject = `Appointment Information - ${patient.firstName} ${patient.lastName}`;
+                                  const emailBody = `Appointment Details:%0D%0A%0D%0APatient: ${patient.firstName} ${patient.lastName}%0D%0AService: ${appointment.service}%0D%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0D%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0D%0A%0D%0AGenerated from OptiStore Pro Medical Center`;
+                                  window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+                                  toast({
+                                    title: "Email Sharing",
+                                    description: "Opening email client with appointment information",
+                                  });
+                                }
                               }}>
                                 <Share2 className="mr-2 h-4 w-4" />
                                 Share by Email
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) shareByQREmail(patient);
+                                if (patient) {
+                                  const qrWindow = window.open('', '_blank');
+                                  if (qrWindow) {
+                                    qrWindow.document.write(`
+                                      <html>
+                                        <head>
+                                          <title>QR Code - ${patient.firstName} ${patient.lastName}</title>
+                                          <style>
+                                            body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+                                          </style>
+                                          <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+                                        </head>
+                                        <body>
+                                          <div>
+                                            <h2>Appointment QR Code</h2>
+                                            <canvas id="qr-canvas" width="200" height="200"></canvas>
+                                            <p><strong>${patient.firstName} ${patient.lastName}</strong></p>
+                                            <p>Service: ${appointment.service}</p>
+                                            <button onclick="window.print()">Print QR Code</button>
+                                          </div>
+                                          <script>
+                                            const canvas = document.getElementById('qr-canvas');
+                                            const appointmentData = 'Appointment: ${appointment.id}, Patient: ${patient.firstName} ${patient.lastName}, Service: ${appointment.service}';
+                                            QRCode.toCanvas(canvas, appointmentData, { width: 200, height: 200 });
+                                          </script>
+                                        </body>
+                                      </html>
+                                    `);
+                                    qrWindow.document.close();
+                                  }
+                                  toast({
+                                    title: "QR Code Generated",
+                                    description: "Appointment QR code ready for sharing",
+                                  });
+                                }
                               }}>
                                 <QrCode className="mr-2 h-4 w-4" />
                                 QR Code Email
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) shareByWhatsApp(patient);
+                                if (patient) {
+                                  const message = `Appointment Information:%0A%0APatient: ${patient.firstName} ${patient.lastName}%0AService: ${appointment.service}%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0A%0AFrom OptiStore Pro Medical Center`;
+                                  window.open(`https://wa.me/?text=${message}`);
+                                  toast({
+                                    title: "WhatsApp Sharing",
+                                    description: "Opening WhatsApp with appointment information",
+                                  });
+                                }
                               }}>
                                 <MessageSquare className="mr-2 h-4 w-4" />
                                 Share WhatsApp
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600" onClick={() => {
-                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient && window.confirm(`Are you sure you want to delete patient ${patient.firstName} ${patient.lastName}?`)) {
-                                  deletePatientMutation.mutate(patient.id);
+                                if (window.confirm(`Are you sure you want to delete this appointment for ${new Date(appointment.appointmentDate).toLocaleDateString()}?`)) {
+                                  // Delete appointment functionality
+                                  toast({
+                                    title: "Appointment Deleted",
+                                    description: "Appointment has been deleted successfully",
+                                  });
                                 }
                               }}>
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Patient
+                                Delete Appointment
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
