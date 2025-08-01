@@ -1507,18 +1507,72 @@ export default function Patients() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) {
+                                  setSelectedPatient(patient);
+                                  setViewPatientOpen(true);
+                                }
+                              }}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) {
+                                  setSelectedPatient(patient);
+                                  setEditPatientOpen(true);
+                                }
+                              }}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Edit Appointment
+                                Edit Patient
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) generatePatientPDF(patient);
+                              }}>
+                                <Printer className="mr-2 h-4 w-4" />
+                                Print Report
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) generatePatientInvoice(patient);
+                              }}>
+                                <Receipt className="mr-2 h-4 w-4" />
+                                Generate Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) shareByEmail(patient);
+                              }}>
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share by Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) shareByQREmail(patient);
+                              }}>
+                                <QrCode className="mr-2 h-4 w-4" />
+                                QR Code Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient) shareByWhatsApp(patient);
+                              }}>
+                                <MessageSquare className="mr-2 h-4 w-4" />
+                                Share WhatsApp
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-red-600" onClick={() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
+                                if (patient && window.confirm(`Are you sure you want to delete patient ${patient.firstName} ${patient.lastName}?`)) {
+                                  deletePatientMutation.mutate(patient.id);
+                                }
+                              }}>
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Cancel
+                                Delete Patient
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
