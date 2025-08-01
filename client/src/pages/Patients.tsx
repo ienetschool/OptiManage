@@ -53,6 +53,8 @@ export default function Patients() {
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
   const [viewAppointmentOpen, setViewAppointmentOpen] = useState(false);
   const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
+  const [forwardToDoctorOpen, setForwardToDoctorOpen] = useState(false);
+  const [createPrescriptionOpen, setCreatePrescriptionOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const { toast } = useToast();
@@ -1693,6 +1695,30 @@ export default function Patients() {
                                 Share WhatsApp
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
+                              
+                              <DropdownMenuItem onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Forward to Doctor clicked for appointment:', appointment.id);
+                                setSelectedAppointment(appointment);
+                                setForwardToDoctorOpen(true);
+                              }}>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Forward to Doctor
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuItem onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Create Prescription clicked for appointment:', appointment.id);
+                                setSelectedAppointment(appointment);
+                                setCreatePrescriptionOpen(true);
+                              }}>
+                                <FileText className="mr-2 h-4 w-4" />
+                                Create Prescription
+                              </DropdownMenuItem>
+                              
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600" onClick={() => {
                                 if (window.confirm(`Are you sure you want to delete this appointment for ${new Date(appointment.appointmentDate).toLocaleDateString()}?`)) {
                                   // Delete appointment functionality
@@ -2272,6 +2298,245 @@ export default function Patients() {
                   setEditAppointmentOpen(false);
                 }}>
                   Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Forward to Doctor Modal */}
+      <Dialog open={forwardToDoctorOpen} onOpenChange={setForwardToDoctorOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Forward Appointment to Doctor</DialogTitle>
+            <DialogDescription>
+              Assign a doctor to appointment {selectedAppointment?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAppointment && (
+            <div className="space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-semibold mb-2">Appointment Details</h4>
+                <p><strong>Service:</strong> {selectedAppointment.service}</p>
+                <p><strong>Date:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString()}</p>
+                <p><strong>Patient:</strong> {(() => {
+                  const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
+                  return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
+                })()}</p>
+              </div>
+
+              <div>
+                <Label>Select Doctor</Label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a doctor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dr-smith">Dr. John Smith - Ophthalmologist</SelectItem>
+                    <SelectItem value="dr-jones">Dr. Sarah Jones - Optometrist</SelectItem>
+                    <SelectItem value="dr-brown">Dr. Michael Brown - Eye Specialist</SelectItem>
+                    <SelectItem value="dr-davis">Dr. Emily Davis - Retina Specialist</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Priority Level</Label>
+                <Select defaultValue="normal">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low Priority</SelectItem>
+                    <SelectItem value="normal">Normal Priority</SelectItem>
+                    <SelectItem value="high">High Priority</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Notes for Doctor</Label>
+                <Textarea 
+                  placeholder="Add any specific instructions or patient notes for the doctor..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setForwardToDoctorOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Appointment Forwarded",
+                    description: "Appointment has been assigned to the selected doctor",
+                  });
+                  setForwardToDoctorOpen(false);
+                }}>
+                  Assign Doctor
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Prescription Modal */}
+      <Dialog open={createPrescriptionOpen} onOpenChange={setCreatePrescriptionOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Prescription</DialogTitle>
+            <DialogDescription>
+              Create a new prescription for appointment {selectedAppointment?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAppointment && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
+                <h4 className="font-semibold mb-2">Patient & Appointment Info</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <strong>Patient:</strong> {(() => {
+                      const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
+                      return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
+                    })()}
+                  </div>
+                  <div><strong>Service:</strong> {selectedAppointment.service}</div>
+                  <div><strong>Date:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString()}</div>
+                  <div><strong>Appointment ID:</strong> {selectedAppointment.id}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Prescription Code</Label>
+                  <Input defaultValue={`RX-${Date.now()}`} />
+                </div>
+                <div>
+                  <Label>Doctor</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select prescribing doctor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dr-smith">Dr. John Smith</SelectItem>
+                      <SelectItem value="dr-jones">Dr. Sarah Jones</SelectItem>
+                      <SelectItem value="dr-brown">Dr. Michael Brown</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-semibold">Vision Prescription</h4>
+                <div className="grid grid-cols-4 gap-4">
+                  <div>
+                    <Label>Right Eye Sphere</Label>
+                    <Input placeholder="-2.25" />
+                  </div>
+                  <div>
+                    <Label>Right Eye Cylinder</Label>
+                    <Input placeholder="-0.50" />
+                  </div>
+                  <div>
+                    <Label>Right Eye Axis</Label>
+                    <Input placeholder="90°" />
+                  </div>
+                  <div>
+                    <Label>Right Eye Add</Label>
+                    <Input placeholder="+1.00" />
+                  </div>
+                  <div>
+                    <Label>Left Eye Sphere</Label>
+                    <Input placeholder="-2.00" />
+                  </div>
+                  <div>
+                    <Label>Left Eye Cylinder</Label>
+                    <Input placeholder="-0.75" />
+                  </div>
+                  <div>
+                    <Label>Left Eye Axis</Label>
+                    <Input placeholder="85°" />
+                  </div>
+                  <div>
+                    <Label>Left Eye Add</Label>
+                    <Input placeholder="+1.00" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Pupillary Distance</Label>
+                  <Input placeholder="62 mm" />
+                </div>
+                <div>
+                  <Label>Prescription Type</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="glasses">Eyeglasses</SelectItem>
+                      <SelectItem value="contacts">Contact Lenses</SelectItem>
+                      <SelectItem value="bifocals">Bifocals</SelectItem>
+                      <SelectItem value="progressive">Progressive Lenses</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label>Diagnosis</Label>
+                  <Textarea placeholder="Patient diagnosis and findings..." rows={2} />
+                </div>
+                <div>
+                  <Label>Treatment Plan</Label>
+                  <Textarea placeholder="Recommended treatment and follow-up..." rows={2} />
+                </div>
+                <div>
+                  <Label>Additional Notes</Label>
+                  <Textarea placeholder="Any additional instructions or notes..." rows={2} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Follow-up Date</Label>
+                  <Input type="date" />
+                </div>
+                <div>
+                  <Label>Prescription Status</Label>
+                  <Select defaultValue="active">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setCreatePrescriptionOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Prescription Created",
+                    description: "New prescription has been created successfully",
+                  });
+                  setCreatePrescriptionOpen(false);
+                }}>
+                  Create Prescription
                 </Button>
               </div>
             </div>

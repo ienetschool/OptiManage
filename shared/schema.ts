@@ -35,7 +35,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").default('staff'), // admin, manager, staff
+  role: varchar("role").default('staff'), // admin, manager, doctor, nurse, receptionist, technician, staff
   isActive: boolean("is_active").default(true),
   lastLogin: timestamp("last_login"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -134,12 +134,15 @@ export const appointments = pgTable("appointments", {
   customerId: varchar("customer_id").references(() => customers.id),
   storeId: varchar("store_id").references(() => stores.id).notNull(),
   staffId: varchar("staff_id").references(() => users.id),
+  assignedDoctorId: varchar("assigned_doctor_id").references(() => users.id), // Doctor assignment
   appointmentDate: timestamp("appointment_date").notNull(),
   duration: integer("duration").default(60), // minutes
   service: varchar("service").notNull(),
   appointmentFee: decimal("appointment_fee", { precision: 10, scale: 2 }),
-  status: varchar("status").default('scheduled'), // scheduled, completed, cancelled, no-show
+  status: varchar("status").default('scheduled'), // scheduled, confirmed, checked-in, in-progress, completed, cancelled, no-show
+  priority: varchar("priority").default('normal'), // low, normal, high, urgent
   notes: text("notes"),
+  doctorNotes: text("doctor_notes"), // Private notes for doctors
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -369,6 +372,73 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
 export type InsertCustomFieldConfig = z.infer<typeof insertCustomFieldConfigSchema>;
+
+// Staff Profiles with enhanced role management
+export const staffProfiles = pgTable("staff_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  staffCode: varchar("staff_code").unique().notNull(),
+  jobTitle: varchar("job_title").notNull(), // Doctor, Nurse, Receptionist, Technician, etc.
+  department: varchar("department").notNull(), // Medical, Administration, Technical, etc.
+  specialization: varchar("specialization"), // For doctors/specialists
+  licenseNumber: varchar("license_number"), // Medical license for doctors
+  permissions: jsonb("permissions").$type<string[]>().default(sql`'[]'::jsonb`), // Array of permission strings
+  workSchedule: jsonb("work_schedule").$type<Record<string, any>>(), // Weekly schedule
+  salary: decimal("salary", { precision: 12, scale: 2 }),
+  hireDate: date("hire_date").notNull(),
+  status: varchar("status").default('active'), // active, inactive, on_leave, terminated
+  supervisorId: varchar("supervisor_id").references(() => users.id),
+  emergencyContact: jsonb("emergency_contact").$type<Record<string, any>>(),
+  qualifications: jsonb("qualifications").$type<string[]>().default(sql`'[]'::jsonb`),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Appointment Doctor Actions (for tracking doctor assignments and actions)
+export const appointmentActions = pgTable("appointment_actions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  appointmentId: varchar("appointment_id").references(() => appointments.id).notNull(),
+  doctorId: varchar("doctor_id").references(() => users.id).notNull(),
+  actionType: varchar("action_type").notNull(), // assigned, started, completed, prescription_created, notes_added
+  notes: text("notes"),
+  actionDate: timestamp("action_date").defaultNow(),
+});
+
+// Prescriptions Management
+export const appointmentPrescriptions = pgTable("appointment_prescriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  appointmentId: varchar("appointment_id").references(() => appointments.id).notNull(),
+  patientId: varchar("patient_id").references(() => patients.id).notNull(),
+  doctorId: varchar("doctor_id").references(() => users.id).notNull(),
+  prescriptionCode: varchar("prescription_code").unique().notNull(),
+  medications: jsonb("medications").$type<Array<{
+    name: string;
+    dosage: string;
+    frequency: string;
+    duration: string;
+    instructions: string;
+  }>>().notNull(),
+  diagnosis: text("diagnosis"),
+  symptoms: text("symptoms"),
+  treatmentPlan: text("treatment_plan"),
+  followUpDate: date("follow_up_date"),
+  status: varchar("status").default('active'), // active, completed, cancelled
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Role Permissions Configuration
+export const rolePermissions = pgTable("role_permissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  roleName: varchar("role_name").notNull(), // doctor, nurse, receptionist, admin, manager
+  module: varchar("module").notNull(), // patients, appointments, prescriptions, inventory, sales
+  permissions: jsonb("permissions").$type<string[]>().notNull(), // read, write, delete, approve
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 // Doctors table for medical practice
 export const doctors = pgTable("doctors", {
@@ -600,6 +670,12 @@ export const patientHistory = pgTable("patient_history", {
 export type SaleItem = typeof saleItems.$inferSelect;
 export type StoreInventory = typeof storeInventory.$inferSelect;
 
+// Enhanced staff and prescription types
+export type StaffProfile = typeof staffProfiles.$inferSelect;
+export type AppointmentAction = typeof appointmentActions.$inferSelect;
+export type AppointmentPrescription = typeof appointmentPrescriptions.$inferSelect;
+export type RolePermission = typeof rolePermissions.$inferSelect;
+
 // Medical practice types
 export type Doctor = typeof doctors.$inferSelect;
 export type Patient = typeof patients.$inferSelect;
@@ -658,6 +734,29 @@ export const insertMedicalInvoiceItemSchema = createInsertSchema(medicalInvoiceI
   createdAt: true,
 });
 
+// Enhanced staff and prescription insert schemas
+export const insertStaffProfileSchema = createInsertSchema(staffProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAppointmentActionSchema = createInsertSchema(appointmentActions).omit({
+  id: true,
+  actionDate: true,
+});
+
+export const insertAppointmentPrescriptionSchema = createInsertSchema(appointmentPrescriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Medical practice insert types
 export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
@@ -667,6 +766,12 @@ export type InsertPrescriptionItem = z.infer<typeof insertPrescriptionItemSchema
 export type InsertMedicalIntervention = z.infer<typeof insertMedicalInterventionSchema>;
 export type InsertMedicalInvoice = z.infer<typeof insertMedicalInvoiceSchema>;
 export type InsertMedicalInvoiceItem = z.infer<typeof insertMedicalInvoiceItemSchema>;
+
+// Enhanced types
+export type InsertStaffProfile = z.infer<typeof insertStaffProfileSchema>;
+export type InsertAppointmentAction = z.infer<typeof insertAppointmentActionSchema>;
+export type InsertAppointmentPrescription = z.infer<typeof insertAppointmentPrescriptionSchema>;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;
 
 // HR Management Schema
 export const staff = pgTable("staff", {
