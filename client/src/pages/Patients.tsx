@@ -31,7 +31,12 @@ import {
   Receipt,
   CalendarPlus,
   FileText,
-  MessageSquare
+  MessageSquare,
+  UserCheck,
+  Activity,
+  Clock,
+  X,
+  CheckCircle
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1748,45 +1753,87 @@ export default function Patients() {
       <Dialog open={viewPatientOpen} onOpenChange={setViewPatientOpen}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-gray-900">Complete Patient Profile</DialogTitle>
-            <DialogDescription>
-              Comprehensive medical and personal information for {selectedPatient?.firstName} {selectedPatient?.lastName}
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-bold text-gray-900">Patient Medical Profile</DialogTitle>
+                <DialogDescription>
+                  Comprehensive medical and personal information for {selectedPatient?.firstName} {selectedPatient?.lastName}
+                </DialogDescription>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedPatient) {
+                      generatePatientPDF(selectedPatient);
+                    }
+                  }}
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Profile
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (selectedPatient) {
+                      shareByQREmail(selectedPatient);
+                    }
+                  }}
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Share QR
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
           
           {selectedPatient && (
             <div className="space-y-6">
-              {/* Patient Header with Avatar and Key Info */}
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
-                <div className="flex items-center space-x-6">
-                  <Avatar className="h-20 w-20">
-                    <AvatarFallback className="text-2xl font-bold bg-blue-500 text-white">
-                      {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-2">
-                      {selectedPatient.firstName} {selectedPatient.lastName}
-                    </h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-600">Patient ID:</span>
-                        <p className="font-semibold text-blue-600">{selectedPatient.patientCode}</p>
+              {/* Professional Header with QR Code */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200 relative print:bg-white">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-6">
+                    <Avatar className="h-20 w-20 border-4 border-white shadow-lg">
+                      <AvatarFallback className="text-2xl font-bold bg-blue-500 text-white">
+                        {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                        {selectedPatient.firstName} {selectedPatient.lastName}
+                      </h3>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-gray-600">Patient ID:</span>
+                          <p className="font-semibold text-blue-600">{selectedPatient.patientCode}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Age:</span>
+                          <p className="font-semibold">{calculateAge(selectedPatient.dateOfBirth)} years</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Blood Group:</span>
+                          <p className="font-semibold">{selectedPatient.bloodGroup || 'Not tested'}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium text-gray-600">Status:</span>
+                          <Badge variant={selectedPatient.isActive ? "default" : "secondary"} className="font-semibold">
+                            {selectedPatient.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
                       </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Age:</span>
-                        <p className="font-semibold">{calculateAge(selectedPatient.dateOfBirth)} years</p>
+                    </div>
+                  </div>
+                  
+                  {/* QR Code in Header */}
+                  <div className="bg-white p-3 rounded-lg shadow-sm border-2 border-blue-200">
+                    <div className="text-center">
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
+                        <QrCode className="h-16 w-16 text-blue-600" />
                       </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Blood Group:</span>
-                        <p className="font-semibold">{selectedPatient.bloodGroup || 'Not tested'}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">Status:</span>
-                        <Badge variant={selectedPatient.isActive ? "default" : "secondary"} className="font-semibold">
-                          {selectedPatient.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
+                      <p className="text-xs font-medium text-blue-700">Scan for Details</p>
                     </div>
                   </div>
                 </div>

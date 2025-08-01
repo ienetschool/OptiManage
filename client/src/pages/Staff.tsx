@@ -44,6 +44,153 @@ export default function StaffPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Generate Staff ID Card function
+  const generateStaffIDCard = (staff: any) => {
+    const idCardWindow = window.open('', '_blank');
+    if (idCardWindow) {
+      idCardWindow.document.write(`
+        <html>
+          <head>
+            <title>Staff ID Card - ${staff.firstName} ${staff.lastName}</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 0; 
+                padding: 20px; 
+                background: #f0f0f0;
+              }
+              .id-card {
+                width: 350px;
+                height: 220px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 15px;
+                padding: 20px;
+                color: white;
+                position: relative;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                margin: 20px auto;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 15px;
+              }
+              .company-name {
+                font-size: 16px;
+                font-weight: bold;
+                margin-bottom: 5px;
+              }
+              .id-title {
+                font-size: 12px;
+                opacity: 0.9;
+              }
+              .content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              .info {
+                flex: 1;
+              }
+              .name {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 5px;
+              }
+              .position {
+                font-size: 14px;
+                margin-bottom: 3px;
+              }
+              .details {
+                font-size: 12px;
+                opacity: 0.9;
+              }
+              .qr-section {
+                width: 80px;
+                height: 80px;
+                background: white;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-left: 15px;
+              }
+              .qr-placeholder {
+                width: 70px;
+                height: 70px;
+                background: #333;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 10px;
+                text-align: center;
+              }
+              .footer {
+                position: absolute;
+                bottom: 10px;
+                left: 20px;
+                right: 20px;
+                text-align: center;
+                font-size: 10px;
+                opacity: 0.7;
+              }
+              @media print {
+                body { background: white; }
+                .id-card { margin: 0; box-shadow: none; }
+              }
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+          </head>
+          <body>
+            <div class="id-card">
+              <div class="header">
+                <div class="company-name">OptiStore Pro Medical Center</div>
+                <div class="id-title">Staff Identification Card</div>
+              </div>
+              
+              <div class="content">
+                <div class="info">
+                  <div class="name">${staff.firstName} ${staff.lastName}</div>
+                  <div class="position">${staff.position || 'Staff Member'}</div>
+                  <div class="details">ID: ${staff.staffCode}</div>
+                  <div class="details">Dept: ${staff.department || 'General'}</div>
+                  <div class="details">Since: ${new Date(staff.hireDate).getFullYear()}</div>
+                </div>
+                
+                <div class="qr-section">
+                  <canvas id="qr-canvas" width="70" height="70"></canvas>
+                </div>
+              </div>
+              
+              <div class="footer">
+                This card is property of OptiStore Pro Medical Center
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin: 20px;">
+              <button onclick="window.print()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                Print ID Card
+              </button>
+            </div>
+            
+            <script>
+              const canvas = document.getElementById('qr-canvas');
+              const staffData = 'STAFF:${staff.staffCode},NAME:${staff.firstName} ${staff.lastName},POS:${staff.position},DEPT:${staff.department}';
+              QRCode.toCanvas(canvas, staffData, { width: 70, height: 70, margin: 1 });
+            </script>
+          </body>
+        </html>
+      `);
+      idCardWindow.document.close();
+    }
+    
+    toast({
+      title: "ID Card Generated",
+      description: `Staff ID card for ${staff.firstName} ${staff.lastName} is ready`,
+    });
+  };
+
   const { data: staffList = [], isLoading } = useQuery<Staff[]>({
     queryKey: ["/api/staff"],
   });
@@ -235,11 +382,12 @@ export default function StaffPage() {
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <Tabs defaultValue="personal" className="w-full">
-                      <TabsList className="grid w-full grid-cols-4">
+                      <TabsList className="grid w-full grid-cols-5">
                         <TabsTrigger value="personal">Personal Info</TabsTrigger>
                         <TabsTrigger value="employment">Employment</TabsTrigger>
                         <TabsTrigger value="contact">Contact Details</TabsTrigger>
                         <TabsTrigger value="access">Access & Permissions</TabsTrigger>
+                        <TabsTrigger value="payroll">Payroll & Documents</TabsTrigger>
                       </TabsList>
 
                       <TabsContent value="personal" className="space-y-4">
@@ -351,9 +499,30 @@ export default function StaffPage() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Position</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select position" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="doctor">Doctor</SelectItem>
+                                    <SelectItem value="optometrist">Optometrist</SelectItem>
+                                    <SelectItem value="nurse">Nurse</SelectItem>
+                                    <SelectItem value="technician">Technician</SelectItem>
+                                    <SelectItem value="receptionist">Receptionist</SelectItem>
+                                    <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                                    <SelectItem value="lab_technician">Lab Technician</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="assistant_manager">Assistant Manager</SelectItem>
+                                    <SelectItem value="sales_associate">Sales Associate</SelectItem>
+                                    <SelectItem value="inventory_manager">Inventory Manager</SelectItem>
+                                    <SelectItem value="cashier">Cashier</SelectItem>
+                                    <SelectItem value="admin_staff">Administrative Staff</SelectItem>
+                                    <SelectItem value="customer_service">Customer Service</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -546,6 +715,151 @@ export default function StaffPage() {
                           )}
                         />
                       </TabsContent>
+
+                      <TabsContent value="payroll" className="space-y-6">
+                        {/* Photo Upload Section */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Photo & Documents</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>Staff Photo</Label>
+                                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                  <User className="mx-auto h-12 w-12 text-gray-400" />
+                                  <p className="mt-2 text-sm text-gray-500">Click to upload photo</p>
+                                  <input type="file" className="hidden" accept="image/*" />
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Qualification Documents</Label>
+                                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                  <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                                  <p className="mt-2 text-sm text-gray-500">Upload certificates, degrees</p>
+                                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" multiple />
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <Label>Appointment Letter</Label>
+                              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                <FileText className="mx-auto h-12 w-12 text-blue-400" />
+                                <p className="mt-2 text-sm text-gray-500">Upload appointment letter</p>
+                                <input type="file" className="hidden" accept=".pdf,.doc,.docx" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Salary & Benefits Section */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Salary & Benefits</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label>Basic Salary</Label>
+                                <Input type="number" placeholder="50000" />
+                              </div>
+                              <div>
+                                <Label>House Allowance</Label>
+                                <Input type="number" placeholder="15000" />
+                              </div>
+                              <div>
+                                <Label>Transport Allowance</Label>
+                                <Input type="number" placeholder="8000" />
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label>Medical Allowance</Label>
+                                <Input type="number" placeholder="5000" />
+                              </div>
+                              <div>
+                                <Label>Other Allowances</Label>
+                                <Input type="number" placeholder="2000" />
+                              </div>
+                              <div>
+                                <Label>Total Gross Salary</Label>
+                                <Input type="number" placeholder="80000" disabled className="bg-gray-100" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Deductions Section */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Deductions</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label>Income Tax</Label>
+                                <Input type="number" placeholder="8000" />
+                              </div>
+                              <div>
+                                <Label>Provident Fund</Label>
+                                <Input type="number" placeholder="4000" />
+                              </div>
+                              <div>
+                                <Label>Health Insurance</Label>
+                                <Input type="number" placeholder="2000" />
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label>Other Deductions</Label>
+                                <Input type="number" placeholder="1000" />
+                              </div>
+                              <div>
+                                <Label>Total Deductions</Label>
+                                <Input type="number" placeholder="15000" disabled className="bg-gray-100" />
+                              </div>
+                              <div>
+                                <Label>Net Salary</Label>
+                                <Input type="number" placeholder="65000" disabled className="bg-green-100" />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Leave Management Section */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Leave Entitlements</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-4 gap-4">
+                              <div>
+                                <Label>Annual Leave</Label>
+                                <Input type="number" placeholder="30" />
+                                <p className="text-xs text-gray-500 mt-1">Days per year</p>
+                              </div>
+                              <div>
+                                <Label>Sick Leave</Label>
+                                <Input type="number" placeholder="15" />
+                                <p className="text-xs text-gray-500 mt-1">Days per year</p>
+                              </div>
+                              <div>
+                                <Label>Casual Leave</Label>
+                                <Input type="number" placeholder="10" />
+                                <p className="text-xs text-gray-500 mt-1">Days per year</p>
+                              </div>
+                              <div>
+                                <Label>Maternity/Paternity</Label>
+                                <Input type="number" placeholder="90" />
+                                <p className="text-xs text-gray-500 mt-1">Days</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </TabsContent>
                     </Tabs>
                     
                     <div className="flex justify-end space-x-2 pt-4 border-t">
@@ -685,6 +999,14 @@ export default function StaffPage() {
                                 size="sm"
                               >
                                 <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => generateStaffIDCard(staff)}
+                                title="Generate ID Card"
+                              >
+                                <QrCode className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>

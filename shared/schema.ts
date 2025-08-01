@@ -409,7 +409,7 @@ export const appointmentActions = pgTable("appointment_actions", {
 export const appointmentPrescriptions = pgTable("appointment_prescriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   appointmentId: varchar("appointment_id").references(() => appointments.id).notNull(),
-  patientId: varchar("patient_id").references(() => patients.id).notNull(),
+  patientId: uuid("patient_id").references(() => patients.id).notNull(),
   doctorId: varchar("doctor_id").references(() => users.id).notNull(),
   prescriptionCode: varchar("prescription_code").unique().notNull(),
   medications: jsonb("medications").$type<Array<{
