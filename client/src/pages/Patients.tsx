@@ -2407,35 +2407,50 @@ export default function Patients() {
                   Cancel
                 </Button>
                 <Button onClick={async () => {
-                  const selectedDoctor = selectedDoctorId;
-                  if (!selectedDoctor || !selectedAppointment) return;
+                  if (!selectedDoctorId || !selectedAppointment) {
+                    toast({
+                      title: "Error",
+                      description: "Please select a doctor before assigning",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
 
                   try {
                     // Update the appointment with doctor assignment
-                    await apiRequest("PUT", `/api/appointments/${selectedAppointment.id}`, {
-                      ...selectedAppointment,
-                      doctorId: selectedDoctor,
-                      staffId: selectedDoctor,
+                    const updateData = {
+                      id: selectedAppointment.id,
+                      patientId: selectedAppointment.patientId,
+                      appointmentDate: selectedAppointment.appointmentDate,
+                      appointmentTime: selectedAppointment.appointmentTime,
+                      service: selectedAppointment.service,
+                      serviceType: selectedAppointment.serviceType || selectedAppointment.service,
+                      doctorId: selectedDoctorId,
+                      staffId: selectedDoctorId,
                       status: "assigned_to_doctor",
+                      notes: selectedAppointment.notes || "",
                       assignedToDoctor: true,
                       doctorNotes: "Appointment forwarded for medical consultation"
-                    });
+                    };
+
+                    await apiRequest("PUT", `/api/appointments/${selectedAppointment.id}`, updateData);
 
                     // Refresh appointments data
                     queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
                     queryClient.invalidateQueries({ queryKey: ["/api/medical-appointments"] });
 
                     toast({
-                      title: "Appointment Forwarded",
+                      title: "Success",
                       description: "Appointment has been assigned to the selected doctor",
                     });
                     setForwardToDoctorOpen(false);
                     setSelectedAppointment(null);
                     setSelectedDoctorId("");
                   } catch (error) {
+                    console.error("Error assigning doctor:", error);
                     toast({
                       title: "Error",
-                      description: "Failed to assign doctor to appointment",
+                      description: "Failed to assign doctor to appointment. Please try again.",
                       variant: "destructive",
                     });
                   }
