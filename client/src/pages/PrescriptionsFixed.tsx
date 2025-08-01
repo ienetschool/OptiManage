@@ -1020,40 +1020,40 @@ OptiStore Pro Team`;
                       </Badge>
                     </div>
                     
+                    {/* Visual Acuity - show for eye examination and glasses fitting */}
+                    {(currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses') && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="visualAcuityLeftEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Left Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/25" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="visualAcuityRightEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Right Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/20" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
                     {/* Service-type specific content */}
-                    {currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses' ? (
-                      <>
-                        {/* Visual Acuity */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={createForm.control}
-                            name="visualAcuityRightEye"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Visual Acuity - Right Eye</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="20/20" {...field} value={field.value || ""} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={createForm.control}
-                            name="visualAcuityLeftEye"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Visual Acuity - Left Eye</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="20/25" {...field} value={field.value || ""} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </>
-                    ) : currentServiceType === 'contact_lens' ? (
+                    {currentServiceType === 'contact_lens' ? (
                       <div className="bg-green-50 rounded-lg p-4">
                         <h4 className="font-medium mb-4">Contact Lens Specifications</h4>
                         <div className="grid grid-cols-3 gap-4">
@@ -1120,7 +1120,7 @@ OptiStore Pro Team`;
                           )}
                         />
                       </div>
-                    ) : (
+                    ) : currentServiceType === 'consultation' && (
                       <div className="bg-purple-50 rounded-lg p-4">
                         <h4 className="font-medium mb-4">Consultation Notes</h4>
                         <FormField
@@ -1136,38 +1136,6 @@ OptiStore Pro Team`;
                                   {...field} 
                                   value={field.value || ""} 
                                 />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
-
-                    {/* Show vision prescription fields only for eye examination and glasses fitting */}
-                    {(currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses') && (
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={createForm.control}
-                          name="visualAcuityRightEye"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Visual Acuity - Right Eye</FormLabel>
-                              <FormControl>
-                                <Input placeholder="20/20" {...field} value={field.value || ""} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={createForm.control}
-                          name="visualAcuityLeftEye"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Visual Acuity - Left Eye</FormLabel>
-                              <FormControl>
-                                <Input placeholder="20/25" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1213,7 +1181,15 @@ OptiStore Pro Team`;
                             <FormItem>
                               <FormLabel>Axis</FormLabel>
                               <FormControl>
-                                <Input type="number" min="1" max="180" placeholder="90" {...field} value={field.value || ""} />
+                                <Input 
+                                  type="number" 
+                                  min="1" 
+                                  max="180" 
+                                  placeholder="90" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1272,7 +1248,15 @@ OptiStore Pro Team`;
                             <FormItem>
                               <FormLabel>Axis</FormLabel>
                               <FormControl>
-                                <Input type="number" min="1" max="180" placeholder="85" {...field} value={field.value || ""} />
+                                <Input 
+                                  type="number" 
+                                  min="1" 
+                                  max="180" 
+                                  placeholder="85" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                  onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
