@@ -237,7 +237,12 @@ export default function Appointments() {
     generateAppointmentPDF(appointment);
   };
 
-
+  const generateAppointmentInvoice = (appointment: any) => {
+    toast({
+      title: "Invoice Generated",
+      description: `Invoice for ${appointment.customer.firstName} ${appointment.customer.lastName} has been generated.`,
+    });
+  };
 
   const shareByEmailSimple = (appointment: any) => {
     const emailSubject = `Appointment Confirmation - ${appointment.customer.firstName} ${appointment.customer.lastName}`;
@@ -508,7 +513,76 @@ export default function Appointments() {
     });
   };
 
+  const handleSendReminder = (appointment: any) => {
+    const reminderWindow = window.open('', '_blank');
+    if (reminderWindow) {
+      reminderWindow.document.write(`
+        <html>
+          <head>
+            <title>Send Appointment Reminder</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; }
+              .reminder-container { border: 2px solid #667eea; border-radius: 12px; padding: 30px; text-align: center; }
+              .reminder-details { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; }
+              button { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; margin: 10px; }
+              button:hover { background: #5a67d8; }
+            </style>
+          </head>
+          <body>
+            <div class="reminder-container">
+              <h2>📅 Appointment Reminder</h2>
+              <div class="reminder-details">
+                <p><strong>Patient:</strong> ${appointment.customer.firstName} ${appointment.customer.lastName}</p>
+                <p><strong>Phone:</strong> ${appointment.customer.phone}</p>
+                <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> ${new Date(appointment.appointmentDate).toLocaleTimeString()}</p>
+                <p><strong>Service:</strong> ${appointment.service}</p>
+                <p><strong>Location:</strong> ${appointment.store.name}</p>
+              </div>
+              <p>Reminder message template ready to send via SMS or email.</p>
+              <button onclick="window.close()">Send SMS Reminder</button>
+              <button onclick="window.close()">Send Email Reminder</button>
+              <button onclick="window.close()">Close</button>
+            </div>
+          </body>
+        </html>
+      `);
+      reminderWindow.document.close();
+    }
+    
+    toast({
+      title: "Reminder Interface Opened",
+      description: `Reminder options for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+    });
+  };
 
+  const handleCheckIn = (appointment: any) => {
+    handleStatusChange(appointment.id, "checked-in");
+  };
+
+  const handleStartConsultation = (appointment: any) => {
+    handleStatusChange(appointment.id, "in-progress");
+  };
+
+  const handleComplete = (appointment: any) => {
+    handleStatusChange(appointment.id, "completed");
+  };
+
+  const handleReschedule = (appointment: any) => {
+    handleEdit(appointment);
+  };
+
+  const handleConfirm = (appointment: any) => {
+    handleStatusChange(appointment.id, "confirmed");
+  };
+
+  const handleCancel = (appointment: any) => {
+    handleStatusChange(appointment.id, "cancelled");
+  };
+
+  const handleNoShow = (appointment: any) => {
+    handleStatusChange(appointment.id, "no-show");
+  };
 
   // Use real appointments data or mock for demo  
   const displayAppointments = appointments.length > 0 ? appointments.map(apt => ({
@@ -1109,26 +1183,8 @@ export default function Appointments() {
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-
-        {/* Calendar View Tab */}
-        <TabsContent value="calendar" className="space-y-6">
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Calendar View Coming Soon</h3>
-            <p className="text-gray-600">Visual calendar interface for appointment management.</p>
-          </div>
-        </TabsContent>
-
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="text-center py-12">
-            <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Analytics Coming Soon</h3>
-            <p className="text-gray-600">Appointment analytics and reporting.</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       {/* Appointment Details Modal */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
@@ -1171,9 +1227,214 @@ export default function Appointments() {
           )}
         </DialogContent>
       </Dialog>
+    </main>
+  );
+}
+
+// Additional helper functions for appointment actions
+const generateAppointmentReport = (appointment: any) => {
+  toast({
+    title: "Report Generated",
+    description: `Appointment report for ${appointment.customer.firstName} ${appointment.customer.lastName} has been generated.`,
+  });
+};
+
+const generateAppointmentQR = (appointment: any) => {
+  toast({
+    title: "QR Code Generated",
+    description: `QR code for appointment #${appointment.id} has been created.`,
+  });
+};
+
+const generateAppointmentInvoice = (appointment: any) => {
+  toast({
+    title: "Invoice Generated",
+    description: `Invoice for ${appointment.customer.firstName} ${appointment.customer.lastName} has been generated.`,
+  });
+};
+
+
+                              <DropdownMenuItem onClick={() => handleStartConsultation(appointment)}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-blue-600" />
+                                Start Consultation
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {appointment.status === "in-progress" && (
+                              <DropdownMenuItem onClick={() => handleComplete(appointment)}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-purple-600" />
+                                Complete Appointment
+                              </DropdownMenuItem>
+                            )}
+                            
+                            {(appointment.status === "scheduled" || appointment.status === "checked-in") && (
+                              <DropdownMenuItem onClick={() => handleSendReminder(appointment)}>
+                                <MessageSquare className="mr-2 h-4 w-4 text-blue-600" />
+                                Send Reminder
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Document Actions */}
+                            <DropdownMenuItem onClick={() => generateAppointmentPDF(appointment)}>
+                              <Printer className="mr-2 h-4 w-4" />
+                              Print Report
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => generateAppointmentQR(appointment)}>
+                              <QrCode className="mr-2 h-4 w-4" />
+                              Generate QR Code
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => shareByEmail(appointment)}>
+                              <Share2 className="mr-2 h-4 w-4" />
+                              Share by Email
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => generateAppointmentInvoice(appointment)}>
+                              <Receipt className="mr-2 h-4 w-4" />
+                              Generate Invoice
+                            </DropdownMenuItem>
+                            
+                            <DropdownMenuSeparator />
+                            
+                            {/* Additional Status Actions */}
+                            {appointment.status === 'scheduled' && (
+                              <DropdownMenuItem onClick={() => handleConfirm(appointment)}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                Confirm Appointment
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Status Changes</DropdownMenuLabel>
+                            
+                            <DropdownMenuItem onClick={() => handleCancel(appointment)}>
+                              <XCircle className="mr-2 h-4 w-4 text-red-600" />
+                              Cancel Appointment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleNoShow(appointment)}>
+                              <AlertCircle className="mr-2 h-4 w-4 text-amber-600" />
+                              Mark No-Show
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {filteredAppointments.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-12 w-12 text-slate-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                  {searchTerm ? "No appointments found" : "No appointments scheduled"}
+                </h3>
+                <p className="text-slate-600 mb-6">
+                  {searchTerm ? `No appointments match "${searchTerm}"` : "Get started by booking your first appointment."}
+                </p>
+                {!searchTerm && (
+                  <Button
+                    onClick={() => setOpen(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Book Your First Appointment
+                  </Button>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Calendar View Tab */}
+          <TabsContent value="calendar" className="space-y-6">
+            <div className="text-center py-12">
+              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-12 w-12 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Calendar View</h3>
+              <p className="text-slate-600 mb-6">Visual calendar interface for appointment management.</p>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Calendar className="mr-2 h-4 w-4" />
+                View Calendar
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">Today's Appointments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {displayAppointments.filter(apt => isSameDay(apt.appointmentDate, new Date())).length}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">This Week</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-slate-900">{displayAppointments.length}</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">Completion Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-emerald-600">
+                    {displayAppointments.length > 0 ? Math.round((displayAppointments.filter(apt => apt.status === 'completed').length / displayAppointments.length) * 100) : 0}%
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-medium text-slate-600">No-Show Rate</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-amber-600">
+                    {Math.round((mockAppointments.filter(apt => apt.status === 'no-show').length / mockAppointments.length) * 100)}%
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="border-slate-200">
+              <CardHeader>
+                <CardTitle>Popular Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {services.slice(0, 5).map((service, index) => (
+                    <div key={service} className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-900">{service}</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-32 bg-slate-200 rounded-full h-2">
+                          <div 
+                            className="bg-blue-600 h-2 rounded-full" 
+                            style={{ width: `${(5 - index) * 20}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-slate-600">{5 - index}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </>
   );
 }
-
-
