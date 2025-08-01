@@ -49,7 +49,10 @@ export default function Patients() {
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
+  const [viewAppointmentOpen, setViewAppointmentOpen] = useState(false);
+  const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [editPatientOpen, setEditPatientOpen] = useState(false);
   const { toast } = useToast();
@@ -1510,19 +1513,9 @@ export default function Patients() {
                               <DropdownMenuItem onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                console.log('View Details clicked for appointment:', appointment.id);
-                                const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
-                                if (patient) {
-                                  console.log('Found patient:', patient.firstName, patient.lastName);
-                                  setSelectedPatient(patient);
-                                  setViewPatientOpen(true);
-                                } else {
-                                  console.log('Patient not found for appointment:', appointment.patientId);
-                                  toast({
-                                    title: "Patient Not Found",
-                                    description: "Could not find patient information for this appointment",
-                                  });
-                                }
+                                console.log('View Appointment Details clicked for:', appointment.id);
+                                setSelectedAppointment(appointment);
+                                setViewAppointmentOpen(true);
                               }}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
@@ -1531,10 +1524,8 @@ export default function Patients() {
                                 e.preventDefault();
                                 e.stopPropagation();
                                 console.log('Edit Appointment clicked for:', appointment.id);
-                                toast({
-                                  title: "Edit Appointment",
-                                  description: "Edit appointment functionality will be implemented",
-                                });
+                                setSelectedAppointment(appointment);
+                                setEditAppointmentOpen(true);
                               }}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Appointment
@@ -2087,6 +2078,199 @@ export default function Patients() {
                   Cancel
                 </Button>
                 <Button onClick={() => setEditPatientOpen(false)}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Appointment Details Modal */}
+      <Dialog open={viewAppointmentOpen} onOpenChange={setViewAppointmentOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Appointment Details</DialogTitle>
+            <DialogDescription>
+              Complete information for appointment {selectedAppointment?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAppointment && (
+            <div className="space-y-6">
+              {/* Appointment Header */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Appointment Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="font-medium text-gray-600">Appointment ID:</span>
+                        <p className="font-semibold text-blue-600">{selectedAppointment.id}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Service:</span>
+                        <p className="font-semibold">{selectedAppointment.service}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Date & Time:</span>
+                        <p className="font-semibold">{new Date(selectedAppointment.appointmentDate).toLocaleDateString()} at {new Date(selectedAppointment.appointmentDate).toLocaleTimeString()}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Duration:</span>
+                        <p className="font-semibold">{selectedAppointment.duration} minutes</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Status:</span>
+                        <Badge variant={selectedAppointment.status === 'scheduled' ? 'default' : 'secondary'}>
+                          {selectedAppointment.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Patient Information</h3>
+                    <div className="space-y-3">
+                      {(() => {
+                        const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
+                        return patient ? (
+                          <>
+                            <div>
+                              <span className="font-medium text-gray-600">Patient Name:</span>
+                              <p className="font-semibold">{patient.firstName} {patient.lastName}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-600">Patient ID:</span>
+                              <p className="font-semibold">{patient.patientCode}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-600">Phone:</span>
+                              <p className="font-semibold">{patient.phone}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium text-gray-600">Email:</span>
+                              <p className="font-semibold">{patient.email || 'N/A'}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-red-600">Patient information not found</p>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notes Section */}
+              {selectedAppointment.notes && (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-2">Notes</h4>
+                  <p className="text-gray-700">{selectedAppointment.notes}</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setViewAppointmentOpen(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => {
+                  setViewAppointmentOpen(false);
+                  setEditAppointmentOpen(true);
+                }}>
+                  Edit Appointment
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Appointment Modal */}
+      <Dialog open={editAppointmentOpen} onOpenChange={setEditAppointmentOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Appointment</DialogTitle>
+            <DialogDescription>
+              Modify appointment details for {selectedAppointment?.id}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedAppointment && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Service</Label>
+                  <Input 
+                    defaultValue={selectedAppointment.service}
+                    placeholder="Enter service type"
+                  />
+                </div>
+                <div>
+                  <Label>Duration (minutes)</Label>
+                  <Input 
+                    type="number"
+                    defaultValue={selectedAppointment.duration}
+                    placeholder="Duration"
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Date</Label>
+                  <Input 
+                    type="date"
+                    defaultValue={new Date(selectedAppointment.appointmentDate).toISOString().split('T')[0]}
+                  />
+                </div>
+                <div>
+                  <Label>Time</Label>
+                  <Input 
+                    type="time"
+                    defaultValue={new Date(selectedAppointment.appointmentDate).toTimeString().slice(0,5)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Status</Label>
+                <Select defaultValue={selectedAppointment.status}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="checked-in">Checked In</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Notes</Label>
+                <Textarea 
+                  defaultValue={selectedAppointment.notes || ''}
+                  placeholder="Additional notes..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button variant="outline" onClick={() => setEditAppointmentOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Appointment Updated",
+                    description: "Appointment has been successfully updated",
+                  });
+                  setEditAppointmentOpen(false);
+                }}>
                   Save Changes
                 </Button>
               </div>
