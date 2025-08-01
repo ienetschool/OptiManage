@@ -1507,18 +1507,30 @@ export default function Patients() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => {
+                              <DropdownMenuItem onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('View Details clicked for appointment:', appointment.id);
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
                                 if (patient) {
+                                  console.log('Found patient:', patient.firstName, patient.lastName);
                                   setSelectedPatient(patient);
                                   setViewPatientOpen(true);
+                                } else {
+                                  console.log('Patient not found for appointment:', appointment.patientId);
+                                  toast({
+                                    title: "Patient Not Found",
+                                    description: "Could not find patient information for this appointment",
+                                  });
                                 }
                               }}>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                // Edit appointment functionality
+                              <DropdownMenuItem onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Edit Appointment clicked for:', appointment.id);
                                 toast({
                                   title: "Edit Appointment",
                                   description: "Edit appointment functionality will be implemented",
@@ -1528,7 +1540,10 @@ export default function Patients() {
                                 Edit Appointment
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => {
+                              <DropdownMenuItem onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                console.log('Print Report clicked for appointment:', appointment.id);
                                 const patient = (patients as Patient[]).find(p => p.id === appointment.patientId);
                                 if (patient) {
                                   // Generate appointment report
