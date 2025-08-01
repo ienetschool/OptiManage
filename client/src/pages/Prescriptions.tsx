@@ -25,13 +25,7 @@ import {
   Activity,
   AlertCircle,
   CheckCircle,
-  Clock,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Share,
-  Mail,
-  FileDown
+  Clock
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,13 +42,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 export default function Prescriptions() {
   const [open, setOpen] = useState(false);
@@ -62,7 +49,7 @@ export default function Prescriptions() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
-  const [serviceType, setServiceType] = useState("eye_examination");
+  const [serviceType, setServiceType] = useState(""); // Service type for prescription format
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,6 +66,7 @@ export default function Prescriptions() {
     queryKey: ["/api/staff"],
   });
 
+  // Get both medical appointments and regular appointments
   const { data: medicalAppointments = [] } = useQuery<MedicalAppointment[]>({
     queryKey: ["/api/medical-appointments"],
   });
@@ -87,6 +75,7 @@ export default function Prescriptions() {
     queryKey: ["/api/appointments"],
   });
 
+  // Combine appointments that have doctors assigned
   const appointments = [
     ...medicalAppointments,
     ...regularAppointments.filter((apt: any) => apt.doctorId || apt.staffId)
@@ -101,593 +90,1137 @@ export default function Prescriptions() {
       appointmentId: "",
       storeId: "",
       prescriptionType: "eye_examination",
-      visualAcuityRightEye: "",
-      visualAcuityLeftEye: "",
-      sphereRight: "",
-      cylinderRight: "",
-      axisRight: 0,
-      addRight: "",
-      sphereLeft: "",
-      cylinderLeft: "",
-      axisLeft: 0,
-      addLeft: "",
-      pdDistance: "",
-      pdNear: "",
-      pdFar: "",
-      diagnosis: "",
-      treatment: "",
-      advice: "",
-      notes: "",
+      visualAcuityRightEye: null,
+      visualAcuityLeftEye: null,
+      sphereRight: null,
+      cylinderRight: null,
+      axisRight: null,
+      addRight: null,
+      sphereLeft: null,
+      cylinderLeft: null,
+      axisLeft: null,
+      addLeft: null,
+      pdDistance: null,
+      pdNear: null,
+      pdFar: null,
+      diagnosis: null,
+      treatment: null,
+      advice: null,
+      notes: null,
       status: "active",
-      nextFollowUp: null,
     },
   });
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async (data: InsertPrescription) => {
-      return await apiRequest('/api/prescriptions', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      await apiRequest("POST", "/api/prescriptions", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
-      setOpen(false);
-      form.reset();
-      setSelectedPatient(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
       toast({
         title: "Success",
-        description: "Prescription created successfully",
+        description: "Prescription created successfully.",
       });
+      setOpen(false);
+      form.reset();
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message || "Failed to create prescription",
+        description: "Failed to create prescription.",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = async (data: InsertPrescription) => {
+  const updateAppointmentMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      await apiRequest("PUT", `/api/appointments/${id}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-appointments"] });
+      toast({
+        title: "Success",
+        description: "Appointment updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update appointment.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: InsertPrescription) => {
     createPrescriptionMutation.mutate(data);
   };
 
-  const filteredPrescriptions = prescriptions.filter((prescription) => {
-    const matchesSearch = prescription.prescriptionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getPatientName(prescription.patientId).toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredPrescriptions = prescriptions.filter(prescription => {
+    const matchesSearch = prescription.prescriptionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         prescription.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         patients.find(p => p.id === prescription.patientId)?.firstName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
     const matchesStatus = selectedStatus === "all" || prescription.status === selectedStatus;
     const matchesType = selectedType === "all" || prescription.prescriptionType === selectedType;
+    
     return matchesSearch && matchesStatus && matchesType;
   });
 
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
-    return patient ? `${patient.firstName} ${patient.lastName}` : "Unknown Patient";
+    return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
   };
 
-  const getDoctorName = (doctorId: string | null) => {
-    if (!doctorId) return "No Doctor Assigned";
+  const getDoctorName = (doctorId: string) => {
     const doctor = doctors.find(d => d.id === doctorId);
-    return doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : "Unknown Doctor";
+    return doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown Doctor';
   };
 
-  const handleDownloadPDF = (prescription: Prescription) => {
-    toast({
-      title: "PDF Download",
-      description: "Downloading prescription PDF...",
-    });
-  };
-
-  const handleSendEmail = (prescription: Prescription) => {
-    toast({
-      title: "Email Sent",
-      description: "Prescription sent via email",
-    });
-  };
-
-  const handleViewDetails = (prescription: Prescription) => {
+  const handleViewPrescription = (prescription: Prescription) => {
     setViewPrescription(prescription);
-    toast({
-      title: "Prescription Details",
-      description: "Viewing prescription details",
-    });
   };
 
-  const handleEditPrescription = (prescription: Prescription) => {
-    // Pre-populate form with prescription data
-    form.reset({
-      prescriptionNumber: prescription.prescriptionNumber,
-      patientId: prescription.patientId,
-      doctorId: prescription.doctorId || "",
-      appointmentId: prescription.appointmentId || "",
-      storeId: prescription.storeId || "",
-      prescriptionType: prescription.prescriptionType || "eye_examination",
-      visualAcuityRightEye: prescription.visualAcuityRightEye || "",
-      visualAcuityLeftEye: prescription.visualAcuityLeftEye || "",
-      sphereRight: prescription.sphereRight || "",
-      cylinderRight: prescription.cylinderRight || "",
-      axisRight: prescription.axisRight || 0,
-      addRight: prescription.addRight || "",
-      sphereLeft: prescription.sphereLeft || "",
-      cylinderLeft: prescription.cylinderLeft || "",
-      axisLeft: prescription.axisLeft || 0,
-      addLeft: prescription.addLeft || "",
-      pdDistance: prescription.pdDistance || "",
-      pdNear: prescription.pdNear || "",
-      pdFar: prescription.pdFar || "",
-      diagnosis: prescription.diagnosis || "",
-      treatment: prescription.treatment || "",
-      advice: prescription.advice || "",
-      notes: prescription.notes || "",
-      status: prescription.status || "active",
-    });
-    
-    const patient = patients.find(p => p.id === prescription.patientId);
-    setSelectedPatient(patient || null);
-    setServiceType(prescription.prescriptionType || "eye_examination");
-    setOpen(true);
-    
-    toast({
-      title: "Edit Prescription",
-      description: "Editing prescription details",
-    });
+  const handleDownloadPDF = async (prescription: Prescription) => {
+    try {
+      const response = await apiRequest("POST", `/api/prescriptions/${prescription.id}/pdf`);
+      // Handle PDF download logic here
+      toast({
+        title: "PDF Generated",
+        description: "Prescription PDF has been generated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeletePrescription = (prescription: Prescription) => {
-    toast({
-      title: "Delete Prescription",
-      description: "This feature will be implemented soon",
-      variant: "destructive",
-    });
-  };
-
-  const handleSharePrescription = (prescription: Prescription) => {
-    toast({
-      title: "Share Prescription",
-      description: "Prescription link copied to clipboard",
-    });
-  };
-
-  const handleGenerateQR = (prescription: Prescription) => {
-    setViewPrescription(prescription);
-    toast({
-      title: "QR Code Generated",
-      description: "QR code for prescription access",
-    });
-  };
-
-  const renderServiceSpecificFields = () => {
-    return (
-      <div className="space-y-6">
-        {/* Patient & Appointment Info Section */}
-        <div className="bg-slate-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">Patient & Appointment Info</h3>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-slate-700">Patient:</Label>
-              <p className="text-base font-medium">{selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : 'Select patient...'}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-slate-700">Service:</Label>
-              <p className="text-base font-medium">{serviceType.replace('_', '-')}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-slate-700">Date:</Label>
-              <p className="text-base">{format(new Date(), 'dd/MM/yyyy')}</p>
-            </div>
-            <div>
-              <Label className="text-sm font-medium text-slate-700">Appointment ID:</Label>
-              <p className="text-base text-slate-600">{form.watch('appointmentId') || 'Not assigned'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Prescription Code */}
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Prescription Code</Label>
-            <Input 
-              value={form.watch('prescriptionNumber')} 
-              onChange={(e) => form.setValue('prescriptionNumber', e.target.value)}
-              className="font-mono"
-            />
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Doctor</Label>
-            <FormField
-              control={form.control}
-              name="doctorId"
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value || ""}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select prescribing doctor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {doctors.map((doctor) => (
-                      <SelectItem key={doctor.id} value={doctor.id}>
-                        Dr. {doctor.firstName} {doctor.lastName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Vision Prescription Section */}
-        {(serviceType === 'eye_examination' || serviceType === 'contact_lens' || serviceType === 'fitting_glasses') && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900">Vision Prescription</h3>
-            
-            {/* Right Eye */}
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Sphere</Label>
-                <FormField
-                  control={form.control}
-                  name="sphereRight"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.25" 
-                      placeholder="-2.25" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Cylinder</Label>
-                <FormField
-                  control={form.control}
-                  name="cylinderRight"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.25" 
-                      placeholder="-0.50" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Axis</Label>
-                <FormField
-                  control={form.control}
-                  name="axisRight"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      min="1" 
-                      max="180" 
-                      placeholder="90°" 
-                      {...field} 
-                      value={field.value?.toString() || ""} 
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? null : parseInt(value, 10));
-                      }} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Right Eye Add</Label>
-                <FormField
-                  control={form.control}
-                  name="addRight"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.25" 
-                      placeholder="+1.00" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Left Eye */}
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Sphere</Label>
-                <FormField
-                  control={form.control}
-                  name="sphereLeft"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.25" 
-                      placeholder="-2.00" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Cylinder</Label>
-                <FormField
-                  control={form.control}
-                  name="cylinderLeft"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.25" 
-                      placeholder="-0.75" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Axis</Label>
-                <FormField
-                  control={form.control}
-                  name="axisLeft"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      min="1" 
-                      max="180" 
-                      placeholder="85°" 
-                      {...field} 
-                      value={field.value?.toString() || ""} 
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        field.onChange(value === "" ? null : parseInt(value, 10));
-                      }} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Left Eye Add</Label>
-                <FormField
-                  control={form.control}
-                  name="addLeft"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.25" 
-                      placeholder="+1.00" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Pupillary Distance & Prescription Type */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Pupillary Distance</Label>
-                <FormField
-                  control={form.control}
-                  name="pdDistance"
-                  render={({ field }) => (
-                    <Input 
-                      type="number" 
-                      step="0.5" 
-                      placeholder="62 mm" 
-                      {...field} 
-                      value={field.value || ""} 
-                    />
-                  )}
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-slate-700 block mb-2">Prescription Type</Label>
-                <Select value={serviceType} onValueChange={setServiceType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                    <SelectItem value="contact_lens">Contact Lens</SelectItem>
-                    <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                    <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
-                    <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Clinical Fields */}
-        <div className="space-y-4">
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Diagnosis</Label>
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <Textarea 
-                  placeholder="Patient diagnosis and findings..." 
-                  className="min-h-[120px]" 
-                  {...field} 
-                  value={field.value || ""} 
-                />
-              )}
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Treatment Plan</Label>
-            <FormField
-              control={form.control}
-              name="treatment"
-              render={({ field }) => (
-                <Textarea 
-                  placeholder="Recommended treatment and follow-up..." 
-                  className="min-h-[120px]" 
-                  {...field} 
-                  value={field.value || ""} 
-                />
-              )}
-            />
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Additional Notes</Label>
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <Textarea 
-                  placeholder="Any additional instructions or notes..." 
-                  className="min-h-[120px]" 
-                  {...field} 
-                  value={field.value || ""} 
-                />
-              )}
-            />
-          </div>
-        </div>
-
-        {/* Follow-up Date & Status */}
-        <div className="grid grid-cols-2 gap-6">
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Follow-up Date</Label>
-            <FormField
-              control={form.control}
-              name="nextFollowUp"
-              render={({ field }) => (
-                <Input 
-                  type="date" 
-                  {...field} 
-                  value={field.value ? format(new Date(field.value), 'yyyy-MM-dd') : ''} 
-                  onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)} 
-                />
-              )}
-            />
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-slate-700 block mb-2">Prescription Status</Label>
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="filled">Filled</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-        </div>
-      </div>
-    );
+  const handleSendEmail = async (prescription: Prescription) => {
+    try {
+      await apiRequest("POST", `/api/prescriptions/${prescription.id}/email`);
+      toast({
+        title: "Email Sent",
+        description: "Prescription has been sent via email.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send email.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Prescriptions</h1>
-          <p className="text-gray-600 mt-2">Manage and create patient prescriptions</p>
-        </div>
-        <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="mr-2 h-4 w-4" />
-          New Prescription
-        </Button>
-      </div>
+    <>
+      <main className="flex-1 overflow-y-auto p-6">
+        <Tabs defaultValue="appointments" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="appointments">Doctor Appointments</TabsTrigger>
+            <TabsTrigger value="all">All Prescriptions</TabsTrigger>
+            <TabsTrigger value="glasses">Glasses</TabsTrigger>
+            <TabsTrigger value="contact-lenses">Contact Lenses</TabsTrigger>
+            <TabsTrigger value="medication">Medication</TabsTrigger>
+          </TabsList>
 
-      {/* Filters */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search prescriptions..."
-              className="pl-10 w-64"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          {/* Doctor Appointments Tab */}
+          <TabsContent value="appointments" className="space-y-6">
+            {/* Appointments Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Today's Appointments</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {appointments.filter(apt => {
+                          const today = new Date().toISOString().split('T')[0];
+                          return apt.appointmentDate?.split('T')[0] === today;
+                        }).length}
+                      </p>
+                      <p className="text-xs text-blue-600 flex items-center mt-1">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Scheduled today
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <Calendar className="text-blue-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Pending Consultations</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {appointments.filter(apt => apt.status === 'scheduled' || apt.status === 'confirmed' || apt.status === 'assigned_to_doctor').length}
+                      </p>
+                      <p className="text-xs text-amber-600">Awaiting consultation</p>
+                    </div>
+                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                      <Stethoscope className="text-amber-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Prescriptions Created</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {prescriptions.filter(p => {
+                          const today = new Date().toISOString().split('T')[0];
+                          return p.createdAt && new Date(p.createdAt).toISOString().split('T')[0] === today;
+                        }).length}
+                      </p>
+                      <p className="text-xs text-emerald-600">Today</p>
+                    </div>
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <Pill className="text-emerald-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Completed Today</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {appointments.filter(apt => apt.status === 'completed' && 
+                          (apt.appointmentDate ? apt.appointmentDate.split('T')[0] === new Date().toISOString().split('T')[0] : false)).length}
+                      </p>
+                      <p className="text-xs text-emerald-600">Consultations done</p>
+                    </div>
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <CheckCircle className="text-emerald-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Appointment Actions */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-slate-900">My Appointments</h2>
+              <div className="flex space-x-3">
+                <Select defaultValue="today">
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    // Reset form for new prescription
+                    form.reset({
+                      prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
+                      patientId: "",
+                      doctorId: "",
+                      appointmentId: "",
+                      storeId: "",
+                      prescriptionType: "eye_examination",
+                      visualAcuityRightEye: null,
+                      visualAcuityLeftEye: null,
+                      sphereRight: null,
+                      cylinderRight: null,
+                      axisRight: null,
+                      addRight: null,
+                      sphereLeft: null,
+                      cylinderLeft: null,
+                      axisLeft: null,
+                      addLeft: null,
+                      pdDistance: null,
+                      pdNear: null,
+                      pdFar: null,
+                      diagnosis: null,
+                      treatment: null,
+                      advice: null,
+                      notes: null,
+                      status: "active",
+                    });
+                    setServiceType("eye_examination");
+                    setSelectedPatient(null);
+                    setOpen(true);
+                    toast({
+                      title: "Quick Prescription",
+                      description: "Opening new prescription form",
+                    });
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Quick Prescription
+                </Button>
+              </div>
+            </div>
+
+            {/* Appointments List */}
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                {appointments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No appointments scheduled</h3>
+                    <p className="text-slate-600">Check back later for new appointments.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {appointments.map((appointment) => {
+                      const patient = patients.find(p => p.id === appointment.patientId);
+                      const doctor = doctors.find(d => d.id === (appointment.assignedDoctorId || appointment.doctorId || appointment.staffId));
+                      
+                      return (
+                        <div key={appointment.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <User className="h-6 w-6 text-blue-600" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h4 className="font-semibold text-slate-900">
+                                    {patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}
+                                  </h4>
+                                  <Badge className={
+                                    appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                    appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                                    appointment.status === 'assigned_to_doctor' ? 'bg-purple-100 text-purple-800' :
+                                    appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }>
+                                    {appointment.status === 'assigned_to_doctor' ? 'Assigned to Doctor' : appointment.status}
+                                  </Badge>
+                                  {doctor && (
+                                    <Badge variant="outline" className="text-xs">
+                                      Dr. {doctor.firstName} {doctor.lastName}
+                                    </Badge>
+                                  )}
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 text-sm text-slate-600">
+                                  <div className="flex items-center">
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    {appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMM dd, yyyy') : 'Date TBD'}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    {appointment.appointmentTime || appointment.time || 'Time TBD'}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Stethoscope className="h-4 w-4 mr-2" />
+                                    {appointment.appointmentType || appointment.service || 'General Consultation'}
+                                  </div>
+                                </div>
+                                {(appointment.reason || appointment.notes) && (
+                                  <p className="text-sm text-slate-600 mt-2">
+                                    <strong>Reason:</strong> {appointment.reason || appointment.notes}
+                                  </p>
+                                )}
+                                {appointment.doctorNotes && (
+                                  <p className="text-sm text-blue-600 mt-1">
+                                    <strong>Doctor Notes:</strong> {appointment.doctorNotes}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  // Set patient and appointment in prescription form
+                                  form.setValue('patientId', appointment.patientId);
+                                  form.setValue('appointmentId', appointment.id);
+                                  form.setValue('doctorId', appointment.assignedDoctorId || appointment.doctorId || appointment.staffId || '');
+                                  setOpen(true);
+                                  toast({
+                                    title: "Prescription Form",
+                                    description: "Opening prescription form for patient",
+                                  });
+                                }}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Pill className="h-4 w-4 mr-2" />
+                                Create Prescription
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const doctor = doctors.find(d => d.id === (appointment.assignedDoctorId || appointment.doctorId || appointment.staffId));
+                                  const detailedInstructions = `
+APPOINTMENT DETAILS REPORT
+═══════════════════════════════════════
+
+Patient Information:
+• Name: ${patient?.firstName} ${patient?.lastName}
+• Age: ${patient?.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
+• Gender: ${patient?.gender || 'Not specified'}
+• Phone: ${patient?.phone || 'Not provided'}
+• Email: ${patient?.email || 'Not provided'}
+
+Appointment Information:
+• Date: ${appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMMM dd, yyyy') : 'Date to be confirmed'}
+• Time: ${appointment.appointmentTime || appointment.time || 'Time to be confirmed'}
+• Type: ${appointment.appointmentType || appointment.service || 'General Consultation'}
+• Status: ${appointment.status || 'scheduled'}
+• Duration: ${appointment.duration || '30 minutes (estimated)'}
+
+Doctor/Staff Details:
+• Name: ${doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'To be assigned'}
+• Position: ${doctor?.position || 'Medical Professional'}
+• Department: ${doctor?.department || 'General'}
+
+Chief Complaint:
+• Reason for Visit: ${appointment.reason || appointment.notes || 'General medical consultation and examination'}
+
+Clinical Notes:
+• Doctor Notes: ${appointment.doctorNotes || 'No additional notes recorded yet'}
+• Appointment ID: ${appointment.id}
+• Scheduled by: System
+
+Medical History Summary:
+• Previous appointments with this patient
+• Any recurring conditions or treatments
+• Medication allergies or special considerations
+
+Follow-up Instructions:
+• Post-appointment care instructions will be provided
+• Next appointment recommendations if needed
+• Prescription details will be recorded separately
+
+═══════════════════════════════════════
+Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+OptiStore Pro Medical Center - Comprehensive Patient Care
+                                  `;
+                                  
+                                  setViewPrescription({
+                                    id: appointment.id,
+                                    prescriptionNumber: `APT-${appointment.id.slice(-8)}`,
+                                    patientId: appointment.patientId,
+                                    appointmentId: appointment.id,
+                                    doctorId: appointment.assignedDoctorId || appointment.doctorId || appointment.staffId,
+                                    storeId: null,
+                                    prescriptionDate: new Date(),
+                                    prescriptionType: 'appointment_details',
+                                    diagnosis: detailedInstructions,
+                                    treatment: appointment.treatmentPlan || null,
+                                    advice: appointment.followUpInstructions || null,
+                                    notes: appointment.notes || null,
+                                    status: 'active',
+                                    visualAcuityRightEye: null,
+                                    visualAcuityLeftEye: null,
+                                    sphereRight: null,
+                                    cylinderRight: null,
+                                    axisRight: null,
+                                    addRight: null,
+                                    sphereLeft: null,
+                                    cylinderLeft: null,
+                                    axisLeft: null,
+                                    addLeft: null,
+                                    pdDistance: null,
+                                    pdNear: null,
+                                    pdFar: null,
+                                    nextFollowUp: null,
+                                    customFields: null,
+                                    qrCode: null,
+                                    createdAt: new Date(),
+                                    updatedAt: new Date()
+                                  });
+                                  
+                                  toast({
+                                    title: "Appointment Details",
+                                    description: `Comprehensive details loaded for ${patient?.firstName} ${patient?.lastName}`,
+                                  });
+                                }}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                View Details
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="all" className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Prescriptions</p>
+                    <p className="text-2xl font-bold text-slate-900">{prescriptions.length}</p>
+                    <p className="text-xs text-emerald-600 flex items-center mt-1">
+                      <Activity className="h-3 w-3 mr-1" />
+                      Active prescriptions
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <FileText className="text-blue-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Glasses Prescriptions</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {prescriptions.filter(p => p.prescriptionType === 'glasses').length}
+                    </p>
+                    <p className="text-xs text-slate-500">Most common type</p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Eye className="text-purple-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Pending Follow-ups</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {prescriptions.filter(p => p.nextFollowUp && new Date(p.nextFollowUp) <= new Date()).length}
+                    </p>
+                    <p className="text-xs text-amber-600 flex items-center mt-1">
+                      <AlertCircle className="h-3 w-3 mr-1" />
+                      Requires attention
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                    <Calendar className="text-amber-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">This Month</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {prescriptions.filter(p => {
+                        if (!p.createdAt) return false;
+                        const date = new Date(p.createdAt);
+                        const now = new Date();
+                        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+                      }).length}
+                    </p>
+                    <p className="text-xs text-emerald-600">New prescriptions</p>
+                  </div>
+                  <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="text-emerald-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="filled">Filled</SelectItem>
-              <SelectItem value="expired">Expired</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={selectedType} onValueChange={setSelectedType}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="eye_examination">Eye Examination</SelectItem>
-              <SelectItem value="contact_lens">Contact Lens</SelectItem>
-              <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-              <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
-              <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <Tabs defaultValue="prescriptions" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="prescriptions">All Prescriptions</TabsTrigger>
-          <TabsTrigger value="recent">Recent Activity</TabsTrigger>
-          <TabsTrigger value="pending">Pending Review</TabsTrigger>
-        </TabsList>
+          {/* Controls */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search prescriptions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+              
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="filled">Filled</SelectItem>
+                  <SelectItem value="expired">Expired</SelectItem>
+                </SelectContent>
+              </Select>
 
-        <TabsContent value="prescriptions">
-          <Card>
+              <Select value={selectedType} onValueChange={setSelectedType}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="glasses">Glasses</SelectItem>
+                  <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                  <SelectItem value="medication">Medication</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Prescription
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Prescription</DialogTitle>
+                </DialogHeader>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <Tabs defaultValue="basic" className="w-full">
+                      <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                        <TabsTrigger value="measurements">Measurements</TabsTrigger>
+                        <TabsTrigger value="medical">Medical Details</TabsTrigger>
+                        <TabsTrigger value="notes">Notes & Follow-up</TabsTrigger>
+                      </TabsList>
+
+                      <TabsContent value="basic" className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="prescriptionNumber"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Prescription Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="prescriptionType"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Prescription Type</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="glasses">👓 Glasses</SelectItem>
+                                    <SelectItem value="contact_lenses">👁️ Contact Lenses</SelectItem>
+                                    <SelectItem value="medication">💊 Medication</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="patientId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Patient</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select patient..." />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {patients.map((patient) => (
+                                      <SelectItem key={patient.id} value={patient.id}>
+                                        {patient.firstName} {patient.lastName} ({patient.patientCode})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="doctorId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Doctor</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select doctor..." />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {doctors.filter(d => d.position === 'Doctor' || d.role === 'doctor').map((doctor) => (
+                                      <SelectItem key={doctor.id} value={doctor.id}>
+                                        Dr. {doctor.firstName} {doctor.lastName} ({doctor.department})
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="measurements" className="space-y-4">
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-slate-900">Visual Acuity</h4>
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="visualAcuityRightEye"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Right Eye</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="20/20" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="visualAcuityLeftEye"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Left Eye</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="20/20" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-slate-900">Pupillary Distance</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="pdDistance"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Distance PD</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.1" 
+                                        placeholder="62.0"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="pdNear"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Near PD</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.1" 
+                                        placeholder="58.0"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="pdFar"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Far PD</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.1" 
+                                        placeholder="64.0"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-slate-900">Right Eye (OD)</h4>
+                            <div className="grid grid-cols-4 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="sphereRight"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Sphere (SPH)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.25" 
+                                        placeholder="-2.00"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="cylinderRight"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Cylinder (CYL)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.25" 
+                                        placeholder="-0.50"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="axisRight"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Axis</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        min="0" 
+                                        max="180" 
+                                        placeholder="90"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="addRight"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Add</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.25" 
+                                        placeholder="+2.00"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <h4 className="font-semibold text-slate-900">Left Eye (OS)</h4>
+                            <div className="grid grid-cols-4 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="sphereLeft"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Sphere (SPH)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.25" 
+                                        placeholder="-2.00"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="cylinderLeft"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Cylinder (CYL)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.25" 
+                                        placeholder="-0.50"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="axisLeft"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Axis</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        min="0" 
+                                        max="180" 
+                                        placeholder="90"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="addLeft"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Add</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        type="number" 
+                                        step="0.25" 
+                                        placeholder="+2.00"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="medical" className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="diagnosis"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Diagnosis</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Enter medical diagnosis..."
+                                  className="min-h-[100px]"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="treatment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Treatment Plan</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Enter treatment recommendations..."
+                                  className="min-h-[100px]"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="advice"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Medical Advice</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Enter medical advice and recommendations..."
+                                  className="min-h-[100px]"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TabsContent>
+
+                      <TabsContent value="notes" className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="notes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Additional Notes</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  placeholder="Enter any additional notes or observations..."
+                                  className="min-h-[120px]"
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="nextFollowUp"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Next Follow-up Date</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="date" 
+                                  {...field}
+                                  value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </TabsContent>
+                    </Tabs>
+                    
+                    <div className="flex justify-end space-x-2 pt-4 border-t">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={createPrescriptionMutation.isPending}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        {createPrescriptionMutation.isPending ? "Creating..." : "Create Prescription"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Prescriptions Table */}
+          <Card className="border-slate-200">
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="mr-2 h-5 w-5" />
-                Prescription Records
-              </CardTitle>
+              <CardTitle>Prescription Records</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoading ? (
                 <div className="space-y-4">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/6"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
                     </div>
                   ))}
                 </div>
               ) : filteredPrescriptions.length === 0 ? (
                 <div className="text-center py-12">
-                  <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No prescriptions found</h3>
-                  <p className="text-gray-600 mb-6">
+                  <FileText className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No prescriptions found</h3>
+                  <p className="text-slate-600 mb-6">
                     {searchTerm ? "Try adjusting your search criteria." : "Create your first prescription to get started."}
                   </p>
                   {!searchTerm && (
-                    <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Button 
+                      onClick={() => setOpen(true)}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
                       <Plus className="mr-2 h-4 w-4" />
                       Create Prescription
                     </Button>
@@ -701,7 +1234,7 @@ export default function Prescriptions() {
                         <TableHead>Prescription #</TableHead>
                         <TableHead>Patient</TableHead>
                         <TableHead>Doctor</TableHead>
-                        <TableHead>Service Type</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Actions</TableHead>
@@ -710,67 +1243,71 @@ export default function Prescriptions() {
                     <TableBody>
                       {filteredPrescriptions.map((prescription) => (
                         <TableRow key={prescription.id}>
-                          <TableCell className="font-medium">{prescription.prescriptionNumber}</TableCell>
-                          <TableCell>{getPatientName(prescription.patientId)}</TableCell>
-                          <TableCell>{getDoctorName(prescription.doctorId)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <QrCode className="h-4 w-4 text-slate-400" />
+                              <span className="font-mono text-sm">{prescription.prescriptionNumber}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <User className="h-4 w-4 text-slate-400" />
+                              <span>{getPatientName(prescription.patientId)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <Stethoscope className="h-4 w-4 text-slate-400" />
+                              <span>{getDoctorName(prescription.doctorId)}</span>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="capitalize">
-                              {prescription.prescriptionType?.replace('_', ' ')}
+                              {prescription.prescriptionType.replace('_', ' ')}
                             </Badge>
                           </TableCell>
-                          <TableCell>{format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}</TableCell>
                           <TableCell>
-                            <Badge className={
-                              prescription.status === 'active' ? 'bg-green-100 text-green-800' :
-                              prescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
-                              'bg-red-100 text-red-800'
-                            }>
+                            <span className="text-sm">
+                              {format(new Date(prescription.createdAt), 'MMM dd, yyyy')}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              className={
+                                prescription.status === 'active' 
+                                  ? 'bg-emerald-100 text-emerald-800' 
+                                  : prescription.status === 'filled'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-red-100 text-red-800'
+                              }
+                            >
                               {prescription.status}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuItem onClick={() => handleViewDetails(prescription)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleEditPrescription(prescription)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDownloadPDF(prescription)}>
-                                  <Download className="mr-2 h-4 w-4" />
-                                  Download PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleSendEmail(prescription)}>
-                                  <Send className="mr-2 h-4 w-4" />
-                                  Send Email
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleGenerateQR(prescription)}>
-                                  <QrCode className="mr-2 h-4 w-4" />
-                                  QR Code
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleSharePrescription(prescription)}>
-                                  <Share className="mr-2 h-4 w-4" />
-                                  Share
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => handleDeletePrescription(prescription)}
-                                  className="text-red-600"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
+                            <div className="flex space-x-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewPrescription(prescription)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadPDF(prescription)}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleSendEmail(prescription)}
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -780,32 +1317,29 @@ export default function Prescriptions() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="recent">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">Recent prescription activities will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          <TabsContent value="glasses" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-slate-600">Glasses prescriptions will be displayed here.</p>
+            </div>
+          </TabsContent>
 
-        <TabsContent value="pending">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">Prescriptions pending review will be displayed here.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="contact-lenses" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-slate-600">Contact lens prescriptions will be displayed here.</p>
+            </div>
+          </TabsContent>
 
-      {/* Create/Edit Prescription Dialog */}
+          <TabsContent value="medication" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-slate-600">Medication prescriptions will be displayed here.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
+
+      {/* Create/Edit Prescription Dialog - Available from all tabs */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -814,70 +1348,679 @@ export default function Prescriptions() {
           
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Patient Selection */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="patientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Patient</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        const patient = patients.find(p => p.id === value);
-                        setSelectedPatient(patient || null);
-                      }} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose patient..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {patients.map((patient) => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              {patient.firstName} {patient.lastName} ({patient.patientCode})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="prescriptionType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Service Type</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value);
-                        setServiceType(value);
-                      }} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select service..." />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                          <SelectItem value="contact_lens">Contact Lens</SelectItem>
-                          <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                          <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
-                          <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="medical">Medical Details</TabsTrigger>
+                </TabsList>
 
-              {/* Service-Specific Fields */}
-              {serviceType && renderServiceSpecificFields()}
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="prescriptionNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prescription Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="prescriptionType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Service Type</FormLabel>
+                          <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            setServiceType(value);
+                          }} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select service type..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="eye_examination">👁️ Eye Examination</SelectItem>
+                              <SelectItem value="contact_lens">🔍 Contact Lens</SelectItem>
+                              <SelectItem value="fitting_glasses">👓 Fitting Glasses</SelectItem>
+                              <SelectItem value="fitting_followup">📋 Fitting Follow-up</SelectItem>
+                              <SelectItem value="visit_consultation">💬 Visit Consultation</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="patientId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Patient</FormLabel>
+                          <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            const patient = patients.find(p => p.id === value);
+                            setSelectedPatient(patient || null);
+                          }} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select patient..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {patients.map((patient) => (
+                                <SelectItem key={patient.id} value={patient.id}>
+                                  {patient.firstName} {patient.lastName} ({patient.patientCode})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="doctorId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Doctor (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select doctor..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {doctors.map((doctor) => (
+                                <SelectItem key={doctor.id} value={doctor.id}>
+                                  Dr. {doctor.firstName} {doctor.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Patient Information Display */}
+                  {selectedPatient && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-900 mb-3">Patient Information</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-blue-700">Name:</span> {selectedPatient.firstName} {selectedPatient.lastName}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Patient ID:</span> {selectedPatient.patientCode}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Age:</span> {selectedPatient.dateOfBirth ? new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Gender:</span> {selectedPatient.gender || 'Not specified'}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Phone:</span> {selectedPatient.phone || 'Not provided'}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Email:</span> {selectedPatient.email || 'Not provided'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="medical" className="space-y-4">
+                  {/* Service Type Specific Fields */}
+                  {serviceType === "eye_examination" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">👁️ Eye Examination Fields</h4>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="visualAcuityRightEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Right Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/20" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="visualAcuityLeftEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Left Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/20" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sphereRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="axisRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" max="180" placeholder="90" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sphereLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="axisLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" max="180" placeholder="90" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Eye Examination Findings</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Enter detailed eye examination findings and diagnosis..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "contact_lens" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">🔍 Contact Lens Prescription</h4>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="diagnosis"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Contact Lens Type</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Daily, Weekly, Monthly..." {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="treatment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Brand & Material</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Acuvue, Biofinity, etc." {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sphereRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Power (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="sphereLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Power (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Base Curve (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.1" placeholder="8.4" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Diameter</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.1" placeholder="14.2" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="advice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contact Lens Care Instructions</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Wear time, cleaning instructions, replacement schedule..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "fitting_glasses" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">👓 Glasses Fitting</h4>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="pdDistance"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Pupillary Distance (mm)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="62.0" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="pdNear"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>PD Near (mm)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="59.0" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="pdFar"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>PD Far (mm)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="65.0" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Frame Selection & Measurements</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Frame style, size, bridge width, temple length..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="treatment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Lens Options & Coatings</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Anti-glare, UV protection, blue light filter, progressive, bifocal..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "fitting_followup" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">📋 Fitting Follow-up</h4>
+                      
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Status Assessment</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Comfort level, vision clarity, fit assessment..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="treatment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Adjustments Made</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Frame adjustments, nose pad alignment, temple adjustment..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="advice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Next Steps & Recommendations</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Further adjustments needed, wear schedule, next appointment..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="nextFollowUp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Next Follow-up Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "visit_consultation" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">💬 Visit Consultation</h4>
+                      
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Chief Complaint & Symptoms</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Patient's main concerns, symptoms, duration..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="treatment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Clinical Assessment</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Examination findings, observations, measurements..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="advice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Treatment Plan & Recommendations</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Recommended treatment, lifestyle changes, precautions..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Additional Notes</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Any additional observations, patient history, special instructions..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {!serviceType && (
+                    <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
+                      <p className="text-slate-600">Please select a service type to see relevant prescription fields</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
               
-              <div className="flex justify-end space-x-3 pt-6 border-t">
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createPrescriptionMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createPrescriptionMutation.isPending ? "Creating..." : "Create Prescription"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+                  <FormField
+                    control={form.control}
+                    name="diagnosis"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Diagnosis</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter diagnosis and medical findings..."
+                            className="min-h-[100px]"
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="treatment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Treatment Plan</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter recommended treatment and instructions..."
+                            className="min-h-[100px]"
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Additional Notes</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter any additional notes or observations..."
+                            className="min-h-[100px]"
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+              </Tabs>
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
                 <Button
                   type="button"
                   variant="outline"
@@ -927,6 +2070,7 @@ export default function Prescriptions() {
             </DialogHeader>
             
             <div className="space-y-6">
+              {/* Basic Information */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-slate-600">Patient</Label>
@@ -938,48 +2082,106 @@ export default function Prescriptions() {
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-slate-600">Date</Label>
-                  <p>{format(new Date(viewPrescription.createdAt || ''), 'MMMM dd, yyyy')}</p>
+                  <p>{format(new Date(viewPrescription.createdAt), 'MMMM dd, yyyy')}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-slate-600">Service Type</Label>
-                  <p className="capitalize">{viewPrescription.prescriptionType?.replace('_', ' ')}</p>
+                  <Label className="text-sm font-medium text-slate-600">Type</Label>
+                  <p className="capitalize">{viewPrescription.prescriptionType.replace('_', ' ')}</p>
                 </div>
               </div>
 
+              {/* Visual Measurements */}
+              {(viewPrescription.sphereRight || viewPrescription.sphereLeft) && (
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-4">Optical Measurements</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border border-slate-300">
+                      <thead>
+                        <tr className="bg-slate-50">
+                          <th className="border border-slate-300 p-2 text-left">Eye</th>
+                          <th className="border border-slate-300 p-2">Sphere</th>
+                          <th className="border border-slate-300 p-2">Cylinder</th>
+                          <th className="border border-slate-300 p-2">Axis</th>
+                          <th className="border border-slate-300 p-2">Add</th>
+                          <th className="border border-slate-300 p-2">Visual Acuity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td className="border border-slate-300 p-2 font-medium">Right (OD)</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.sphereRight || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.cylinderRight || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.axisRight || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.addRight || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.visualAcuityRightEye || '-'}</td>
+                        </tr>
+                        <tr>
+                          <td className="border border-slate-300 p-2 font-medium">Left (OS)</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.sphereLeft || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.cylinderLeft || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.axisLeft || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.addLeft || '-'}</td>
+                          <td className="border border-slate-300 p-2 text-center">{viewPrescription.visualAcuityLeftEye || '-'}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  {viewPrescription.pdDistance && (
+                    <div className="mt-4">
+                      <Label className="text-sm font-medium text-slate-600">Pupillary Distance (PD)</Label>
+                      <p>Distance: {viewPrescription.pdDistance}mm {viewPrescription.pdNear && `, Near: ${viewPrescription.pdNear}mm`} {viewPrescription.pdFar && `, Far: ${viewPrescription.pdFar}mm`}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Medical Information */}
               {viewPrescription.diagnosis && (
                 <div>
-                  <Label className="text-sm font-medium text-slate-600">Diagnosis/Details</Label>
-                  <div className="bg-slate-50 p-4 rounded-lg mt-2">
-                    <pre className="whitespace-pre-wrap text-sm">{viewPrescription.diagnosis}</pre>
-                  </div>
+                  <Label className="text-sm font-medium text-slate-600">Diagnosis</Label>
+                  <p className="mt-1 p-3 bg-slate-50 rounded-md">{viewPrescription.diagnosis}</p>
                 </div>
               )}
 
-              {(viewPrescription.visualAcuityRightEye || viewPrescription.visualAcuityLeftEye) && (
+              {viewPrescription.treatment && (
                 <div>
-                  <Label className="text-sm font-medium text-slate-600">Visual Acuity</Label>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div>
-                      <span className="text-xs text-slate-500">Right Eye:</span>
-                      <p>{viewPrescription.visualAcuityRightEye || 'Not recorded'}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-slate-500">Left Eye:</span>
-                      <p>{viewPrescription.visualAcuityLeftEye || 'Not recorded'}</p>
-                    </div>
-                  </div>
+                  <Label className="text-sm font-medium text-slate-600">Treatment</Label>
+                  <p className="mt-1 p-3 bg-slate-50 rounded-md">{viewPrescription.treatment}</p>
                 </div>
               )}
 
-              <div className="flex justify-center pt-4">
-                <div className="bg-white p-4 rounded-lg border">
-                  <QRCode value={`prescription:${viewPrescription.prescriptionNumber}`} size={128} />
+              {viewPrescription.advice && (
+                <div>
+                  <Label className="text-sm font-medium text-slate-600">Medical Advice</Label>
+                  <p className="mt-1 p-3 bg-slate-50 rounded-md">{viewPrescription.advice}</p>
+                </div>
+              )}
+
+              {viewPrescription.notes && (
+                <div>
+                  <Label className="text-sm font-medium text-slate-600">Notes</Label>
+                  <p className="mt-1 p-3 bg-slate-50 rounded-md">{viewPrescription.notes}</p>
+                </div>
+              )}
+
+              {/* QR Code */}
+              <div className="flex justify-center">
+                <div className="text-center">
+                  <Label className="text-sm font-medium text-slate-600">Verification QR Code</Label>
+                  <div className="mt-2 p-4 bg-white border rounded-lg">
+                    <QRCode
+                      value={`${window.location.origin}/verify/prescription/${viewPrescription.id}`}
+                      size={150}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">Scan to verify prescription</p>
                 </div>
               </div>
             </div>
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </>
   );
 }

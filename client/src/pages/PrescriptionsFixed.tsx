@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,16 +90,6 @@ export default function PrescriptionsFixed() {
     },
   });
 
-  // Watch the prescriptionType field to update the current service type
-  const watchedPrescriptionType = createForm.watch("prescriptionType");
-  
-  // Update currentServiceType when form prescriptionType changes
-  useEffect(() => {
-    if (watchedPrescriptionType) {
-      setCurrentServiceType(watchedPrescriptionType);
-    }
-  }, [watchedPrescriptionType]);
-
   // Quick prescription form
   const quickForm = useForm<InsertPrescription>({
     resolver: zodResolver(insertPrescriptionSchema),
@@ -173,11 +163,11 @@ export default function PrescriptionsFixed() {
       visualAcuityLeftEye: data.visualAcuityLeftEye || null,
       sphereRight: data.sphereRight || null,
       cylinderRight: data.cylinderRight || null,
-      axisRight: typeof data.axisRight === 'number' ? data.axisRight : null,
+      axisRight: data.axisRight || null,
       addRight: data.addRight || null,
       sphereLeft: data.sphereLeft || null,
       cylinderLeft: data.cylinderLeft || null,
-      axisLeft: typeof data.axisLeft === 'number' ? data.axisLeft : null,
+      axisLeft: data.axisLeft || null,
       addLeft: data.addLeft || null,
       pdDistance: data.pdDistance || null,
       pdNear: data.pdNear || null,
@@ -1186,83 +1176,69 @@ OptiStore Pro Team`;
                       </div>
                     )}
 
-                    {/* Vision Prescription Fields - Only for eye examination and glasses fitting */}
-                    {(currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses') && (
-                      <>
-                        {/* Right Eye Prescription */}
-                        <div className="bg-blue-50 rounded-lg p-4">
-                          <h4 className="font-medium mb-4">Right Eye (OD)</h4>
-                          <div className="grid grid-cols-4 gap-4">
-                            <FormField
-                              control={createForm.control}
-                              name="sphereRight"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Sphere (SPH)</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" step="0.25" placeholder="-2.25" {...field} value={field.value || ""} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={createForm.control}
-                              name="cylinderRight"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Cylinder (CYL)</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" step="0.25" placeholder="-0.50" {...field} value={field.value || ""} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={createForm.control}
-                              name="axisRight"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Axis</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      min="1" 
-                                      max="180" 
-                                      placeholder="90" 
-                                      {...field} 
-                                      value={field.value?.toString() || ""} 
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        field.onChange(value === "" ? null : parseInt(value, 10));
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={createForm.control}
-                              name="addRight"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Add</FormLabel>
-                                  <FormControl>
-                                    <Input type="number" step="0.25" placeholder="+1.00" {...field} value={field.value || ""} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
+                    {/* Right Eye Prescription */}
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <h4 className="font-medium mb-4">Right Eye (OD)</h4>
+                      <div className="grid grid-cols-4 gap-4">
+                        <FormField
+                          control={createForm.control}
+                          name="sphereRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (SPH)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.25" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="cylinderRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (CYL)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-0.50" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="axisRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="1" max="180" placeholder="90" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={createForm.control}
+                          name="addRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Add</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="+1.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
 
-                        {/* Left Eye Prescription */}
-                        <div className="bg-green-50 rounded-lg p-4">
-                          <h4 className="font-medium mb-4">Left Eye (OS)</h4>
-                          <div className="grid grid-cols-4 gap-4">
+                    {/* Left Eye Prescription */}
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <h4 className="font-medium mb-4">Left Eye (OS)</h4>
+                      <div className="grid grid-cols-4 gap-4">
                         <FormField
                           control={createForm.control}
                           name="sphereLeft"
@@ -1296,18 +1272,7 @@ OptiStore Pro Team`;
                             <FormItem>
                               <FormLabel>Axis</FormLabel>
                               <FormControl>
-                                <Input 
-                                  type="number" 
-                                  min="1" 
-                                  max="180" 
-                                  placeholder="85" 
-                                  {...field} 
-                                  value={field.value?.toString() || ""} 
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    field.onChange(value === "" ? null : parseInt(value, 10));
-                                  }}
-                                />
+                                <Input type="number" min="1" max="180" placeholder="85" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -1328,10 +1293,8 @@ OptiStore Pro Team`;
                         />
                       </div>
                     </div>
-                    )}
 
-                    {/* Pupillary Distance - Only for eye examination and glasses fitting */}
-                    {(currentServiceType === 'eye_examination' || currentServiceType === 'fitting_glasses') && (
+                    {/* Pupillary Distance */}
                     <div className="grid grid-cols-3 gap-4">
                       <FormField
                         control={createForm.control}
@@ -1373,8 +1336,6 @@ OptiStore Pro Team`;
                         )}
                       />
                     </div>
-                      </>
-                    )}
                   </div>
                 </TabsContent>
 
