@@ -714,7 +714,17 @@ export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}).extend({
+  prescriptionDate: z.union([z.string(), z.date()]).transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ).optional(),
+  axisRight: z.union([z.number(), z.string(), z.null()]).transform((val) => 
+    val === null || val === '' ? null : typeof val === 'string' ? parseInt(val) : val
+  ).optional(),
+  axisLeft: z.union([z.number(), z.string(), z.null()]).transform((val) => 
+    val === null || val === '' ? null : typeof val === 'string' ? parseInt(val) : val
+  ).optional(),
+}).partial();
 
 export const insertPrescriptionItemSchema = createInsertSchema(prescriptionItems).omit({
   id: true,

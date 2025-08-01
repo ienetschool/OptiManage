@@ -77,7 +77,7 @@ export default function PrescriptionsFixed() {
 
   // Create prescription form
   const createForm = useForm<InsertPrescription>({
-    resolver: zodResolver(insertPrescriptionSchema),
+    mode: "onChange",
     defaultValues: {
       prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
       patientId: "",
@@ -92,7 +92,7 @@ export default function PrescriptionsFixed() {
 
   // Quick prescription form
   const quickForm = useForm<InsertPrescription>({
-    resolver: zodResolver(insertPrescriptionSchema),
+    mode: "onChange",
     defaultValues: {
       prescriptionNumber: `QRX-${Date.now().toString().slice(-6)}`,
       patientId: "",
@@ -149,40 +149,11 @@ export default function PrescriptionsFixed() {
     }
     
     // Clean up the data - ensure all required fields have proper values
-    const cleanedData: InsertPrescription = {
-      prescriptionNumber: data.prescriptionNumber,
-      patientId: data.patientId,
-      doctorId: data.doctorId || null,
-      appointmentId: data.appointmentId || null,
-      storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+    const cleanedData = {
+      ...data,
       prescriptionDate: data.prescriptionDate || new Date(),
-      prescriptionType: data.prescriptionType || "eye_examination",
-      
-      // Vision prescription fields
-      visualAcuityRightEye: data.visualAcuityRightEye || null,
-      visualAcuityLeftEye: data.visualAcuityLeftEye || null,
-      sphereRight: data.sphereRight || null,
-      cylinderRight: data.cylinderRight || null,
-      axisRight: data.axisRight || null,
-      addRight: data.addRight || null,
-      sphereLeft: data.sphereLeft || null,
-      cylinderLeft: data.cylinderLeft || null,
-      axisLeft: data.axisLeft || null,
-      addLeft: data.addLeft || null,
-      pdDistance: data.pdDistance || null,
-      pdNear: data.pdNear || null,
-      pdFar: data.pdFar || null,
-      
-      // Clinical fields
-      diagnosis: data.diagnosis || null,
-      treatment: data.treatment || null,
-      advice: data.advice || null,
-      notes: data.notes || null,
-      nextFollowUp: data.nextFollowUp || null,
-      
-      // Status
+      storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
       status: data.status || "active",
-      qrCode: data.qrCode || null,
     };
     
     console.log('Cleaned data for submission:', cleanedData);
