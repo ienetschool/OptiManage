@@ -269,8 +269,8 @@ export default function StaffPage() {
                     <span class="value">${staff.department || 'General'}</span>
                   </div>
                   <div class="id-row">
-                    <span class="label">Blood Group:</span>
-                    <span class="value">${staff.bloodGroup || 'N/A'}</span>
+                    <span class="label">Nationality:</span>
+                    <span class="value">${staff.nationality || 'N/A'}</span>
                   </div>
                   <div class="id-row">
                     <span class="label">Phone:</span>
@@ -493,7 +493,7 @@ export default function StaffPage() {
       role: "staff",
       permissions: [],
       customFields: {},
-      bloodGroup: "",
+      nationality: "",
       dateOfBirth: "",
       gender: "",
     },
@@ -517,7 +517,7 @@ export default function StaffPage() {
         status: editingStaff.status || "active",
         permissions: editingStaff.permissions || [],
         customFields: editingStaff.customFields || {},
-        bloodGroup: editingStaff.bloodGroup || "",
+        nationality: editingStaff.nationality || "",
         dateOfBirth: editingStaff.dateOfBirth || "",
         gender: editingStaff.gender || "",
       });
@@ -2033,8 +2033,9 @@ export default function StaffPage() {
             <Form {...editForm}>
               <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
                 <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
+                  <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                    <TabsTrigger value="personal">Personal Info</TabsTrigger>
                     <TabsTrigger value="contact">Contact</TabsTrigger>
                     <TabsTrigger value="access">Access</TabsTrigger>
                     <TabsTrigger value="payroll">Payroll & Docs</TabsTrigger>
@@ -2188,6 +2189,67 @@ export default function StaffPage() {
                         </FormItem>
                       )}
                     />
+                  </TabsContent>
+
+                  <TabsContent value="personal" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date of Birth</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select gender" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="nationality"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nationality</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Enter nationality" 
+                                {...field} 
+                                value={field.value || ""} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </TabsContent>
 
                   <TabsContent value="access" className="space-y-4">
