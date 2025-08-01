@@ -23,7 +23,9 @@ import {
   Activity,
   Shield,
   Clock,
-  Award
+  Award,
+  FileText,
+  QrCode
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -502,7 +504,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Employee ID</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -548,7 +550,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Date of Birth</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} />
+                                  <Input type="date" {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -561,7 +563,7 @@ export default function StaffPage() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Gender</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue />
@@ -588,7 +590,7 @@ export default function StaffPage() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Position</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select position" />
@@ -624,7 +626,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Department</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -639,14 +641,14 @@ export default function StaffPage() {
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel>Store Assignment</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
                                       <SelectValue placeholder="Select store" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
-                                    {stores.map((store: any) => (
+                                    {(stores as any[]).map((store: any) => (
                                       <SelectItem key={store.id} value={store.id}>
                                         {store.name}
                                       </SelectItem>
@@ -708,7 +710,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Phone Number</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -722,7 +724,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Email Address</FormLabel>
                                 <FormControl>
-                                  <Input type="email" {...field} />
+                                  <Input type="email" {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -741,6 +743,7 @@ export default function StaffPage() {
                                   placeholder="Enter complete address..."
                                   className="min-h-[80px]"
                                   {...field} 
+                                  value={field.value || ""}
                                 />
                               </FormControl>
                               <FormMessage />
@@ -756,7 +759,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Emergency Contact Name</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -770,7 +773,7 @@ export default function StaffPage() {
                               <FormItem>
                                 <FormLabel>Emergency Contact Phone</FormLabel>
                                 <FormControl>
-                                  <Input {...field} />
+                                  <Input {...field} value={field.value || ""} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

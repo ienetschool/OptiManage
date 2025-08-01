@@ -2427,15 +2427,13 @@ export default function Patients() {
 
                     // Then create a medical appointment record
                     const medicalAppointmentData = {
+                      appointmentNumber: `MA-${Date.now()}`,
                       patientId: selectedAppointment.patientId,
                       doctorId: selectedDoctorId,
                       appointmentDate: selectedAppointment.appointmentDate,
-                      appointmentTime: selectedAppointment.appointmentTime || "09:00",
                       appointmentType: selectedAppointment.service || "consultation",
                       status: "scheduled",
-                      priority: "normal",
-                      notes: "Forwarded from general appointment",
-                      originalAppointmentId: selectedAppointment.id
+                      notes: "Forwarded from general appointment"
                     };
 
                     await apiRequest("POST", "/api/medical-appointments", medicalAppointmentData);

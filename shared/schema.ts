@@ -514,7 +514,7 @@ export const medicalAppointments = pgTable("medical_appointments", {
   id: uuid("id").primaryKey().defaultRandom(),
   appointmentNumber: varchar("appointment_number", { length: 20 }).unique().notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
-  doctorId: uuid("doctor_id").references(() => doctors.id).notNull(),
+  doctorId: uuid("doctor_id").references(() => staff.id).notNull(),
   storeId: varchar("store_id").references(() => stores.id),
   appointmentDate: timestamp("appointment_date").notNull(),
   appointmentType: varchar("appointment_type", { length: 50 }).notNull(), // checkup, follow-up, emergency
@@ -704,6 +704,10 @@ export const insertMedicalAppointmentSchema = createInsertSchema(medicalAppointm
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  appointmentDate: z.union([z.string(), z.date()]).transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
 });
 
 export const insertPrescriptionSchema = createInsertSchema(prescriptions).omit({
