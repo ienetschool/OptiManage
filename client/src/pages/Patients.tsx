@@ -2371,10 +2371,8 @@ export default function Patients() {
                     <SelectValue placeholder="Choose a doctor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dr-smith">Dr. John Smith - Ophthalmologist</SelectItem>
-                    <SelectItem value="dr-jones">Dr. Sarah Jones - Optometrist</SelectItem>
-                    <SelectItem value="dr-brown">Dr. Michael Brown - Eye Specialist</SelectItem>
-                    <SelectItem value="dr-davis">Dr. Emily Davis - Retina Specialist</SelectItem>
+                    <SelectItem value="d7309e8a-611f-490a-8ec7-427aea6ebf08">Dr. Fafa Fafa - Eye Specialist</SelectItem>
+                    <SelectItem value="958400e7-db8e-4350-968a-e5c3f67c0fc6">Dr. Test Staff - Doctor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -2417,23 +2415,30 @@ export default function Patients() {
                   }
 
                   try {
-                    // Update the appointment with doctor assignment
+                    // First, update the regular appointment
                     const updateData = {
-                      id: selectedAppointment.id,
-                      patientId: selectedAppointment.patientId,
-                      appointmentDate: selectedAppointment.appointmentDate,
-                      appointmentTime: selectedAppointment.appointmentTime,
-                      service: selectedAppointment.service,
-                      serviceType: selectedAppointment.serviceType || selectedAppointment.service,
-                      doctorId: selectedDoctorId,
-                      staffId: selectedDoctorId,
+                      ...selectedAppointment,
+                      assignedDoctorId: selectedDoctorId,
                       status: "assigned_to_doctor",
-                      notes: selectedAppointment.notes || "",
-                      assignedToDoctor: true,
                       doctorNotes: "Appointment forwarded for medical consultation"
                     };
 
                     await apiRequest("PUT", `/api/appointments/${selectedAppointment.id}`, updateData);
+
+                    // Then create a medical appointment record
+                    const medicalAppointmentData = {
+                      patientId: selectedAppointment.patientId,
+                      doctorId: selectedDoctorId,
+                      appointmentDate: selectedAppointment.appointmentDate,
+                      appointmentTime: selectedAppointment.appointmentTime || "09:00",
+                      appointmentType: selectedAppointment.service || "consultation",
+                      status: "scheduled",
+                      priority: "normal",
+                      notes: "Forwarded from general appointment",
+                      originalAppointmentId: selectedAppointment.id
+                    };
+
+                    await apiRequest("POST", "/api/medical-appointments", medicalAppointmentData);
 
                     // Refresh appointments data
                     queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
@@ -2441,7 +2446,7 @@ export default function Patients() {
 
                     toast({
                       title: "Success",
-                      description: "Appointment has been assigned to the selected doctor",
+                      description: "Appointment forwarded to doctor and will appear in Doctor Appointments tab",
                     });
                     setForwardToDoctorOpen(false);
                     setSelectedAppointment(null);

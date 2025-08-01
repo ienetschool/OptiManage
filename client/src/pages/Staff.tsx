@@ -277,12 +277,12 @@ export default function StaffPage() {
 
   const { data: staffListFromAPI = [], isLoading, error } = useQuery<any[]>({
     queryKey: ["/api/staff"],
-    retry: 1,
-    retryDelay: 500,
+    retry: 3,
+    retryDelay: 1000,
   });
 
-  // Use mock data as fallback if API fails
-  const staffList = error || staffListFromAPI.length === 0 ? mockStaffData : staffListFromAPI;
+  // Use API data if available, fallback to mock data only if API fails completely
+  const staffList = Array.isArray(staffListFromAPI) && staffListFromAPI.length > 0 ? staffListFromAPI : mockStaffData;
 
   const { data: stores = [] } = useQuery({
     queryKey: ["/api/stores"],
