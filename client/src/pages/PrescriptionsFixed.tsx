@@ -1,27 +1,34 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Label } from "@/components/ui/label";
-import {
-  Plus,
-  Search,
-  FileText,
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Plus, 
+  Search, 
+  Eye,
   Download,
   Send,
-  Eye,
-  User,
+  QrCode,
+  FileText,
   Calendar,
-  Clock,
-  Activity,
-  AlertCircle,
-  CheckCircle
+  Users,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Share,
+  Mail,
+  FileDown,
+  Zap,
+  CheckCircle,
+  Clock
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,26 +37,30 @@ import {
   insertPrescriptionSchema, 
   type Prescription, 
   type InsertPrescription, 
-  type Patient, 
-  type Doctor,
-  type MedicalAppointment 
+  type Patient
 } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-export default function Prescriptions() {
-  const [open, setOpen] = useState(false);
+export default function PrescriptionsFixed() {
+  const [createOpen, setCreateOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedType, setSelectedType] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
-  const [serviceType, setServiceType] = useState("eye_examination");
-  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Data queries
   const { data: prescriptions = [], isLoading } = useQuery<Prescription[]>({
     queryKey: ["/api/prescriptions"],
   });
@@ -58,53 +69,39 @@ export default function Prescriptions() {
     queryKey: ["/api/patients"],
   });
 
-  const { data: doctors = [] } = useQuery<any[]>({
+  const { data: staff = [] } = useQuery<any[]>({
     queryKey: ["/api/staff"],
   });
 
-  const { data: medicalAppointments = [] } = useQuery<MedicalAppointment[]>({
-    queryKey: ["/api/medical-appointments"],
-  });
-
-  const { data: regularAppointments = [] } = useQuery<any[]>({
-    queryKey: ["/api/appointments"],
-  });
-
-  const appointments = [
-    ...medicalAppointments,
-    ...regularAppointments.filter((apt: any) => apt.doctorId || apt.staffId)
-  ];
-
-  const form = useForm<InsertPrescription>({
+  // Create prescription form
+  const createForm = useForm<InsertPrescription>({
     resolver: zodResolver(insertPrescriptionSchema),
     defaultValues: {
       prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
       patientId: "",
       doctorId: "",
-      appointmentId: "",
-      storeId: "",
+      storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
       prescriptionType: "eye_examination",
-      visualAcuityRightEye: "",
-      visualAcuityLeftEye: "",
-      sphereRight: "",
-      cylinderRight: "",
-      axisRight: 0,
-      addRight: "",
-      sphereLeft: "",
-      cylinderLeft: "",
-      axisLeft: 0,
-      addLeft: "",
-      pdDistance: "",
-      pdNear: "",
-      pdFar: "",
       diagnosis: "",
       treatment: "",
-      advice: "",
-      notes: "",
       status: "active",
     },
   });
 
+  // Quick prescription form
+  const quickForm = useForm<InsertPrescription>({
+    resolver: zodResolver(insertPrescriptionSchema),
+    defaultValues: {
+      prescriptionNumber: `QRX-${Date.now().toString().slice(-6)}`,
+      patientId: "",
+      storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+      prescriptionType: "eye_examination",
+      diagnosis: "",
+      status: "active",
+    },
+  });
+
+  // Mutation for creating prescriptions
   const createPrescriptionMutation = useMutation({
     mutationFn: async (data: InsertPrescription) => {
       return await apiRequest('/api/prescriptions', {
@@ -114,9 +111,10 @@ export default function Prescriptions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
-      setOpen(false);
-      form.reset();
-      setSelectedPatient(null);
+      setCreateOpen(false);
+      setQuickOpen(false);
+      createForm.reset();
+      quickForm.reset();
       toast({
         title: "Success",
         description: "Prescription created successfully",
@@ -131,939 +129,597 @@ export default function Prescriptions() {
     },
   });
 
-  const onSubmit = async (data: InsertPrescription) => {
+  // Form submit handlers
+  const onCreateSubmit = (data: InsertPrescription) => {
     createPrescriptionMutation.mutate(data);
   };
 
+  const onQuickSubmit = (data: InsertPrescription) => {
+    createPrescriptionMutation.mutate(data);
+  };
+
+  // Filter prescriptions
   const filteredPrescriptions = prescriptions.filter((prescription) => {
+    const patient = patients.find(p => p.id === prescription.patientId);
+    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
+    
     const matchesSearch = prescription.prescriptionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      getPatientName(prescription.patientId).toLowerCase().includes(searchTerm.toLowerCase());
+      patientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === "all" || prescription.status === selectedStatus;
-    const matchesType = selectedType === "all" || prescription.prescriptionType === selectedType;
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus;
   });
 
+  // Helper functions
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
     return patient ? `${patient.firstName} ${patient.lastName}` : "Unknown Patient";
   };
 
   const getDoctorName = (doctorId: string | null) => {
-    if (!doctorId) return "No Doctor Assigned";
-    const doctor = doctors.find(d => d.id === doctorId);
+    if (!doctorId) return "No Doctor";
+    const doctor = staff.find(d => d.id === doctorId);
     return doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : "Unknown Doctor";
   };
 
+  // Action handlers
   const handleDownloadPDF = (prescription: Prescription) => {
+    const patient = patients.find(p => p.id === prescription.patientId);
+    const pdfContent = `
+PRESCRIPTION REPORT
+==================
+
+Prescription Number: ${prescription.prescriptionNumber}
+Patient: ${getPatientName(prescription.patientId)}
+Doctor: ${getDoctorName(prescription.doctorId)}
+Date: ${format(new Date(prescription.createdAt || ''), 'MMMM dd, yyyy')}
+Service Type: ${prescription.prescriptionType?.replace('_', ' ')}
+Status: ${prescription.status}
+
+VISION PRESCRIPTION:
+Right Eye: SPH ${prescription.sphereRight || 'N/A'} CYL ${prescription.cylinderRight || 'N/A'} AXIS ${prescription.axisRight || 'N/A'}°
+Left Eye: SPH ${prescription.sphereLeft || 'N/A'} CYL ${prescription.cylinderLeft || 'N/A'} AXIS ${prescription.axisLeft || 'N/A'}°
+PD: ${prescription.pdDistance || 'N/A'} mm
+
+DIAGNOSIS:
+${prescription.diagnosis || 'No diagnosis recorded'}
+
+TREATMENT:
+${prescription.treatment || 'No treatment recorded'}
+
+NOTES:
+${prescription.notes || 'No additional notes'}
+    `;
+
+    const blob = new Blob([pdfContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `prescription-${prescription.prescriptionNumber}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
     toast({
-      title: "PDF Download",
-      description: "Downloading prescription PDF...",
+      title: "PDF Downloaded",
+      description: `Prescription ${prescription.prescriptionNumber} downloaded successfully`,
     });
   };
 
   const handleSendEmail = (prescription: Prescription) => {
+    const patient = patients.find(p => p.id === prescription.patientId);
+    const subject = `Prescription ${prescription.prescriptionNumber} - ${patient?.firstName} ${patient?.lastName}`;
+    const body = `Dear ${patient?.firstName},
+
+Your prescription is ready:
+
+Prescription Number: ${prescription.prescriptionNumber}
+Date: ${format(new Date(prescription.createdAt || ''), 'MMMM dd, yyyy')}
+Service: ${prescription.prescriptionType?.replace('_', ' ')}
+
+Please contact us if you have any questions.
+
+Best regards,
+OptiStore Pro Team`;
+
+    const mailtoLink = `mailto:${patient?.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(mailtoLink);
+
     toast({
-      title: "Email Sent",
-      description: "Prescription sent via email",
+      title: "Email Client Opened",
+      description: `Email prepared for ${patient?.email || 'patient'}`,
     });
   };
 
-  const renderServiceSpecificFields = () => {
-    switch (serviceType) {
-      case "eye_examination":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">👁️ Eye Examination Fields</h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="visualAcuityRightEye"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visual Acuity - Right Eye</FormLabel>
-                    <FormControl>
-                      <Input placeholder="20/20" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="visualAcuityLeftEye"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Visual Acuity - Left Eye</FormLabel>
-                    <FormControl>
-                      <Input placeholder="20/20" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="sphereRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sphere (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cylinder (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="axisRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Axis (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" max="180" placeholder="90" {...field} value={field.value || 0} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="sphereLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sphere (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cylinder (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="axisLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Axis (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" min="0" max="180" placeholder="90" {...field} value={field.value || 0} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
-                    </FormControl>
-                    <FormMessage />  
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Eye Examination Findings</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Enter detailed eye examination findings and diagnosis..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
-      case "contact_lens":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">🔍 Contact Lens Prescription</h4>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="diagnosis"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Lens Type</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Daily, Weekly, Monthly..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="treatment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand & Material</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Acuvue, Biofinity, etc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-4 gap-4">
-              <FormField
-                control={form.control}
-                name="sphereRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Power (Right)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="-2.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="sphereLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Power (Left)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.25" placeholder="-2.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderRight"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Base Curve</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" placeholder="8.4" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cylinderLeft"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Diameter</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.1" placeholder="14.2" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="advice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contact Lens Care Instructions</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Wear time, cleaning instructions, replacement schedule..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
-      case "fitting_glasses":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">👓 Glasses Fitting</h4>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="pdDistance"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pupillary Distance (mm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" placeholder="62.0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="pdNear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PD Near (mm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" placeholder="59.0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="pdFar"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>PD Far (mm)</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.5" placeholder="65.0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Frame Selection & Measurements</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Frame style, size, bridge width, temple length..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="treatment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Lens Options & Coatings</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Anti-glare, UV protection, blue light filter, progressive, bifocal..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
-      case "fitting_followup":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">📋 Fitting Follow-up</h4>
-            
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Status Assessment</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Comfort level, vision clarity, fit assessment..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="treatment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Adjustments Made</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Frame adjustments, nose pad alignment, temple adjustment..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="advice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Next Steps & Recommendations</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Further adjustments needed, wear schedule, next appointment..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
-      case "visit_consultation":
-        return (
-          <div className="space-y-4">
-            <h4 className="font-semibold text-slate-900 border-b pb-2">💬 Visit Consultation</h4>
-            
-            <FormField
-              control={form.control}
-              name="diagnosis"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chief Complaint & Symptoms</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Patient's main concerns, symptoms, duration..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="treatment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Clinical Assessment</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Examination findings, observations, measurements..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="advice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Treatment Plan & Recommendations</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Recommended treatment, lifestyle changes, precautions..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Additional Notes</FormLabel>
-                  <FormControl>
-                    <Textarea placeholder="Any additional observations, patient history, special instructions..." className="min-h-[100px]" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        );
-
-      default:
-        return (
-          <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
-            <p className="text-slate-600">Please select a service type to see relevant prescription fields</p>
-          </div>
-        );
+  const handleSharePrescription = (prescription: Prescription) => {
+    const shareUrl = `${window.location.origin}/prescriptions/${prescription.id}`;
+    const shareText = `Prescription ${prescription.prescriptionNumber} - ${getPatientName(prescription.patientId)}`;
+    
+    if (navigator.share) {
+      navigator.share({
+        title: 'Prescription Details',
+        text: shareText,
+        url: shareUrl,
+      });
+    } else {
+      navigator.clipboard.writeText(`${shareText}\n${shareUrl}`).then(() => {
+        toast({
+          title: "Link Copied",
+          description: "Prescription link copied to clipboard",
+        });
+      }).catch(() => {
+        toast({
+          title: "Share Link",
+          description: shareUrl,
+        });
+      });
     }
   };
 
+  const handleViewDetails = (prescription: Prescription) => {
+    setViewPrescription(prescription);
+  };
+
+  const handleEdit = (prescription: Prescription) => {
+    createForm.reset({
+      prescriptionNumber: prescription.prescriptionNumber,
+      patientId: prescription.patientId,
+      doctorId: prescription.doctorId || "",
+      storeId: prescription.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+      prescriptionType: prescription.prescriptionType || "eye_examination",
+      diagnosis: prescription.diagnosis || "",
+      treatment: prescription.treatment || "",
+      status: prescription.status || "active",
+    });
+    setCreateOpen(true);
+  };
+
+  const handleDelete = (prescription: Prescription) => {
+    toast({
+      title: "Delete Prescription",
+      description: "This feature will be implemented soon",
+      variant: "destructive",
+    });
+  };
+
+  // Stats data
+  const statsData = [
+    {
+      title: "Total Prescriptions",
+      value: prescriptions.length,
+      icon: FileText,
+      color: "text-blue-600",
+      bgColor: "bg-blue-100"
+    },
+    {
+      title: "Active Prescriptions", 
+      value: prescriptions.filter(p => p.status === 'active').length,
+      icon: CheckCircle,
+      color: "text-green-600",
+      bgColor: "bg-green-100"
+    },
+    {
+      title: "This Month",
+      value: prescriptions.filter(p => {
+        const prescriptionDate = new Date(p.createdAt || '');
+        const currentMonth = new Date().getMonth();
+        return prescriptionDate.getMonth() === currentMonth;
+      }).length,
+      icon: Calendar,
+      color: "text-purple-600",
+      bgColor: "bg-purple-100"
+    },
+    {
+      title: "Pending Review",
+      value: prescriptions.filter(p => p.status === 'pending').length,
+      icon: Clock,
+      color: "text-orange-600",
+      bgColor: "bg-orange-100"
+    }
+  ];
+
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">Prescription Management</h1>
-        <p className="text-slate-600 mt-2">Create and manage patient prescriptions with service-specific formats</p>
-      </header>
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header Tabs */}
+      <div className="flex items-center gap-8 border-b">
+        <div className="flex items-center gap-2 pb-4 border-b-2 border-blue-500">
+          <Users className="h-4 w-4" />
+          <span className="font-medium">Patients ({patients.length})</span>
+        </div>
+        <div className="flex items-center gap-2 pb-4 text-gray-500">
+          <Calendar className="h-4 w-4" />
+          <span>Appointments (8)</span>
+        </div>
+      </div>
 
-      <main className="space-y-8">
-        <Tabs defaultValue="prescriptions" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="prescriptions">All Prescriptions</TabsTrigger>
-            <TabsTrigger value="appointments">Doctor Appointments</TabsTrigger>
-            <TabsTrigger value="eye_examination">Eye Examination</TabsTrigger>
-            <TabsTrigger value="contact_lens">Contact Lens</TabsTrigger>
-            <TabsTrigger value="fitting_glasses">Glasses Fitting</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="prescriptions" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {statsData.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <Card key={index} className="p-6">
               <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                  <Input
-                    placeholder="Search prescriptions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
-                  />
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <IconComponent className={`h-6 w-6 ${stat.color}`} />
                 </div>
-                
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="filled">Filled</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                    <SelectItem value="contact_lens">Contact Lens</SelectItem>
-                    <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                    <SelectItem value="fitting_followup">Fitting Follow-up</SelectItem>
-                    <SelectItem value="visit_consultation">Visit Consultation</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                </div>
               </div>
-              
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700"
-                onClick={() => setOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Prescription
-              </Button>
-            </div>
-
-            <Card className="border-slate-200">
-              <CardHeader>
-                <CardTitle>Prescription Records</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-4">
-                    {[...Array(5)].map((_, i) => (
-                      <div key={i} className="animate-pulse flex space-x-4">
-                        <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                        <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                        <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                        <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                        <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      </div>
-                    ))}
-                  </div>
-                ) : filteredPrescriptions.length === 0 ? (
-                  <div className="text-center py-12">
-                    <FileText className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No prescriptions found</h3>
-                    <p className="text-slate-600 mb-6">
-                      {searchTerm ? "Try adjusting your search criteria." : "Create your first prescription to get started."}
-                    </p>
-                    {!searchTerm && (
-                      <Button 
-                        onClick={() => setOpen(true)}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create Prescription
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Prescription #</TableHead>
-                          <TableHead>Patient</TableHead>
-                          <TableHead>Doctor</TableHead>
-                          <TableHead>Service Type</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredPrescriptions.map((prescription) => (
-                          <TableRow key={prescription.id}>
-                            <TableCell className="font-medium">{prescription.prescriptionNumber}</TableCell>
-                            <TableCell>{getPatientName(prescription.patientId)}</TableCell>
-                            <TableCell>{getDoctorName(prescription.doctorId)}</TableCell>
-                            <TableCell>
-                              <span className="capitalize">{prescription.prescriptionType?.replace('_', ' ')}</span>
-                            </TableCell>
-                            <TableCell>{format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}</TableCell>
-                            <TableCell>
-                              <span className={`px-2 py-1 rounded-full text-xs ${
-                                prescription.status === 'active' ? 'bg-green-100 text-green-800' :
-                                prescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
-                                'bg-red-100 text-red-800'
-                              }`}>
-                                {prescription.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setViewPrescription(prescription)}
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDownloadPDF(prescription)}
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleSendEmail(prescription)}
-                                >
-                                  <Send className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
             </Card>
-          </TabsContent>
+          );
+        })}
+      </div>
 
-          <TabsContent value="appointments" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold text-slate-900">My Appointments</h2>
-              <div className="flex space-x-3">
-                <Select defaultValue="today">
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                    <SelectItem value="week">This Week</SelectItem>
-                    <SelectItem value="all">All</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button 
-                  className="bg-blue-600 hover:bg-blue-700"
-                  onClick={() => {
-                    form.reset({
-                      prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
-                      patientId: "",
-                      doctorId: "",
-                      appointmentId: "",
-                      storeId: "",
-                      prescriptionType: "eye_examination",
-                      status: "active",
-                    });
-                    setServiceType("eye_examination");
-                    setSelectedPatient(null);
-                    setOpen(true);
-                    toast({
-                      title: "Quick Prescription",
-                      description: "Opening new prescription form",
-                    });
-                  }}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Quick Prescription
-                </Button>
-              </div>
+      {/* Prescriptions Section */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Prescriptions</h2>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setQuickOpen(true)}
+              className="border-blue-500 text-blue-600 hover:bg-blue-50"
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              Quick Prescription
+            </Button>
+            <Button 
+              onClick={() => setCreateOpen(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Create Prescription
+            </Button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search prescriptions..."
+                className="pl-10 w-64"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="filled">Filled</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
 
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                {appointments.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No appointments scheduled</h3>
-                    <p className="text-slate-600">Check back later for new appointments.</p>
+        {/* Prescriptions Table */}
+        <Card>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-8 space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="animate-pulse flex space-x-4">
+                    <div className="h-4 bg-gray-200 rounded w-1/6"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/6"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/6"></div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {appointments.map((appointment) => {
-                      const patient = patients.find(p => p.id === appointment.patientId);
-                      const doctor = doctors.find(d => d.id === (appointment.assignedDoctorId || appointment.doctorId || appointment.staffId));
-                      
+                ))}
+              </div>
+            ) : filteredPrescriptions.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No prescriptions found</h3>
+                <p className="text-gray-600 mb-6">
+                  {searchTerm ? "Try adjusting your search criteria." : "Create your first prescription to get started."}
+                </p>
+                {!searchTerm && (
+                  <Button onClick={() => setCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Prescription
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Prescription #</TableHead>
+                      <TableHead>Patient Name</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Service Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPrescriptions.map((prescription) => {
+                      const patient = patients.find(p => p.id === prescription.patientId);
                       return (
-                        <div key={appointment.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4">
-                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <User className="h-6 w-6 text-blue-600" />
+                        <TableRow key={prescription.id}>
+                          <TableCell className="font-medium text-blue-600">
+                            {prescription.prescriptionNumber}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-sm font-medium text-blue-600">
+                                  {patient ? `${patient.firstName?.[0]}${patient.lastName?.[0]}` : 'UN'}
+                                </span>
                               </div>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <h4 className="font-semibold text-slate-900">
-                                    {patient?.firstName} {patient?.lastName}
-                                  </h4>
-                                  <span className="text-sm text-slate-500">({patient?.patientCode})</span>
-                                </div>
-                                <div className="text-sm text-slate-600 space-y-1">
-                                  <div className="flex items-center space-x-2">
-                                    <Calendar className="h-4 w-4" />
-                                    <span>{appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMM dd, yyyy') : 'Date not set'}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <Clock className="h-4 w-4" />
-                                    <span>{appointment.appointmentTime || 'Time not set'}</span>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <Activity className="h-4 w-4" />
-                                    <span>{appointment.serviceType || appointment.appointmentType || 'General Consultation'}</span>
-                                  </div>
-                                </div>
+                              <div>
+                                <p className="font-medium">{getPatientName(prescription.patientId)}</p>
+                                <p className="text-sm text-gray-500">{patient?.email || 'No email'}</p>
                               </div>
                             </div>
-                            <div className="flex space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => {
-                                  const detailedInstructions = `
-Patient: ${patient?.firstName} ${patient?.lastName}
-Age: ${patient?.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
-Gender: ${patient?.gender || 'Not specified'}  
-Phone: ${patient?.phone || 'Not provided'}
-Email: ${patient?.email || 'Not provided'}
-
-Appointment Details:
-Service Type: ${appointment.serviceType || appointment.appointmentType || 'General Consultation'}
-Date: ${appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMMM dd, yyyy') : 'Not set'}
-Time: ${appointment.appointmentTime || 'Not set'} 
-Doctor: ${doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Not assigned'}
-Status: ${appointment.status || 'Scheduled'}
-
-Notes: ${appointment.notes || 'No additional notes'}
-Treatment Plan: ${appointment.treatmentPlan || 'To be determined during consultation'}
-Follow-up Instructions: ${appointment.followUpInstructions || 'Standard follow-up as needed'}
-
-Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
-OptiStore Pro Medical Center - Comprehensive Patient Care
-                                  `;
-                                  
-                                  setViewPrescription({
-                                    id: appointment.id,
-                                    prescriptionNumber: `APT-${appointment.id.slice(-8)}`,
-                                    patientId: appointment.patientId,
-                                    appointmentId: appointment.id,
-                                    doctorId: appointment.assignedDoctorId || appointment.doctorId || appointment.staffId,
-                                    storeId: null,
-                                    prescriptionDate: new Date(),
-                                    prescriptionType: 'appointment_details',
-                                    diagnosis: detailedInstructions,
-                                    treatment: appointment.treatmentPlan || null,
-                                    advice: appointment.followUpInstructions || null,
-                                    notes: appointment.notes || null,
-                                    status: 'active',
-                                    visualAcuityRightEye: null,
-                                    visualAcuityLeftEye: null,
-                                    sphereRight: null,
-                                    cylinderRight: null,
-                                    axisRight: null,
-                                    addRight: null,
-                                    sphereLeft: null,
-                                    cylinderLeft: null,
-                                    axisLeft: null,
-                                    addLeft: null,
-                                    pdDistance: null,
-                                    pdNear: null,
-                                    pdFar: null,
-                                    nextFollowUp: null,
-                                    customFields: null,
-                                    qrCode: null,
-                                    createdAt: new Date(),
-                                    updatedAt: new Date()
-                                  });
-                                }}
-                              >
-                                <Eye className="h-4 w-4 mr-1" />
-                                View Details
-                              </Button>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="text-sm">{patient?.phone || 'No phone'}</p>
+                              <p className="text-xs text-gray-500">{patient?.gender || 'Not specified'}</p>
                             </div>
-                          </div>
-                        </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {prescription.prescriptionType?.replace('_', ' ')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={
+                              prescription.status === 'active' ? 'bg-green-100 text-green-800' :
+                              prescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }>
+                              {prescription.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuItem onClick={() => handleViewDetails(prescription)}>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEdit(prescription)}>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleDownloadPDF(prescription)}>
+                                  <FileDown className="mr-2 h-4 w-4" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSendEmail(prescription)}>
+                                  <Mail className="mr-2 h-4 w-4" />
+                                  Send Email
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setViewPrescription(prescription)}>
+                                  <QrCode className="mr-2 h-4 w-4" />
+                                  QR Code
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSharePrescription(prescription)}>
+                                  <Share className="mr-2 h-4 w-4" />
+                                  Share
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={() => handleDelete(prescription)}
+                                  className="text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
                       );
                     })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-          <TabsContent value="eye_examination" className="space-y-6">
-            <div className="text-center py-12">
-              <p className="text-slate-600">Eye examination prescriptions will be displayed here.</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="contact_lens" className="space-y-6">
-            <div className="text-center py-12">
-              <p className="text-slate-600">Contact lens prescriptions will be displayed here.</p>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="fitting_glasses" className="space-y-6">
-            <div className="text-center py-12">
-              <p className="text-slate-600">Glasses fitting prescriptions will be displayed here.</p>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-
-      {/* Create/Edit Prescription Dialog - Available from all tabs */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      {/* Quick Prescription Dialog */}
+      <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Service-Specific Prescription</DialogTitle>
+            <DialogTitle>Quick Prescription</DialogTitle>
           </DialogHeader>
           
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="service">Service Details</TabsTrigger>
+          <Form {...quickForm}>
+            <form onSubmit={quickForm.handleSubmit(onQuickSubmit)} className="space-y-4">
+              <FormField
+                control={quickForm.control}
+                name="patientId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Select Patient</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose patient..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.firstName} {patient.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={quickForm.control}
+                name="prescriptionType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Type</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="eye_examination">Eye Examination</SelectItem>
+                        <SelectItem value="contact_lens">Contact Lens</SelectItem>
+                        <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
+                        <SelectItem value="fitting_followup">Follow-up</SelectItem>
+                        <SelectItem value="visit_consultation">Consultation</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={quickForm.control}
+                name="diagnosis"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Quick Notes</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Brief diagnosis or notes..." 
+                        className="h-20" 
+                        {...field} 
+                        value={field.value || ""} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setQuickOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createPrescriptionMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createPrescriptionMutation.isPending ? "Creating..." : "Create Quick Prescription"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Prescription Dialog with Tabs */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Prescription</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...createForm}>
+            <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
+              <Tabs defaultValue="patient-info" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="patient-info">Patient Info</TabsTrigger>
+                  <TabsTrigger value="vision">Vision Prescription</TabsTrigger>
+                  <TabsTrigger value="clinical">Clinical Details</TabsTrigger>
+                  <TabsTrigger value="additional">Additional Info</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="basic" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="prescriptionNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prescription Number</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="prescriptionType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Service Type</FormLabel>
-                          <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            setServiceType(value);
-                          }} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select service type..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="eye_examination">👁️ Eye Examination</SelectItem>
-                              <SelectItem value="contact_lens">🔍 Contact Lens</SelectItem>
-                              <SelectItem value="fitting_glasses">👓 Fitting Glasses</SelectItem>
-                              <SelectItem value="fitting_followup">📋 Fitting Follow-up</SelectItem>
-                              <SelectItem value="visit_consultation">💬 Visit Consultation</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                <TabsContent value="patient-info" className="space-y-6">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold mb-4">Patient Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={createForm.control}
+                        name="patientId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Select Patient</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Choose patient..." />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {patients.map((patient) => (
+                                  <SelectItem key={patient.id} value={patient.id}>
+                                    {patient.firstName} {patient.lastName} ({patient.patientCode})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={createForm.control}
+                        name="prescriptionType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Service Type</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="eye_examination">Eye Examination</SelectItem>
+                                <SelectItem value="contact_lens">Contact Lens</SelectItem>
+                                <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
+                                <SelectItem value="fitting_followup">Follow-up</SelectItem>
+                                <SelectItem value="visit_consultation">Consultation</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                  <div className="grid grid-cols-2 gap-4">
                     <FormField
-                      control={form.control}
-                      name="patientId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Patient</FormLabel>
-                          <Select onValueChange={(value) => {
-                            field.onChange(value);
-                            const patient = patients.find(p => p.id === value);
-                            setSelectedPatient(patient || null);
-                          }} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select patient..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {patients.map((patient) => (
-                                <SelectItem key={patient.id} value={patient.id}>
-                                  {patient.firstName} {patient.lastName} ({patient.patientCode})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
+                      control={createForm.control}
                       name="doctorId"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Doctor (Optional)</FormLabel>
+                        <FormItem className="mt-4">
+                          <FormLabel>Prescribing Doctor</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger>
@@ -1071,7 +727,7 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {doctors.map((doctor) => (
+                              {staff.map((doctor) => (
                                 <SelectItem key={doctor.id} value={doctor.id}>
                                   Dr. {doctor.firstName} {doctor.lastName}
                                 </SelectItem>
@@ -1083,45 +739,187 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                       )}
                     />
                   </div>
+                </TabsContent>
 
-                  {/* Patient Information Display */}
-                  {selectedPatient && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-blue-900 mb-3">Patient Information</h4>
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium text-blue-700">Name:</span> {selectedPatient.firstName} {selectedPatient.lastName}
+                <TabsContent value="vision" className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Vision Prescription</h3>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-medium mb-3">Right Eye</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-sm">Sphere</Label>
+                            <FormField
+                              control={createForm.control}
+                              name="sphereRight"
+                              render={({ field }) => (
+                                <Input 
+                                  type="number" 
+                                  step="0.25" 
+                                  placeholder="-2.25" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                />
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Cylinder</Label>
+                            <FormField
+                              control={createForm.control}
+                              name="cylinderRight"
+                              render={({ field }) => (
+                                <Input 
+                                  type="number" 
+                                  step="0.25" 
+                                  placeholder="-0.50" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                />
+                              )}
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Patient ID:</span> {selectedPatient.patientCode}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Age:</span> {selectedPatient.dateOfBirth ? new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Gender:</span> {selectedPatient.gender || 'Not specified'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Phone:</span> {selectedPatient.phone || 'Not provided'}
-                        </div>
-                        <div>
-                          <span className="font-medium text-blue-700">Email:</span> {selectedPatient.email || 'Not provided'}
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium mb-3">Left Eye</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label className="text-sm">Sphere</Label>
+                            <FormField
+                              control={createForm.control}
+                              name="sphereLeft"
+                              render={({ field }) => (
+                                <Input 
+                                  type="number" 
+                                  step="0.25" 
+                                  placeholder="-2.00" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                />
+                              )}
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Cylinder</Label>
+                            <FormField
+                              control={createForm.control}
+                              name="cylinderLeft"
+                              render={({ field }) => (
+                                <Input 
+                                  type="number" 
+                                  step="0.25" 
+                                  placeholder="-0.75" 
+                                  {...field} 
+                                  value={field.value || ""} 
+                                />
+                              )}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </TabsContent>
 
-                <TabsContent value="service" className="space-y-4">
-                  {renderServiceSpecificFields()}
+                <TabsContent value="clinical" className="space-y-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={createForm.control}
+                      name="diagnosis"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Diagnosis</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Patient diagnosis and findings..." 
+                              className="h-32" 
+                              {...field} 
+                              value={field.value || ""} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={createForm.control}
+                      name="treatment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Treatment Plan</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Recommended treatment and follow-up..." 
+                              className="h-32" 
+                              {...field} 
+                              value={field.value || ""} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="additional" className="space-y-6">
+                  <div className="space-y-4">
+                    <FormField
+                      control={createForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Additional Notes</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Any additional instructions or notes..." 
+                              className="h-32" 
+                              {...field} 
+                              value={field.value || ""} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={createForm.control}
+                      name="status"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prescription Status</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="filled">Filled</SelectItem>
+                              <SelectItem value="expired">Expired</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </TabsContent>
               </Tabs>
               
-              <div className="flex justify-end space-x-2 pt-4 border-t">
+              <div className="flex justify-end space-x-3 pt-6 border-t">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setCreateOpen(false)}
                 >
                   Cancel
                 </Button>
@@ -1138,7 +936,7 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
         </DialogContent>
       </Dialog>
 
-      {/* Prescription View Dialog */}
+      {/* View Prescription Dialog */}
       {viewPrescription && (
         <Dialog open={!!viewPrescription} onOpenChange={() => setViewPrescription(null)}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1162,61 +960,187 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                     <Send className="h-4 w-4 mr-2" />
                     Email
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSharePrescription(viewPrescription)}
+                  >
+                    <Share className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
                 </div>
               </DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-slate-600">Patient</Label>
-                  <p className="text-lg font-semibold">{getPatientName(viewPrescription.patientId)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-slate-600">Doctor</Label>
-                  <p className="text-lg font-semibold">{getDoctorName(viewPrescription.doctorId)}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-slate-600">Date</Label>
-                  <p>{format(new Date(viewPrescription.createdAt || ''), 'MMMM dd, yyyy')}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-slate-600">Service Type</Label>
-                  <p className="capitalize">{viewPrescription.prescriptionType?.replace('_', ' ')}</p>
-                </div>
-              </div>
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="patient">Patient Details</TabsTrigger>
+                <TabsTrigger value="vision">Vision Data</TabsTrigger>
+                <TabsTrigger value="clinical">Clinical Notes</TabsTrigger>
+              </TabsList>
 
-              {viewPrescription.diagnosis && (
-                <div>
-                  <Label className="text-sm font-medium text-slate-600">Diagnosis/Details</Label>
-                  <div className="bg-slate-50 p-4 rounded-lg mt-2">
-                    <pre className="whitespace-pre-wrap text-sm">{viewPrescription.diagnosis}</pre>
-                  </div>
-                </div>
-              )}
-
-              {(viewPrescription.visualAcuityRightEye || viewPrescription.visualAcuityLeftEye) && (
-                <div>
-                  <Label className="text-sm font-medium text-slate-600">Visual Acuity</Label>
-                  <div className="grid grid-cols-2 gap-4 mt-2">
-                    <div>
-                      <span className="text-xs text-slate-500">Right Eye:</span>
-                      <p>{viewPrescription.visualAcuityRightEye || 'Not recorded'}</p>
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Prescription Information</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Number:</span>
+                        <span className="font-mono">{viewPrescription.prescriptionNumber}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Date:</span>
+                        <span>{format(new Date(viewPrescription.createdAt || ''), 'MMMM dd, yyyy')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Service:</span>
+                        <Badge variant="outline" className="capitalize">
+                          {viewPrescription.prescriptionType?.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Status:</span>
+                        <Badge className={
+                          viewPrescription.status === 'active' ? 'bg-green-100 text-green-800' :
+                          viewPrescription.status === 'filled' ? 'bg-blue-100 text-blue-800' :
+                          'bg-red-100 text-red-800'
+                        }>
+                          {viewPrescription.status}
+                        </Badge>
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-xs text-slate-500">Left Eye:</span>
-                      <p>{viewPrescription.visualAcuityLeftEye || 'Not recorded'}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  </Card>
 
-              <div className="flex justify-center pt-4">
-                <div className="bg-white p-4 rounded-lg border">
-                  <QRCode value={`prescription:${viewPrescription.prescriptionNumber}`} size={128} />
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Medical Team</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Patient:</span>
+                        <span className="font-semibold">{getPatientName(viewPrescription.patientId)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Doctor:</span>
+                        <span className="font-semibold">{getDoctorName(viewPrescription.doctorId)}</span>
+                      </div>
+                    </div>
+                  </Card>
                 </div>
-              </div>
-            </div>
+
+                <div className="flex justify-center">
+                  <Card className="p-6">
+                    <h4 className="font-semibold text-center mb-4">QR Code</h4>
+                    <QRCode value={`prescription:${viewPrescription.prescriptionNumber}`} size={150} />
+                    <p className="text-xs text-gray-500 text-center mt-2">Scan for quick access</p>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="patient" className="space-y-6">
+                {(() => {
+                  const patient = patients.find(p => p.id === viewPrescription.patientId);
+                  return (
+                    <Card className="p-4">
+                      <h4 className="font-semibold mb-3">Patient Information</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-lg font-medium text-blue-600">
+                              {patient ? `${patient.firstName?.[0]}${patient.lastName?.[0]}` : 'UN'}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-semibold">{patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}</p>
+                            <p className="text-sm text-gray-600">{patient?.patientCode || 'No code'}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <Label className="text-gray-600">Email</Label>
+                            <p>{patient?.email || 'Not provided'}</p>
+                          </div>
+                          <div>
+                            <Label className="text-gray-600">Phone</Label>
+                            <p>{patient?.phone || 'Not provided'}</p>
+                          </div>
+                          <div>
+                            <Label className="text-gray-600">Gender</Label>
+                            <p>{patient?.gender || 'Not specified'}</p>
+                          </div>
+                          <div>
+                            <Label className="text-gray-600">Blood Group</Label>
+                            <p>{patient?.bloodGroup || 'Not specified'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })()}
+              </TabsContent>
+
+              <TabsContent value="vision" className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Right Eye</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Sphere:</span>
+                        <span className="font-mono">{viewPrescription.sphereRight || 'Not recorded'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cylinder:</span>
+                        <span className="font-mono">{viewPrescription.cylinderRight || 'Not recorded'}</span>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Left Eye</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Sphere:</span>
+                        <span className="font-mono">{viewPrescription.sphereLeft || 'Not recorded'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Cylinder:</span>
+                        <span className="font-mono">{viewPrescription.cylinderLeft || 'Not recorded'}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="clinical" className="space-y-6">
+                <div className="space-y-4">
+                  {viewPrescription.diagnosis && (
+                    <Card className="p-4">
+                      <h4 className="font-semibold mb-3">Diagnosis</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <pre className="whitespace-pre-wrap text-sm">{viewPrescription.diagnosis}</pre>
+                      </div>
+                    </Card>
+                  )}
+
+                  {viewPrescription.treatment && (
+                    <Card className="p-4">
+                      <h4 className="font-semibold mb-3">Treatment Plan</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <pre className="whitespace-pre-wrap text-sm">{viewPrescription.treatment}</pre>
+                      </div>
+                    </Card>
+                  )}
+
+                  {viewPrescription.notes && (
+                    <Card className="p-4">
+                      <h4 className="font-semibold mb-3">Additional Notes</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <pre className="whitespace-pre-wrap text-sm">{viewPrescription.notes}</pre>
+                      </div>
+                    </Card>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
       )}
