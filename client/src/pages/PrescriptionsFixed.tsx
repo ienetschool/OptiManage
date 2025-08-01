@@ -1372,8 +1372,7 @@ OptiStore Pro Team`;
                           </FormItem>
                         )}
                       />
-                          </div>
-                        </div>
+                    </div>
                       </>
                     )}
                   </div>
