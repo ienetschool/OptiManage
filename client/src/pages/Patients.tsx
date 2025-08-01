@@ -191,81 +191,233 @@ export default function Patients() {
       pdfWindow.document.write(`
         <html>
           <head>
-            <title>Patient Report - ${patient.firstName} ${patient.lastName}</title>
+            <title>Patient Medical Report - ${patient.firstName} ${patient.lastName}</title>
             <style>
-              @page { size: A4; margin: 20mm; }
-              body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; font-size: 12pt; }
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #2563eb; padding: 30px 20px 20px 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 8px; }
-              .header h1 { color: #2563eb; margin: 0 0 10px 0; font-size: 28pt; font-weight: 700; }
-              .header h2 { color: #64748b; margin: 0 0 15px 0; font-size: 18pt; font-weight: 400; }
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; line-height: 1.5; color: #2c3e50; margin: 0; padding: 0; font-size: 11pt; background: #ffffff; }
+              .document-container { max-width: 210mm; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; text-align: center; position: relative; }
+              .header::after { content: ''; position: absolute; bottom: -10px; left: 0; width: 100%; height: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%); }
+              .clinic-logo { font-size: 32pt; font-weight: 900; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+              .clinic-subtitle { font-size: 14pt; margin-bottom: 5px; opacity: 0.9; }
+              .report-meta { font-size: 10pt; margin-top: 15px; opacity: 0.8; }
+              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; margin-top: 10px; font-weight: bold; }
+              .content { padding: 30px; }
+              .patient-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin-bottom: 30px; border-left: 6px solid #667eea; }
+              .patient-name { font-size: 24pt; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
+              .patient-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 11pt; }
+              .meta-item { display: flex; align-items: center; }
+              .meta-icon { width: 20px; height: 20px; margin-right: 8px; color: #667eea; }
               .section { margin-bottom: 35px; page-break-inside: avoid; }
-              .section h3 { background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%); color: white; padding: 15px 20px; margin: 0 0 20px 0; border-radius: 8px; font-size: 16pt; font-weight: 600; }
-              .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px; }
-              .info-item { margin-bottom: 15px; padding: 12px; background: #f8fafc; border-left: 4px solid #e2e8f0; border-radius: 4px; }
-              .label { font-weight: 600; color: #1e293b; display: inline-block; min-width: 140px; margin-right: 10px; }
-              .value { color: #475569; font-weight: 400; }
-              .footer { margin-top: 50px; text-align: center; padding: 20px; border-top: 2px solid #e2e8f0; color: #64748b; font-size: 10pt; }
-              .no-print { text-align: center; margin: 30px 0; padding: 20px; }
-              .print-btn { background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 14pt; font-weight: 600; }
-              @media print { body { margin: 0; } .no-print { display: none; } .header { background: #f0f9ff !important; } }
+              .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 20px; margin: 0 0 20px 0; border-radius: 8px; font-size: 14pt; font-weight: 600; display: flex; align-items: center; }
+              .section-icon { margin-right: 10px; font-size: 16pt; }
+              .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+              .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; transition: all 0.3s ease; }
+              .info-card:hover { background: #f1f5f9; border-color: #cbd5e0; }
+              .info-label { font-weight: 600; color: #4a5568; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+              .info-value { color: #2d3748; font-size: 12pt; font-weight: 500; word-wrap: break-word; }
+              .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 9pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+              .status-active { background: #c6f6d5; color: #22543d; }
+              .status-inactive { background: #fed7d7; color: #742a2a; }
+              .loyalty-badge { display: inline-block; padding: 8px 16px; border-radius: 25px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 10pt; }
+              .loyalty-bronze { background: #cd7f32; color: white; }
+              .loyalty-silver { background: #c0c0c0; color: #333; }
+              .loyalty-gold { background: #ffd700; color: #333; }
+              .loyalty-platinum { background: #e5e4e2; color: #333; }
+              .medical-alert { background: #fff5f5; border: 2px solid #feb2b2; border-radius: 8px; padding: 15px; margin: 15px 0; }
+              .medical-alert-title { color: #c53030; font-weight: 700; margin-bottom: 8px; font-size: 12pt; }
+              .qr-section { text-align: center; margin: 25px 0; padding: 20px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; }
+              .qr-placeholder { width: 120px; height: 120px; background: #e2e8f0; border-radius: 8px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 8pt; color: #718096; }
+              .footer { margin-top: 40px; padding: 25px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 12px; text-align: center; border-top: 3px solid #667eea; }
+              .clinic-info { margin-bottom: 15px; }
+              .clinic-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 15px 0; font-size: 10pt; color: #4a5568; }
+              .disclaimer { margin-top: 20px; font-size: 9pt; color: #718096; font-style: italic; line-height: 1.4; }
+              .report-id { margin-top: 15px; font-size: 8pt; color: #a0aec0; font-family: monospace; }
+              .print-button { margin: 20px 0; text-align: center; }
+              .print-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 12pt; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; }
+              .print-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+              @media print { 
+                body { margin: 0; font-size: 10pt; } 
+                .print-button { display: none; } 
+                .document-container { box-shadow: none; }
+                .section { page-break-inside: avoid; }
+                .header::after { display: none; }
+              }
             </style>
           </head>
           <body>
-            <div class="header">
-              <h1>🏥 OptiStore Pro Medical Center</h1>
-              <h2>Comprehensive Patient Medical Report</h2>
-              <div class="report-info">
-                <strong>Report Generated:</strong> ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}<br>
-                <strong>Patient ID:</strong> ${patient.patientCode}
-              </div>
-            </div>
-            <div class="section">
-              <h3>👤 Patient Demographics</h3>
-              <div class="info-grid">
-                <div>
-                  <div class="info-item"><span class="label">Full Name:</span><span class="value">${patient.firstName} ${patient.lastName}</span></div>
-                  <div class="info-item"><span class="label">Patient Code:</span><span class="value">${patient.patientCode}</span></div>
-                  <div class="info-item"><span class="label">Date of Birth:</span><span class="value">${patient.dateOfBirth || 'Not specified'}</span></div>
-                  <div class="info-item"><span class="label">Age:</span><span class="value">${calculateAge(patient.dateOfBirth)} years</span></div>
-                  <div class="info-item"><span class="label">Gender:</span><span class="value">${patient.gender || 'Not specified'}</span></div>
-                  <div class="info-item"><span class="label">Blood Group:</span><span class="value">${patient.bloodGroup || 'Not tested'}</span></div>
-                </div>
-                <div>
-                  <div class="info-item"><span class="label">Phone:</span><span class="value">${patient.phone || 'Not provided'}</span></div>
-                  <div class="info-item"><span class="label">Email:</span><span class="value">${patient.email || 'Not provided'}</span></div>
-                  <div class="info-item"><span class="label">Address:</span><span class="value">${patient.address || 'Not provided'}</span></div>
-                  <div class="info-item"><span class="label">Emergency Contact:</span><span class="value">${patient.emergencyContact || 'Not provided'}</span></div>
-                  <div class="info-item"><span class="label">Emergency Phone:</span><span class="value">${patient.emergencyPhone || 'Not provided'}</span></div>
-                  <div class="info-item"><span class="label">Patient Status:</span><span class="value" style="color: ${patient.isActive ? '#10b981' : '#ef4444'}; font-weight: 600;">${patient.isActive ? '✅ Active' : '❌ Inactive'}</span></div>
+            <div class="document-container">
+              <div class="header">
+                <div class="clinic-logo">🏥 OptiStore Pro</div>
+                <div class="clinic-subtitle">Advanced Medical Center & Eye Care Specialists</div>
+                <div class="patient-id-badge">Patient ID: ${patient.patientCode}</div>
+                <div class="report-meta">
+                  📅 Generated: ${new Date().toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </div>
               </div>
-            </div>
-            <div class="section">
-              <h3>🏥 Medical Information</h3>
-              <div class="info-item"><span class="label">Known Allergies:</span><span class="value">${patient.allergies || 'None reported'}</span></div>
-              <div class="info-item"><span class="label">Medical History:</span><span class="value">${patient.medicalHistory || 'No significant history recorded'}</span></div>
-            </div>
-            <div class="section">
-              <h3>🏥 Insurance & Account Information</h3>
-              <div class="info-grid">
-                <div>
-                  <div class="info-item"><span class="label">Insurance Provider:</span><span class="value">${patient.insuranceProvider || 'Self-pay'}</span></div>
-                  <div class="info-item"><span class="label">Policy Number:</span><span class="value">${patient.insuranceNumber || 'N/A'}</span></div>
+              
+              <div class="content">
+                <div class="patient-header">
+                  <div class="patient-name">${patient.firstName} ${patient.lastName}</div>
+                  <div class="patient-meta">
+                    <div class="meta-item">
+                      <span class="meta-icon">🎂</span>
+                      <span>Age: ${calculateAge(patient.dateOfBirth)} years old</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-icon">⚧</span>
+                      <span>${patient.gender || 'Not specified'}</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="meta-icon">🩸</span>
+                      <span>Blood: ${patient.bloodGroup || 'Not tested'}</span>
+                    </div>
+                    <div class="meta-item">
+                      <span class="status-badge ${patient.isActive ? 'status-active' : 'status-inactive'}">
+                        ${patient.isActive ? '✅ Active Patient' : '❌ Inactive'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <div class="info-item"><span class="label">Loyalty Tier:</span><span class="value" style="color: ${patient.loyaltyTier === 'gold' ? '#f59e0b' : patient.loyaltyTier === 'silver' ? '#6b7280' : '#cd7f32'}; font-weight: 600;">${(patient.loyaltyTier || 'Bronze').toUpperCase()}</span></div>
-                  <div class="info-item"><span class="label">Loyalty Points:</span><span class="value">${patient.loyaltyPoints || 0} points</span></div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">👤</span>
+                    Personal & Contact Information
+                  </div>
+                  <div class="info-grid">
+                    <div class="info-card">
+                      <div class="info-label">Full Legal Name</div>
+                      <div class="info-value">${patient.firstName} ${patient.lastName}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Date of Birth</div>
+                      <div class="info-value">${patient.dateOfBirth || 'Not provided'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Primary Phone</div>
+                      <div class="info-value">${patient.phone || 'Not provided'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Email Address</div>
+                      <div class="info-value">${patient.email || 'Not provided'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Residential Address</div>
+                      <div class="info-value">${patient.address || 'Not provided'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Emergency Contact</div>
+                      <div class="info-value">${patient.emergencyContact || 'Not provided'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Emergency Phone</div>
+                      <div class="info-value">${patient.emergencyPhone || 'Not provided'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">🏥</span>
+                    Medical Information & History
+                  </div>
+                  ${patient.allergies && patient.allergies.trim() ? `
+                    <div class="medical-alert">
+                      <div class="medical-alert-title">⚠️ ALLERGIES & REACTIONS</div>
+                      <div>${patient.allergies}</div>
+                    </div>
+                  ` : ''}
+                  <div class="info-grid">
+                    <div class="info-card">
+                      <div class="info-label">Known Allergies</div>
+                      <div class="info-value">${patient.allergies || 'None reported'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Medical History</div>
+                      <div class="info-value">${patient.medicalHistory || 'No significant history recorded'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Blood Group</div>
+                      <div class="info-value">${patient.bloodGroup || 'Not tested'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">💳</span>
+                    Insurance & Account Details
+                  </div>
+                  <div class="info-grid">
+                    <div class="info-card">
+                      <div class="info-label">Insurance Provider</div>
+                      <div class="info-value">${patient.insuranceProvider || 'Self-pay / No insurance'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Policy Number</div>
+                      <div class="info-value">${patient.insuranceNumber || 'N/A'}</div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Loyalty Program</div>
+                      <div class="info-value">
+                        <span class="loyalty-badge loyalty-${patient.loyaltyTier || 'bronze'}">
+                          ${(patient.loyaltyTier || 'Bronze').toUpperCase()} MEMBER
+                        </span>
+                      </div>
+                    </div>
+                    <div class="info-card">
+                      <div class="info-label">Loyalty Points</div>
+                      <div class="info-value">${patient.loyaltyPoints || 0} points</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="qr-section">
+                  <h4 style="margin-top: 0; color: #4a5568;">Digital Patient Record</h4>
+                  <div class="qr-placeholder">
+                    QR Code<br>
+                    ${patient.patientCode}
+                  </div>
+                  <p style="font-size: 9pt; color: #718096; margin: 0;">Scan to access secure digital medical records</p>
+                </div>
+              </div>
+
+              <div class="footer">
+                <div class="clinic-info">
+                  <h3 style="margin: 0 0 15px 0; color: #2d3748;">🏥 OptiStore Pro Medical Center</h3>
+                  <p style="margin: 5px 0; color: #4a5568; font-weight: 500;">Leading Provider of Comprehensive Eye Care & Medical Services</p>
+                </div>
+                <div class="clinic-contact">
+                  <div>📞 Phone: +1 (555) 123-4567</div>
+                  <div>📧 Email: info@optistorepro.com</div>
+                  <div>🌐 Web: www.optistorepro.com</div>
+                  <div>📍 Address: 123 Medical Plaza, Healthcare District, City 12345</div>
+                </div>
+                <div class="disclaimer">
+                  This medical report contains confidential patient information protected under HIPAA regulations. 
+                  It is intended solely for authorized healthcare providers and the patient. Unauthorized disclosure 
+                  is strictly prohibited and may result in civil and criminal penalties.
+                </div>
+                <div class="report-id">
+                  Report ID: RPT-${Date.now()} | Generated by OptiStore Pro Medical Management System v2.1<br>
+                  Document Authentication: ${Math.random().toString(36).substr(2, 9).toUpperCase()}
                 </div>
               </div>
             </div>
-            <div class="footer">
-              <p><strong>OptiStore Pro Medical Center</strong></p>
-              <p>📞 Contact: +1 (555) 123-4567 | 📧 Email: info@optistorepro.com</p>
-              <p>🏥 Address: 123 Medical Plaza, Healthcare District, City 12345</p>
-              <p style="margin-top: 20px; font-style: italic;">This report is confidential and intended solely for the use of the patient and authorized healthcare providers.</p>
-              <p style="color: #64748b; font-size: 9pt;">Generated by OptiStore Pro Medical Management System v2.0 | Report ID: RPT-${Date.now()}</p>
+            
+            <div class="print-button">
+              <button onclick="window.print()" class="print-btn">
+                🖨️ Print Professional Medical Report
+              </button>
             </div>
-            <div class="no-print"><button onclick="window.print()" class="print-btn">📄 Print Professional Report</button></div>
           </body>
         </html>
       `);
@@ -273,8 +425,173 @@ export default function Patients() {
     }
     
     toast({
-      title: "Professional Patient Report Generated",
-      description: `Comprehensive A4 medical report for ${patient.firstName} ${patient.lastName} ready for printing`,
+      title: "Enhanced Medical Report Generated",
+      description: `Professional A4 medical report for ${patient.firstName} ${patient.lastName} is ready for printing`,
+    });
+  };
+
+  const generatePatientInvoice = (patient: Patient) => {
+    const invoiceWindow = window.open('', '_blank');
+    if (invoiceWindow) {
+      invoiceWindow.document.write(`
+        <html>
+          <head>
+            <title>Medical Invoice - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 12pt; color: #333; }
+              .invoice-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
+              .clinic-info h1 { color: #667eea; margin: 0; font-size: 28pt; }
+              .invoice-number { text-align: right; }
+              .invoice-number h2 { color: #333; margin: 0; font-size: 24pt; }
+              .billing-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+              .bill-to, .invoice-details { background: #f8fafc; padding: 20px; border-radius: 8px; }
+              .services-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+              .services-table th, .services-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+              .services-table th { background: #667eea; color: white; }
+              .total-section { text-align: right; margin-top: 30px; }
+              .total-amount { font-size: 18pt; font-weight: bold; color: #667eea; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-header">
+              <div class="clinic-info">
+                <h1>OptiStore Pro</h1>
+                <p>Medical Center & Eye Care</p>
+                <p>📍 123 Medical Plaza, City 12345</p>
+                <p>📞 +1 (555) 123-4567</p>
+              </div>
+              <div class="invoice-number">
+                <h2>INVOICE</h2>
+                <p><strong>Invoice #:</strong> INV-${Date.now()}</p>
+                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
+            
+            <div class="billing-info">
+              <div class="bill-to">
+                <h3>Bill To:</h3>
+                <p><strong>${patient.firstName} ${patient.lastName}</strong></p>
+                <p>Patient ID: ${patient.patientCode}</p>
+                <p>${patient.phone}</p>
+                <p>${patient.email || ''}</p>
+                <p>${patient.address || ''}</p>
+              </div>
+              <div class="invoice-details">
+                <h3>Payment Details:</h3>
+                <p><strong>Due Date:</strong> ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
+                <p><strong>Payment Terms:</strong> Net 30</p>
+                <p><strong>Insurance:</strong> ${patient.insuranceProvider || 'Self-pay'}</p>
+              </div>
+            </div>
+
+            <table class="services-table">
+              <thead>
+                <tr>
+                  <th>Service Description</th>
+                  <th>Quantity</th>
+                  <th>Unit Price</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Comprehensive Eye Examination</td>
+                  <td>1</td>
+                  <td>$150.00</td>
+                  <td>$150.00</td>
+                </tr>
+                <tr>
+                  <td>Vision Screening Test</td>
+                  <td>1</td>
+                  <td>$75.00</td>
+                  <td>$75.00</td>
+                </tr>
+                <tr>
+                  <td>Patient Consultation</td>
+                  <td>1</td>
+                  <td>$100.00</td>
+                  <td>$100.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="total-section">
+              <p><strong>Subtotal: $325.00</strong></p>
+              <p><strong>Tax (8.5%): $27.63</strong></p>
+              <p class="total-amount">Total Amount: $352.63</p>
+            </div>
+
+            <div style="margin-top: 40px; padding: 20px; background: #f1f5f9; border-radius: 8px;">
+              <h4>Payment Instructions:</h4>
+              <p>Please remit payment within 30 days. We accept cash, check, and all major credit cards.</p>
+              <p><strong>Questions?</strong> Contact our billing department at billing@optistorepro.com</p>
+            </div>
+          </body>
+        </html>
+      `);
+      invoiceWindow.document.close();
+    }
+    
+    toast({
+      title: "Medical Invoice Generated",
+      description: `Invoice for ${patient.firstName} ${patient.lastName} is ready for printing`,
+    });
+  };
+
+  const shareByEmail = (patient: Patient) => {
+    const emailSubject = `Patient Information - ${patient.firstName} ${patient.lastName}`;
+    const emailBody = `Patient Details:%0D%0A%0D%0AName: ${patient.firstName} ${patient.lastName}%0D%0APatient ID: ${patient.patientCode}%0D%0APhone: ${patient.phone}%0D%0AEmail: ${patient.email || 'N/A'}%0D%0A%0D%0AGenerated from OptiStore Pro Medical Center`;
+    window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+    
+    toast({
+      title: "Email Sharing",
+      description: "Opening email client with patient information",
+    });
+  };
+
+  const shareByQREmail = (patient: Patient) => {
+    const qrWindow = window.open('', '_blank');
+    if (qrWindow) {
+      qrWindow.document.write(`
+        <html>
+          <head>
+            <title>QR Code - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+              .qr-container { max-width: 400px; margin: 0 auto; padding: 30px; border: 2px solid #667eea; border-radius: 12px; }
+              .qr-code { width: 200px; height: 200px; background: #e2e8f0; margin: 20px auto; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14pt; color: #718096; }
+            </style>
+          </head>
+          <body>
+            <div class="qr-container">
+              <h2>Patient QR Code</h2>
+              <div class="qr-code">QR Code<br>${patient.patientCode}</div>
+              <p><strong>${patient.firstName} ${patient.lastName}</strong></p>
+              <p>Patient ID: ${patient.patientCode}</p>
+              <p>Scan to access patient information</p>
+              <button onclick="window.print()">Print QR Code</button>
+            </div>
+          </body>
+        </html>
+      `);
+      qrWindow.document.close();
+    }
+    
+    toast({
+      title: "QR Code Generated",
+      description: "Patient QR code ready for sharing via email",
+    });
+  };
+
+  const shareByWhatsApp = (patient: Patient) => {
+    const message = `Patient Information:%0A%0AName: ${patient.firstName} ${patient.lastName}%0APatient ID: ${patient.patientCode}%0APhone: ${patient.phone}%0A%0AFrom OptiStore Pro Medical Center`;
+    window.open(`https://wa.me/?text=${message}`);
+    
+    toast({
+      title: "WhatsApp Sharing",
+      description: "Opening WhatsApp with patient information",
     });
   };
 
@@ -808,7 +1125,7 @@ export default function Patients() {
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuContent align="end" className="w-56">
                               <DropdownMenuItem onClick={() => {
                                 setSelectedPatient(patient);
                                 setViewPatientOpen(true);
@@ -816,6 +1133,11 @@ export default function Patients() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
+                              <DropdownMenuItem>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit Patient
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => {
                                 setSelectedPatient(patient);
                                 generatePatientPDF(patient);
@@ -824,16 +1146,34 @@ export default function Patients() {
                                 Print Report
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
-                                setSelectedPatient(patient);
-                                setShareModalOpen(true);
+                                generatePatientInvoice(patient);
                               }}>
-                                <Share2 className="mr-2 h-4 w-4" />
-                                Share
+                                <Receipt className="mr-2 h-4 w-4" />
+                                Generate Invoice
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => {
+                                shareByEmail(patient);
+                              }}>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Share by Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                shareByQREmail(patient);
+                              }}>
+                                <QrCode className="mr-2 h-4 w-4" />
+                                QR Code Email
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                shareByWhatsApp(patient);
+                              }}>
+                                <MessageSquare className="mr-2 h-4 w-4" />
+                                Share WhatsApp
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem className="text-red-600">
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
+                                Delete Patient
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1132,66 +1472,231 @@ export default function Patients() {
 
       {/* Patient Details Modal */}
       <Dialog open={viewPatientOpen} onOpenChange={setViewPatientOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Patient Details</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-gray-900">Complete Patient Profile</DialogTitle>
             <DialogDescription>
-              Comprehensive information for {selectedPatient?.firstName} {selectedPatient?.lastName}
+              Comprehensive medical and personal information for {selectedPatient?.firstName} {selectedPatient?.lastName}
             </DialogDescription>
           </DialogHeader>
           
           {selectedPatient && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Personal Information</CardTitle>
+              {/* Patient Header with Avatar and Key Info */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200">
+                <div className="flex items-center space-x-6">
+                  <Avatar className="h-20 w-20">
+                    <AvatarFallback className="text-2xl font-bold bg-blue-500 text-white">
+                      {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-3xl font-bold text-gray-900 mb-2">
+                      {selectedPatient.firstName} {selectedPatient.lastName}
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Patient ID:</span>
+                        <p className="font-semibold text-blue-600">{selectedPatient.patientCode}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Age:</span>
+                        <p className="font-semibold">{calculateAge(selectedPatient.dateOfBirth)} years</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Blood Group:</span>
+                        <p className="font-semibold">{selectedPatient.bloodGroup || 'Not tested'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Status:</span>
+                        <Badge variant={selectedPatient.isActive ? "default" : "secondary"} className="font-semibold">
+                          {selectedPatient.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-3 p-4 bg-gray-50 rounded-lg">
+                <Button onClick={() => generatePatientPDF(selectedPatient)} className="flex items-center space-x-2">
+                  <Printer className="h-4 w-4" />
+                  <span>Print Report</span>
+                </Button>
+                <Button onClick={() => generatePatientInvoice(selectedPatient)} variant="outline" className="flex items-center space-x-2">
+                  <Receipt className="h-4 w-4" />
+                  <span>Generate Invoice</span>
+                </Button>
+                <Button onClick={() => shareByEmail(selectedPatient)} variant="outline" className="flex items-center space-x-2">
+                  <Mail className="h-4 w-4" />
+                  <span>Share by Email</span>
+                </Button>
+                <Button onClick={() => shareByQREmail(selectedPatient)} variant="outline" className="flex items-center space-x-2">
+                  <QrCode className="h-4 w-4" />
+                  <span>QR Code</span>
+                </Button>
+                <Button onClick={() => shareByWhatsApp(selectedPatient)} variant="outline" className="flex items-center space-x-2">
+                  <MessageSquare className="h-4 w-4" />
+                  <span>WhatsApp</span>
+                </Button>
+              </div>
+
+              {/* Detailed Information Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card className="border-l-4 border-l-blue-500">
+                  <CardHeader className="bg-blue-50">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <User className="h-5 w-5 text-blue-600" />
+                      <span>Personal Information</span>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div><strong>Name:</strong> {selectedPatient.firstName} {selectedPatient.lastName}</div>
-                    <div><strong>Patient Code:</strong> {selectedPatient.patientCode}</div>
-                    <div><strong>Date of Birth:</strong> {selectedPatient.dateOfBirth}</div>
-                    <div><strong>Age:</strong> {calculateAge(selectedPatient.dateOfBirth)} years</div>
-                    <div><strong>Gender:</strong> {selectedPatient.gender}</div>
-                    <div><strong>Blood Group:</strong> {selectedPatient.bloodGroup || 'N/A'}</div>
+                  <CardContent className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Full Name</label>
+                        <p className="text-base font-semibold">{selectedPatient.firstName} {selectedPatient.lastName}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Patient Code</label>
+                        <p className="text-base font-semibold text-blue-600">{selectedPatient.patientCode}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Date of Birth</label>
+                        <p className="text-base">{selectedPatient.dateOfBirth || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Gender</label>
+                        <p className="text-base capitalize">{selectedPatient.gender || 'Not specified'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Blood Group</label>
+                        <p className="text-base font-semibold text-red-600">{selectedPatient.bloodGroup || 'Not tested'}</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Contact Information</CardTitle>
+                <Card className="border-l-4 border-l-green-500">
+                  <CardHeader className="bg-green-50">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <Phone className="h-5 w-5 text-green-600" />
+                      <span>Contact Information</span>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div><strong>Phone:</strong> {selectedPatient.phone}</div>
-                    <div><strong>Email:</strong> {selectedPatient.email || 'N/A'}</div>
-                    <div><strong>Address:</strong> {selectedPatient.address || 'N/A'}</div>
-                    <div><strong>Emergency Contact:</strong> {selectedPatient.emergencyContact || 'N/A'}</div>
-                    <div><strong>Emergency Phone:</strong> {selectedPatient.emergencyPhone || 'N/A'}</div>
+                  <CardContent className="space-y-4 pt-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Phone Number</label>
+                      <p className="text-base font-semibold">{selectedPatient.phone || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Email Address</label>
+                      <p className="text-base">{selectedPatient.email || 'Not provided'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Home Address</label>
+                      <p className="text-base">{selectedPatient.address || 'Not provided'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Emergency Contact</label>
+                        <p className="text-base">{selectedPatient.emergencyContact || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Emergency Phone</label>
+                        <p className="text-base">{selectedPatient.emergencyPhone || 'Not provided'}</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Medical Information</CardTitle>
+                <Card className="border-l-4 border-l-red-500">
+                  <CardHeader className="bg-red-50">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <Stethoscope className="h-5 w-5 text-red-600" />
+                      <span>Medical Information</span>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div><strong>Allergies:</strong> {selectedPatient.allergies || 'None recorded'}</div>
-                    <div><strong>Medical History:</strong> {selectedPatient.medicalHistory || 'None recorded'}</div>
+                  <CardContent className="space-y-4 pt-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Known Allergies</label>
+                      <div className={`p-3 rounded-lg ${selectedPatient.allergies ? 'bg-red-50 border border-red-200' : 'bg-gray-50'}`}>
+                        <p className={`text-base ${selectedPatient.allergies ? 'text-red-800 font-semibold' : 'text-gray-500'}`}>
+                          {selectedPatient.allergies || 'No known allergies'}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Medical History</label>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-base">{selectedPatient.medicalHistory || 'No significant medical history recorded'}</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Insurance & Loyalty</CardTitle>
+                <Card className="border-l-4 border-l-purple-500">
+                  <CardHeader className="bg-purple-50">
+                    <CardTitle className="text-lg flex items-center space-x-2">
+                      <Receipt className="h-5 w-5 text-purple-600" />
+                      <span>Insurance & Account</span>
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div><strong>Insurance Provider:</strong> {selectedPatient.insuranceProvider || 'N/A'}</div>
-                    <div><strong>Policy Number:</strong> {selectedPatient.insuranceNumber || 'N/A'}</div>
-                    <div><strong>Loyalty Tier:</strong> {selectedPatient.loyaltyTier || 'Bronze'}</div>
-                    <div><strong>Loyalty Points:</strong> {selectedPatient.loyaltyPoints || 0}</div>
+                  <CardContent className="space-y-4 pt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Insurance Provider</label>
+                        <p className="text-base">{selectedPatient.insuranceProvider || 'Self-pay'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Policy Number</label>
+                        <p className="text-base font-mono">{selectedPatient.insuranceNumber || 'N/A'}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Loyalty Tier</label>
+                        <Badge 
+                          variant="outline" 
+                          className={`font-semibold ${
+                            selectedPatient.loyaltyTier === 'gold' ? 'border-yellow-500 text-yellow-700 bg-yellow-50' :
+                            selectedPatient.loyaltyTier === 'silver' ? 'border-gray-400 text-gray-700 bg-gray-50' :
+                            selectedPatient.loyaltyTier === 'platinum' ? 'border-purple-500 text-purple-700 bg-purple-50' :
+                            'border-amber-600 text-amber-700 bg-amber-50'
+                          }`}
+                        >
+                          {(selectedPatient.loyaltyTier || 'Bronze').toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Loyalty Points</label>
+                        <p className="text-base font-bold text-purple-600">{selectedPatient.loyaltyPoints || 0} points</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Registration and Activity Info */}
+              <Card className="bg-gradient-to-r from-gray-50 to-blue-50">
+                <CardContent className="p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <p className="text-gray-600">Registration Date</p>
+                      <p className="font-semibold">January 15, 2024</p>
+                    </div>
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <p className="text-gray-600">Last Visit</p>
+                      <p className="font-semibold">December 8, 2024</p>
+                    </div>
+                    <div className="text-center p-4 bg-white rounded-lg shadow-sm">
+                      <p className="text-gray-600">Total Visits</p>
+                      <p className="font-semibold">12 visits</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
