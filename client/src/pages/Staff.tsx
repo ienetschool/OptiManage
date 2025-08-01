@@ -84,15 +84,16 @@ export default function StaffPage() {
                 min-height: 100vh;
               }
               .id-card {
-                width: 280px;
-                height: 450px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                width: 300px;
+                height: 480px;
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e40af 100%);
                 border-radius: 20px;
-                padding: 25px;
+                padding: 0;
                 color: white;
                 position: relative;
-                box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+                box-shadow: 0 20px 40px rgba(37, 99, 235, 0.3);
                 margin: 20px auto;
+                overflow: hidden;
               }
               .header {
                 text-align: center;
@@ -283,7 +284,9 @@ export default function StaffPage() {
               </div>
               
               <div class="footer">
-                This card is property of OptiStore Pro Medical Center
+                <div style="font-weight: 600; margin-bottom: 5px;">OptiStore Pro Medical Center</div>
+                <div style="font-size: 8px;">Authorized Personnel Only • Valid ID Required</div>
+                <div style="font-size: 8px; margin-top: 3px;">Emergency: +1 (555) 123-4567</div>
               </div>
             </div>
             
@@ -1604,27 +1607,223 @@ export default function StaffPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const printContent = document.createElement('div');
-                        printContent.innerHTML = `
-                          <h2>Staff Information</h2>
-                          <p><strong>Name:</strong> ${selectedStaff.firstName} ${selectedStaff.lastName}</p>
-                          <p><strong>Staff Code:</strong> ${selectedStaff.staffCode}</p>
-                          <p><strong>Position:</strong> ${selectedStaff.position}</p>
-                          <p><strong>Department:</strong> ${selectedStaff.department}</p>
-                          <p><strong>Phone:</strong> ${selectedStaff.phone}</p>
-                          <p><strong>Email:</strong> ${selectedStaff.email}</p>
-                          <p><strong>Address:</strong> ${selectedStaff.address}</p>
-                        `;
-                        const printWindow = window.open('', '', 'width=800,height=600');
+                        const printWindow = window.open('', '_blank', 'width=900,height=700');
                         if (printWindow) {
                           printWindow.document.write(`
                             <html>
-                              <head><title>Staff Information</title></head>
-                              <body>${printContent.innerHTML}</body>
+                              <head>
+                                <title>Staff Information - ${selectedStaff.firstName} ${selectedStaff.lastName}</title>
+                                <style>
+                                  @page { size: A4; margin: 2cm; }
+                                  body { 
+                                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                                    margin: 0; padding: 20px; 
+                                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                                    color: #333;
+                                  }
+                                  .header {
+                                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                    color: white;
+                                    padding: 30px;
+                                    border-radius: 15px;
+                                    text-align: center;
+                                    margin-bottom: 30px;
+                                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                                  }
+                                  .company-name { font-size: 28px; font-weight: bold; margin-bottom: 10px; }
+                                  .document-title { font-size: 18px; opacity: 0.9; }
+                                  .content {
+                                    background: white;
+                                    padding: 40px;
+                                    border-radius: 15px;
+                                    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+                                    margin-bottom: 20px;
+                                  }
+                                  .staff-photo {
+                                    width: 120px; height: 120px;
+                                    background: linear-gradient(135deg, #667eea, #764ba2);
+                                    border-radius: 50%;
+                                    display: flex; align-items: center; justify-content: center;
+                                    color: white; font-size: 40px;
+                                    margin: 0 auto 30px auto;
+                                    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+                                  }
+                                  .staff-name {
+                                    text-align: center;
+                                    font-size: 32px;
+                                    font-weight: bold;
+                                    color: #667eea;
+                                    margin-bottom: 10px;
+                                  }
+                                  .staff-position {
+                                    text-align: center;
+                                    font-size: 18px;
+                                    color: #764ba2;
+                                    margin-bottom: 40px;
+                                    font-weight: 500;
+                                  }
+                                  .info-grid {
+                                    display: grid;
+                                    grid-template-columns: 1fr 1fr;
+                                    gap: 30px;
+                                    margin-bottom: 30px;
+                                  }
+                                  .info-section {
+                                    background: #f8f9ff;
+                                    padding: 25px;
+                                    border-radius: 12px;
+                                    border-left: 5px solid #667eea;
+                                  }
+                                  .info-section h3 {
+                                    color: #667eea;
+                                    font-size: 18px;
+                                    margin-bottom: 20px;
+                                    font-weight: 600;
+                                  }
+                                  .info-item {
+                                    margin-bottom: 15px;
+                                    display: flex;
+                                    align-items: center;
+                                  }
+                                  .info-label {
+                                    font-weight: 600;
+                                    color: #555;
+                                    width: 140px;
+                                    flex-shrink: 0;
+                                  }
+                                  .info-value {
+                                    color: #333;
+                                    flex: 1;
+                                  }
+                                  .footer {
+                                    text-align: center;
+                                    color: #666;
+                                    font-size: 14px;
+                                    margin-top: 30px;
+                                    padding: 20px;
+                                    border-top: 2px solid #eee;
+                                  }
+                                  .print-date {
+                                    text-align: right;
+                                    color: #999;
+                                    font-size: 12px;
+                                    margin-bottom: 20px;
+                                  }
+                                  @media print {
+                                    body { background: white !important; }
+                                    .header, .content { box-shadow: none !important; }
+                                  }
+                                </style>
+                              </head>
+                              <body>
+                                <div class="print-date">Generated on: ${new Date().toLocaleDateString()}</div>
+                                
+                                <div class="header">
+                                  <div class="company-name">OptiStore Pro Medical Center</div>
+                                  <div class="document-title">Staff Information Report</div>
+                                </div>
+                                
+                                <div class="content">
+                                  <div class="staff-photo">👤</div>
+                                  <div class="staff-name">${selectedStaff.firstName} ${selectedStaff.lastName}</div>
+                                  <div class="staff-position">${selectedStaff.position || 'Staff Member'} - ${selectedStaff.department || 'General'}</div>
+                                  
+                                  <div class="info-grid">
+                                    <div class="info-section">
+                                      <h3>Personal Information</h3>
+                                      <div class="info-item">
+                                        <span class="info-label">Staff Code:</span>
+                                        <span class="info-value">${selectedStaff.staffCode}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Employee ID:</span>
+                                        <span class="info-value">${selectedStaff.employeeId || selectedStaff.staffCode}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Date of Birth:</span>
+                                        <span class="info-value">${selectedStaff.dateOfBirth || 'Not provided'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Gender:</span>
+                                        <span class="info-value">${selectedStaff.gender || 'Not specified'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Blood Group:</span>
+                                        <span class="info-value">${selectedStaff.bloodGroup || 'Not provided'}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div class="info-section">
+                                      <h3>Contact Information</h3>
+                                      <div class="info-item">
+                                        <span class="info-label">Phone:</span>
+                                        <span class="info-value">${selectedStaff.phone || 'Not provided'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Email:</span>
+                                        <span class="info-value">${selectedStaff.email || 'Not provided'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Address:</span>
+                                        <span class="info-value">${selectedStaff.address || 'Not provided'}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div class="info-section">
+                                      <h3>Employment Details</h3>
+                                      <div class="info-item">
+                                        <span class="info-label">Position:</span>
+                                        <span class="info-value">${selectedStaff.position || 'Not specified'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Department:</span>
+                                        <span class="info-value">${selectedStaff.department || 'Not specified'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Hire Date:</span>
+                                        <span class="info-value">${selectedStaff.hireDate ? new Date(selectedStaff.hireDate).toLocaleDateString() : 'Not provided'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Status:</span>
+                                        <span class="info-value">${selectedStaff.status || 'Active'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Role:</span>
+                                        <span class="info-value">${selectedStaff.role || 'Staff'}</span>
+                                      </div>
+                                    </div>
+                                    
+                                    <div class="info-section">
+                                      <h3>Additional Information</h3>
+                                      <div class="info-item">
+                                        <span class="info-label">Salary:</span>
+                                        <span class="info-value">${selectedStaff.salary ? '$' + selectedStaff.salary.toLocaleString() : 'Confidential'}</span>
+                                      </div>
+                                      <div class="info-item">
+                                        <span class="info-label">Years of Service:</span>
+                                        <span class="info-value">${selectedStaff.hireDate ? new Date().getFullYear() - new Date(selectedStaff.hireDate).getFullYear() : 'N/A'} years</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div class="footer">
+                                  <p><strong>OptiStore Pro Medical Center</strong></p>
+                                  <p>123 Healthcare Boulevard, Medical District | Phone: +1 (555) 123-4567</p>
+                                  <p>This document contains confidential information and is intended for authorized personnel only.</p>
+                                </div>
+                                
+                                <script>
+                                  window.onload = function() {
+                                    setTimeout(function() {
+                                      window.print();
+                                    }, 500);
+                                  }
+                                </script>
+                              </body>
                             </html>
                           `);
                           printWindow.document.close();
-                          printWindow.print();
                         }
                       }}
                     >
@@ -2010,11 +2209,10 @@ export default function StaffPage() {
                                 <SelectItem value="Optometrist">Optometrist</SelectItem>
                                 <SelectItem value="Nurse">Nurse</SelectItem>
                                 <SelectItem value="Technician">Technician</SelectItem>
+                                <SelectItem value="Receptionist">Receptionist</SelectItem>
                                 <SelectItem value="Manager">Manager</SelectItem>
-                                <SelectItem value="Assistant Manager">Assistant Manager</SelectItem>
                                 <SelectItem value="Sales Associate">Sales Associate</SelectItem>
-                                <SelectItem value="Cashier">Cashier</SelectItem>
-                                <SelectItem value="Administrative Staff">Administrative Staff</SelectItem>
+                                <SelectItem value="Assistant">Assistant</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -2047,6 +2245,91 @@ export default function StaffPage() {
                                 <SelectItem value="IT Support">IT Support</SelectItem>
                               </SelectContent>
                             </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="role"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Access Role</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || "staff"}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="admin">Admin</SelectItem>
+                                <SelectItem value="manager">Manager</SelectItem>
+                                <SelectItem value="doctor">Doctor</SelectItem>
+                                <SelectItem value="staff">Staff</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="status"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Employment Status</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || "active"}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="active">Active</SelectItem>
+                                <SelectItem value="inactive">Inactive</SelectItem>
+                                <SelectItem value="terminated">Terminated</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="hireDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Hire Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="salary"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Salary</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                placeholder="Enter salary amount" 
+                                {...field} 
+                                value={field.value || ""} 
+                                onChange={(e) => field.onChange(Number(e.target.value))}
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}

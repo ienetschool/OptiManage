@@ -322,7 +322,16 @@ export default function Prescriptions() {
                     <SelectItem value="all">All</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => {
+                    setOpen(true);
+                    toast({
+                      title: "Quick Prescription",
+                      description: "Opening prescription form",
+                    });
+                  }}
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Quick Prescription
                 </Button>
@@ -421,11 +430,53 @@ export default function Prescriptions() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  toast({
-                                    title: "Appointment Details",
-                                    description: `Viewing details for ${patient?.firstName} ${patient?.lastName}`,
-                                  });
-                                  // Show appointment details in a modal or navigate to details page
+                                  const doctor = doctors.find(d => d.id === (appointment.doctorId || appointment.staffId));
+                                  const detailedInstructions = `
+APPOINTMENT DETAILS REPORT
+═══════════════════════════════════════
+
+Patient Information:
+• Name: ${patient?.firstName} ${patient?.lastName}
+• Age: ${patient?.age ? patient.age + ' years' : 'Not specified'}
+• Gender: ${patient?.gender || 'Not specified'}
+• Phone: ${patient?.phone || 'Not provided'}
+• Email: ${patient?.email || 'Not provided'}
+
+Appointment Information:
+• Date: ${appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMMM dd, yyyy') : 'Date to be confirmed'}
+• Time: ${appointment.appointmentTime || appointment.time || 'Time to be confirmed'}
+• Type: ${appointment.appointmentType || appointment.service || 'General Consultation'}
+• Status: ${appointment.status || 'scheduled'}
+• Duration: ${appointment.duration || '30 minutes (estimated)'}
+
+Doctor/Staff Details:
+• Name: ${doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'To be assigned'}
+• Position: ${doctor?.position || 'Medical Professional'}
+• Department: ${doctor?.department || 'General'}
+
+Chief Complaint:
+• Reason for Visit: ${appointment.reason || appointment.notes || 'General medical consultation and examination'}
+
+Clinical Notes:
+• Doctor Notes: ${appointment.doctorNotes || 'No additional notes recorded yet'}
+• Appointment ID: ${appointment.id}
+• Scheduled by: System
+
+Medical History Summary:
+• Previous appointments with this patient
+• Any recurring conditions or treatments
+• Medication allergies or special considerations
+
+Follow-up Instructions:
+• Post-appointment care instructions will be provided
+• Next appointment recommendations if needed
+• Prescription details will be recorded separately
+
+═══════════════════════════════════════
+Generated on: ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}
+OptiStore Pro Medical Center - Comprehensive Patient Care
+                                  `;
+                                  
                                   setViewPrescription({
                                     id: appointment.id,
                                     patientId: appointment.patientId,
@@ -433,11 +484,16 @@ export default function Prescriptions() {
                                     doctorId: appointment.doctorId || appointment.staffId || '',
                                     prescriptionType: 'appointment_details',
                                     medications: [],
-                                    instructions: `Appointment Details:\nPatient: ${patient?.firstName} ${patient?.lastName}\nDate: ${appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMM dd, yyyy') : 'Date TBD'}\nTime: ${appointment.appointmentTime || appointment.time || 'Time TBD'}\nReason: ${appointment.reason || appointment.notes || 'General Consultation'}`,
+                                    instructions: detailedInstructions,
                                     status: 'active',
                                     createdAt: new Date().toISOString(),
                                     updatedAt: new Date().toISOString()
                                   } as Prescription);
+                                  
+                                  toast({
+                                    title: "Appointment Details",
+                                    description: `Comprehensive details loaded for ${patient?.firstName} ${patient?.lastName}`,
+                                  });
                                 }}
                               >
                                 <Eye className="h-4 w-4 mr-1" />
