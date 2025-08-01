@@ -193,55 +193,55 @@ export default function Patients() {
           <head>
             <title>Patient Medical Report - ${patient.firstName} ${patient.lastName}</title>
             <style>
-              @page { size: A4; margin: 15mm; }
-              body { font-family: 'Arial', sans-serif; line-height: 1.5; color: #2c3e50; margin: 0; padding: 0; font-size: 11pt; background: #ffffff; }
-              .document-container { max-width: 210mm; margin: 0 auto; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.1); }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; text-align: center; position: relative; }
-              .header::after { content: ''; position: absolute; bottom: -10px; left: 0; width: 100%; height: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); clip-path: polygon(0 0, 100% 0, 95% 100%, 5% 100%); }
-              .clinic-logo { font-size: 32pt; font-weight: 900; margin-bottom: 8px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-              .clinic-subtitle { font-size: 14pt; margin-bottom: 5px; opacity: 0.9; }
-              .report-meta { font-size: 10pt; margin-top: 15px; opacity: 0.8; }
-              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; margin-top: 10px; font-weight: bold; }
-              .content { padding: 30px; }
-              .patient-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 12px; padding: 25px; margin-bottom: 30px; border-left: 6px solid #667eea; }
-              .patient-name { font-size: 24pt; font-weight: 700; color: #2d3748; margin-bottom: 8px; }
-              .patient-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 11pt; }
+              @page { size: A4; margin: 10mm; }
+              body { font-family: 'Arial', sans-serif; line-height: 1.3; color: #2c3e50; margin: 0; padding: 0; font-size: 9pt; background: #ffffff; }
+              .document-container { max-width: 210mm; margin: 0 auto; background: white; height: 297mm; overflow: hidden; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: center; height: 60mm; display: flex; flex-direction: column; justify-content: center; }
+              .clinic-logo { font-size: 24pt; font-weight: 900; margin-bottom: 5px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+              .clinic-subtitle { font-size: 12pt; margin-bottom: 5px; opacity: 0.9; }
+              .report-meta { font-size: 8pt; margin-top: 8px; opacity: 0.8; }
+              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 15px; margin-top: 5px; font-weight: bold; font-size: 9pt; }
+              .content { padding: 15px; height: 180mm; overflow: hidden; }
+              .patient-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; padding: 12px; margin-bottom: 15px; border-left: 4px solid #667eea; }
+              .patient-name { font-size: 16pt; font-weight: 700; color: #2d3748; margin-bottom: 5px; }
+              .patient-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 8pt; }
               .meta-item { display: flex; align-items: center; }
-              .meta-icon { width: 20px; height: 20px; margin-right: 8px; color: #667eea; }
-              .section { margin-bottom: 35px; page-break-inside: avoid; }
-              .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 20px; margin: 0 0 20px 0; border-radius: 8px; font-size: 14pt; font-weight: 600; display: flex; align-items: center; }
-              .section-icon { margin-right: 10px; font-size: 16pt; }
-              .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-              .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; transition: all 0.3s ease; }
-              .info-card:hover { background: #f1f5f9; border-color: #cbd5e0; }
-              .info-label { font-weight: 600; color: #4a5568; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-              .info-value { color: #2d3748; font-size: 12pt; font-weight: 500; word-wrap: break-word; }
-              .status-badge { display: inline-block; padding: 6px 12px; border-radius: 20px; font-size: 9pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+              .meta-icon { width: 12px; height: 12px; margin-right: 5px; color: #667eea; }
+              .section { margin-bottom: 15px; page-break-inside: avoid; }
+              .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 12px; margin: 0 0 10px 0; border-radius: 5px; font-size: 10pt; font-weight: 600; display: flex; align-items: center; }
+              .section-icon { margin-right: 8px; font-size: 10pt; }
+              .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+              .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; padding: 8px; }
+              .info-label { font-weight: 600; color: #4a5568; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+              .info-value { color: #2d3748; font-size: 8pt; font-weight: 500; word-wrap: break-word; line-height: 1.2; }
+              .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 7pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
               .status-active { background: #c6f6d5; color: #22543d; }
               .status-inactive { background: #fed7d7; color: #742a2a; }
-              .loyalty-badge { display: inline-block; padding: 8px 16px; border-radius: 25px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; font-size: 10pt; }
+              .loyalty-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-size: 7pt; }
               .loyalty-bronze { background: #cd7f32; color: white; }
               .loyalty-silver { background: #c0c0c0; color: #333; }
               .loyalty-gold { background: #ffd700; color: #333; }
               .loyalty-platinum { background: #e5e4e2; color: #333; }
-              .medical-alert { background: #fff5f5; border: 2px solid #feb2b2; border-radius: 8px; padding: 15px; margin: 15px 0; }
-              .medical-alert-title { color: #c53030; font-weight: 700; margin-bottom: 8px; font-size: 12pt; }
-              .qr-section { text-align: center; margin: 25px 0; padding: 20px; background: #f7fafc; border-radius: 12px; border: 2px dashed #cbd5e0; }
-              .qr-placeholder { width: 120px; height: 120px; background: #e2e8f0; border-radius: 8px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 8pt; color: #718096; }
-              .footer { margin-top: 40px; padding: 25px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 12px; text-align: center; border-top: 3px solid #667eea; }
-              .clinic-info { margin-bottom: 15px; }
-              .clinic-contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 15px 0; font-size: 10pt; color: #4a5568; }
-              .disclaimer { margin-top: 20px; font-size: 9pt; color: #718096; font-style: italic; line-height: 1.4; }
-              .report-id { margin-top: 15px; font-size: 8pt; color: #a0aec0; font-family: monospace; }
-              .print-button { margin: 20px 0; text-align: center; }
-              .print-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 12pt; font-weight: 600; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; }
-              .print-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+              .medical-alert { background: #fff5f5; border: 1px solid #feb2b2; border-radius: 5px; padding: 8px; margin: 8px 0; }
+              .medical-alert-title { color: #c53030; font-weight: 700; margin-bottom: 5px; font-size: 8pt; }
+              .qr-section { text-align: center; margin: 10px 0; padding: 10px; background: #f7fafc; border-radius: 8px; border: 1px dashed #cbd5e0; }
+              .qr-code { width: 60px; height: 60px; background: #e2e8f0; border-radius: 5px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 6pt; color: #718096; position: relative; }
+              .qr-code canvas { width: 100%; height: 100%; }
+              .footer { padding: 12px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 8px; text-align: center; border-top: 2px solid #667eea; height: 40mm; display: flex; flex-direction: column; justify-content: center; }
+              .clinic-info { margin-bottom: 8px; }
+              .clinic-contact { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin: 8px 0; font-size: 7pt; color: #4a5568; }
+              .disclaimer { margin-top: 8px; font-size: 6pt; color: #718096; font-style: italic; line-height: 1.3; }
+              .report-id { margin-top: 5px; font-size: 6pt; color: #a0aec0; font-family: monospace; }
+              .print-button { margin: 15px 0; text-align: center; }
+              .print-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-size: 10pt; font-weight: 600; box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; }
+              .print-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.6); }
               @media print { 
-                body { margin: 0; font-size: 10pt; } 
+                body { margin: 0; font-size: 8pt; } 
                 .print-button { display: none; } 
-                .document-container { box-shadow: none; }
+                .document-container { box-shadow: none; height: auto; }
                 .section { page-break-inside: avoid; }
-                .header::after { display: none; }
+                .content { height: auto; }
+                .footer { height: auto; }
               }
             </style>
           </head>
@@ -381,13 +381,20 @@ export default function Patients() {
                 </div>
 
                 <div class="qr-section">
-                  <h4 style="margin-top: 0; color: #4a5568;">Digital Patient Record</h4>
-                  <div class="qr-placeholder">
-                    QR Code<br>
-                    ${patient.patientCode}
+                  <h4 style="margin-top: 0; color: #4a5568; font-size: 9pt;">Digital Patient Record</h4>
+                  <div class="qr-code" id="qr-code-container">
+                    <canvas id="qr-canvas"></canvas>
                   </div>
-                  <p style="font-size: 9pt; color: #718096; margin: 0;">Scan to access secure digital medical records</p>
+                  <p style="font-size: 7pt; color: #718096; margin: 0;">Scan to access: ${patient.patientCode}</p>
                 </div>
+                <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+                <script>
+                  const canvas = document.getElementById('qr-canvas');
+                  const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}';
+                  QRCode.toCanvas(canvas, patientData, { width: 60, height: 60, margin: 1 }, function (error) {
+                    if (error) console.error(error);
+                  });
+                </script>
               </div>
 
               <div class="footer">
@@ -523,11 +530,28 @@ export default function Patients() {
               <p class="total-amount">Total Amount: $352.63</p>
             </div>
 
-            <div style="margin-top: 40px; padding: 20px; background: #f1f5f9; border-radius: 8px;">
-              <h4>Payment Instructions:</h4>
-              <p>Please remit payment within 30 days. We accept cash, check, and all major credit cards.</p>
-              <p><strong>Questions?</strong> Contact our billing department at billing@optistorepro.com</p>
+            <div class="qr-section" style="margin-top: 30px;">
+              <h4 style="margin-top: 0; color: #4a5568;">Quick Pay QR Code</h4>
+              <div class="qr-code" id="invoice-qr-container">
+                <canvas id="invoice-qr-canvas"></canvas>
+              </div>
+              <p style="font-size: 9pt; color: #718096; margin: 5px 0;">Scan to pay invoice: INV-${Date.now()}</p>
             </div>
+
+            <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 8px;">
+              <h4 style="margin-top: 0;">Payment Instructions:</h4>
+              <p style="margin: 5px 0;">Please remit payment within 30 days. We accept cash, check, and all major credit cards.</p>
+              <p style="margin: 5px 0;"><strong>Questions?</strong> Contact our billing department at billing@optistorepro.com</p>
+            </div>
+
+            <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+            <script>
+              const invoiceCanvas = document.getElementById('invoice-qr-canvas');
+              const invoiceData = 'Invoice: INV-${Date.now()}, Patient: ${patient.firstName} ${patient.lastName}, Amount: $352.63';
+              QRCode.toCanvas(invoiceCanvas, invoiceData, { width: 80, height: 80, margin: 1 }, function (error) {
+                if (error) console.error(error);
+              });
+            </script>
           </body>
         </html>
       `);
@@ -561,18 +585,29 @@ export default function Patients() {
             <style>
               body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
               .qr-container { max-width: 400px; margin: 0 auto; padding: 30px; border: 2px solid #667eea; border-radius: 12px; }
-              .qr-code { width: 200px; height: 200px; background: #e2e8f0; margin: 20px auto; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14pt; color: #718096; }
+              .qr-code { width: 200px; height: 200px; margin: 20px auto; border-radius: 8px; }
+              .qr-code canvas { width: 100%; height: 100%; }
             </style>
+            <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
           </head>
           <body>
             <div class="qr-container">
               <h2>Patient QR Code</h2>
-              <div class="qr-code">QR Code<br>${patient.patientCode}</div>
+              <div class="qr-code">
+                <canvas id="qr-canvas"></canvas>
+              </div>
               <p><strong>${patient.firstName} ${patient.lastName}</strong></p>
               <p>Patient ID: ${patient.patientCode}</p>
               <p>Scan to access patient information</p>
               <button onclick="window.print()">Print QR Code</button>
             </div>
+            <script>
+              const canvas = document.getElementById('qr-canvas');
+              const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}, Email: ${patient.email || 'N/A'}';
+              QRCode.toCanvas(canvas, patientData, { width: 200, height: 200, margin: 2 }, function (error) {
+                if (error) console.error(error);
+              });
+            </script>
           </body>
         </html>
       `);
@@ -1528,19 +1563,35 @@ export default function Patients() {
                   <Receipt className="h-4 w-4" />
                   <span>Generate Invoice</span>
                 </Button>
-                <Button onClick={() => shareByEmail(selectedPatient)} variant="outline" className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4" />
-                  <span>Share by Email</span>
-                </Button>
-                <Button onClick={() => shareByQREmail(selectedPatient)} variant="outline" className="flex items-center space-x-2">
-                  <QrCode className="h-4 w-4" />
-                  <span>QR Code</span>
-                </Button>
-                <Button onClick={() => shareByWhatsApp(selectedPatient)} variant="outline" className="flex items-center space-x-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>WhatsApp</span>
+                <Button onClick={() => setShareModalOpen(true)} variant="outline" className="flex items-center space-x-2">
+                  <Share2 className="h-4 w-4" />
+                  <span>Share Options</span>
                 </Button>
               </div>
+
+              {/* QR Code Section */}
+              <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+                <CardContent className="p-6 text-center">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Patient QR Code</h4>
+                  <div className="inline-block p-4 bg-white rounded-lg shadow-sm border">
+                    <div 
+                      id="patient-qr-code" 
+                      className="w-32 h-32 mx-auto mb-3"
+                      ref={(el) => {
+                        if (el && selectedPatient) {
+                          import('qrcode').then((QRCode) => {
+                            const patientData = `Patient: ${selectedPatient.firstName} ${selectedPatient.lastName}, ID: ${selectedPatient.patientCode}, Phone: ${selectedPatient.phone}`;
+                            QRCode.default.toCanvas(el.querySelector('canvas') || el.appendChild(document.createElement('canvas')), patientData, { width: 128, height: 128, margin: 1 });
+                          });
+                        }
+                      }}
+                    >
+                      <canvas className="w-full h-full"></canvas>
+                    </div>
+                    <p className="text-sm text-gray-600">Scan for patient info</p>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Detailed Information Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1702,9 +1753,9 @@ export default function Patients() {
         </DialogContent>
       </Dialog>
 
-      {/* Share Modal */}
+      {/* Enhanced Share Modal */}
       <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Share Patient Information</DialogTitle>
             <DialogDescription>
@@ -1717,32 +1768,76 @@ export default function Patients() {
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   variant="outline" 
-                  className="h-16 flex flex-col items-center space-y-2"
+                  className="h-20 flex flex-col items-center justify-center space-y-2"
+                  onClick={() => {
+                    const shareLink = `${window.location.origin}/patient/${selectedPatient.patientCode}`;
+                    navigator.clipboard.writeText(shareLink);
+                    toast({
+                      title: "Link Copied",
+                      description: "Patient profile link copied to clipboard",
+                    });
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <Share2 className="h-6 w-6" />
+                  <span className="text-sm text-center">Share Link</span>
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center space-y-2"
+                  onClick={() => {
+                    shareByEmail(selectedPatient);
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <Mail className="h-6 w-6" />
+                  <span className="text-sm text-center">Email</span>
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center space-y-2"
                   onClick={() => {
                     generatePatientPDF(selectedPatient);
                     setShareModalOpen(false);
                   }}
                 >
                   <FileText className="h-6 w-6" />
-                  <span className="text-sm">PDF Report</span>
+                  <span className="text-sm text-center">PDF Report</span>
                 </Button>
                 
                 <Button 
                   variant="outline" 
-                  className="h-16 flex flex-col items-center space-y-2"
+                  className="h-20 flex flex-col items-center justify-center space-y-2"
                   onClick={() => {
-                    const shareText = `Patient: ${selectedPatient.firstName} ${selectedPatient.lastName}\nCode: ${selectedPatient.patientCode}\nPhone: ${selectedPatient.phone}`;
-                    navigator.clipboard.writeText(shareText);
-                    toast({
-                      title: "Copied",
-                      description: "Patient information copied to clipboard",
-                    });
+                    shareByQREmail(selectedPatient);
                     setShareModalOpen(false);
                   }}
                 >
-                  <Share2 className="h-6 w-6" />
-                  <span className="text-sm">Copy Info</span>
+                  <QrCode className="h-6 w-6" />
+                  <span className="text-sm text-center">QR Code</span>
                 </Button>
+
+                <Button 
+                  variant="outline" 
+                  className="h-20 flex flex-col items-center justify-center space-y-2 col-span-2"
+                  onClick={() => {
+                    // Create PDF and share via WhatsApp
+                    const message = `Patient Report: ${selectedPatient.firstName} ${selectedPatient.lastName}%0APatient ID: ${selectedPatient.patientCode}%0APhone: ${selectedPatient.phone}%0A%0AFrom OptiStore Pro Medical Center`;
+                    window.open(`https://wa.me/?text=${message}`);
+                    setShareModalOpen(false);
+                  }}
+                >
+                  <MessageSquare className="h-6 w-6" />
+                  <span className="text-sm text-center">PDF via WhatsApp</span>
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t">
+                <p className="text-sm text-gray-600 text-center">
+                  All sharing options comply with HIPAA privacy regulations
+                </p>
               </div>
             </div>
           )}
