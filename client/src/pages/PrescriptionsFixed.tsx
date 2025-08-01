@@ -57,6 +57,7 @@ export default function PrescriptionsFixed() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
+  const [activeTab, setActiveTab] = useState("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -104,10 +105,7 @@ export default function PrescriptionsFixed() {
   // Mutation for creating prescriptions
   const createPrescriptionMutation = useMutation({
     mutationFn: async (data: InsertPrescription) => {
-      return await apiRequest('/api/prescriptions', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return await apiRequest('/api/prescriptions', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
@@ -146,7 +144,20 @@ export default function PrescriptionsFixed() {
     const matchesSearch = prescription.prescriptionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patientName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === "all" || prescription.status === selectedStatus;
-    return matchesSearch && matchesStatus;
+    
+    // Tab filtering
+    let matchesTab = true;
+    if (activeTab === "active") {
+      matchesTab = prescription.status === "active";
+    } else if (activeTab === "pending") {
+      matchesTab = prescription.status === "pending";
+    } else if (activeTab === "month") {
+      const prescriptionDate = new Date(prescription.createdAt || '');
+      const currentMonth = new Date().getMonth();
+      matchesTab = prescriptionDate.getMonth() === currentMonth;
+    }
+    
+    return matchesSearch && matchesStatus && matchesTab;
   });
 
   // Helper functions
@@ -322,13 +333,54 @@ OptiStore Pro Team`;
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header Tabs */}
       <div className="flex items-center gap-8 border-b">
-        <div className="flex items-center gap-2 pb-4 border-b-2 border-blue-500">
-          <Users className="h-4 w-4" />
-          <span className="font-medium">Patients ({patients.length})</span>
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+            activeTab === "all" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("all")}
+        >
+          <FileText className="h-4 w-4" />
+          <span className="font-medium">All Prescriptions ({prescriptions.length})</span>
         </div>
-        <div className="flex items-center gap-2 pb-4 text-gray-500">
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+            activeTab === "active" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("active")}
+        >
+          <CheckCircle className="h-4 w-4" />
+          <span>Active ({prescriptions.filter(p => p.status === 'active').length})</span>
+        </div>
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+            activeTab === "pending" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("pending")}
+        >
+          <Clock className="h-4 w-4" />
+          <span>Pending ({prescriptions.filter(p => p.status === 'pending').length})</span>
+        </div>
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+            activeTab === "month" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("month")}
+        >
           <Calendar className="h-4 w-4" />
-          <span>Appointments (8)</span>
+          <span>This Month ({prescriptions.filter(p => {
+            const prescriptionDate = new Date(p.createdAt || '');
+            const currentMonth = new Date().getMonth();
+            return prescriptionDate.getMonth() === currentMonth;
+          }).length})</span>
+        </div>
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+            activeTab === "patients" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("patients")}
+        >
+          <Users className="h-4 w-4" />
+          <span>Patients ({patients.length})</span>
         </div>
       </div>
 
@@ -894,7 +946,7 @@ OptiStore Pro Team`;
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Prescription Status</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue />
