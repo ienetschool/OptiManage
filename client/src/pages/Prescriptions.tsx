@@ -1331,6 +1331,195 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
         </Tabs>
       </main>
 
+      {/* Create/Edit Prescription Dialog - Available from all tabs */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create New Prescription</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="medical">Medical Details</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="prescriptionNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prescription Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="prescriptionType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prescription Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="glasses">👓 Glasses</SelectItem>
+                              <SelectItem value="contact_lenses">👁️ Contact Lenses</SelectItem>
+                              <SelectItem value="medication">💊 Medication</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="patientId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Patient</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select patient..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {patients.map((patient) => (
+                                <SelectItem key={patient.id} value={patient.id}>
+                                  {patient.firstName} {patient.lastName} ({patient.patientCode})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="doctorId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Doctor (Optional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select doctor..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {doctors.map((doctor) => (
+                                <SelectItem key={doctor.id} value={doctor.id}>
+                                  Dr. {doctor.firstName} {doctor.lastName}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="medical" className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="diagnosis"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Diagnosis</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter diagnosis and medical findings..."
+                            className="min-h-[100px]"
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="treatment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Treatment Plan</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter recommended treatment and instructions..."
+                            className="min-h-[100px]"
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Additional Notes</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Enter any additional notes or observations..."
+                            className="min-h-[100px]"
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+              </Tabs>
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createPrescriptionMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createPrescriptionMutation.isPending ? "Creating..." : "Create Prescription"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
       {/* Prescription View Dialog */}
       {viewPrescription && (
         <Dialog open={!!viewPrescription} onOpenChange={() => setViewPrescription(null)}>
