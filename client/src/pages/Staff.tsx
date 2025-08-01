@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -142,6 +142,7 @@ export default function StaffPage() {
                 font-weight: bold;
                 margin-bottom: 8px;
                 text-align: center;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.1);
               }
               .position {
                 font-size: 16px;
@@ -149,6 +150,29 @@ export default function StaffPage() {
                 text-align: center;
                 font-weight: 500;
                 opacity: 0.9;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+              }
+              .id-details {
+                text-align: left;
+                margin-top: 10px;
+              }
+              .id-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 4px;
+                font-size: 11px;
+              }
+              .label {
+                font-weight: 600;
+                opacity: 0.8;
+                width: 50%;
+              }
+              .value {
+                font-weight: 400;
+                opacity: 0.9;
+                width: 50%;
+                text-align: right;
               }
               .details {
                 font-size: 13px;
@@ -211,12 +235,32 @@ export default function StaffPage() {
               <div class="info">
                 <div class="name">${staff.firstName} ${staff.lastName}</div>
                 <div class="position">${staff.position || 'Staff Member'}</div>
-                <div class="details">ID: ${staff.staffCode}</div>
-                <div class="details">Dept: ${staff.department || 'General'}</div>
-                <div class="details">Blood Group: ${staff.bloodGroup || 'N/A'}</div>
-                <div class="details">Phone: ${staff.phone || 'N/A'}</div>
-                <div class="details">Address: ${staff.address || 'N/A'}</div>
-                <div class="details">Since: ${new Date(staff.hireDate).getFullYear()}</div>
+                <div class="id-details">
+                  <div class="id-row">
+                    <span class="label">Staff ID:</span>
+                    <span class="value">${staff.staffCode}</span>
+                  </div>
+                  <div class="id-row">
+                    <span class="label">Employee ID:</span>
+                    <span class="value">${staff.employeeId || staff.staffCode}</span>
+                  </div>
+                  <div class="id-row">
+                    <span class="label">Department:</span>
+                    <span class="value">${staff.department || 'General'}</span>
+                  </div>
+                  <div class="id-row">
+                    <span class="label">Blood Group:</span>
+                    <span class="value">${staff.bloodGroup || 'N/A'}</span>
+                  </div>
+                  <div class="id-row">
+                    <span class="label">Phone:</span>
+                    <span class="value">${staff.phone || 'N/A'}</span>
+                  </div>
+                  <div class="id-row">
+                    <span class="label">Since:</span>
+                    <span class="value">${new Date(staff.hireDate).getFullYear()}</span>
+                  </div>
+                </div>
               </div>
               
               <div class="footer">
@@ -235,17 +279,49 @@ export default function StaffPage() {
                 try {
                   const canvas = document.getElementById('qr-canvas');
                   if (canvas && window.QRCode) {
-                    const staffData = 'STAFF:${staff.staffCode},NAME:${staff.firstName} ${staff.lastName},POS:${staff.position},DEPT:${staff.department},PHONE:${staff.phone || "N/A"},ADDRESS:${(staff.address || "N/A").replace(/,/g, "|")}';
+                    const staffData = JSON.stringify({
+                      staffCode: '${staff.staffCode}',
+                      employeeId: '${staff.employeeId || staff.staffCode}',
+                      name: '${staff.firstName} ${staff.lastName}',
+                      position: '${staff.position}',
+                      department: '${staff.department}',
+                      phone: '${staff.phone || "N/A"}',
+                      bloodGroup: '${staff.bloodGroup || "N/A"}',
+                      company: 'OptiStore Pro Medical Center'
+                    });
                     QRCode.toCanvas(canvas, staffData, { 
-                      width: 72, 
-                      height: 72, 
-                      margin: 1, 
+                      width: 76, 
+                      height: 76, 
+                      margin: 2, 
                       color: { dark: '#000000', light: '#ffffff' },
                       errorCorrectionLevel: 'M'
                     });
+                  } else {
+                    // Fallback if QRCode library not loaded
+                    const canvas = document.getElementById('qr-canvas');
+                    if (canvas) {
+                      const ctx = canvas.getContext('2d');
+                      ctx.fillStyle = '#333';
+                      ctx.fillRect(0, 0, 80, 80);
+                      ctx.fillStyle = '#fff';
+                      ctx.font = '10px Arial';
+                      ctx.textAlign = 'center';
+                      ctx.fillText('QR CODE', 40, 40);
+                    }
                   }
                 } catch (e) {
                   console.error('QR Code generation failed:', e);
+                  // Fallback display
+                  const canvas = document.getElementById('qr-canvas');
+                  if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(0, 0, 80, 80);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('QR CODE', 40, 40);
+                  }
                 }
               };
             </script>
@@ -378,6 +454,54 @@ export default function StaffPage() {
     },
   });
 
+  const editForm = useForm<InsertStaff>({
+    resolver: zodResolver(insertStaffSchema),
+    defaultValues: {
+      staffCode: "",
+      employeeId: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      address: "",
+      position: "",
+      department: "",
+      hireDate: "",
+      status: "active",
+      role: "staff",
+      permissions: [],
+      customFields: {},
+      bloodGroup: "",
+      dateOfBirth: "",
+      gender: "",
+    },
+  });
+
+  // Set edit form values when editing staff is selected
+  React.useEffect(() => {
+    if (editingStaff) {
+      editForm.reset({
+        staffCode: editingStaff.staffCode || "",
+        employeeId: editingStaff.employeeId || editingStaff.staffCode || "",
+        firstName: editingStaff.firstName || "",
+        lastName: editingStaff.lastName || "",
+        email: editingStaff.email || "",
+        phone: editingStaff.phone || "",
+        address: editingStaff.address || "",
+        position: editingStaff.position || "",
+        department: editingStaff.department || "",
+        hireDate: editingStaff.hireDate || "",
+        role: editingStaff.role || "staff",
+        status: editingStaff.status || "active",
+        permissions: editingStaff.permissions || [],
+        customFields: editingStaff.customFields || {},
+        bloodGroup: editingStaff.bloodGroup || "",
+        dateOfBirth: editingStaff.dateOfBirth || "",
+        gender: editingStaff.gender || "",
+      });
+    }
+  }, [editingStaff, editForm]);
+
   const createStaffMutation = useMutation({
     mutationFn: async (data: InsertStaff) => {
       await apiRequest("POST", "/api/staff", data);
@@ -400,8 +524,36 @@ export default function StaffPage() {
     },
   });
 
+  const updateStaffMutation = useMutation({
+    mutationFn: async (data: InsertStaff & { id: string }) => {
+      await apiRequest("PUT", `/api/staff/${data.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/staff"] });
+      toast({
+        title: "Success",
+        description: "Staff member updated successfully.",
+      });
+      setEditOpen(false);
+      setEditingStaff(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update staff member.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: InsertStaff) => {
     createStaffMutation.mutate(data);
+  };
+
+  const onEditSubmit = (data: InsertStaff) => {
+    if (editingStaff?.id) {
+      updateStaffMutation.mutate({ ...data, id: editingStaff.id });
+    }
   };
 
   const filteredStaff = staffList.filter(staff => {
@@ -1398,6 +1550,17 @@ export default function StaffPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => {
+                        setEditingStaff(selectedStaff);
+                        setEditOpen(true);
+                      }}
+                      title="Edit Staff"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => window.print()}
                       title="Print Profile"
                     >
@@ -1424,10 +1587,31 @@ export default function StaffPage() {
                 
                 <div className="bg-white p-4 rounded-lg border text-center">
                   <h4 className="font-medium mb-2">Staff QR Code</h4>
-                  <div className="w-24 h-24 bg-gray-100 rounded mx-auto flex items-center justify-center">
+                  <div className="w-24 h-24 bg-gray-100 rounded mx-auto flex items-center justify-content">
                     <QrCode className="h-8 w-8 text-gray-400" />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">Scan for staff info</p>
+                  
+                  <div className="flex space-x-1 mt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const staffInfo = `Name: ${selectedStaff.firstName} ${selectedStaff.lastName}\nPosition: ${selectedStaff.position}\nDepartment: ${selectedStaff.department}\nPhone: ${selectedStaff.phone}\nEmail: ${selectedStaff.email}`;
+                        navigator.clipboard.writeText(staffInfo);
+                        toast({ title: "Copied to clipboard", description: "Staff info copied successfully" });
+                      }}
+                    >
+                      Share
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generateStaffIDCard(selectedStaff)}
+                    >
+                      PDF
+                    </Button>
+                  </div>
                 </div>
               </div>
 
@@ -1502,39 +1686,371 @@ export default function StaffPage() {
             </div>
 
             <div className="border-t pt-4 mt-6">
-              <h4 className="font-semibold text-slate-900 mb-3">Additional Information</h4>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Address</Label>
-                    <p className="flex items-start space-x-2">
-                      <MapPin className="h-4 w-4 text-slate-400 mt-1" />
-                      <span>{selectedStaff.address || 'Not provided'}</span>
-                    </p>
+              <Tabs defaultValue="additional" className="w-full">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="additional">Additional Info</TabsTrigger>
+                  <TabsTrigger value="salary">Salary Details</TabsTrigger>
+                  <TabsTrigger value="documents">Documents</TabsTrigger>
+                  <TabsTrigger value="leave">Leave & Attendance</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="additional" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Address</Label>
+                        <p className="flex items-start space-x-2">
+                          <MapPin className="h-4 w-4 text-slate-400 mt-1" />
+                          <span>{selectedStaff.address || 'Not provided'}</span>
+                        </p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Emergency Contact</Label>
+                        <p>{selectedStaff.emergencyContactName || 'Not provided'}</p>
+                        {selectedStaff.emergencyContactPhone && (
+                          <p className="text-sm text-slate-500">{selectedStaff.emergencyContactPhone}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Bank Details</Label>
+                        <p className="text-sm">{selectedStaff.bankName || 'Not provided'}</p>
+                        {selectedStaff.bankAccountNumber && (
+                          <p className="text-sm font-mono">{selectedStaff.bankAccountNumber}</p>
+                        )}
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">NID Number</Label>
+                        <p className="font-mono">{selectedStaff.nidNumber || 'Not provided'}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Emergency Contact</Label>
-                    <p>{selectedStaff.emergencyContactName || 'Not provided'}</p>
-                    {selectedStaff.emergencyContactPhone && (
-                      <p className="text-sm text-slate-500">{selectedStaff.emergencyContactPhone}</p>
-                    )}
+                </TabsContent>
+
+                <TabsContent value="salary" className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-green-50 p-4 rounded-lg">
+                      <Label className="text-sm font-medium text-green-600">Basic Salary</Label>
+                      <p className="text-2xl font-bold text-green-700">₹{selectedStaff.salary || '50,000'}</p>
+                    </div>
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <Label className="text-sm font-medium text-blue-600">Allowances</Label>
+                      <p className="text-2xl font-bold text-blue-700">₹{(selectedStaff.salary || 50000) * 0.3}</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded-lg">
+                      <Label className="text-sm font-medium text-purple-600">Net Salary</Label>
+                      <p className="text-2xl font-bold text-purple-700">₹{(selectedStaff.salary || 50000) * 1.2}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Bank Details</Label>
-                    <p className="text-sm">{selectedStaff.bankName || 'Not provided'}</p>
-                    {selectedStaff.bankAccountNumber && (
-                      <p className="text-sm font-mono">{selectedStaff.bankAccountNumber}</p>
-                    )}
+                  <div className="text-sm text-slate-600">
+                    <p>Last updated: {new Date().toLocaleDateString()}</p>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">NID Number</Label>
-                    <p className="font-mono">{selectedStaff.nidNumber || 'Not provided'}</p>
+                </TabsContent>
+
+                <TabsContent value="documents" className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Photo ID</p>
+                      <p className="text-xs text-gray-400">Uploaded</p>
+                    </div>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Qualification Certificates</p>
+                      <p className="text-xs text-gray-400">2 files</p>
+                    </div>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Appointment Letter</p>
+                      <p className="text-xs text-gray-400">Uploaded</p>
+                    </div>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500">Medical Records</p>
+                      <p className="text-xs text-gray-400">Updated</p>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </TabsContent>
+
+                <TabsContent value="leave" className="space-y-4">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                      <p className="text-sm font-medium text-yellow-600">Total Leave</p>
+                      <p className="text-xl font-bold text-yellow-700">24 days</p>
+                    </div>
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <p className="text-sm font-medium text-green-600">Used</p>
+                      <p className="text-xl font-bold text-green-700">8 days</p>
+                    </div>
+                    <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm font-medium text-blue-600">Remaining</p>
+                      <p className="text-xl font-bold text-blue-700">16 days</p>
+                    </div>
+                    <div className="text-center p-3 bg-red-50 rounded-lg">
+                      <p className="text-sm font-medium text-red-600">Pending</p>
+                      <p className="text-xl font-bold text-red-700">2 requests</p>
+                    </div>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    <p>Last leave: December 15-18, 2024 (4 days)</p>
+                    <p>Next scheduled: February 10-12, 2025 (3 days)</p>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Staff Dialog */}
+      {editingStaff && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Staff - {editingStaff.firstName} {editingStaff.lastName}</DialogTitle>
+            </DialogHeader>
+            
+            <Form {...editForm}>
+              <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+                <Tabs defaultValue="basic" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                    <TabsTrigger value="contact">Contact</TabsTrigger>
+                    <TabsTrigger value="access">Access</TabsTrigger>
+                    <TabsTrigger value="payroll">Payroll & Docs</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="basic" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone</FormLabel>
+                            <FormControl>
+                              <Input {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="bloodGroup"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Blood Group</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select blood group" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="A+">A+</SelectItem>
+                                <SelectItem value="A-">A-</SelectItem>
+                                <SelectItem value="B+">B+</SelectItem>
+                                <SelectItem value="B-">B-</SelectItem>
+                                <SelectItem value="AB+">AB+</SelectItem>
+                                <SelectItem value="AB-">AB-</SelectItem>
+                                <SelectItem value="O+">O+</SelectItem>
+                                <SelectItem value="O-">O-</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="dateOfBirth"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date of Birth</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select gender" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="contact" className="space-y-4">
+                    <FormField
+                      control={editForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Address</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="Enter complete address..."
+                              className="min-h-[80px]"
+                              {...field} 
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="access" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="position"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Position</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select position" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Doctor">Doctor</SelectItem>
+                                <SelectItem value="Optometrist">Optometrist</SelectItem>
+                                <SelectItem value="Nurse">Nurse</SelectItem>
+                                <SelectItem value="Technician">Technician</SelectItem>
+                                <SelectItem value="Manager">Manager</SelectItem>
+                                <SelectItem value="Assistant Manager">Assistant Manager</SelectItem>
+                                <SelectItem value="Sales Associate">Sales Associate</SelectItem>
+                                <SelectItem value="Cashier">Cashier</SelectItem>
+                                <SelectItem value="Administrative Staff">Administrative Staff</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="department"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Department</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select department" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Eye Care">Eye Care</SelectItem>
+                                <SelectItem value="Vision Care">Vision Care</SelectItem>
+                                <SelectItem value="Diagnostics">Diagnostics</SelectItem>
+                                <SelectItem value="Administration">Administration</SelectItem>
+                                <SelectItem value="Sales">Sales</SelectItem>
+                                <SelectItem value="Customer Service">Customer Service</SelectItem>
+                                <SelectItem value="Inventory">Inventory</SelectItem>
+                                <SelectItem value="Finance">Finance</SelectItem>
+                                <SelectItem value="Human Resources">Human Resources</SelectItem>
+                                <SelectItem value="IT Support">IT Support</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="payroll" className="space-y-4">
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-600">Edit complete staff details including salary, documents, and leave management.</p>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+
+                <div className="flex justify-end space-x-2 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateStaffMutation.isPending}>
+                    {updateStaffMutation.isPending ? "Updating..." : "Update Staff"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       )}
