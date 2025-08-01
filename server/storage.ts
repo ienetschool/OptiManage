@@ -110,6 +110,13 @@ export interface IStorage {
   createCustomFieldConfig(config: InsertCustomFieldConfig): Promise<CustomFieldConfig>;
   updateCustomFieldConfig(id: string, config: Partial<InsertCustomFieldConfig>): Promise<CustomFieldConfig>;
   deleteCustomFieldConfig(id: string): Promise<void>;
+  
+  // Staff operations
+  getStaff(): Promise<any[]>;
+  getStaffMember(id: string): Promise<any | undefined>;
+  createStaff(staff: any): Promise<any>;
+  updateStaff(id: string, staff: any): Promise<any>;
+  deleteStaff(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -472,6 +479,96 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCustomFieldConfig(id: string): Promise<void> {
     await db.delete(customFieldsConfig).where(eq(customFieldsConfig.id, id));
+  }
+
+  // Staff operations
+  async getStaff(): Promise<any[]> {
+    // Return mock staff data for now since we need to set up the staff table properly
+    return [
+      {
+        id: "1",
+        staffCode: "STF-001",
+        firstName: "Dr. Sarah",
+        lastName: "Johnson",
+        email: "sarah.johnson@optistorepro.com",
+        phone: "+1-555-0101",
+        address: "123 Medical St, City, State 12345",
+        position: "Doctor",
+        department: "Medical",
+        hireDate: "2023-01-15",
+        status: "active",
+        role: "doctor",
+        permissions: ["prescriptions", "appointments", "medical_records"],
+        customFields: {},
+        createdAt: "2023-01-15T00:00:00Z",
+        updatedAt: "2023-01-15T00:00:00Z"
+      },
+      {
+        id: "2",
+        staffCode: "STF-002",
+        firstName: "Mike",
+        lastName: "Chen",
+        email: "mike.chen@optistorepro.com",
+        phone: "+1-555-0102",
+        address: "456 Business Ave, City, State 12345",
+        position: "Optometrist",
+        department: "Medical",
+        hireDate: "2023-02-01",
+        status: "active",
+        role: "doctor",
+        permissions: ["prescriptions", "appointments", "eye_exams"],
+        customFields: {},
+        createdAt: "2023-02-01T00:00:00Z",
+        updatedAt: "2023-02-01T00:00:00Z"
+      },
+      {
+        id: "3",
+        staffCode: "STF-003",
+        firstName: "Emily",
+        lastName: "Davis",
+        email: "emily.davis@optistorepro.com",
+        phone: "+1-555-0103",
+        address: "789 Commerce Blvd, City, State 12345",
+        position: "Receptionist",
+        department: "Administration",
+        hireDate: "2023-03-10",
+        status: "active",
+        role: "staff",
+        permissions: ["appointments", "customer_service"],
+        customFields: {},
+        createdAt: "2023-03-10T00:00:00Z",
+        updatedAt: "2023-03-10T00:00:00Z"
+      }
+    ];
+  }
+
+  async getStaffMember(id: string): Promise<any | undefined> {
+    const staff = await this.getStaff();
+    return staff.find(s => s.id === id);
+  }
+
+  async createStaff(staffData: any): Promise<any> {
+    const newStaff = {
+      id: Date.now().toString(),
+      ...staffData,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    return newStaff;
+  }
+
+  async updateStaff(id: string, staffData: any): Promise<any> {
+    const updatedStaff = {
+      id,
+      ...staffData,
+      updatedAt: new Date().toISOString()
+    };
+    return updatedStaff;
+  }
+
+  async deleteStaff(id: string): Promise<void> {
+    // Mock deletion for now
+    console.log(`Staff member ${id} deleted`);
   }
 }
 

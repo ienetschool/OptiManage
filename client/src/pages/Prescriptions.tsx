@@ -182,7 +182,215 @@ export default function Prescriptions() {
   return (
     <>
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="space-y-6">
+        <Tabs defaultValue="appointments" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="appointments">Doctor Appointments</TabsTrigger>
+            <TabsTrigger value="all">All Prescriptions</TabsTrigger>
+            <TabsTrigger value="glasses">Glasses</TabsTrigger>
+            <TabsTrigger value="contact-lenses">Contact Lenses</TabsTrigger>
+            <TabsTrigger value="medication">Medication</TabsTrigger>
+          </TabsList>
+
+          {/* Doctor Appointments Tab */}
+          <TabsContent value="appointments" className="space-y-6">
+            {/* Appointments Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Today's Appointments</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {appointments.filter(apt => {
+                          const today = new Date().toISOString().split('T')[0];
+                          return apt.appointmentDate?.split('T')[0] === today;
+                        }).length}
+                      </p>
+                      <p className="text-xs text-blue-600 flex items-center mt-1">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Scheduled today
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <Calendar className="text-blue-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Pending Consultations</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {appointments.filter(apt => apt.status === 'scheduled' || apt.status === 'confirmed').length}
+                      </p>
+                      <p className="text-xs text-amber-600">Awaiting consultation</p>
+                    </div>
+                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+                      <Stethoscope className="text-amber-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Prescriptions Created</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {prescriptions.filter(p => {
+                          const today = new Date().toISOString().split('T')[0];
+                          return p.createdAt?.split('T')[0] === today;
+                        }).length}
+                      </p>
+                      <p className="text-xs text-emerald-600">Today</p>
+                    </div>
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <Pill className="text-emerald-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">Completed Today</p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {appointments.filter(apt => apt.status === 'completed' && 
+                          apt.appointmentDate?.split('T')[0] === new Date().toISOString().split('T')[0]).length}
+                      </p>
+                      <p className="text-xs text-emerald-600">Consultations done</p>
+                    </div>
+                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                      <CheckCircle className="text-emerald-600 h-6 w-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Appointment Actions */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-slate-900">My Appointments</h2>
+              <div className="flex space-x-3">
+                <Select defaultValue="today">
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Quick Prescription
+                </Button>
+              </div>
+            </div>
+
+            {/* Appointments List */}
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                {appointments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Calendar className="mx-auto h-12 w-12 text-slate-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-slate-900 mb-2">No appointments scheduled</h3>
+                    <p className="text-slate-600">Check back later for new appointments.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {appointments.map((appointment) => {
+                      const patient = patients.find(p => p.id === appointment.patientId);
+                      const doctor = doctors.find(d => d.id === appointment.doctorId);
+                      
+                      return (
+                        <div key={appointment.id} className="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4">
+                              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <User className="h-6 w-6 text-blue-600" />
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h4 className="font-semibold text-slate-900">
+                                    {patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}
+                                  </h4>
+                                  <Badge className={
+                                    appointment.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                    appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' :
+                                    appointment.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }>
+                                    {appointment.status}
+                                  </Badge>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4 text-sm text-slate-600">
+                                  <div className="flex items-center">
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    {appointment.appointmentTime}
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Stethoscope className="h-4 w-4 mr-2" />
+                                    {appointment.appointmentType}
+                                  </div>
+                                </div>
+                                {appointment.reason && (
+                                  <p className="text-sm text-slate-600 mt-2">
+                                    <strong>Reason:</strong> {appointment.reason}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Set patient and appointment in prescription form
+                                  form.setValue('patientId', appointment.patientId);
+                                  form.setValue('appointmentId', appointment.id);
+                                  setOpen(true);
+                                }}
+                                className="text-blue-600 hover:bg-blue-50"
+                              >
+                                <Pill className="h-4 w-4 mr-2" />
+                                Create Prescription
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // View patient details
+                                  window.open(`/patients?view=${appointment.patientId}`, '_blank');
+                                }}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="all" className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Card className="border-slate-200">
@@ -934,7 +1142,26 @@ export default function Prescriptions() {
               )}
             </CardContent>
           </Card>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="glasses" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-slate-600">Glasses prescriptions will be displayed here.</p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="contact-lenses" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-slate-600">Contact lens prescriptions will be displayed here.</p>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="medication" className="space-y-6">
+            <div className="text-center py-12">
+              <p className="text-slate-600">Medication prescriptions will be displayed here.</p>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       {/* Prescription View Dialog */}

@@ -104,6 +104,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Staff routes
+  app.get('/api/staff', isAuthenticated, async (req, res) => {
+    try {
+      const staff = await storage.getStaff();
+      res.json(staff);
+    } catch (error) {
+      console.error("Error fetching staff:", error);
+      res.status(500).json({ message: "Failed to fetch staff" });
+    }
+  });
+
+  app.get('/api/staff/:id', isAuthenticated, async (req, res) => {
+    try {
+      const staffMember = await storage.getStaffMember(req.params.id);
+      if (!staffMember) {
+        return res.status(404).json({ message: "Staff member not found" });
+      }
+      res.json(staffMember);
+    } catch (error) {
+      console.error("Error fetching staff member:", error);
+      res.status(500).json({ message: "Failed to fetch staff member" });
+    }
+  });
+
+  app.post('/api/staff', isAuthenticated, async (req, res) => {
+    try {
+      const staffMember = await storage.createStaff(req.body);
+      res.status(201).json(staffMember);
+    } catch (error) {
+      console.error("Error creating staff member:", error);
+      res.status(400).json({ message: "Failed to create staff member" });
+    }
+  });
+
+  app.put('/api/staff/:id', isAuthenticated, async (req, res) => {
+    try {
+      const staffMember = await storage.updateStaff(req.params.id, req.body);
+      res.json(staffMember);
+    } catch (error) {
+      console.error("Error updating staff member:", error);
+      res.status(400).json({ message: "Failed to update staff member" });
+    }
+  });
+
+  app.delete('/api/staff/:id', isAuthenticated, async (req, res) => {
+    try {
+      await storage.deleteStaff(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting staff member:", error);
+      res.status(500).json({ message: "Failed to delete staff member" });
+    }
+  });
+
   // Additional API routes can be added here
 
   // Dashboard KPIs
