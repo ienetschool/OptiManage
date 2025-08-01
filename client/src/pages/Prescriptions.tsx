@@ -363,12 +363,15 @@ export default function Prescriptions() {
                   render={({ field }) => (
                     <Input 
                       type="number" 
-                      min="0" 
+                      min="1" 
                       max="180" 
                       placeholder="90°" 
                       {...field} 
-                      value={field.value || 0} 
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                      value={field.value?.toString() || ""} 
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? null : parseInt(value, 10));
+                      }} 
                     />
                   )}
                 />
@@ -433,12 +436,15 @@ export default function Prescriptions() {
                   render={({ field }) => (
                     <Input 
                       type="number" 
-                      min="0" 
+                      min="1" 
                       max="180" 
                       placeholder="85°" 
                       {...field} 
-                      value={field.value || 0} 
-                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} 
+                      value={field.value?.toString() || ""} 
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        field.onChange(value === "" ? null : parseInt(value, 10));
+                      }} 
                     />
                   )}
                 />
