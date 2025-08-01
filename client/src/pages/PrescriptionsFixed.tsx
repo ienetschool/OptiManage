@@ -151,7 +151,7 @@ export default function PrescriptionsFixed() {
     // Clean up the data - ensure all required fields have proper values
     const cleanedData = {
       ...data,
-      doctorId: data.doctorId || null, // Set to null if no doctor selected to avoid FK constraint
+      doctorId: null, // Always set to null to avoid FK constraint issues
       prescriptionDate: data.prescriptionDate || new Date(),
       storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
       status: data.status || "active",
