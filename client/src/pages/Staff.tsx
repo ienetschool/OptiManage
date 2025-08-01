@@ -41,10 +41,26 @@ import { format } from "date-fns";
 
 export default function StaffPage() {
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [basicSalary, setBasicSalary] = useState(0);
+  const [houseAllowance, setHouseAllowance] = useState(0);
+  const [transportAllowance, setTransportAllowance] = useState(0);
+  const [medicalAllowance, setMedicalAllowance] = useState(0);
+  const [otherAllowances, setOtherAllowances] = useState(0);
+  const [incomeTax, setIncomeTax] = useState(0);
+  const [providentFund, setProvidentFund] = useState(0);
+  const [healthInsurance, setHealthInsurance] = useState(0);
+  const [otherDeductions, setOtherDeductions] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Calculate totals
+  const grossSalary = basicSalary + houseAllowance + transportAllowance + medicalAllowance + otherAllowances;
+  const totalDeductions = incomeTax + providentFund + healthInsurance + otherDeductions;
+  const netSalary = grossSalary - totalDeductions;
 
   // Generate Staff ID Card function
   const generateStaffIDCard = (staff: any) => {
@@ -92,7 +108,9 @@ export default function StaffPage() {
                 font-weight: 300;
               }
               .photo-section {
-                text-align: center;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
                 margin-bottom: 20px;
               }
               .photo-placeholder {
@@ -100,7 +118,6 @@ export default function StaffPage() {
                 height: 80px;
                 background: rgba(255,255,255,0.2);
                 border-radius: 50%;
-                margin: 0 auto 10px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -108,8 +125,14 @@ export default function StaffPage() {
                 border: 3px solid rgba(255,255,255,0.3);
               }
               .qr-section {
-                text-align: center;
-                margin: 15px 0;
+                width: 80px;
+                height: 80px;
+                background: white;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 4px;
               }
               .info {
                 margin-bottom: 15px;
@@ -180,6 +203,9 @@ export default function StaffPage() {
               
               <div class="photo-section">
                 <div class="photo-placeholder">👤</div>
+                <div class="qr-section">
+                  <canvas id="qr-canvas" width="80" height="80"></canvas>
+                </div>
               </div>
               
               <div class="info">
@@ -191,10 +217,6 @@ export default function StaffPage() {
                 <div class="details">Phone: ${staff.phone || 'N/A'}</div>
                 <div class="details">Address: ${staff.address || 'N/A'}</div>
                 <div class="details">Since: ${new Date(staff.hireDate).getFullYear()}</div>
-              </div>
-              
-              <div class="qr-section">
-                <canvas id="qr-canvas" width="80" height="80"></canvas>
               </div>
               
               <div class="footer">
@@ -209,9 +231,23 @@ export default function StaffPage() {
             </div>
             
             <script>
-              const canvas = document.getElementById('qr-canvas');
-              const staffData = 'STAFF:${staff.staffCode},NAME:${staff.firstName} ${staff.lastName},POS:${staff.position},DEPT:${staff.department},PHONE:${staff.phone},ADDRESS:${staff.address}';
-              QRCode.toCanvas(canvas, staffData, { width: 80, height: 80, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
+              window.onload = function() {
+                try {
+                  const canvas = document.getElementById('qr-canvas');
+                  if (canvas && window.QRCode) {
+                    const staffData = 'STAFF:${staff.staffCode},NAME:${staff.firstName} ${staff.lastName},POS:${staff.position},DEPT:${staff.department},PHONE:${staff.phone || "N/A"},ADDRESS:${(staff.address || "N/A").replace(/,/g, "|")}';
+                    QRCode.toCanvas(canvas, staffData, { 
+                      width: 72, 
+                      height: 72, 
+                      margin: 1, 
+                      color: { dark: '#000000', light: '#ffffff' },
+                      errorCorrectionLevel: 'M'
+                    });
+                  }
+                } catch (e) {
+                  console.error('QR Code generation failed:', e);
+                }
+              };
             </script>
           </body>
         </html>
@@ -326,6 +362,7 @@ export default function StaffPage() {
     resolver: zodResolver(insertStaffSchema),
     defaultValues: {
       staffCode: `STF-${Date.now().toString().slice(-6)}`,
+      employeeId: `EMP-${Date.now().toString().slice(-6)}`, // Auto-generate Employee ID
       firstName: "",
       lastName: "",
       email: "",
@@ -932,30 +969,60 @@ export default function StaffPage() {
                             <div className="grid grid-cols-3 gap-4">
                               <div>
                                 <Label>Basic Salary</Label>
-                                <Input type="number" placeholder="50000" />
+                                <Input 
+                                  type="number" 
+                                  value={basicSalary || ""} 
+                                  onChange={(e) => setBasicSalary(Number(e.target.value) || 0)}
+                                  placeholder="50000" 
+                                />
                               </div>
                               <div>
                                 <Label>House Allowance</Label>
-                                <Input type="number" placeholder="15000" />
+                                <Input 
+                                  type="number" 
+                                  value={houseAllowance || ""} 
+                                  onChange={(e) => setHouseAllowance(Number(e.target.value) || 0)}
+                                  placeholder="15000" 
+                                />
                               </div>
                               <div>
                                 <Label>Transport Allowance</Label>
-                                <Input type="number" placeholder="8000" />
+                                <Input 
+                                  type="number" 
+                                  value={transportAllowance || ""} 
+                                  onChange={(e) => setTransportAllowance(Number(e.target.value) || 0)}
+                                  placeholder="8000" 
+                                />
                               </div>
                             </div>
                             
                             <div className="grid grid-cols-3 gap-4">
                               <div>
                                 <Label>Medical Allowance</Label>
-                                <Input type="number" placeholder="5000" />
+                                <Input 
+                                  type="number" 
+                                  value={medicalAllowance || ""} 
+                                  onChange={(e) => setMedicalAllowance(Number(e.target.value) || 0)}
+                                  placeholder="5000" 
+                                />
                               </div>
                               <div>
                                 <Label>Other Allowances</Label>
-                                <Input type="number" placeholder="2000" />
+                                <Input 
+                                  type="number" 
+                                  value={otherAllowances || ""} 
+                                  onChange={(e) => setOtherAllowances(Number(e.target.value) || 0)}
+                                  placeholder="2000" 
+                                />
                               </div>
                               <div>
                                 <Label>Total Gross Salary</Label>
-                                <Input type="number" placeholder="80000" disabled className="bg-gray-100" />
+                                <Input 
+                                  type="number" 
+                                  value={grossSalary} 
+                                  disabled 
+                                  className="bg-green-100 font-semibold" 
+                                />
                               </div>
                             </div>
                           </CardContent>
@@ -970,30 +1037,60 @@ export default function StaffPage() {
                             <div className="grid grid-cols-3 gap-4">
                               <div>
                                 <Label>Income Tax</Label>
-                                <Input type="number" placeholder="8000" />
+                                <Input 
+                                  type="number" 
+                                  value={incomeTax || ""} 
+                                  onChange={(e) => setIncomeTax(Number(e.target.value) || 0)}
+                                  placeholder="8000" 
+                                />
                               </div>
                               <div>
                                 <Label>Provident Fund</Label>
-                                <Input type="number" placeholder="4000" />
+                                <Input 
+                                  type="number" 
+                                  value={providentFund || ""} 
+                                  onChange={(e) => setProvidentFund(Number(e.target.value) || 0)}
+                                  placeholder="4000" 
+                                />
                               </div>
                               <div>
                                 <Label>Health Insurance</Label>
-                                <Input type="number" placeholder="2000" />
+                                <Input 
+                                  type="number" 
+                                  value={healthInsurance || ""} 
+                                  onChange={(e) => setHealthInsurance(Number(e.target.value) || 0)}
+                                  placeholder="2000" 
+                                />
                               </div>
                             </div>
                             
                             <div className="grid grid-cols-3 gap-4">
                               <div>
                                 <Label>Other Deductions</Label>
-                                <Input type="number" placeholder="1000" />
+                                <Input 
+                                  type="number" 
+                                  value={otherDeductions || ""} 
+                                  onChange={(e) => setOtherDeductions(Number(e.target.value) || 0)}
+                                  placeholder="1000" 
+                                />
                               </div>
                               <div>
                                 <Label>Total Deductions</Label>
-                                <Input type="number" placeholder="15000" disabled className="bg-gray-100" />
+                                <Input 
+                                  type="number" 
+                                  value={totalDeductions} 
+                                  disabled 
+                                  className="bg-red-100 font-semibold" 
+                                />
                               </div>
                               <div>
                                 <Label>Net Salary</Label>
-                                <Input type="number" placeholder="65000" disabled className="bg-green-100" />
+                                <Input 
+                                  type="number" 
+                                  value={netSalary} 
+                                  disabled 
+                                  className="bg-green-200 font-bold text-green-800" 
+                                />
                               </div>
                             </div>
                           </CardContent>
@@ -1167,6 +1264,10 @@ export default function StaffPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
+                                onClick={() => {
+                                  setEditingStaff(staff);
+                                  setEditOpen(true);
+                                }}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -1194,31 +1295,103 @@ export default function StaffPage() {
       {/* Staff View Dialog */}
       {selectedStaff && (
         <Dialog open={!!selectedStaff} onOpenChange={() => setSelectedStaff(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
                 <span>Staff Profile - {selectedStaff.firstName} {selectedStaff.lastName}</span>
-                <Badge className={getRoleBadgeColor(selectedStaff.role)}>
-                  {selectedStaff.role}
-                </Badge>
+                <div className="flex items-center space-x-2">
+                  <Badge className={getRoleBadgeColor(selectedStaff.role)}>
+                    {selectedStaff.role}
+                  </Badge>
+                  <div className="flex space-x-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => generateStaffIDCard(selectedStaff)}
+                      title="Generate ID Card"
+                    >
+                      <QrCode className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.print()}
+                      title="Print Profile"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </DialogTitle>
             </DialogHeader>
             
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h4 className="font-semibold text-slate-900">Personal Information</h4>
+            <div className="grid grid-cols-3 gap-6">
+              {/* Photo and QR Section */}
+              <div className="col-span-1 space-y-4">
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border text-center">
+                  <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <User className="h-12 w-12 text-gray-400" />
+                  </div>
+                  <h3 className="font-semibold text-lg">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
+                  <p className="text-sm text-slate-600">{selectedStaff.position}</p>
+                  <Badge className={getRoleBadgeColor(selectedStaff.role)} style={{ marginTop: '8px' }}>
+                    {selectedStaff.role}
+                  </Badge>
+                </div>
+                
+                <div className="bg-white p-4 rounded-lg border text-center">
+                  <h4 className="font-medium mb-2">Staff QR Code</h4>
+                  <div className="w-24 h-24 bg-gray-100 rounded mx-auto flex items-center justify-center">
+                    <QrCode className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2">Scan for staff info</p>
+                </div>
+              </div>
+
+              {/* Personal Information */}
+              <div className="col-span-1 space-y-4">
+                <h4 className="font-semibold text-slate-900 border-b pb-2">Personal Information</h4>
                 <div className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-slate-600">Staff Code</Label>
-                    <p className="font-mono">{selectedStaff.staffCode}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Full Name</Label>
-                    <p className="text-lg font-semibold">{selectedStaff.firstName} {selectedStaff.lastName}</p>
+                    <p className="font-mono bg-gray-50 p-2 rounded">{selectedStaff.staffCode}</p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-slate-600">Employee ID</Label>
-                    <p>{selectedStaff.employeeId || 'Not assigned'}</p>
+                    <p className="font-mono bg-gray-50 p-2 rounded">{selectedStaff.employeeId || 'Not assigned'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Blood Group</Label>
+                    <p className="bg-red-50 p-2 rounded text-red-700 font-medium">{selectedStaff.bloodGroup || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Date of Birth</Label>
+                    <p>{selectedStaff.dateOfBirth ? format(new Date(selectedStaff.dateOfBirth), 'MMMM dd, yyyy') : 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Gender</Label>
+                    <p className="capitalize">{selectedStaff.gender || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Nationality</Label>
+                    <p>{selectedStaff.nationality || 'Not provided'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employment & Contact */}
+              <div className="col-span-1 space-y-4">
+                <h4 className="font-semibold text-slate-900 border-b pb-2">Employment & Contact</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Department</Label>
+                    <p className="bg-blue-50 p-2 rounded text-blue-700">{selectedStaff.department}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Status</Label>
+                    <Badge className={getStatusBadgeColor(selectedStaff.status)}>
+                      {selectedStaff.status}
+                    </Badge>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-slate-600">Hire Date</Label>
@@ -1227,39 +1400,6 @@ export default function StaffPage() {
                       <span>{format(new Date(selectedStaff.hireDate), 'MMMM dd, yyyy')}</span>
                     </p>
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-semibold text-slate-900">Employment Details</h4>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Position</Label>
-                    <p className="font-medium">{selectedStaff.position}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Department</Label>
-                    <p>{selectedStaff.department || 'Not assigned'}</p>
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium text-slate-600">Role & Status</Label>
-                    <div className="flex space-x-2">
-                      <Badge className={getRoleBadgeColor(selectedStaff.role)}>
-                        {selectedStaff.role}
-                      </Badge>
-                      <Badge className={getStatusBadgeColor(selectedStaff.status)}>
-                        {selectedStaff.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-4">
-              <h4 className="font-semibold text-slate-900 mb-3">Contact Information</h4>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-slate-600">Phone</Label>
                     <p className="flex items-center space-x-2">
@@ -1271,10 +1411,16 @@ export default function StaffPage() {
                     <Label className="text-sm font-medium text-slate-600">Email</Label>
                     <p className="flex items-center space-x-2">
                       <Mail className="h-4 w-4 text-slate-400" />
-                      <span>{selectedStaff.email || 'Not provided'}</span>
+                      <span className="text-sm break-all">{selectedStaff.email || 'Not provided'}</span>
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-6">
+              <h4 className="font-semibold text-slate-900 mb-3">Additional Information</h4>
+              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <div>
                     <Label className="text-sm font-medium text-slate-600">Address</Label>
@@ -1289,6 +1435,19 @@ export default function StaffPage() {
                     {selectedStaff.emergencyContactPhone && (
                       <p className="text-sm text-slate-500">{selectedStaff.emergencyContactPhone}</p>
                     )}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">Bank Details</Label>
+                    <p className="text-sm">{selectedStaff.bankName || 'Not provided'}</p>
+                    {selectedStaff.bankAccountNumber && (
+                      <p className="text-sm font-mono">{selectedStaff.bankAccountNumber}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-slate-600">NID Number</Label>
+                    <p className="font-mono">{selectedStaff.nidNumber || 'Not provided'}</p>
                   </div>
                 </div>
               </div>
