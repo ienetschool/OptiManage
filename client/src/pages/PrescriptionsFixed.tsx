@@ -106,7 +106,8 @@ export default function PrescriptionsFixed() {
   // Mutation for creating prescriptions
   const createPrescriptionMutation = useMutation({
     mutationFn: async (data: InsertPrescription) => {
-      return await apiRequest('/api/prescriptions', 'POST', data);
+      const response = await apiRequest('POST', '/api/prescriptions', data);
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
@@ -131,6 +132,7 @@ export default function PrescriptionsFixed() {
   // Form submit handlers
   const onCreateSubmit = (data: InsertPrescription) => {
     console.log('Submitting prescription data:', data);
+    console.log('Form errors:', createForm.formState.errors);
     
     // Ensure required fields are present
     if (!data.patientId) {
@@ -146,15 +148,44 @@ export default function PrescriptionsFixed() {
       data.prescriptionNumber = `RX-${Date.now().toString().slice(-6)}`;
     }
     
-    // Clean up the data - remove empty strings and convert to null where appropriate
-    const cleanedData = {
-      ...data,
-      axisRight: data.axisRight || null,
-      axisLeft: data.axisLeft || null,
+    // Clean up the data - ensure all required fields have proper values
+    const cleanedData: InsertPrescription = {
+      prescriptionNumber: data.prescriptionNumber,
+      patientId: data.patientId,
       doctorId: data.doctorId || null,
       appointmentId: data.appointmentId || null,
+      storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+      prescriptionDate: data.prescriptionDate || new Date(),
+      prescriptionType: data.prescriptionType || "eye_examination",
+      
+      // Vision prescription fields
+      visualAcuityRightEye: data.visualAcuityRightEye || null,
+      visualAcuityLeftEye: data.visualAcuityLeftEye || null,
+      sphereRight: data.sphereRight || null,
+      cylinderRight: data.cylinderRight || null,
+      axisRight: data.axisRight || null,
+      addRight: data.addRight || null,
+      sphereLeft: data.sphereLeft || null,
+      cylinderLeft: data.cylinderLeft || null,
+      axisLeft: data.axisLeft || null,
+      addLeft: data.addLeft || null,
+      pdDistance: data.pdDistance || null,
+      pdNear: data.pdNear || null,
+      pdFar: data.pdFar || null,
+      
+      // Clinical fields
+      diagnosis: data.diagnosis || null,
+      treatment: data.treatment || null,
+      advice: data.advice || null,
+      notes: data.notes || null,
+      nextFollowUp: data.nextFollowUp || null,
+      
+      // Status
+      status: data.status || "active",
+      qrCode: data.qrCode || null,
     };
     
+    console.log('Cleaned data for submission:', cleanedData);
     createPrescriptionMutation.mutate(cleanedData);
   };
 
