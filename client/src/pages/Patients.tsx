@@ -197,16 +197,18 @@ export default function Patients() {
               @page { size: A4; margin: 10mm; }
               body { font-family: 'Arial', sans-serif; line-height: 1.3; color: #2c3e50; margin: 0; padding: 0; font-size: 9pt; background: #ffffff; }
               .document-container { max-width: 210mm; margin: 0 auto; background: white; height: 297mm; overflow: hidden; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 15px; height: 35mm; display: flex; align-items: center; justify-content: space-between; }
-              .clinic-logo { font-size: 20pt; font-weight: 900; margin-bottom: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-              .clinic-subtitle { font-size: 10pt; margin-bottom: 3px; opacity: 0.9; }
-              .report-meta { font-size: 7pt; margin-top: 5px; opacity: 0.8; }
-              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; margin-top: 3px; font-weight: bold; font-size: 8pt; }
-              .qr-header-container { flex: 0 0 auto; text-align: center; }
-              .qr-header-box { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; padding: 6px; }
-              .qr-header-canvas { background: white; width: 45px; height: 45px; border-radius: 4px; margin: 0 auto 3px; display: flex; align-items: center; justify-content: center; }
-              .qr-header-label { font-size: 6pt; color: rgba(255,255,255,0.95); margin: 0; font-weight: 600; }
-              .content { padding: 15px; height: 190mm; overflow: hidden; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; height: 28mm; display: flex; align-items: center; justify-content: space-between; position: relative; }
+              .header-content { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+              .clinic-info { flex: 1; }
+              .clinic-logo { font-size: 18pt; font-weight: 900; margin-bottom: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+              .clinic-subtitle { font-size: 9pt; margin-bottom: 2px; opacity: 0.9; }
+              .report-meta { font-size: 6pt; margin-top: 3px; opacity: 0.8; }
+              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; margin-top: 2px; font-weight: bold; font-size: 7pt; }
+              .digital-record-header { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); text-align: center; }
+              .qr-header-container { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 4px; backdrop-filter: blur(5px); }
+              .qr-header-canvas { background: white; width: 38px; height: 38px; border-radius: 3px; margin: 0 auto 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+              .qr-header-label { font-size: 5pt; color: rgba(255,255,255,0.95); margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+              .content { padding: 15px; height: 200mm; overflow: hidden; }
               .patient-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; padding: 12px; margin-bottom: 15px; border-left: 4px solid #667eea; }
               .patient-name { font-size: 16pt; font-weight: 700; color: #2d3748; margin-bottom: 5px; }
               .patient-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 8pt; }
@@ -253,18 +255,20 @@ export default function Patients() {
           <body>
             <div class="document-container">
               <div class="header">
-                <div style="flex: 1; text-align: left;">
-                  <div class="clinic-logo">🏥 OptiStore Pro</div>
-                  <div class="clinic-subtitle">Advanced Medical Center & Eye Care Specialists</div>
-                  <div class="patient-id-badge">Patient ID: ${patient.patientCode}</div>
-                  <div class="report-meta">📅 ${new Date().toLocaleDateString()}</div>
+                <div class="header-content">
+                  <div class="clinic-info">
+                    <div class="clinic-logo">🏥 OptiStore Pro</div>
+                    <div class="clinic-subtitle">Advanced Medical Center & Eye Care Specialists</div>
+                    <div class="patient-id-badge">Patient ID: ${patient.patientCode}</div>
+                    <div class="report-meta">📅 ${new Date().toLocaleDateString()}</div>
+                  </div>
                 </div>
-                <div class="qr-header-container">
-                  <div class="qr-header-box">
+                <div class="digital-record-header">
+                  <div class="qr-header-container">
                     <div class="qr-header-canvas">
-                      <canvas id="header-qr-canvas" style="width: 40px; height: 40px;"></canvas>
+                      <canvas id="header-qr-canvas" style="width: 34px; height: 34px;"></canvas>
                     </div>
-                    <p class="qr-header-label">Digital Patient Record</p>
+                    <p class="qr-header-label">Digital Record</p>
                   </div>
                 </div>
               </div>
@@ -390,8 +394,8 @@ export default function Patients() {
                 <script>
                   // Header QR Code
                   const headerCanvas = document.getElementById('header-qr-canvas');
-                  const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}';
-                  QRCode.toCanvas(headerCanvas, patientData, { width: 45, height: 45, margin: 1 }, function (error) {
+                  const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}, DOB: ${patient.dateOfBirth}';
+                  QRCode.toCanvas(headerCanvas, patientData, { width: 34, height: 34, margin: 1 }, function (error) {
                     if (error) console.error(error);
                   });
                 </script>
@@ -447,13 +451,16 @@ export default function Patients() {
             <style>
               @page { size: A4; margin: 15mm; }
               body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 12pt; color: #333; }
-              .invoice-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 30px; }
-              .clinic-info h1 { color: #667eea; margin: 0; font-size: 28pt; }
-              .invoice-number { text-align: right; display: flex; flex-direction: column; align-items: flex-end; }
-              .invoice-number h2 { color: #333; margin: 0; font-size: 24pt; margin-bottom: 10px; }
-              .invoice-qr { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
-              .invoice-qr canvas { width: 60px; height: 60px; }
-              .invoice-qr-label { font-size: 8pt; color: #666; margin-top: 5px; }
+              .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #667eea; padding: 15px 0; margin-bottom: 25px; position: relative; }
+              .clinic-info h1 { color: #667eea; margin: 0; font-size: 26pt; font-weight: 900; }
+              .clinic-info p { margin: 3px 0; font-size: 10pt; color: #666; }
+              .invoice-header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 15px; }
+              .invoice-details { text-align: right; }
+              .invoice-details h2 { color: #333; margin: 0; font-size: 22pt; margin-bottom: 8px; }
+              .invoice-details p { margin: 2px 0; font-size: 9pt; color: #555; }
+              .invoice-qr-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border: 2px solid #667eea; border-radius: 10px; padding: 8px; text-align: center; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15); }
+              .invoice-qr-header canvas { width: 55px; height: 55px; border-radius: 4px; }
+              .invoice-qr-header-label { font-size: 7pt; color: #667eea; margin: 3px 0 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
               .billing-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
               .bill-to, .invoice-details { background: #f8fafc; padding: 20px; border-radius: 8px; }
               .services-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
@@ -472,14 +479,16 @@ export default function Patients() {
                 <p>123 Healthcare Avenue, Medical District</p>
                 <p>Phone: (555) 123-4567 | Email: billing@optistorepro.com</p>
               </div>
-              <div class="invoice-number">
-                <h2>INVOICE</h2>
-                <p><strong>Invoice #:</strong> INV-${Date.now()}</p>
-                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-                <p><strong>Due Date:</strong> ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
-                <div class="invoice-qr">
-                  <canvas id="invoice-qr-canvas"></canvas>
-                  <p class="invoice-qr-label">Invoice QR Code</p>
+              <div class="invoice-header-right">
+                <div class="invoice-details">
+                  <h2>INVOICE</h2>
+                  <p><strong>Invoice #:</strong> INV-${Date.now()}</p>
+                  <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                  <p><strong>Due Date:</strong> ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
+                </div>
+                <div class="invoice-qr-header">
+                  <canvas id="invoice-header-qr-canvas"></canvas>
+                  <p class="invoice-qr-header-label">Invoice QR</p>
                 </div>
               </div>
             </div>
@@ -554,8 +563,16 @@ export default function Patients() {
 
             <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
             <script>
+              // Header QR Code for Invoice
+              const invoiceHeaderCanvas = document.getElementById('invoice-header-qr-canvas');
+              const invoiceHeaderData = 'Invoice: INV-${Date.now()}, Patient: ${patient.firstName} ${patient.lastName}, Total: $352.63, Due: ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}';
+              QRCode.toCanvas(invoiceHeaderCanvas, invoiceHeaderData, { width: 55, height: 55, margin: 1 }, function (error) {
+                if (error) console.error(error);
+              });
+              
+              // Payment QR Code
               const invoiceCanvas = document.getElementById('invoice-qr-canvas');
-              const invoiceData = 'Invoice: INV-${Date.now()}, Patient: ${patient.firstName} ${patient.lastName}, Amount: $352.63';
+              const invoiceData = 'Payment: INV-${Date.now()}, Patient: ${patient.firstName} ${patient.lastName}, Amount: $352.63, PayTo: OptiStore Pro';
               QRCode.toCanvas(invoiceCanvas, invoiceData, { width: 75, height: 75, margin: 1 }, function (error) {
                 if (error) console.error(error);
               });
