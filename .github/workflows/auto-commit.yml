@@ -1,0 +1,61 @@
+name: Auto Commit on Changes
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      task_name:
+        description: 'Task name for commit message'
+        required: false
+        default: 'Manual trigger'
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Commit changes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      run: |
+        TASK_NAME="${{ github.event.inputs.task_name || 'Auto-commit' }}"
+        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        git add .
+        git commit -m "$TASK_NAME - $TIMESTAMP
+
+        Auto-generated commit from OptiStore Pro development workflow
+        
+        - Updated patient management system
+        - Enhanced appointment scheduling
+        - Improved medical records handling
+        - QR code integration updates
+        
+        Committed automatically via GitHub Actions"
+
+    - name: Push changes
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
