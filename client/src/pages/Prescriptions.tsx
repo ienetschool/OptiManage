@@ -129,6 +129,27 @@ export default function Prescriptions() {
     },
   });
 
+  const updateAppointmentMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: any }) => {
+      await apiRequest("PUT", `/api/appointments/${id}`, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-appointments"] });
+      toast({
+        title: "Success",
+        description: "Appointment updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update appointment.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: InsertPrescription) => {
     createPrescriptionMutation.mutate(data);
   };

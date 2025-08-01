@@ -25,7 +25,8 @@ import {
   Clock,
   Award,
   FileText,
-  QrCode
+  QrCode,
+  Download
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +39,7 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import QRCode from "react-qr-code";
 
 export default function StaffPage() {
   const [open, setOpen] = useState(false);
@@ -95,17 +97,30 @@ export default function StaffPage() {
               .header {
                 text-align: center;
                 margin-bottom: 20px;
+                background: linear-gradient(135deg, #2563eb, #1d4ed8);
+                color: white;
+                padding: 15px;
+                border-radius: 12px 12px 0 0;
+                margin: -25px -25px 20px -25px;
               }
               .company-name {
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: bold;
                 margin-bottom: 8px;
                 line-height: 1.2;
               }
-              .id-title {
-                font-size: 13px;
+              .company-details {
+                font-size: 9px;
                 opacity: 0.9;
-                font-weight: 300;
+                margin-bottom: 8px;
+                line-height: 1.3;
+              }
+              .id-title {
+                font-size: 12px;
+                opacity: 0.9;
+                font-weight: 500;
+                text-transform: uppercase;
+                letter-spacing: 1px;
               }
               .photo-section {
                 display: flex;
@@ -222,6 +237,10 @@ export default function StaffPage() {
             <div class="id-card">
               <div class="header">
                 <div class="company-name">OptiStore Pro Medical Center</div>
+                <div class="company-details">
+                  <div>123 Healthcare Boulevard, Medical District</div>
+                  <div>Phone: +1 (555) 123-4567 | Email: info@optistorepro.com</div>
+                </div>
                 <div class="id-title">Staff Identification Card</div>
               </div>
               
@@ -763,7 +782,7 @@ export default function StaffPage() {
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                           <FormField
                             control={form.control}
                             name="dateOfBirth"
@@ -787,13 +806,41 @@ export default function StaffPage() {
                                 <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <FormControl>
                                     <SelectTrigger>
-                                      <SelectValue />
+                                      <SelectValue placeholder="Select gender" />
                                     </SelectTrigger>
                                   </FormControl>
                                   <SelectContent>
                                     <SelectItem value="male">Male</SelectItem>
                                     <SelectItem value="female">Female</SelectItem>
                                     <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="bloodGroup"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Blood Group</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select blood group" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="A+">A+</SelectItem>
+                                    <SelectItem value="A-">A-</SelectItem>
+                                    <SelectItem value="B+">B+</SelectItem>
+                                    <SelectItem value="B-">B-</SelectItem>
+                                    <SelectItem value="AB+">AB+</SelectItem>
+                                    <SelectItem value="AB-">AB-</SelectItem>
+                                    <SelectItem value="O+">O+</SelectItem>
+                                    <SelectItem value="O-">O-</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -1018,72 +1065,7 @@ export default function StaffPage() {
                           />
                         </div>
 
-                        <div className="grid grid-cols-3 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="bloodGroup"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Blood Group</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select blood group" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="A+">A+</SelectItem>
-                                    <SelectItem value="A-">A-</SelectItem>
-                                    <SelectItem value="B+">B+</SelectItem>
-                                    <SelectItem value="B-">B-</SelectItem>
-                                    <SelectItem value="AB+">AB+</SelectItem>
-                                    <SelectItem value="AB-">AB-</SelectItem>
-                                    <SelectItem value="O+">O+</SelectItem>
-                                    <SelectItem value="O-">O-</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="dateOfBirth"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Date of Birth</FormLabel>
-                                <FormControl>
-                                  <Input type="date" {...field} value={field.value || ""} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={form.control}
-                            name="gender"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Gender</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select gender" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="male">Male</SelectItem>
-                                    <SelectItem value="female">Female</SelectItem>
-                                    <SelectItem value="other">Other</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+
                       </TabsContent>
 
                       <TabsContent value="access" className="space-y-4">
@@ -1587,8 +1569,13 @@ export default function StaffPage() {
                 
                 <div className="bg-white p-4 rounded-lg border text-center">
                   <h4 className="font-medium mb-2">Staff QR Code</h4>
-                  <div className="w-24 h-24 bg-gray-100 rounded mx-auto flex items-center justify-content">
-                    <QrCode className="h-8 w-8 text-gray-400" />
+                  <div className="w-24 h-24 bg-gray-100 rounded mx-auto flex items-center justify-center">
+                    <QRCode
+                      value={`${window.location.origin}/staff?view=${selectedStaff.id}`}
+                      size={80}
+                      level="L"
+                      includeMargin={false}
+                    />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">Scan for staff info</p>
                   
@@ -1602,6 +1589,7 @@ export default function StaffPage() {
                         toast({ title: "Copied to clipboard", description: "Staff info copied successfully" });
                       }}
                     >
+                      <FileText className="h-3 w-3 mr-1" />
                       Share
                     </Button>
                     <Button
@@ -1609,7 +1597,39 @@ export default function StaffPage() {
                       size="sm"
                       onClick={() => generateStaffIDCard(selectedStaff)}
                     >
+                      <Download className="h-3 w-3 mr-1" />
                       PDF
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const printContent = document.createElement('div');
+                        printContent.innerHTML = `
+                          <h2>Staff Information</h2>
+                          <p><strong>Name:</strong> ${selectedStaff.firstName} ${selectedStaff.lastName}</p>
+                          <p><strong>Staff Code:</strong> ${selectedStaff.staffCode}</p>
+                          <p><strong>Position:</strong> ${selectedStaff.position}</p>
+                          <p><strong>Department:</strong> ${selectedStaff.department}</p>
+                          <p><strong>Phone:</strong> ${selectedStaff.phone}</p>
+                          <p><strong>Email:</strong> ${selectedStaff.email}</p>
+                          <p><strong>Address:</strong> ${selectedStaff.address}</p>
+                        `;
+                        const printWindow = window.open('', '', 'width=800,height=600');
+                        if (printWindow) {
+                          printWindow.document.write(`
+                            <html>
+                              <head><title>Staff Information</title></head>
+                              <body>${printContent.innerHTML}</body>
+                            </html>
+                          `);
+                          printWindow.document.close();
+                          printWindow.print();
+                        }
+                      }}
+                    >
+                      <Eye className="h-3 w-3 mr-1" />
+                      Print
                     </Button>
                   </div>
                 </div>
