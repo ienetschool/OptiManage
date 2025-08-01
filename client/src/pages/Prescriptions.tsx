@@ -400,7 +400,6 @@ export default function Prescriptions() {
                             
                             <div className="flex space-x-2">
                               <Button
-                                variant="outline"
                                 size="sm"
                                 onClick={() => {
                                   // Set patient and appointment in prescription form
@@ -408,8 +407,12 @@ export default function Prescriptions() {
                                   form.setValue('appointmentId', appointment.id);
                                   form.setValue('doctorId', appointment.doctorId || appointment.staffId || '');
                                   setOpen(true);
+                                  toast({
+                                    title: "Prescription Form",
+                                    description: "Opening prescription form for patient",
+                                  });
                                 }}
-                                className="text-blue-600 hover:bg-blue-50"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
                               >
                                 <Pill className="h-4 w-4 mr-2" />
                                 Create Prescription
@@ -418,11 +421,27 @@ export default function Prescriptions() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  // View patient details
-                                  window.open(`/patients?view=${appointment.patientId}`, '_blank');
+                                  toast({
+                                    title: "Appointment Details",
+                                    description: `Viewing details for ${patient?.firstName} ${patient?.lastName}`,
+                                  });
+                                  // Show appointment details in a modal or navigate to details page
+                                  setViewPrescription({
+                                    id: appointment.id,
+                                    patientId: appointment.patientId,
+                                    appointmentId: appointment.id,
+                                    doctorId: appointment.doctorId || appointment.staffId || '',
+                                    prescriptionType: 'appointment_details',
+                                    medications: [],
+                                    instructions: `Appointment Details:\nPatient: ${patient?.firstName} ${patient?.lastName}\nDate: ${appointment.appointmentDate ? format(new Date(appointment.appointmentDate), 'MMM dd, yyyy') : 'Date TBD'}\nTime: ${appointment.appointmentTime || appointment.time || 'Time TBD'}\nReason: ${appointment.reason || appointment.notes || 'General Consultation'}`,
+                                    status: 'active',
+                                    createdAt: new Date().toISOString(),
+                                    updatedAt: new Date().toISOString()
+                                  } as Prescription);
                                 }}
                               >
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-4 w-4 mr-1" />
+                                View Details
                               </Button>
                             </div>
                           </div>
