@@ -905,66 +905,70 @@ export default function Appointments() {
                       </td>
                     </tr>
                   ) : (
-                    filteredAppointments.map((appointment) => (
-                      <tr key={appointment.id} className="border-b border-gray-100 hover:bg-gray-50">
-                        <td className="py-4 px-6">
-                          <div className="font-medium text-blue-600">APT-{appointment.id.slice(0, 8)}</div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs">
-                                {patients.find(p => p.id === appointment.patientId)?.firstName?.[0] || 'P'}{patients.find(p => p.id === appointment.patientId)?.lastName?.[0] || 'A'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium text-gray-900">
-                                {patients.find(p => p.id === appointment.patientId)?.firstName || 'Unknown'} {patients.find(p => p.id === appointment.patientId)?.lastName || 'Patient'}
+                    filteredAppointments.map((appointment: any) => {
+                      const patient = patients.find(p => p.id === (appointment.patientId || appointment.customerId));
+                      const store = stores.find(s => s.id === appointment.storeId);
+                      return (
+                        <tr key={appointment.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-6">
+                            <div className="font-medium text-blue-600">APT-{appointment.id.slice(0, 8)}</div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex items-center space-x-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarFallback className="text-xs">
+                                  {patient?.firstName?.[0] || 'P'}{patient?.lastName?.[0] || 'A'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {patient?.firstName || 'Unknown'} {patient?.lastName || 'Patient'}
+                                </div>
+                                <div className="text-sm text-gray-500">{patient?.phone || patient?.patientCode || 'No phone'}</div>
                               </div>
-                              <div className="text-sm text-gray-500">{patients.find(p => p.id === appointment.patientId)?.phone || 'No phone'}</div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="text-sm text-gray-900">{appointment.service}</div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="text-sm">
-                            <div className="text-gray-900">{format(appointment.appointmentDate, 'MMM dd, yyyy')}</div>
-                            <div className="text-gray-500">{format(appointment.appointmentDate, 'HH:mm')}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
-                            {appointment.status}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-6">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48">
-                              <DropdownMenuItem onClick={() => handleViewDetails(appointment)}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEdit(appointment)}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Appointment
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleCancel(appointment)} className="text-red-600">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Cancel
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="text-sm text-gray-900">{appointment.service}</div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="text-sm">
+                              <div className="text-gray-900">{new Date(appointment.appointmentDate).toLocaleDateString()}</div>
+                              <div className="text-gray-500">{new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
+                              {appointment.status}
+                            </Badge>
+                          </td>
+                          <td className="py-4 px-6">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem>
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit Appointment
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-red-600">
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Cancel
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
