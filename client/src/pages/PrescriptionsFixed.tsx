@@ -293,6 +293,45 @@ OptiStore Pro Team`;
     });
   };
 
+  const handleCreatePrescriptionFromAppointment = (prescription: Prescription) => {
+    const patient = patients.find(p => p.id === prescription.patientId);
+    if (patient) {
+      // Auto-populate the create form with patient data
+      createForm.reset({
+        prescriptionNumber: `RX-${Date.now()}`,
+        patientId: patient.id,
+        prescriptionType: prescription.prescriptionType || 'eye_examination',
+        storeId: prescription.storeId,
+        status: 'active',
+        diagnosis: '',
+        treatment: '',
+        advice: '',
+        notes: '',
+        visualAcuityRightEye: '',
+        visualAcuityLeftEye: '',
+        sphereRight: '',
+        cylinderRight: '',
+        axisRight: null,
+        addRight: '',
+        sphereLeft: '',
+        cylinderLeft: '',
+        axisLeft: null,
+        addLeft: '',
+        pdDistance: '',
+        pdNear: '',
+        pdFar: '',
+        nextFollowUp: ''
+      });
+      
+      setCreateOpen(true);
+      
+      toast({
+        title: "Create Prescription",
+        description: `Auto-filled form for ${patient.firstName} ${patient.lastName}`,
+      });
+    }
+  };
+
   // Stats data
   const statsData = [
     {
@@ -416,13 +455,6 @@ OptiStore Pro Team`;
             >
               <Zap className="mr-2 h-4 w-4" />
               Quick Prescription
-            </Button>
-            <Button 
-              onClick={() => setCreateOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create Prescription
             </Button>
           </div>
         </div>
@@ -555,6 +587,11 @@ OptiStore Pro Team`;
                                 <DropdownMenuItem onClick={() => handleEdit(prescription)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleCreatePrescriptionFromAppointment(prescription)}>
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Create Prescription
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => handleDownloadPDF(prescription)}>
