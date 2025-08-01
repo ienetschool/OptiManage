@@ -40,6 +40,20 @@ export default function Appointments() {
     queryKey: ["/api/stores"],
   });
 
+  // Available services for appointments
+  const services = [
+    "Comprehensive Eye Examination",
+    "Contact Lens Fitting",
+    "Frame Selection & Fitting",
+    "Vision Screening",
+    "Glaucoma Screening",
+    "Prescription Update",
+    "Eye Health Consultation",
+    "Diabetic Eye Exam",
+    "Children's Eye Exam",
+    "Low Vision Assessment"
+  ];
+
   const form = useForm<InsertAppointment>({
     resolver: zodResolver(insertAppointmentSchema),
     defaultValues: {
@@ -130,9 +144,19 @@ export default function Appointments() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/kpis"] });
+      const statusMessages = {
+        'scheduled': 'Appointment scheduled successfully',
+        'confirmed': 'Appointment confirmed',
+        'checked-in': 'Patient checked in',
+        'in-progress': 'Consultation started',
+        'completed': 'Appointment completed',
+        'cancelled': 'Appointment cancelled',
+        'no-show': 'Marked as no-show',
+        'rescheduled': 'Appointment rescheduled'
+      };
       toast({
-        title: "Success",
-        description: `Appointment ${variables.status} successfully.`,
+        title: "Status Updated",
+        description: statusMessages[variables.status as keyof typeof statusMessages] || "Status updated successfully",
       });
     },
     onError: () => {
@@ -175,38 +199,304 @@ export default function Appointments() {
     updateAppointmentStatusMutation.mutate({ id, status });
   };
 
-  const handlePrint = (appointment: any) => {
+  const generateAppointmentPDF = (appointment: any) => {
+    const pdfWindow = window.open('', '_blank');
+    if (pdfWindow) {
+      pdfWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment Details - ${appointment.customer.firstName} ${appointment.customer.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 15px; height: 25mm; display: flex; align-items: center; justify-content: space-between; border-radius: 8px; margin-bottom: 20px; }
+              .clinic-logo { font-size: 18pt; font-weight: 900; margin-bottom: 2px; }
+              .clinic-subtitle { font-size: 9pt; opacity: 0.9; }
+              .appointment-qr { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; padding: 5px; text-align: center; }
+              .qr-canvas { background: white; width: 35px; height: 35px; border-radius: 3px; margin: 0 auto 2px; }
+              .qr-label { font-size: 5pt; margin: 0; font-weight: 700; }
+              .content { padding: 20px; }
+              .appointment-details { background: #f8fafc; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+              .details-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+              .detail-item { border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; }
+              .detail-label { font-weight: 600; color: #4a5568; font-size: 9pt; }
+              .detail-value { color: #2d3748; font-size: 10pt; margin-top: 3px; }
+              .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 8pt; font-weight: 600; text-transform: uppercase; }
+              @media print { body { margin: 0; } }
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="clinic-logo">🏥 OptiStore Pro</div>
+                <div class="clinic-subtitle">Advanced Medical Center & Eye Care Specialists</div>
+              </div>
+              <div class="appointment-qr">
+                <div class="qr-canvas">
+                  <canvas id="appointment-qr" style="width: 30px; height: 30px;"></canvas>
+                </div>
+                <p class="qr-label">Appointment QR</p>
+              </div>
+            </div>
+            
+            <div class="content">
+              <div class="appointment-details">
+                <h2 style="margin-top: 0; color: #667eea;">Appointment Details</h2>
+                <div class="details-grid">
+                  <div class="detail-item">
+                    <div class="detail-label">Patient Name</div>
+                    <div class="detail-value">${appointment.customer.firstName} ${appointment.customer.lastName}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Appointment Date</div>
+                    <div class="detail-value">${new Date(appointment.appointmentDate).toLocaleDateString()}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Time</div>
+                    <div class="detail-value">${new Date(appointment.appointmentDate).toLocaleTimeString()}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Service</div>
+                    <div class="detail-value">${appointment.service}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Duration</div>
+                    <div class="detail-value">${appointment.duration} minutes</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                      <span class="status-badge" style="background: #e2e8f0; color: #4a5568;">${appointment.status}</span>
+                    </div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value">${appointment.store.name}</div>
+                  </div>
+                  <div class="detail-item">
+                    <div class="detail-label">Notes</div>
+                    <div class="detail-value">${appointment.notes || 'No special notes'}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div style="text-align: center; margin-top: 30px;">
+                <button onclick="window.print()" style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Print Appointment</button>
+              </div>
+            </div>
+            
+            <script>
+              const canvas = document.getElementById('appointment-qr');
+              const qrData = 'Appointment: ${appointment.id}, Patient: ${appointment.customer.firstName} ${appointment.customer.lastName}, Date: ${new Date(appointment.appointmentDate).toLocaleDateString()}, Service: ${appointment.service}';
+              QRCode.toCanvas(canvas, qrData, { width: 30, height: 30, margin: 1 }, function (error) {
+                if (error) console.error(error);
+              });
+            </script>
+          </body>
+        </html>
+      `);
+      pdfWindow.document.close();
+    }
+    
     toast({
-      title: "Print Appointment",
-      description: `Generating print format for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "Appointment Report Generated",
+      description: `Report for ${appointment.customer.firstName} ${appointment.customer.lastName} is ready for printing`,
     });
   };
 
-  const handleQRCode = (appointment: any) => {
+  const generateAppointmentQR = (appointment: any) => {
+    const qrWindow = window.open('', '_blank');
+    if (qrWindow) {
+      qrWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment QR Code - ${appointment.customer.firstName} ${appointment.customer.lastName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; text-align: center; padding: 40px; }
+              .qr-container { max-width: 400px; margin: 0 auto; padding: 30px; border: 2px solid #667eea; border-radius: 12px; }
+              .qr-code { width: 200px; height: 200px; margin: 20px auto; border-radius: 8px; }
+              .qr-code canvas { width: 100%; height: 100%; }
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+          </head>
+          <body>
+            <div class="qr-container">
+              <h2>Appointment QR Code</h2>
+              <div class="qr-code">
+                <canvas id="qr-canvas"></canvas>
+              </div>
+              <p><strong>${appointment.customer.firstName} ${appointment.customer.lastName}</strong></p>
+              <p>Appointment ID: ${appointment.id}</p>
+              <p>Date: ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+              <p>Service: ${appointment.service}</p>
+              <p>Scan to access appointment details</p>
+              <button onclick="window.print()">Print QR Code</button>
+            </div>
+            
+            <script>
+              const canvas = document.getElementById('qr-canvas');
+              const qrData = 'Appointment: ${appointment.id}, Patient: ${appointment.customer.firstName} ${appointment.customer.lastName}, Date: ${new Date(appointment.appointmentDate).toLocaleDateString()}, Service: ${appointment.service}, Status: ${appointment.status}';
+              QRCode.toCanvas(canvas, qrData, { width: 200, height: 200, margin: 2 }, function (error) {
+                if (error) console.error(error);
+              });
+            </script>
+          </body>
+        </html>
+      `);
+      qrWindow.document.close();
+    }
+    
     toast({
-      title: "QR Code Generated", 
-      description: `QR code created for appointment with ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "QR Code Generated",
+      description: `QR code for appointment with ${appointment.customer.firstName} ${appointment.customer.lastName}`,
     });
   };
 
-  const handleShare = (appointment: any) => {
+  const shareByEmail = (appointment: any) => {
+    const emailSubject = `Appointment Confirmation - ${appointment.customer.firstName} ${appointment.customer.lastName}`;
+    const emailBody = `Appointment Details:%0D%0A%0D%0APatient: ${appointment.customer.firstName} ${appointment.customer.lastName}%0D%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0D%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0D%0AService: ${appointment.service}%0D%0ADuration: ${appointment.duration} minutes%0D%0ALocation: ${appointment.store.name}%0D%0AStatus: ${appointment.status}%0D%0A%0D%0AGenerated from OptiStore Pro Medical Center`;
+    window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
+    
     toast({
-      title: "Share Appointment",
-      description: `Sharing appointment details for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "Email Sharing",
+      description: "Opening email client with appointment details",
     });
   };
 
-  const handleInvoice = (appointment: any) => {
+  const generateAppointmentInvoice = (appointment: any) => {
+    const invoiceWindow = window.open('', '_blank');
+    if (invoiceWindow) {
+      invoiceWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment Invoice - ${appointment.customer.firstName} ${appointment.customer.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 12pt; color: #333; }
+              .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #667eea; padding: 15px 0; margin-bottom: 25px; }
+              .clinic-info h1 { color: #667eea; margin: 0; font-size: 24pt; font-weight: 900; }
+              .clinic-info p { margin: 3px 0; font-size: 10pt; color: #666; }
+              .invoice-details { text-align: right; }
+              .invoice-details h2 { color: #333; margin: 0; font-size: 20pt; margin-bottom: 8px; }
+              .services-table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+              .services-table th, .services-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+              .services-table th { background: #f8fafc; font-weight: 600; color: #4a5568; }
+              .total-section { text-align: right; margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px; }
+              .total-amount { font-size: 18pt; font-weight: 700; color: #667eea; margin: 10px 0; }
+              @media print { body { margin: 0; } }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-header">
+              <div class="clinic-info">
+                <h1>🏥 OptiStore Pro</h1>
+                <p>Advanced Medical Center & Eye Care Specialists</p>
+                <p>123 Healthcare Avenue, Medical District</p>
+                <p>Phone: (555) 123-4567 | Email: billing@optistorepro.com</p>
+              </div>
+              <div class="invoice-details">
+                <h2>INVOICE</h2>
+                <p><strong>Invoice #:</strong> APT-${appointment.id}</p>
+                <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+                <p><strong>Due Date:</strong> ${new Date(Date.now() + 30*24*60*60*1000).toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px;">
+                <h3 style="margin-top: 0;">Bill To:</h3>
+                <p><strong>${appointment.customer.firstName} ${appointment.customer.lastName}</strong></p>
+                <p>Phone: ${appointment.customer.phone}</p>
+              </div>
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px;">
+                <h3 style="margin-top: 0;">Appointment Details:</h3>
+                <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> ${new Date(appointment.appointmentDate).toLocaleTimeString()}</p>
+                <p><strong>Location:</strong> ${appointment.store.name}</p>
+              </div>
+            </div>
+
+            <table class="services-table">
+              <thead>
+                <tr>
+                  <th>Service Description</th>
+                  <th>Duration</th>
+                  <th>Rate</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${appointment.service}</td>
+                  <td>${appointment.duration} minutes</td>
+                  <td>$125.00</td>
+                  <td>$125.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="total-section">
+              <p><strong>Subtotal: $125.00</strong></p>
+              <p><strong>Tax (8.5%): $10.63</strong></p>
+              <p class="total-amount">Total Amount: $135.63</p>
+            </div>
+
+            <div style="margin-top: 30px; text-align: center;">
+              <button onclick="window.print()" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 12pt;">Print Invoice</button>
+            </div>
+          </body>
+        </html>
+      `);
+      invoiceWindow.document.close();
+    }
+    
     toast({
-      title: "Invoice Generated",
-      description: `Creating invoice for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "Appointment Invoice Generated",
+      description: `Invoice for ${appointment.customer.firstName} ${appointment.customer.lastName} is ready for printing`,
     });
   };
 
   const handleSendReminder = (appointment: any) => {
+    const reminderWindow = window.open('', '_blank');
+    if (reminderWindow) {
+      reminderWindow.document.write(`
+        <html>
+          <head>
+            <title>Send Appointment Reminder</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 40px; max-width: 600px; margin: 0 auto; }
+              .reminder-container { border: 2px solid #667eea; border-radius: 12px; padding: 30px; text-align: center; }
+              .reminder-details { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left; }
+              button { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; margin: 10px; }
+              button:hover { background: #5a67d8; }
+            </style>
+          </head>
+          <body>
+            <div class="reminder-container">
+              <h2>📅 Appointment Reminder</h2>
+              <div class="reminder-details">
+                <p><strong>Patient:</strong> ${appointment.customer.firstName} ${appointment.customer.lastName}</p>
+                <p><strong>Phone:</strong> ${appointment.customer.phone}</p>
+                <p><strong>Date:</strong> ${new Date(appointment.appointmentDate).toLocaleDateString()}</p>
+                <p><strong>Time:</strong> ${new Date(appointment.appointmentDate).toLocaleTimeString()}</p>
+                <p><strong>Service:</strong> ${appointment.service}</p>
+                <p><strong>Location:</strong> ${appointment.store.name}</p>
+              </div>
+              <p>Reminder message template ready to send via SMS or email.</p>
+              <button onclick="window.close()">Send SMS Reminder</button>
+              <button onclick="window.close()">Send Email Reminder</button>
+              <button onclick="window.close()">Close</button>
+            </div>
+          </body>
+        </html>
+      `);
+      reminderWindow.document.close();
+    }
+    
     toast({
-      title: "Reminder Sent",
-      description: `Appointment reminder sent to ${appointment.customer.firstName} ${appointment.customer.lastName}`,
+      title: "Reminder Interface Opened",
+      description: `Reminder options for ${appointment.customer.firstName} ${appointment.customer.lastName}`,
     });
   };
 
@@ -224,6 +514,18 @@ export default function Appointments() {
 
   const handleReschedule = (appointment: any) => {
     handleEdit(appointment);
+  };
+
+  const handleConfirm = (appointment: any) => {
+    handleStatusChange(appointment.id, "confirmed");
+  };
+
+  const handleCancel = (appointment: any) => {
+    handleStatusChange(appointment.id, "cancelled");
+  };
+
+  const handleNoShow = (appointment: any) => {
+    handleStatusChange(appointment.id, "no-show");
   };
 
   // Use real appointments data or mock for demo  
@@ -290,9 +592,12 @@ export default function Appointments() {
     switch (status) {
       case 'scheduled': return 'bg-blue-100 text-blue-800';
       case 'confirmed': return 'bg-emerald-100 text-emerald-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'checked-in': return 'bg-teal-100 text-teal-800';
+      case 'in-progress': return 'bg-purple-100 text-purple-800';
+      case 'completed': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       case 'no-show': return 'bg-amber-100 text-amber-800';
+      case 'rescheduled': return 'bg-indigo-100 text-indigo-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -301,22 +606,15 @@ export default function Appointments() {
     switch (status) {
       case 'scheduled': return <Clock className="h-4 w-4" />;
       case 'confirmed': return <CheckCircle className="h-4 w-4" />;
+      case 'checked-in': return <UserCheck className="h-4 w-4" />;
+      case 'in-progress': return <Clock className="h-4 w-4" />;
       case 'completed': return <CheckCircle className="h-4 w-4" />;
       case 'cancelled': return <XCircle className="h-4 w-4" />;
       case 'no-show': return <AlertCircle className="h-4 w-4" />;
+      case 'rescheduled': return <Calendar className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
-
-  const services = [
-    "Eye Exam",
-    "Contact Lens Fitting", 
-    "Frame Fitting",
-    "Frame Repair",
-    "Prescription Pickup",
-    "Follow-up Appointment",
-    "Consultation"
-  ];
 
   const onSubmit = (data: InsertAppointment) => {
     if (editingAppointment) {
@@ -766,32 +1064,43 @@ export default function Appointments() {
                             <DropdownMenuSeparator />
                             
                             {/* Document Actions */}
-                            <DropdownMenuItem onClick={() => handlePrint(appointment)}>
+                            <DropdownMenuItem onClick={() => generateAppointmentPDF(appointment)}>
                               <Printer className="mr-2 h-4 w-4" />
-                              Print Details
+                              Print Report
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleQRCode(appointment)}>
+                            <DropdownMenuItem onClick={() => generateAppointmentQR(appointment)}>
                               <QrCode className="mr-2 h-4 w-4" />
                               Generate QR Code
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleShare(appointment)}>
+                            <DropdownMenuItem onClick={() => shareByEmail(appointment)}>
                               <Share2 className="mr-2 h-4 w-4" />
-                              Share Appointment
+                              Share by Email
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleInvoice(appointment)}>
+                            <DropdownMenuItem onClick={() => generateAppointmentInvoice(appointment)}>
                               <Receipt className="mr-2 h-4 w-4" />
                               Generate Invoice
                             </DropdownMenuItem>
                             
                             <DropdownMenuSeparator />
                             
-                            {/* Danger Actions */}
-                            <DropdownMenuItem 
-                              onClick={() => handleDelete(appointment.id)}
-                              className="text-red-600 focus:text-red-600"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
+                            {/* Additional Status Actions */}
+                            {appointment.status === 'scheduled' && (
+                              <DropdownMenuItem onClick={() => handleConfirm(appointment)}>
+                                <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                                Confirm Appointment
+                              </DropdownMenuItem>
+                            )}
+                            
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Status Changes</DropdownMenuLabel>
+                            
+                            <DropdownMenuItem onClick={() => handleCancel(appointment)}>
+                              <XCircle className="mr-2 h-4 w-4 text-red-600" />
                               Cancel Appointment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleNoShow(appointment)}>
+                              <AlertCircle className="mr-2 h-4 w-4 text-amber-600" />
+                              Mark No-Show
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
