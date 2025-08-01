@@ -60,51 +60,78 @@ export default function StaffPage() {
                 margin: 0; 
                 padding: 20px; 
                 background: #f0f0f0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
               }
               .id-card {
-                width: 350px;
-                height: 220px;
+                width: 280px;
+                height: 450px;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border-radius: 15px;
-                padding: 20px;
+                border-radius: 20px;
+                padding: 25px;
                 color: white;
                 position: relative;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                box-shadow: 0 15px 35px rgba(0,0,0,0.3);
                 margin: 20px auto;
               }
               .header {
                 text-align: center;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
               }
               .company-name {
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 5px;
-              }
-              .id-title {
-                font-size: 12px;
-                opacity: 0.9;
-              }
-              .content {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-              }
-              .info {
-                flex: 1;
-              }
-              .name {
                 font-size: 18px;
                 font-weight: bold;
-                margin-bottom: 5px;
+                margin-bottom: 8px;
+                line-height: 1.2;
+              }
+              .id-title {
+                font-size: 13px;
+                opacity: 0.9;
+                font-weight: 300;
+              }
+              .photo-section {
+                text-align: center;
+                margin-bottom: 20px;
+              }
+              .photo-placeholder {
+                width: 80px;
+                height: 80px;
+                background: rgba(255,255,255,0.2);
+                border-radius: 50%;
+                margin: 0 auto 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 30px;
+                border: 3px solid rgba(255,255,255,0.3);
+              }
+              .qr-section {
+                text-align: center;
+                margin: 15px 0;
+              }
+              .info {
+                margin-bottom: 15px;
+              }
+              .name {
+                font-size: 20px;
+                font-weight: bold;
+                margin-bottom: 8px;
+                text-align: center;
               }
               .position {
-                font-size: 14px;
-                margin-bottom: 3px;
+                font-size: 16px;
+                margin-bottom: 15px;
+                text-align: center;
+                font-weight: 500;
+                opacity: 0.9;
               }
               .details {
-                font-size: 12px;
-                opacity: 0.9;
+                font-size: 13px;
+                margin-bottom: 6px;
+                opacity: 0.95;
+                line-height: 1.3;
               }
               .qr-section {
                 width: 80px;
@@ -151,18 +178,23 @@ export default function StaffPage() {
                 <div class="id-title">Staff Identification Card</div>
               </div>
               
-              <div class="content">
-                <div class="info">
-                  <div class="name">${staff.firstName} ${staff.lastName}</div>
-                  <div class="position">${staff.position || 'Staff Member'}</div>
-                  <div class="details">ID: ${staff.staffCode}</div>
-                  <div class="details">Dept: ${staff.department || 'General'}</div>
-                  <div class="details">Since: ${new Date(staff.hireDate).getFullYear()}</div>
-                </div>
-                
-                <div class="qr-section">
-                  <canvas id="qr-canvas" width="70" height="70"></canvas>
-                </div>
+              <div class="photo-section">
+                <div class="photo-placeholder">👤</div>
+              </div>
+              
+              <div class="info">
+                <div class="name">${staff.firstName} ${staff.lastName}</div>
+                <div class="position">${staff.position || 'Staff Member'}</div>
+                <div class="details">ID: ${staff.staffCode}</div>
+                <div class="details">Dept: ${staff.department || 'General'}</div>
+                <div class="details">Blood Group: ${staff.bloodGroup || 'N/A'}</div>
+                <div class="details">Phone: ${staff.phone || 'N/A'}</div>
+                <div class="details">Address: ${staff.address || 'N/A'}</div>
+                <div class="details">Since: ${new Date(staff.hireDate).getFullYear()}</div>
+              </div>
+              
+              <div class="qr-section">
+                <canvas id="qr-canvas" width="80" height="80"></canvas>
               </div>
               
               <div class="footer">
@@ -178,8 +210,8 @@ export default function StaffPage() {
             
             <script>
               const canvas = document.getElementById('qr-canvas');
-              const staffData = 'STAFF:${staff.staffCode},NAME:${staff.firstName} ${staff.lastName},POS:${staff.position},DEPT:${staff.department}';
-              QRCode.toCanvas(canvas, staffData, { width: 70, height: 70, margin: 1 });
+              const staffData = 'STAFF:${staff.staffCode},NAME:${staff.firstName} ${staff.lastName},POS:${staff.position},DEPT:${staff.department},PHONE:${staff.phone},ADDRESS:${staff.address}';
+              QRCode.toCanvas(canvas, staffData, { width: 80, height: 80, margin: 1, color: { dark: '#000000', light: '#ffffff' } });
             </script>
           </body>
         </html>
@@ -818,28 +850,74 @@ export default function StaffPage() {
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label>Staff Photo</Label>
-                                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                                     onClick={() => document.getElementById('photo-upload')?.click()}>
                                   <User className="mx-auto h-12 w-12 text-gray-400" />
                                   <p className="mt-2 text-sm text-gray-500">Click to upload photo</p>
-                                  <input type="file" className="hidden" accept="image/*" />
+                                  <input 
+                                    id="photo-upload"
+                                    type="file" 
+                                    className="hidden" 
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        toast({
+                                          title: "Photo uploaded",
+                                          description: `Selected: ${file.name}`,
+                                        });
+                                      }
+                                    }}
+                                  />
                                 </div>
                               </div>
                               <div>
                                 <Label>Qualification Documents</Label>
-                                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                                     onClick={() => document.getElementById('docs-upload')?.click()}>
                                   <FileText className="mx-auto h-12 w-12 text-gray-400" />
                                   <p className="mt-2 text-sm text-gray-500">Upload certificates, degrees</p>
-                                  <input type="file" className="hidden" accept=".pdf,.doc,.docx" multiple />
+                                  <input 
+                                    id="docs-upload"
+                                    type="file" 
+                                    className="hidden" 
+                                    accept=".pdf,.doc,.docx" 
+                                    multiple
+                                    onChange={(e) => {
+                                      const files = e.target.files;
+                                      if (files && files.length > 0) {
+                                        toast({
+                                          title: "Documents uploaded",
+                                          description: `Selected ${files.length} file(s)`,
+                                        });
+                                      }
+                                    }}
+                                  />
                                 </div>
                               </div>
                             </div>
                             
                             <div>
                               <Label>Appointment Letter</Label>
-                              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                                   onClick={() => document.getElementById('appointment-upload')?.click()}>
                                 <FileText className="mx-auto h-12 w-12 text-blue-400" />
                                 <p className="mt-2 text-sm text-gray-500">Upload appointment letter</p>
-                                <input type="file" className="hidden" accept=".pdf,.doc,.docx" />
+                                <input 
+                                  id="appointment-upload"
+                                  type="file" 
+                                  className="hidden" 
+                                  accept=".pdf,.doc,.docx"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      toast({
+                                        title: "Appointment letter uploaded",
+                                        description: `Selected: ${file.name}`,
+                                      });
+                                    }
+                                  }}
+                                />
                               </div>
                             </div>
                           </CardContent>

@@ -112,6 +112,11 @@ export default function Patients() {
     queryKey: ["/api/appointments"],
   });
 
+  // Fetch staff members (doctors)
+  const { data: staff = [] } = useQuery({
+    queryKey: ["/api/staff"],
+  });
+
   // Create patient mutation
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
@@ -2371,8 +2376,11 @@ export default function Patients() {
                     <SelectValue placeholder="Choose a doctor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="d7309e8a-611f-490a-8ec7-427aea6ebf08">Dr. Fafa Fafa - Eye Specialist</SelectItem>
-                    <SelectItem value="958400e7-db8e-4350-968a-e5c3f67c0fc6">Dr. Test Staff - Doctor</SelectItem>
+                    {staff.filter((member: any) => member.position === 'Doctor' || member.role === 'doctor').map((doctor: any) => (
+                      <SelectItem key={doctor.id} value={doctor.id}>
+                        Dr. {doctor.firstName} {doctor.lastName} - {doctor.department}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
