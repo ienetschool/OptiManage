@@ -53,6 +53,8 @@ export default function Patients() {
   const [open, setOpen] = useState(false);
   const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
@@ -671,12 +673,32 @@ export default function Patients() {
     });
   };
 
-  const filteredPatients = (patients as Patient[]).filter((patient: Patient) =>
-    patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (patient.phone && patient.phone.includes(searchTerm))
-  );
+  // Filter and sort patients
+  const filteredPatients = (patients as Patient[])
+    .filter((patient: Patient) => {
+      const matchesSearch = patient.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.patientCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (patient.phone && patient.phone.includes(searchTerm));
+      
+      const matchesStatus = statusFilter === "all" || 
+        (statusFilter === "active" && patient.isActive) ||
+        (statusFilter === "inactive" && !patient.isActive);
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "name":
+          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+        case "date":
+          return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
+        case "code":
+          return a.patientCode.localeCompare(b.patientCode);
+        default:
+          return 0;
+      }
+    });
 
   const calculateAge = (dateOfBirth: string | null) => {
     if (!dateOfBirth) return 'N/A';
@@ -704,8 +726,9 @@ export default function Patients() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <Tabs defaultValue="patients" className="w-full">
+    <div className="h-screen flex flex-col">
+      <div className="flex-grow min-h-0 space-y-6 p-6 overflow-y-auto">
+        <Tabs defaultValue="patients" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="patients" className="flex items-center gap-2">
             <User className="h-4 w-4" />
@@ -790,7 +813,7 @@ export default function Patients() {
                   className="pl-10 w-64"
                 />
               </div>
-              <Select defaultValue="all">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
@@ -798,6 +821,16 @@ export default function Patients() {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Sort by Name</SelectItem>
+                  <SelectItem value="date">Sort by Date</SelectItem>
+                  <SelectItem value="code">Sort by Code</SelectItem>
                 </SelectContent>
               </Select>
               <Button variant="outline">
@@ -2633,6 +2666,7 @@ export default function Patients() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

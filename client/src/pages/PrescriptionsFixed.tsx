@@ -58,6 +58,7 @@ export default function PrescriptionsFixed() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
   const [activeTab, setActiveTab] = useState("all");
+  const [sortBy, setSortBy] = useState("date");
   const [currentServiceType, setCurrentServiceType] = useState("eye_examination");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -209,29 +210,7 @@ export default function PrescriptionsFixed() {
     createPrescriptionMutation.mutate(cleanedQuickData);
   };
 
-  // Filter prescriptions
-  const filteredPrescriptions = prescriptions.filter((prescription) => {
-    const patient = patients.find(p => p.id === prescription.patientId);
-    const patientName = patient ? `${patient.firstName} ${patient.lastName}` : "";
-    
-    const matchesSearch = prescription.prescriptionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patientName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = selectedStatus === "all" || prescription.status === selectedStatus;
-    
-    // Tab filtering
-    let matchesTab = true;
-    if (activeTab === "active") {
-      matchesTab = prescription.status === "active";
-    } else if (activeTab === "pending") {
-      matchesTab = prescription.status === "pending";
-    } else if (activeTab === "month") {
-      const prescriptionDate = new Date(prescription.createdAt || '');
-      const currentMonth = new Date().getMonth();
-      matchesTab = prescriptionDate.getMonth() === currentMonth;
-    }
-    
-    return matchesSearch && matchesStatus && matchesTab;
-  });
+
 
   // Helper functions
   const getPatientName = (patientId: string) => {
@@ -540,8 +519,56 @@ OptiStore Pro Team`;
     }
   ];
 
+  // Filter and sort prescriptions based on active tab
+  const filteredPrescriptions = prescriptions
+    .filter((prescription) => {
+      const matchesSearch = 
+        prescription.prescriptionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patients.find(p => p.id === prescription.patientId)?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patients.find(p => p.id === prescription.patientId)?.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        prescription.diagnosis?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesTab = (() => {
+        switch (activeTab) {
+          case "all":
+            return true;
+          case "active":
+            return prescription.status === 'active';
+          case "pending":
+            return prescription.status === 'pending';
+          case "month":
+            const prescriptionDate = new Date(prescription.createdAt || '');
+            const currentMonth = new Date().getMonth();
+            return prescriptionDate.getMonth() === currentMonth;
+          case "patients":
+            return true; // Show all for patients tab
+          default:
+            return true;
+        }
+      })();
+
+      return matchesSearch && matchesTab;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "date":
+          return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
+        case "patient":
+          const patientA = patients.find(p => p.id === a.patientId);
+          const patientB = patients.find(p => p.id === b.patientId);
+          return `${patientA?.firstName} ${patientA?.lastName}`.localeCompare(`${patientB?.firstName} ${patientB?.lastName}`);
+        case "status":
+          return a.status.localeCompare(b.status);
+        case "number":
+          return (a.prescriptionNumber || '').localeCompare(b.prescriptionNumber || '');
+        default:
+          return 0;
+      }
+    });
+
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="h-screen flex flex-col">
+      <div className="flex-grow min-h-0 p-6 space-y-6 max-w-7xl mx-auto overflow-y-auto">
       {/* Header Tabs */}
       <div className="flex items-center gap-8 border-b">
         <div 
@@ -652,6 +679,17 @@ OptiStore Pro Team`;
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="filled">Filled</SelectItem>
                 <SelectItem value="expired">Expired</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date">Sort by Date</SelectItem>
+                <SelectItem value="patient">Sort by Patient</SelectItem>
+                <SelectItem value="status">Sort by Status</SelectItem>
+                <SelectItem value="number">Sort by Number</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1731,6 +1769,7 @@ OptiStore Pro Team`;
           </DialogContent>
         </Dialog>
       )}
+      </div>
     </div>
   );
 }
