@@ -49,6 +49,8 @@ export default function Prescriptions() {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedType, setSelectedType] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
+  const [serviceType, setServiceType] = useState(""); // Service type for prescription format
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -87,18 +89,20 @@ export default function Prescriptions() {
       doctorId: "",
       appointmentId: "",
       storeId: "",
-      prescriptionType: "glasses",
+      prescriptionType: "eye_examination",
       visualAcuityRightEye: null,
       visualAcuityLeftEye: null,
-      sphereRight: "0",
-      cylinderRight: "0",
-      axisRight: 0,
-      addRight: "0",
-      sphereLeft: "0",
-      cylinderLeft: "0",
-      axisLeft: 0,
-      addLeft: "0",
-      pdDistance: "0",
+      sphereRight: null,
+      cylinderRight: null,
+      axisRight: null,
+      addRight: null,
+      sphereLeft: null,
+      cylinderLeft: null,
+      axisLeft: null,
+      addLeft: null,
+      pdDistance: null,
+      pdNear: null,
+      pdFar: null,
       diagnosis: null,
       treatment: null,
       advice: null,
@@ -332,24 +336,28 @@ export default function Prescriptions() {
                       doctorId: "",
                       appointmentId: "",
                       storeId: "",
-                      prescriptionType: "glasses",
+                      prescriptionType: "eye_examination",
                       visualAcuityRightEye: null,
                       visualAcuityLeftEye: null,
-                      sphereRight: "0",
-                      cylinderRight: "0",
-                      axisRight: 0,
-                      addRight: "0",
-                      sphereLeft: "0",
-                      cylinderLeft: "0",
-                      axisLeft: 0,
-                      addLeft: "0",
-                      pdDistance: "0",
+                      sphereRight: null,
+                      cylinderRight: null,
+                      axisRight: null,
+                      addRight: null,
+                      sphereLeft: null,
+                      cylinderLeft: null,
+                      axisLeft: null,
+                      addLeft: null,
+                      pdDistance: null,
+                      pdNear: null,
+                      pdFar: null,
                       diagnosis: null,
                       treatment: null,
                       advice: null,
                       notes: null,
                       status: "active",
                     });
+                    setServiceType("eye_examination");
+                    setSelectedPatient(null);
                     setOpen(true);
                     toast({
                       title: "Quick Prescription",
@@ -1367,17 +1375,22 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                       name="prescriptionType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Prescription Type</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <FormLabel>Service Type</FormLabel>
+                          <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            setServiceType(value);
+                          }} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue placeholder="Select service type..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="glasses">👓 Glasses</SelectItem>
-                              <SelectItem value="contact_lenses">👁️ Contact Lenses</SelectItem>
-                              <SelectItem value="medication">💊 Medication</SelectItem>
+                              <SelectItem value="eye_examination">👁️ Eye Examination</SelectItem>
+                              <SelectItem value="contact_lens">🔍 Contact Lens</SelectItem>
+                              <SelectItem value="fitting_glasses">👓 Fitting Glasses</SelectItem>
+                              <SelectItem value="fitting_followup">📋 Fitting Follow-up</SelectItem>
+                              <SelectItem value="visit_consultation">💬 Visit Consultation</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -1393,7 +1406,11 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Patient</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={(value) => {
+                            field.onChange(value);
+                            const patient = patients.find(p => p.id === value);
+                            setSelectedPatient(patient || null);
+                          }} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select patient..." />
@@ -1437,9 +1454,513 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
                       )}
                     />
                   </div>
+
+                  {/* Patient Information Display */}
+                  {selectedPatient && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-900 mb-3">Patient Information</h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium text-blue-700">Name:</span> {selectedPatient.firstName} {selectedPatient.lastName}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Patient ID:</span> {selectedPatient.patientCode}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Age:</span> {selectedPatient.dateOfBirth ? new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear() + ' years' : 'Not specified'}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Gender:</span> {selectedPatient.gender || 'Not specified'}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Phone:</span> {selectedPatient.phone || 'Not provided'}
+                        </div>
+                        <div>
+                          <span className="font-medium text-blue-700">Email:</span> {selectedPatient.email || 'Not provided'}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="medical" className="space-y-4">
+                  {/* Service Type Specific Fields */}
+                  {serviceType === "eye_examination" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">👁️ Eye Examination Fields</h4>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="visualAcuityRightEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Right Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/20" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="visualAcuityLeftEye"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Visual Acuity - Left Eye</FormLabel>
+                              <FormControl>
+                                <Input placeholder="20/20" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sphereRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="axisRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" max="180" placeholder="90" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sphereLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sphere (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Cylinder (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="0.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="axisLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Axis (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" min="0" max="180" placeholder="90" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Eye Examination Findings</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Enter detailed eye examination findings and diagnosis..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "contact_lens" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">🔍 Contact Lens Prescription</h4>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="diagnosis"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Contact Lens Type</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Daily, Weekly, Monthly..." {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="treatment"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Brand & Material</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Acuvue, Biofinity, etc." {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-4 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="sphereRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Power (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="sphereLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Power (Left)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.25" placeholder="-2.00" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderRight"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Base Curve (Right)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.1" placeholder="8.4" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cylinderLeft"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Diameter</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.1" placeholder="14.2" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="advice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Contact Lens Care Instructions</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Wear time, cleaning instructions, replacement schedule..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "fitting_glasses" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">👓 Glasses Fitting</h4>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="pdDistance"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Pupillary Distance (mm)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="62.0" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="pdNear"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>PD Near (mm)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="59.0" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="pdFar"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>PD Far (mm)</FormLabel>
+                              <FormControl>
+                                <Input type="number" step="0.5" placeholder="65.0" {...field} value={field.value || ""} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Frame Selection & Measurements</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Frame style, size, bridge width, temple length..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="treatment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Lens Options & Coatings</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Anti-glare, UV protection, blue light filter, progressive, bifocal..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "fitting_followup" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">📋 Fitting Follow-up</h4>
+                      
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Status Assessment</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Comfort level, vision clarity, fit assessment..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="treatment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Adjustments Made</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Frame adjustments, nose pad alignment, temple adjustment..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="advice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Next Steps & Recommendations</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Further adjustments needed, wear schedule, next appointment..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="nextFollowUp"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Next Follow-up Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {serviceType === "visit_consultation" && (
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-slate-900 border-b pb-2">💬 Visit Consultation</h4>
+                      
+                      <FormField
+                        control={form.control}
+                        name="diagnosis"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Chief Complaint & Symptoms</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Patient's main concerns, symptoms, duration..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="treatment"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Clinical Assessment</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Examination findings, observations, measurements..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="advice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Treatment Plan & Recommendations</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Recommended treatment, lifestyle changes, precautions..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="notes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Additional Notes</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Any additional observations, patient history, special instructions..." className="min-h-[100px]" {...field} value={field.value || ""} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {!serviceType && (
+                    <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
+                      <p className="text-slate-600">Please select a service type to see relevant prescription fields</p>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
+              
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createPrescriptionMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createPrescriptionMutation.isPending ? "Creating..." : "Create Prescription"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
                   <FormField
                     control={form.control}
                     name="diagnosis"
