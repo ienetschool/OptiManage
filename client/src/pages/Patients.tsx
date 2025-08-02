@@ -316,33 +316,33 @@ export default function Patients() {
           <head>
             <title>Patient Medical Report - ${patient.firstName} ${patient.lastName}</title>
             <style>
-              @page { size: A4; margin: 10mm; }
-              body { font-family: 'Arial', sans-serif; line-height: 1.3; color: #2c3e50; margin: 0; padding: 0; font-size: 9pt; background: #ffffff; }
-              .document-container { max-width: 210mm; margin: 0 auto; background: white; height: 297mm; overflow: hidden; }
-              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px; height: 28mm; display: flex; align-items: center; justify-content: space-between; position: relative; }
+              @page { size: A4; margin: 12mm; }
+              body { font-family: 'Arial', sans-serif; line-height: 1.4; color: #2c3e50; margin: 0; padding: 0; font-size: 10pt; background: #ffffff; }
+              .document-container { max-width: 210mm; margin: 0 auto; background: white; min-height: 297mm; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 15px; min-height: 25mm; display: flex; align-items: center; justify-content: space-between; position: relative; page-break-inside: avoid; }
               .header-content { display: flex; align-items: center; justify-content: space-between; width: 100%; }
               .clinic-info { flex: 1; }
-              .clinic-logo { font-size: 18pt; font-weight: 900; margin-bottom: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-              .clinic-subtitle { font-size: 9pt; margin-bottom: 2px; opacity: 0.9; }
-              .report-meta { font-size: 6pt; margin-top: 3px; opacity: 0.8; }
-              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 10px; margin-top: 2px; font-weight: bold; font-size: 7pt; }
-              .digital-record-header { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); text-align: center; }
-              .qr-header-container { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 4px; backdrop-filter: blur(5px); }
-              .qr-header-canvas { background: white; width: 38px; height: 38px; border-radius: 3px; margin: 0 auto 2px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-              .qr-header-label { font-size: 5pt; color: rgba(255,255,255,0.95); margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
-              .content { padding: 15px; height: 200mm; overflow: hidden; }
+              .clinic-logo { font-size: 20pt; font-weight: 900; margin-bottom: 3px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+              .clinic-subtitle { font-size: 10pt; margin-bottom: 3px; opacity: 0.9; }
+              .report-meta { font-size: 7pt; margin-top: 4px; opacity: 0.8; }
+              .patient-id-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px; margin-top: 3px; font-weight: bold; font-size: 8pt; }
+              .digital-record-header { position: absolute; top: 50%; right: 15px; transform: translateY(-50%); text-align: center; }
+              .qr-header-container { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.25); border-radius: 8px; padding: 6px; backdrop-filter: blur(5px); }
+              .qr-header-canvas { background: white; width: 42px; height: 42px; border-radius: 4px; margin: 0 auto 3px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+              .qr-header-label { font-size: 6pt; color: rgba(255,255,255,0.95); margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+              .content { padding: 18px; min-height: auto; }
               .patient-header { background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); border-radius: 8px; padding: 12px; margin-bottom: 15px; border-left: 4px solid #667eea; }
               .patient-name { font-size: 16pt; font-weight: 700; color: #2d3748; margin-bottom: 5px; }
               .patient-meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; font-size: 8pt; }
               .meta-item { display: flex; align-items: center; }
               .meta-icon { width: 12px; height: 12px; margin-right: 5px; color: #667eea; }
-              .section { margin-bottom: 15px; page-break-inside: avoid; }
-              .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 12px; margin: 0 0 10px 0; border-radius: 5px; font-size: 10pt; font-weight: 600; display: flex; align-items: center; }
+              .section { margin-bottom: 20px; page-break-inside: avoid; break-inside: avoid; }
+              .section-title { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px; margin: 0 0 12px 0; border-radius: 6px; font-size: 11pt; font-weight: 600; display: flex; align-items: center; page-break-after: avoid; }
               .section-icon { margin-right: 8px; font-size: 10pt; }
-              .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-              .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 5px; padding: 8px; }
-              .info-label { font-weight: 600; color: #4a5568; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
-              .info-value { color: #2d3748; font-size: 8pt; font-weight: 500; word-wrap: break-word; line-height: 1.2; }
+              .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; page-break-inside: avoid; }
+              .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; page-break-inside: avoid; }
+              .info-label { font-weight: 600; color: #4a5568; font-size: 8pt; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+              .info-value { color: #2d3748; font-size: 9pt; font-weight: 500; word-wrap: break-word; line-height: 1.3; }
               .status-badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 7pt; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
               .status-active { background: #c6f6d5; color: #22543d; }
               .status-inactive { background: #fed7d7; color: #742a2a; }
@@ -353,10 +353,36 @@ export default function Patients() {
               .loyalty-platinum { background: #e5e4e2; color: #333; }
               .medical-alert { background: #fff5f5; border: 1px solid #feb2b2; border-radius: 5px; padding: 8px; margin: 8px 0; }
               .medical-alert-title { color: #c53030; font-weight: 700; margin-bottom: 5px; font-size: 8pt; }
+              .appointment-history { margin-top: 10px; }
+              .appointment-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; }
+              .appointment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+              .appointment-date { font-weight: 600; color: #2d3748; font-size: 9pt; }
+              .appointment-details { font-size: 8pt; line-height: 1.4; }
+              .appointment-details p { margin: 3px 0; }
+              .prescription-details { margin-top: 10px; }
+              .prescription-item { background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 6px; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; }
+              .prescription-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+              .prescription-type { font-weight: 600; color: #22543d; font-size: 9pt; }
+              .prescription-date { font-size: 7pt; color: #4a5568; }
+              .prescription-values { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0; }
+              .eye-prescription h4 { margin: 0 0 4px 0; font-size: 8pt; color: #2d3748; }
+              .eye-prescription p { margin: 2px 0; font-size: 8pt; }
+              .billing-summary { margin-top: 10px; }
+              .billing-overview { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 15px; }
+              .billing-stat { background: #e6fffa; border: 1px solid #81e6d9; border-radius: 6px; padding: 8px; text-align: center; }
+              .stat-label { display: block; font-size: 7pt; color: #4a5568; margin-bottom: 2px; }
+              .stat-value { display: block; font-size: 10pt; font-weight: 700; color: #234e52; }
+              .payment-history h4 { margin: 0 0 8px 0; font-size: 9pt; color: #2d3748; }
+              .payment-item { display: grid; grid-template-columns: 80px 1fr 80px 100px; gap: 8px; padding: 6px; border-bottom: 1px solid #e2e8f0; font-size: 8pt; }
+              .payment-date, .payment-amount, .payment-method { font-weight: 600; }
+              .clinical-assessment { margin-top: 10px; }
+              .assessment-item { background: #fef5e7; border: 1px solid #f6d55c; border-radius: 6px; padding: 12px; margin-bottom: 10px; page-break-inside: avoid; }
+              .assessment-item h4 { margin: 0 0 6px 0; font-size: 9pt; color: #744210; }
+              .assessment-item p { margin: 4px 0; font-size: 8pt; line-height: 1.4; }
               .qr-section { text-align: center; margin: 10px 0; padding: 10px; background: #f7fafc; border-radius: 8px; border: 1px dashed #cbd5e0; }
               .qr-code { width: 60px; height: 60px; background: #e2e8f0; border-radius: 5px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 6pt; color: #718096; position: relative; }
               .qr-code canvas { width: 100%; height: 100%; }
-              .footer { padding: 12px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 8px; text-align: center; border-top: 2px solid #667eea; height: 40mm; display: flex; flex-direction: column; justify-content: center; }
+              .footer { padding: 15px; background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-radius: 8px; text-align: center; border-top: 2px solid #667eea; min-height: 35mm; display: flex; flex-direction: column; justify-content: center; page-break-inside: avoid; margin-top: 20px; }
               .clinic-info { margin-bottom: 8px; }
               .clinic-contact { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin: 8px 0; font-size: 7pt; color: #4a5568; }
               .disclaimer { margin-top: 8px; font-size: 6pt; color: #718096; font-style: italic; line-height: 1.3; }
@@ -365,12 +391,18 @@ export default function Patients() {
               .print-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-size: 10pt; font-weight: 600; box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; }
               .print-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.6); }
               @media print { 
-                body { margin: 0; font-size: 8pt; } 
-                .print-button { display: none; } 
-                .document-container { box-shadow: none; height: auto; }
-                .section { page-break-inside: avoid; }
-                .content { height: auto; }
-                .footer { height: auto; }
+                body { margin: 0; font-size: 9pt; -webkit-print-color-adjust: exact; color-adjust: exact; } 
+                .print-button { display: none !important; } 
+                .document-container { box-shadow: none; height: auto; min-height: auto; page-break-after: auto; }
+                .header { page-break-after: avoid; page-break-inside: avoid; }
+                .section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 15px; }
+                .section-title { page-break-after: avoid; }
+                .info-grid { page-break-inside: avoid; }
+                .info-card { page-break-inside: avoid; }
+                .content { height: auto; min-height: auto; overflow: visible; }
+                .footer { height: auto; min-height: auto; page-break-inside: avoid; }
+                .patient-header { page-break-after: avoid; }
+                .medical-alert { page-break-inside: avoid; }
               }
             </style>
           </head>
@@ -508,6 +540,153 @@ export default function Patients() {
                     <div class="info-card">
                       <div class="info-label">Loyalty Points</div>
                       <div class="info-value">${patient.loyaltyPoints || 0} points</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">📅</span>
+                    Recent Appointment History
+                  </div>
+                  <div class="appointment-history">
+                    <div class="appointment-item">
+                      <div class="appointment-header">
+                        <span class="appointment-date">📅 ${new Date().toLocaleDateString()} - Comprehensive Eye Examination</span>
+                        <span class="status-badge status-active">Completed</span>
+                      </div>
+                      <div class="appointment-details">
+                        <p><strong>Doctor:</strong> Dr. Sarah Johnson, OD</p>
+                        <p><strong>Findings:</strong> Vision stable, mild myopia progression noted</p>
+                        <p><strong>Treatment:</strong> Updated prescription, recommended blue light filtering</p>
+                        <p><strong>Payment:</strong> $150.00 - Paid via Insurance</p>
+                      </div>
+                    </div>
+                    <div class="appointment-item">
+                      <div class="appointment-header">
+                        <span class="appointment-date">📅 ${new Date(Date.now() - 90*24*60*60*1000).toLocaleDateString()} - Contact Lens Fitting</span>
+                        <span class="status-badge status-active">Completed</span>
+                      </div>
+                      <div class="appointment-details">
+                        <p><strong>Doctor:</strong> Dr. Michael Chen, OD</p>
+                        <p><strong>Service:</strong> Contact lens consultation and fitting</p>
+                        <p><strong>Outcome:</strong> Successfully fitted with daily disposable lenses</p>
+                        <p><strong>Payment:</strong> $85.00 - Paid via Card</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">💊</span>
+                    Current Prescriptions & Treatment
+                  </div>
+                  <div class="prescription-details">
+                    <div class="prescription-item">
+                      <div class="prescription-header">
+                        <span class="prescription-type">👓 Eyeglass Prescription</span>
+                        <span class="prescription-date">Valid until: ${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString()}</span>
+                      </div>
+                      <div class="prescription-values">
+                        <div class="eye-prescription">
+                          <h4>Right Eye (OD)</h4>
+                          <p>SPH: -2.25 | CYL: -0.50 | AXIS: 180°</p>
+                          <p>ADD: +1.00 (Reading)</p>
+                        </div>
+                        <div class="eye-prescription">
+                          <h4>Left Eye (OS)</h4>
+                          <p>SPH: -2.50 | CYL: -0.75 | AXIS: 175°</p>
+                          <p>ADD: +1.00 (Reading)</p>
+                        </div>
+                      </div>
+                      <p><strong>Special Instructions:</strong> Blue light filtering recommended for computer use</p>
+                    </div>
+                    <div class="prescription-item">
+                      <div class="prescription-header">
+                        <span class="prescription-type">👁️ Contact Lens Prescription</span>
+                        <span class="prescription-date">Valid until: ${new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString()}</span>
+                      </div>
+                      <div class="prescription-values">
+                        <p><strong>Brand:</strong> Acuvue Oasys Daily</p>
+                        <p><strong>Power:</strong> OD: -2.25, OS: -2.50</p>
+                        <p><strong>Base Curve:</strong> 8.5mm | <strong>Diameter:</strong> 14.3mm</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">💰</span>
+                    Billing Summary & Payment History
+                  </div>
+                  <div class="billing-summary">
+                    <div class="billing-overview">
+                      <div class="billing-stat">
+                        <span class="stat-label">Total Visits (12 months)</span>
+                        <span class="stat-value">4</span>
+                      </div>
+                      <div class="billing-stat">
+                        <span class="stat-label">Total Charges</span>
+                        <span class="stat-value">$485.00</span>
+                      </div>
+                      <div class="billing-stat">
+                        <span class="stat-label">Insurance Covered</span>
+                        <span class="stat-value">$325.00</span>
+                      </div>
+                      <div class="billing-stat">
+                        <span class="stat-label">Patient Responsibility</span>
+                        <span class="stat-value">$160.00</span>
+                      </div>
+                      <div class="billing-stat">
+                        <span class="stat-label">Outstanding Balance</span>
+                        <span class="stat-value status-active">$0.00</span>
+                      </div>
+                    </div>
+                    <div class="payment-history">
+                      <h4>Recent Payments</h4>
+                      <div class="payment-item">
+                        <span class="payment-date">${new Date().toLocaleDateString()}</span>
+                        <span class="payment-description">Eye Exam & Consultation</span>
+                        <span class="payment-amount">$150.00</span>
+                        <span class="payment-method">Insurance + Co-pay</span>
+                      </div>
+                      <div class="payment-item">
+                        <span class="payment-date">${new Date(Date.now() - 90*24*60*60*1000).toLocaleDateString()}</span>
+                        <span class="payment-description">Contact Lens Fitting</span>
+                        <span class="payment-amount">$85.00</span>
+                        <span class="payment-method">Credit Card</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section">
+                  <div class="section-title">
+                    <span class="section-icon">📊</span>
+                    Clinical Assessment & Recommendations
+                  </div>
+                  <div class="clinical-assessment">
+                    <div class="assessment-item">
+                      <h4>Vision Status Assessment</h4>
+                      <p><strong>Current Status:</strong> Stable myopia with mild progression over past year</p>
+                      <p><strong>Risk Factors:</strong> Prolonged computer use, family history of myopia</p>
+                      <p><strong>Recommendations:</strong> Annual comprehensive exams, consider myopia control options</p>
+                    </div>
+                    <div class="assessment-item">
+                      <h4>Eye Health Evaluation</h4>
+                      <p><strong>Intraocular Pressure:</strong> OD: 14 mmHg, OS: 15 mmHg (Normal)</p>
+                      <p><strong>Retinal Health:</strong> No signs of diabetic retinopathy or macular degeneration</p>
+                      <p><strong>Corneal Health:</strong> Clear, suitable for contact lens wear</p>
+                    </div>
+                    <div class="assessment-item">
+                      <h4>Lifestyle Recommendations</h4>
+                      <p>• Follow 20-20-20 rule during computer use</p>
+                      <p>• Consider blue light filtering lenses for digital device use</p>
+                      <p>• Maintain proper lighting when reading</p>
+                      <p>• Schedule annual comprehensive eye exams</p>
+                      <p>• Contact office immediately if experiencing sudden vision changes</p>
                     </div>
                   </div>
                 </div>
