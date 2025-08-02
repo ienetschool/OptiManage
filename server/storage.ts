@@ -300,7 +300,7 @@ export class DatabaseStorage implements IStorage {
 
   async createSale(sale: InsertSale, items: Omit<SaleItem, 'id' | 'saleId'>[]): Promise<Sale> {
     return await db.transaction(async (tx) => {
-      const [newSale] = await tx.insert(sales).values(sale).returning();
+      const [newSale] = await tx.insert(sales).values([sale]).returning();
       
       const saleItemsToInsert = items.map(item => ({
         ...item,
@@ -489,7 +489,7 @@ export class DatabaseStorage implements IStorage {
       ...config,
       fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions : undefined,
     };
-    const [newConfig] = await db.insert(customFieldsConfig).values(configData).returning();
+    const [newConfig] = await db.insert(customFieldsConfig).values([configData]).returning();
     return newConfig;
   }
 

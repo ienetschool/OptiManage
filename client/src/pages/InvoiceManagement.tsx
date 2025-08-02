@@ -45,6 +45,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import QRCodeReact from "react-qr-code";
+import { generateProfessionalA4Invoice } from "@/components/ProfessionalInvoice";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { format } from "date-fns";
@@ -1345,13 +1346,13 @@ export default function InvoiceManagement() {
                                 <Send className="h-4 w-4 mr-2" />
                                 Send to Customer
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
+                              <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
                                 <Printer className="h-4 w-4 mr-2" />
-                                Print Professional Invoice
+                                Print A4 Invoice
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
+                              <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
                                 <Download className="h-4 w-4 mr-2" />
-                                Export PDF
+                                Export A4 PDF
                               </DropdownMenuItem>
                               <DropdownMenuItem className="text-red-600">
                                 <Trash2 className="h-4 w-4 mr-2" />

@@ -263,6 +263,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
+      
+      // If assigned_doctor_id is provided and not a valid UUID, set it to null
+      if (validatedData.assignedDoctorId && 
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(validatedData.assignedDoctorId)) {
+        validatedData.assignedDoctorId = null;
+      }
+      
       const appointment = await storage.createAppointment(validatedData);
       res.status(201).json(appointment);
     } catch (error) {

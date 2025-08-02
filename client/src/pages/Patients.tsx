@@ -60,6 +60,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
+import { generateMultiPagePatientPDF } from "@/components/PatientProfilePDF";
 
 export default function Patients() {
   const [open, setOpen] = useState(false);
@@ -1903,10 +1904,13 @@ export default function Patients() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => {
                                 setSelectedPatient(patient);
-                                generatePatientPDF(patient);
+                                const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === patient.id);
+                                const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === patient.id);
+                                const patientInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === patient.id);
+                                generateMultiPagePatientPDF(patient, patientAppointments, patientPrescriptions, patientInvoices);
                               }}>
                                 <Printer className="mr-2 h-4 w-4" />
-                                Print Report
+                                Print Complete Profile
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => {
                                 generatePatientInvoice(patient);

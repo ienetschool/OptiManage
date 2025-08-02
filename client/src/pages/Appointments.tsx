@@ -72,7 +72,7 @@ export default function Appointments() {
       appointmentDate: new Date(),
       duration: 60,
       service: "",
-      appointmentFee: "0",
+      appointmentFee: 0,
       paymentStatus: "pending",
       paymentMethod: undefined,
       paymentDate: undefined,
