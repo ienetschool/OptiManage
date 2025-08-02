@@ -24,9 +24,12 @@ import { apiRequest } from "@/lib/queryClient";
 interface Product {
   id: string;
   name: string;
-  price: number;
-  category: string;
-  stock: number;
+  price: string;
+  description?: string;
+  sku: string;
+  categoryId?: string;
+  reorderLevel?: number;
+  isActive: boolean;
 }
 
 interface CartItem extends Product {
@@ -64,7 +67,13 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
       
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error("Failed to fetch products");
-      return response.json();
+      const data = await response.json();
+      
+      // Transform the data to ensure proper types
+      return data.map((product: any) => ({
+        ...product,
+        price: typeof product.price === 'string' ? product.price : product.price?.toString() || '0.00'
+      }));
     }
   });
 
@@ -104,22 +113,32 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
 
   const addToCart = (product: Product) => {
     const existingItem = cart.find(item => item.id === product.id);
+    const maxQuantity = product.reorderLevel || 99; // Use reorderLevel as a proxy for stock
+    
     if (existingItem) {
-      if (existingItem.quantity < product.stock) {
+      if (existingItem.quantity < maxQuantity) {
         setCart(cart.map(item => 
           item.id === product.id 
             ? { ...item, quantity: item.quantity + 1 }
             : item
         ));
+        toast({
+          title: "Product Added",
+          description: `${product.name} quantity increased to ${existingItem.quantity + 1}`,
+        });
       } else {
         toast({
-          title: "Insufficient Stock",
-          description: `Only ${product.stock} items available.`,
+          title: "Quantity Limit Reached",
+          description: `Maximum ${maxQuantity} items allowed.`,
           variant: "destructive",
         });
       }
     } else {
       setCart([...cart, { ...product, quantity: 1 }]);
+      toast({
+        title: "Product Added",
+        description: `${product.name} added to cart`,
+      });
     }
   };
 
@@ -139,7 +158,10 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
   };
 
   const calculateSubtotal = () => {
-    return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return cart.reduce((sum, item) => {
+      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+      return sum + (price * item.quantity);
+    }, 0);
   };
 
   const calculateDiscount = () => {
@@ -171,12 +193,15 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
 
     const saleData = {
       customerId: selectedCustomer || null,
-      items: cart.map(item => ({
-        productId: item.id,
-        quantity: item.quantity,
-        unitPrice: item.price,
-        totalPrice: item.price * item.quantity
-      })),
+      items: cart.map(item => {
+        const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        return {
+          productId: item.id,
+          quantity: item.quantity,
+          unitPrice: price,
+          totalPrice: price * item.quantity
+        };
+      }),
       subtotal: calculateSubtotal(),
       discountAmount: calculateDiscount(),
       taxAmount: calculateTax(),
@@ -190,7 +215,8 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (product.sku?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -225,12 +251,17 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
                 <div>
                   <h4 className="font-medium">{product.name}</h4>
                   <div className="flex items-center space-x-2 text-sm text-slate-500">
-                    <span>{product.category}</span>
-                    <Badge variant="outline">Stock: {product.stock}</Badge>
+                    <span>SKU: {product.sku}</span>
+                    {product.reorderLevel && (
+                      <Badge variant="outline">Min: {product.reorderLevel}</Badge>
+                    )}
                   </div>
+                  {product.description && (
+                    <p className="text-xs text-slate-400 mt-1">{product.description}</p>
+                  )}
                 </div>
                 <div className="text-right">
-                  <p className="font-bold">${(typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0).toFixed(2)}</p>
+                  <p className="font-bold">${(typeof product.price === 'string' ? parseFloat(product.price) : product.price || 0).toFixed(2)}</p>
                   <Button 
                     size="sm" 
                     variant="outline"
@@ -291,7 +322,7 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
                 <div key={item.id} className="flex items-center justify-between p-2 border rounded">
                   <div className="flex-1">
                     <h4 className="font-medium text-sm">{item.name}</h4>
-                    <p className="text-xs text-slate-500">${item.price.toFixed(2)} each</p>
+                    <p className="text-xs text-slate-500">${(typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2)} each</p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button

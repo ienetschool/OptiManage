@@ -32,7 +32,7 @@ import Analytics from "@/pages/Analytics";
 import StorePerformance from "@/pages/StorePerformance";
 import Profile from "@/pages/Profile";
 
-import QuickSale from "@/pages/QuickSale";
+
 import Payments from "@/pages/Payments";
 import StoreSettings from "@/pages/StoreSettings";
 import Pages from "@/pages/Pages";
@@ -365,16 +365,7 @@ function Router() {
         </AppLayout>
       </Route>
       
-      <Route path="/quick-sale">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="p-6">
-              <QuickSale />
-            </div>
-          </div>
-        </AppLayout>
-      </Route>
+
       
       <Route path="/payments">
         <AppLayout>
