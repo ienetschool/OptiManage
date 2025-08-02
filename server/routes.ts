@@ -499,6 +499,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Store Inventory routes (for new inventory management)
+  app.get('/api/store-inventory', async (req, res) => {
+    try {
+      const storeId = req.query.storeId as string || "5ff902af-3849-4ea6-945b-4d49175d6638";
+      const inventory = await storage.getStoreInventory(storeId);
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error fetching store inventory:", error);
+      res.status(500).json({ message: "Failed to fetch store inventory" });
+    }
+  });
+
+  app.post('/api/store-inventory', async (req, res) => {
+    try {
+      const { storeId, productId, quantity } = req.body;
+      if (!storeId || !productId || quantity === undefined) {
+        return res.status(400).json({ message: "Missing required fields: storeId, productId, quantity" });
+      }
+      const inventory = await storage.updateInventory(storeId, productId, quantity);
+      res.status(201).json(inventory);
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+      res.status(500).json({ message: "Failed to update inventory" });
+    }
+  });
+
+  app.put('/api/store-inventory/:storeId/:productId', async (req, res) => {
+    try {
+      const { storeId, productId } = req.params;
+      const { quantity } = req.body;
+      if (quantity === undefined) {
+        return res.status(400).json({ message: "Missing required field: quantity" });
+      }
+      const inventory = await storage.updateInventory(storeId, productId, quantity);
+      res.json(inventory);
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+      res.status(500).json({ message: "Failed to update inventory" });
+    }
+  });
+
   // Appointments routes (without authentication for demo)
   app.get("/api/appointments", async (req, res) => {
     try {

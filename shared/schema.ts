@@ -90,6 +90,7 @@ export const products = pgTable("products", {
   supplierId: varchar("supplier_id").references(() => suppliers.id),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   costPrice: decimal("cost_price", { precision: 10, scale: 2 }),
+  productType: varchar("product_type").default('frames'), // frames, lenses, sunglasses, accessories, contact_lenses, solutions
   reorderLevel: integer("reorder_level").default(10),
   isActive: boolean("is_active").default(true),
   customFields: jsonb("custom_fields").$type<Record<string, any>>(),
@@ -303,6 +304,8 @@ export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  initialStock: z.number().int().min(0).optional(), // For initial stock quantity when creating product
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
