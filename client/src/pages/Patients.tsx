@@ -53,6 +53,8 @@ import {
 } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import QRCode from "react-qr-code";
 
 export default function Patients() {
   const [open, setOpen] = useState(false);
@@ -72,6 +74,28 @@ export default function Patients() {
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Helper function to calculate age
+  const calculateAge = (dateOfBirth: string | null | undefined): number | string => {
+    if (!dateOfBirth) return 'N/A';
+    const today = new Date();
+    const birthDate = new Date(dateOfBirth);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Helper function to generate appointment reports
+  const generateAppointmentReport = (appointment: any) => {
+    toast({
+      title: "Generating Report",
+      description: "Creating appointment report...",
+    });
+    window.print();
+  };
 
   // Patient form
   const form = useForm<InsertPatient>({
@@ -710,19 +734,7 @@ export default function Patients() {
       }
     });
 
-  const calculateAge = (dateOfBirth: string | null) => {
-    if (!dateOfBirth) return 'N/A';
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
+
 
   if (isLoading) {
     return (
@@ -924,7 +936,7 @@ export default function Patients() {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Gender *</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <Select onValueChange={field.onChange} value={field.value || ""}>
                                     <FormControl>
                                       <SelectTrigger>
                                         <SelectValue placeholder="Select gender" />
@@ -947,7 +959,7 @@ export default function Patients() {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Blood Group</FormLabel>
-                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <Select onValueChange={field.onChange} value={field.value || ""}>
                                     <FormControl>
                                       <SelectTrigger>
                                         <SelectValue placeholder="Select blood group" />
