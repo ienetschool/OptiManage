@@ -75,10 +75,10 @@ export default function Patients() {
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
   const [viewAppointmentOpen, setViewAppointmentOpen] = useState(false);
   const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
+  const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [forwardToDoctorOpen, setForwardToDoctorOpen] = useState(false);
   const [createPrescriptionOpen, setCreatePrescriptionOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
-  const [editPatientOpen, setEditPatientOpen] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -2101,7 +2101,9 @@ export default function Patients() {
                           </SelectTrigger>
                           <SelectContent>
                             {(staff as any[])?.filter(member => 
-                              member.position === 'Doctor' || member.position === 'Optometrist'
+                              member.role === 'doctor' || 
+                              member.position?.toLowerCase() === 'doctor' || 
+                              member.position?.toLowerCase() === 'optometrist'
                             ).map((doctor: any) => (
                               <SelectItem key={doctor.id} value={doctor.id}>
                                 Dr. {doctor.firstName} {doctor.lastName} - {doctor.position}
