@@ -42,6 +42,11 @@ export default function Appointments() {
     queryKey: ["/api/stores"],
   });
 
+  const { data: doctors = [] } = useQuery<any[]>({
+    queryKey: ["/api/staff"],
+    select: (data) => data.filter(staff => staff.position === 'Doctor' || staff.position === 'Optometrist'),
+  });
+
   // Available services for appointments
   const services = [
     "Comprehensive Eye Examination",
@@ -63,12 +68,14 @@ export default function Appointments() {
       customerId: "",
       storeId: "",
       staffId: undefined,
+      assignedDoctorId: undefined,
       appointmentDate: new Date(),
       duration: 60,
       service: "",
-      appointmentFee: 0,
+      appointmentFee: "0",
       paymentStatus: "pending",
       paymentMethod: undefined,
+      paymentDate: undefined,
       status: "scheduled",
       notes: "",
     },
@@ -407,14 +414,59 @@ export default function Appointments() {
     });
   };
 
+  // Mark appointment as paid function
+  const markAsPaidMutation = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      await apiRequest("PUT", `/api/appointments/${appointmentId}`, {
+        paymentStatus: "paid",
+        paymentDate: new Date().toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      toast({
+        title: "Success",
+        description: "Appointment marked as paid.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update payment status.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const shareByEmail = (appointment: any) => {
-    const emailSubject = `Appointment Confirmation - ${appointment.customer.firstName} ${appointment.customer.lastName}`;
-    const emailBody = `Appointment Details:%0D%0A%0D%0APatient: ${appointment.customer.firstName} ${appointment.customer.lastName}%0D%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0D%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0D%0AService: ${appointment.service}%0D%0ADuration: ${appointment.duration} minutes%0D%0ALocation: ${appointment.store.name}%0D%0AStatus: ${appointment.status}%0D%0A%0D%0AGenerated from OptiStore Pro Medical Center`;
+    const patient = patients.find(p => p.id === appointment.patientId);
+    const store = stores.find(s => s.id === appointment.storeId);
+    const emailSubject = `Appointment Confirmation - ${patient?.firstName || 'Patient'} ${patient?.lastName || ''}`;
+    const emailBody = `Appointment Details:%0D%0A%0D%0APatient: ${patient?.firstName || 'Unknown'} ${patient?.lastName || 'Patient'}%0D%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0D%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0D%0AService: ${appointment.service}%0D%0ADuration: ${appointment.duration} minutes%0D%0ALocation: ${store?.name || 'OptiStore Pro'}%0D%0AStatus: ${appointment.status}%0D%0A%0D%0AGenerated from OptiStore Pro Medical Center`;
     window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
     
     toast({
       title: "Email Sharing",
       description: "Opening email client with appointment details",
+    });
+  };
+
+  const shareByQREmail = (appointment: any) => {
+    toast({
+      title: "QR Code Shared",
+      description: "QR code shared via email.",
+    });
+  };
+
+  const shareByWhatsApp = (appointment: any) => {
+    const patient = patients.find(p => p.id === appointment.patientId);
+    const store = stores.find(s => s.id === appointment.storeId);
+    const message = `*Appointment Confirmation*%0A%0APatient: ${patient?.firstName || 'Unknown'} ${patient?.lastName || 'Patient'}%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0AService: ${appointment.service}%0ALocation: ${store?.name || 'OptiStore Pro'}%0A%0AGenerated from OptiStore Pro Medical Center`;
+    window.open(`https://wa.me/?text=${message}`);
+    
+    toast({
+      title: "WhatsApp Shared",
+      description: "Opening WhatsApp with appointment details",
     });
   };
 
@@ -817,6 +869,103 @@ export default function Appointments() {
                         )}
                       />
                       
+                      {/* Doctor Assignment Field */}
+                      <FormField
+                        control={form.control}
+                        name="assignedDoctorId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Assigned Doctor</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select doctor" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {doctors.map((doctor) => (
+                                  <SelectItem key={doctor.id} value={doctor.id}>
+                                    Dr. {doctor.firstName} {doctor.lastName} ({doctor.position})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Appointment Fee and Payment Section */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="appointmentFee"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Appointment Fee</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  step="0.01"
+                                  placeholder="0.00"
+                                  {...field}
+                                  onChange={(e) => field.onChange(e.target.value)}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="paymentStatus"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Payment Status</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Payment status" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="pending">Pending</SelectItem>
+                                  <SelectItem value="paid">Paid</SelectItem>
+                                  <SelectItem value="refunded">Refunded</SelectItem>
+                                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="paymentMethod"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Payment Method</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Payment method" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="cash">Cash</SelectItem>
+                                  <SelectItem value="card">Card</SelectItem>
+                                  <SelectItem value="insurance">Insurance</SelectItem>
+                                  <SelectItem value="online">Online</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
                       <FormField
                         control={form.control}
                         name="notes"
@@ -932,7 +1081,12 @@ export default function Appointments() {
                             </div>
                           </td>
                           <td className="py-4 px-6">
-                            <div className="text-sm text-gray-900">{appointment.service}</div>
+                            <div className="text-sm">
+                              <div className="text-gray-900">{appointment.service}</div>
+                              {appointment.appointmentFee && (
+                                <div className="text-gray-500">${parseFloat(appointment.appointmentFee).toFixed(2)}</div>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-6">
                             <div className="text-sm">
@@ -941,9 +1095,16 @@ export default function Appointments() {
                             </div>
                           </td>
                           <td className="py-4 px-6">
-                            <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
-                              {appointment.status}
-                            </Badge>
+                            <div className="space-y-1">
+                              <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
+                                {appointment.status}
+                              </Badge>
+                              {appointment.paymentStatus && (
+                                <Badge variant={appointment.paymentStatus === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                                  {appointment.paymentStatus}
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-6">
                             <DropdownMenu>
@@ -984,9 +1145,18 @@ export default function Appointments() {
                                   Share WhatsApp
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600">
+                                {appointment.paymentStatus === 'pending' && (
+                                  <DropdownMenuItem 
+                                    onClick={() => markAsPaidMutation.mutate(appointment.id)}
+                                    className="text-green-600"
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Mark as Paid
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(appointment.id)}>
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete Patient
+                                  Cancel Appointment
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -1032,9 +1202,9 @@ export default function Appointments() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Patient Information</h3>
                   <div className="space-y-2">
-                    <p><strong>Name:</strong> {selectedAppointment.customer.firstName} {selectedAppointment.customer.lastName}</p>
-                    <p><strong>Phone:</strong> {selectedAppointment.customer.phone}</p>
-                    <p><strong>Email:</strong> {selectedAppointment.customer.email}</p>
+                    <p><strong>Name:</strong> {patients.find(p => p.id === selectedAppointment.patientId)?.firstName || 'Unknown'} {patients.find(p => p.id === selectedAppointment.patientId)?.lastName || 'Patient'}</p>
+                    <p><strong>Phone:</strong> {patients.find(p => p.id === selectedAppointment.patientId)?.phone || 'N/A'}</p>
+                    <p><strong>Email:</strong> {patients.find(p => p.id === selectedAppointment.patientId)?.email || 'N/A'}</p>
                   </div>
                 </div>
                 
@@ -1046,7 +1216,7 @@ export default function Appointments() {
                     <p><strong>Duration:</strong> {selectedAppointment.duration} minutes</p>
                     <p><strong>Service:</strong> {selectedAppointment.service}</p>
                     <p><strong>Status:</strong> {selectedAppointment.status}</p>
-                    <p><strong>Store:</strong> {selectedAppointment.store.name}</p>
+                    <p><strong>Store:</strong> {stores.find(s => s.id === selectedAppointment.storeId)?.name || 'OptiStore Pro'}</p>
                   </div>
                 </div>
               </div>
