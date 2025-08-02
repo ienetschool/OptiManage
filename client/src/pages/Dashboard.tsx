@@ -34,7 +34,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
-import QuickSale from "./QuickSale";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const salesData = [
@@ -68,7 +68,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 export default function Dashboard() {
   const [selectedStore, setSelectedStore] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('7d');
-  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
+
   const [, navigate] = useLocation();
 
   const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
@@ -170,7 +170,7 @@ export default function Dashboard() {
       title: "Process Sale",
       description: "Quick sale transaction",
       icon: Receipt,
-      action: () => setQuickSaleOpen(true),
+      action: () => navigate('/invoices'),
       color: "bg-purple-500 hover:bg-purple-600"
     },
     {
@@ -460,15 +460,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Quick Sale Modal */}
-      <Dialog open={quickSaleOpen} onOpenChange={setQuickSaleOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Quick Sale</DialogTitle>
-          </DialogHeader>
-          <QuickSale onClose={() => setQuickSaleOpen(false)} />
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }

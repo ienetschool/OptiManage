@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import QuickSaleModal from "@/components/QuickSaleModal";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +27,7 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const [location, navigate] = useLocation();
@@ -88,7 +88,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Button 
             variant="default" 
             size="sm"
-            onClick={() => setQuickSaleOpen(true)}
+            onClick={() => navigate('/invoices')}
             className="bg-green-600 hover:bg-green-700 hidden sm:flex"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
@@ -273,7 +273,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </footer>
 
       {/* Quick Sale Modal */}
-      <QuickSaleModal open={quickSaleOpen} onOpenChange={setQuickSaleOpen} />
+
       
       {/* Live Chat for mobile */}
       <div className="block sm:hidden">

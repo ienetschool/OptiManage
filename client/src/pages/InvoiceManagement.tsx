@@ -211,7 +211,7 @@ export default function InvoiceManagement() {
     }
   ];
 
-  // Queries - Enhanced to show both manual and QuickSale invoices
+  // Queries - Enhanced to show both manual and sales invoices
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
   });

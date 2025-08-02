@@ -59,7 +59,7 @@ const navigationItems = [
     items: [
       { title: "Invoices & Sales", href: "/invoices", icon: Receipt },
       { title: "Payment History", href: "/payments", icon: CreditCard },
-      { title: "Quick Sale", href: "/quick-sale", icon: DollarSign },
+
     ],
   },
   {
