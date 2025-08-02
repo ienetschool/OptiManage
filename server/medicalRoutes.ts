@@ -108,7 +108,7 @@ export function registerMedicalRoutes(app: Express) {
     try {
       const validatedData = insertPrescriptionSchema.parse(req.body);
       
-      const [prescription] = await db.insert(prescriptions).values([validatedData]).returning();
+      const [prescription] = await db.insert(prescriptions).values(validatedData).returning();
 
       // Create patient history entry
       await db.insert(patientHistory).values({
@@ -236,7 +236,7 @@ export function registerMedicalRoutes(app: Express) {
       console.log(`💰 MEDICAL INVOICE CALCULATIONS: Subtotal: $${invoiceData.subtotal}, Tax: $${invoiceData.taxAmount}, Total: $${invoiceData.total}`);
       
       // Create the medical invoice in the database
-      const [medicalInvoice] = await db.insert(medicalInvoices).values(invoiceData).returning();
+      const [medicalInvoice] = await db.insert(medicalInvoices).values([invoiceData]).returning();
       
       // Create patient history entry
       await db.insert(patientHistory).values({

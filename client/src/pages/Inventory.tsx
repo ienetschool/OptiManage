@@ -20,6 +20,7 @@ import { insertProductSchema, insertCategorySchema, insertSupplierSchema, type P
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 
 // Product types for optical store
 const PRODUCT_TYPES = [
@@ -242,6 +243,98 @@ export default function Inventory() {
     sum + (parseFloat(product.price) * product.currentStock), 0);
   const lowStockProducts = enrichedProducts.filter(p => p.stockStatus === "low_stock");
   const outOfStockProducts = enrichedProducts.filter(p => p.stockStatus === "out_of_stock");
+
+  // Column definitions for EnhancedDataTable
+  const inventoryColumns: Column[] = [
+    {
+      key: 'name',
+      title: 'Product',
+      sortable: true,
+      filterable: true,
+      render: (value, row) => (
+        <div className="space-y-1">
+          <div className="font-medium text-slate-900">{value}</div>
+          <div className="text-sm text-slate-500">SKU: {row.sku}</div>
+          {row.description && (
+            <div className="text-xs text-slate-400 max-w-xs truncate">
+              {row.description}
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'productType',
+      title: 'Type',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: PRODUCT_TYPES.map(type => ({ value: type.value, label: type.label })),
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <span className="text-lg">{getProductTypeIcon(value || "frames")}</span>
+          <span className="text-sm capitalize">
+            {PRODUCT_TYPES.find(t => t.value === value)?.label || value}
+          </span>
+        </div>
+      )
+    },
+    {
+      key: 'categoryName',
+      title: 'Category',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <span className="text-sm text-slate-600">{value}</span>
+      )
+    },
+    {
+      key: 'price',
+      title: 'Price',
+      sortable: true,
+      render: (value, row) => (
+        <div className="space-y-1">
+          <div className="font-medium text-emerald-600">${value}</div>
+          {row.costPrice && (
+            <div className="text-xs text-slate-500">Cost: ${row.costPrice}</div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'currentStock',
+      title: 'Stock',
+      sortable: true,
+      render: (value, row) => (
+        <div className="space-y-1">
+          <div className="font-medium">{value} units</div>
+          <div className="text-xs text-slate-500">
+            Reorder at: {row.reorderLevel}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'stockStatus',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'in_stock', label: 'In Stock' },
+        { value: 'low_stock', label: 'Low Stock' },
+        { value: 'out_of_stock', label: 'Out of Stock' }
+      ],
+      render: (value, row) => (
+        <div className="space-y-2">
+          {getStockStatusBadge(value, row.currentStock)}
+          <Badge variant={row.isActive ? "default" : "secondary"} className="block w-fit">
+            {row.isActive ? "Active" : "Inactive"}
+          </Badge>
+        </div>
+      )
+    }
+  ];
 
   // Handlers
   const handleEditProduct = (product: Product) => {
@@ -664,132 +757,56 @@ export default function Inventory() {
               </Dialog>
             </div>
 
-            {/* Products Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Product Catalog ({filteredProducts.length} products)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Product</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Stock</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredProducts.map((product) => (
-                        <TableRow key={product.id}>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="font-medium text-slate-900">{product.name}</div>
-                              <div className="text-sm text-slate-500">SKU: {product.sku}</div>
-                              {product.description && (
-                                <div className="text-xs text-slate-400 max-w-xs truncate">
-                                  {product.description}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <span className="text-lg">{getProductTypeIcon(product.productType || "frames")}</span>
-                              <span className="text-sm capitalize">
-                                {PRODUCT_TYPES.find(t => t.value === product.productType)?.label || product.productType}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-slate-600">{product.categoryName}</span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="font-medium text-emerald-600">${product.price}</div>
-                              {product.costPrice && (
-                                <div className="text-xs text-slate-500">Cost: ${product.costPrice}</div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              <div className="font-medium">{product.currentStock} units</div>
-                              <div className="text-xs text-slate-500">
-                                Reorder at: {product.reorderLevel}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              {getStockStatusBadge(product.stockStatus, product.currentStock)}
-                              <Badge variant={product.isActive ? "default" : "secondary"} className="block w-fit">
-                                {product.isActive ? "Active" : "Inactive"}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => handleEditProduct(product)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit Product
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Warehouse className="mr-2 h-4 w-4" />
-                                  Adjust Stock
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-red-600">
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete Product
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {filteredProducts.length === 0 && (
-                  <div className="text-center py-12">
-                    <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Package className="h-12 w-12 text-slate-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-slate-900 mb-2">
-                      {searchTerm ? "No products found" : "No products yet"}
-                    </h3>
-                    <p className="text-slate-600 mb-6">
-                      {searchTerm ? `No products match your search criteria` : "Get started by adding your first product."}
-                    </p>
-                    {!searchTerm && (
-                      <Button
-                        onClick={() => setOpenProduct(true)}
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Add Your First Product
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Enhanced Products Table with Pagination, Filtering, and Sorting */}
+            <EnhancedDataTable
+              data={enrichedProducts}
+              columns={inventoryColumns}
+              title={`Product Catalog (${filteredProducts.length} products)`}
+              searchPlaceholder="Search products by name, SKU, or category..."
+              isLoading={productsLoading}
+              onRefresh={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
+              }}
+              onView={(product) => {
+                // TODO: Implement product details view
+                console.log("View product:", product);
+              }}
+              onEdit={(product) => handleEditProduct(product)}
+              actions={(product) => (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => handleEditProduct(product)}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Product
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Warehouse className="mr-2 h-4 w-4" />
+                      Adjust Stock
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600">
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Product
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              pageSize={10}
+              showPagination={true}
+              emptyMessage="No products found. Start by adding your first product to the inventory."
+              totalCount={enrichedProducts.length}
+            />
           </TabsContent>
 
           {/* Categories Tab */}

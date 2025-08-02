@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { 
   CreditCard, 
   Search, 
@@ -43,13 +44,95 @@ interface Payment {
 export default function Payments() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [methodFilter, setMethodFilter] = useState("all");
-  const [dateRange, setDateRange] = useState("30d");
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [paymentMethodDialog, setPaymentMethodDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+
+  // Define columns for EnhancedDataTable
+  const paymentColumns: Column[] = [
+    {
+      key: 'invoiceId',
+      title: 'Invoice #',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">{value}</div>
+      )
+    },
+    {
+      key: 'customerName',
+      title: 'Customer',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-gray-900">{value}</div>
+      )
+    },
+    {
+      key: 'amount',
+      title: 'Amount',
+      sortable: true,
+      render: (value) => (
+        <div className="text-lg font-bold">${value.toFixed(2)}</div>
+      )
+    },
+    {
+      key: 'paymentMethod',
+      title: 'Method',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'cash', label: 'Cash' },
+        { value: 'card', label: 'Card' },
+        { value: 'check', label: 'Check' },
+        { value: 'digital', label: 'Digital' }
+      ],
+      render: (value) => (
+        <div className="capitalize text-sm">{value}</div>
+      )
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'completed', label: 'Completed' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'failed', label: 'Failed' },
+        { value: 'refunded', label: 'Refunded' }
+      ],
+      render: (value) => (
+        <Badge variant={getStatusBadge(value)}>
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: 'paymentDate',
+      title: 'Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">{new Date(value).toLocaleDateString()}</div>
+      )
+    },
+    {
+      key: 'transactionId',
+      title: 'Transaction ID',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="text-xs text-gray-500 font-mono">{value}</div>
+      )
+    }
+  ];
+
+  // Fetch payments data
+  const { data: payments = [], isLoading } = useQuery<Payment[]>({
+    queryKey: ["/api/payments"],
+  });
 
   // Payment processing mutation
   const processPaymentMutation = useMutation({
@@ -80,21 +163,6 @@ export default function Payments() {
         variant: "destructive",
       });
     },
-  });
-
-  const { data: payments = [], isLoading } = useQuery<Payment[]>({
-    queryKey: ["/api/payments", searchTerm, statusFilter, methodFilter, dateRange],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (searchTerm) params.append("search", searchTerm);
-      if (statusFilter !== "all") params.append("status", statusFilter);
-      if (methodFilter !== "all") params.append("method", methodFilter);
-      params.append("dateRange", dateRange);
-      
-      const response = await fetch(`/api/payments?${params}`);
-      if (!response.ok) throw new Error("Failed to fetch payments");
-      return response.json();
-    }
   });
 
   const getStatusIcon = (status: string) => {
@@ -342,125 +410,39 @@ export default function Payments() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
-          <Input
-            placeholder="Search payments..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="failed">Failed</SelectItem>
-            <SelectItem value="refunded">Refunded</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={methodFilter} onValueChange={setMethodFilter}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Filter by method" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Methods</SelectItem>
-            <SelectItem value="cash">Cash</SelectItem>
-            <SelectItem value="card">Card</SelectItem>
-            <SelectItem value="check">Check</SelectItem>
-            <SelectItem value="digital">Digital</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-full sm:w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7d">Last 7 days</SelectItem>
-            <SelectItem value="30d">Last 30 days</SelectItem>
-            <SelectItem value="90d">Last 90 days</SelectItem>
-            <SelectItem value="1y">Last year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Payments List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Payment History</CardTitle>
-          <CardDescription>All payment transactions and their status</CardDescription>
-        </CardHeader>
-        <CardContent className="max-h-[600px] overflow-y-auto">
-          {isLoading ? (
-            <div className="text-center py-8">
-              <p className="text-slate-500">Loading payments...</p>
-            </div>
-          ) : payments.length === 0 ? (
-            <div className="text-center py-8">
-              <CreditCard className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500">No payments found</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all duration-200 group">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(payment.status)}
-                      {getMethodIcon(payment.paymentMethod)}
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium">{payment.customerName}</h4>
-                        <Badge variant={getStatusBadge(payment.status)}>
-                          {payment.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-slate-500">
-                        <span>Invoice: {payment.invoiceId}</span>
-                        {payment.transactionId && (
-                          <span>Transaction: {payment.transactionId}</span>
-                        )}
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-3 w-3" />
-                          <span>{new Date(payment.paymentDate).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <p className="text-lg font-bold">${payment.amount.toFixed(2)}</p>
-                      <p className="text-sm text-slate-500 capitalize">{payment.paymentMethod}</p>
-                    </div>
-                    {/* Prominent Pay Now Button for Pending Payments */}
-                    {payment.status === "pending" && (
-                      <Button 
-                        onClick={() => {
-                          setSelectedPayment(payment);
-                          setPaymentMethodDialog(true);
-                        }}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                        size="sm"
-                      >
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Pay Now
-                      </Button>
-                    )}
-                    <PaymentActions payment={payment} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Enhanced Payments Table with Pagination, Filtering, and Sorting */}
+      <EnhancedDataTable
+        data={payments}
+        columns={paymentColumns}
+        title="Payment Management"
+        searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
+        isLoading={isLoading}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+        }}
+        actions={(payment) => (
+          <div className="flex items-center gap-2">
+            {payment.status === "pending" && (
+              <Button 
+                onClick={() => {
+                  setSelectedPayment(payment);
+                  setPaymentMethodDialog(true);
+                }}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                size="sm"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Pay Now
+              </Button>
+            )}
+            <PaymentActions payment={payment} />
+          </div>
+        )}
+        pageSize={10}
+        showPagination={true}
+        emptyMessage="No payments found. Payment history will appear here once transactions are made."
+        totalCount={payments.length}
+      />
 
       {/* Payment Method Selection Dialog */}
       <Dialog open={paymentMethodDialog} onOpenChange={setPaymentMethodDialog}>

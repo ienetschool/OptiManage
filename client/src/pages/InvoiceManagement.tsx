@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -37,18 +37,19 @@ import {
   ChevronDown
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import QRCodeReact from "react-qr-code";
 import { generateProfessionalA4Invoice } from "@/components/ProfessionalInvoice";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { format } from "date-fns";
+
 
 interface Invoice {
   id: string;
@@ -123,6 +124,92 @@ export default function InvoiceManagement() {
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Helper function for invoice status badge variants
+  const getInvoiceStatusVariant = (status: string) => {
+    const variants = {
+      draft: "secondary" as const,
+      sent: "default" as const,
+      paid: "default" as const,
+      overdue: "destructive" as const,
+      cancelled: "outline" as const
+    };
+    return variants[status as keyof typeof variants] || "secondary";
+  };
+
+  // Define columns for EnhancedDataTable
+  const invoiceColumns: Column[] = [
+    {
+      key: 'invoiceNumber',
+      title: 'Invoice #',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">{value}</div>
+      )
+    },
+    {
+      key: 'customerName',
+      title: 'Customer',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-gray-900">{value}</div>
+      )
+    },
+    {
+      key: 'date',
+      title: 'Invoice Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">{new Date(value).toLocaleDateString()}</div>
+      )
+    },
+    {
+      key: 'dueDate',
+      title: 'Due Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">{new Date(value).toLocaleDateString()}</div>
+      )
+    },
+    {
+      key: 'total',
+      title: 'Total Amount',
+      sortable: true,
+      render: (value) => (
+        <div className="text-lg font-bold">${value.toFixed(2)}</div>
+      )
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'draft', label: 'Draft' },
+        { value: 'sent', label: 'Sent' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'overdue', label: 'Overdue' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ],
+      render: (value) => (
+        <Badge variant={getInvoiceStatusVariant(value)}>
+          {value.toUpperCase()}
+        </Badge>
+      )
+    },
+    {
+      key: 'paymentMethod',
+      title: 'Payment Method',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="text-sm text-gray-600 capitalize">{value || 'Not specified'}</div>
+      )
+    }
+  ];
 
   // Queries - Enhanced to show both manual and QuickSale invoices
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
@@ -1300,86 +1387,64 @@ export default function InvoiceManagement() {
             </Card>
           </div>
 
-          {/* Invoices Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoices</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Invoice #</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Store</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Due Date</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInvoices.map((invoice) => (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                        <TableCell>{invoice.customerName}</TableCell>
-                        <TableCell>{invoice.storeName}</TableCell>
-                        <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                        <TableCell>${parseFloat(invoice.total.toString()).toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(invoice.status)}>
-                            {invoice.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Invoice
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <QrCode className="h-4 w-4 mr-2" />
-                                Show QR Code
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Send className="h-4 w-4 mr-2" />
-                                Send to Customer
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
-                                <Printer className="h-4 w-4 mr-2" />
-                                Print A4 Invoice
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
-                                <Download className="h-4 w-4 mr-2" />
-                                Export A4 PDF
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Enhanced Invoices Table with Pagination, Filtering, and Sorting */}
+          <EnhancedDataTable
+            data={filteredInvoices}
+            columns={invoiceColumns}
+            title="Invoice Management"
+            searchPlaceholder="Search invoices by invoice number, customer name, or store..."
+            isLoading={false}
+            onView={(invoice) => setSelectedInvoice(invoice)}
+            onEdit={(invoice) => {
+              // TODO: Implement edit functionality
+              console.log("Edit invoice:", invoice);
+            }}
+            actions={(invoice) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setSelectedInvoice(invoice)}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Invoice
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Show QR Code
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Send className="h-4 w-4 mr-2" />
+                    Send to Customer
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
+                    <Printer className="h-4 w-4 mr-2" />
+                    Print A4 Invoice
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export A4 PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            pageSize={10}
+            showPagination={true}
+            emptyMessage="No invoices found. Create your first invoice to get started."
+            totalCount={filteredInvoices.length}
+          />
 
           {/* Invoice Preview Dialog */}
           {selectedInvoice && (

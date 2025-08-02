@@ -49,6 +49,7 @@ import {
   Eye as EyeIcon,
   RefreshCw
 } from "lucide-react";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -1819,194 +1820,35 @@ export default function Patients() {
             </div>
           </div>
 
-          {/* Patients Table */}
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient #</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient Name</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Contact</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Age</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Blood Group</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPatients.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="text-center py-12">
-                        <div className="text-gray-500">
-                          <User className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                          <h3 className="text-lg font-medium mb-2">No patients found</h3>
-                          <p>Start by registering your first patient</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredPatients.map((patient: Patient) => {
-                      const isNew = new Date(patient.createdAt || '').getTime() > Date.now() - 24*60*60*1000;
-                      return (
-                        <tr key={patient.id} className={`border-b border-gray-100 hover:bg-gray-50 ${
-                          isNew ? 'bg-green-50/50 border-green-200' : ''
-                        }`}>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-2">
-                            <div className="font-medium text-blue-600">{patient.patientCode}</div>
-                            {isNew && (
-                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="flex items-center space-x-3">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs">
-                                {patient.firstName[0]}{patient.lastName[0]}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium text-gray-900">{patient.firstName} {patient.lastName}</div>
-                              <div className="text-sm text-gray-500">{patient.email || 'No email'}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="text-sm">
-                            <div className="text-gray-900">{patient.phone}</div>
-                            <div className="text-gray-500">{patient.gender}</div>
-                          </div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="text-sm text-gray-900">{calculateAge(patient.dateOfBirth)} years</div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <div className="text-sm text-gray-900">{patient.bloodGroup || '-'}</div>
-                        </td>
-                        <td className="py-4 px-6">
-                          <Badge variant={patient.isActive ? "default" : "secondary"}>
-                            {patient.isActive ? "Active" : "Inactive"}
-                          </Badge>
-                        </td>
-                        <td className="py-4 px-6">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedPatient(patient);
-                                // Refresh all data when opening patient details
-                                refetchAppointments();
-                                refetchPrescriptions();
-                                refetchMedicalInvoices();
-                                setViewPatientOpen(true);
-                              }}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedPatient(patient);
-                                setEditPatientOpen(true);
-                              }}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Patient
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => {
-                                setSelectedPatient(patient);
-                                const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === patient.id);
-                                const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === patient.id);
-                                const patientInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === patient.id);
-                                
-                                // Handle nullable fields for PDF generation
-                                const patientForPDF = {
-                                  ...patient,
-                                  dateOfBirth: patient.dateOfBirth || '', // Handle null dateOfBirth
-                                  address: patient.address || '',
-                                  emergencyContact: patient.emergencyContact || '',
-                                  emergencyPhone: patient.emergencyPhone || '',
-                                  bloodGroup: patient.bloodGroup || '',
-                                  allergies: patient.allergies || '',
-                                  medicalHistory: patient.medicalHistory || '',
-                                  currentMedications: patient.currentMedications || '',
-                                  previousEyeConditions: patient.previousEyeConditions || '',
-                                  lastEyeExamDate: patient.lastEyeExamDate || '',
-                                  currentPrescription: patient.currentPrescription || '',
-                                  riskFactors: patient.riskFactors || '',
-                                  familyMedicalHistory: patient.familyMedicalHistory || '',
-                                  smokingStatus: patient.smokingStatus || '',
-                                  alcoholConsumption: patient.alcoholConsumption || '',
-                                  exerciseFrequency: patient.exerciseFrequency || '',
-                                  rightEyeSphere: patient.rightEyeSphere || '',
-                                  rightEyeCylinder: patient.rightEyeCylinder || '',
-                                  rightEyeAxis: patient.rightEyeAxis || '',
-                                  leftEyeSphere: patient.leftEyeSphere || '',
-                                  leftEyeCylinder: patient.leftEyeCylinder || '',
-                                  leftEyeAxis: patient.leftEyeAxis || '',
-                                  pupillaryDistance: patient.pupillaryDistance || '',
-                                  doctorNotes: patient.doctorNotes || '',
-                                  treatmentPlan: patient.treatmentPlan || '',
-                                  followUpDate: patient.followUpDate || '',
-                                  medicalAlerts: patient.medicalAlerts || '',
-                                  createdAt: patient.createdAt?.toString() || new Date().toISOString()
-                                };
-                                
-                                generateMultiPagePatientPDF(patientForPDF, patientAppointments, patientPrescriptions, patientInvoices);
-                                
-                                toast({
-                                  title: "Complete Medical Profile Generated",
-                                  description: "Multi-page patient profile with all medical history, appointments, and billing information has been generated for printing.",
-                                });
-                              }}>
-                                <Printer className="mr-2 h-4 w-4" />
-                                Print Complete Profile
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                generatePatientInvoice(patient);
-                              }}>
-                                <Receipt className="mr-2 h-4 w-4" />
-                                Generate Invoice
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => {
-                                shareByEmail(patient);
-                              }}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Share by Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                shareByQREmail(patient);
-                              }}>
-                                <QrCode className="mr-2 h-4 w-4" />
-                                QR Code Email
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => {
-                                shareByWhatsApp(patient);
-                              }}>
-                                <MessageSquare className="mr-2 h-4 w-4" />
-                                Share WhatsApp
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem className="text-red-600">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete Patient
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          {/* Enhanced Patients Table with Pagination, Filtering, and Sorting */}
+          <EnhancedDataTable
+            data={patients as Patient[]}
+            columns={patientColumns}
+            title="Patient Management"
+            searchPlaceholder="Search patients by name, email, phone, or patient code..."
+            isLoading={isLoading}
+            onRefresh={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+            }}
+            onView={(patient) => {
+              setSelectedPatient(patient);
+              refetchAppointments();
+              refetchPrescriptions();
+              refetchMedicalInvoices();
+              setViewPatientOpen(true);
+            }}
+            onEdit={(patient) => {
+              setSelectedPatient(patient);
+              setEditPatientOpen(true);
+            }}
+            pageSize={10}
+            showPagination={true}
+            emptyMessage="No patients found. Start by registering your first patient."
+            totalCount={patients.length}
+          />
         </TabsContent>
 
         <TabsContent value="appointments" className="space-y-6">

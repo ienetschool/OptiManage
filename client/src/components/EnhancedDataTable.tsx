@@ -1,142 +1,204 @@
 import React, { useState, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Search, 
   Filter, 
+  SortAsc, 
+  SortDesc, 
+  RefreshCw, 
   ChevronLeft, 
-  ChevronRight, 
-  ChevronsLeft, 
+  ChevronRight,
+  ChevronsLeft,
   ChevronsRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Download,
-  RefreshCw
+  MoreVertical,
+  Eye,
+  Edit,
+  Trash2
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-interface Column<T> {
-  key: keyof T;
-  label: string;
+export interface Column {
+  key: string;
+  title: string;
   sortable?: boolean;
   filterable?: boolean;
-  render?: (value: any, item: T) => React.ReactNode;
-  filterType?: "text" | "select" | "date";
-  filterOptions?: { value: string; label: string; }[];
+  filterType?: 'text' | 'select' | 'date' | 'number';
+  filterOptions?: { value: string; label: string }[];
+  render?: (value: any, row: any) => React.ReactNode;
+  width?: string;
 }
 
-interface EnhancedDataTableProps<T> {
-  data: T[];
-  columns: Column<T>[];
+export interface EnhancedDataTableProps {
+  data: any[];
+  columns: Column[];
   title: string;
   searchPlaceholder?: string;
   isLoading?: boolean;
   onRefresh?: () => void;
-  onExport?: () => void;
-  actions?: (item: T) => React.ReactNode;
-  defaultSort?: { field: keyof T; direction: "asc" | "desc" };
-  defaultPageSize?: number;
+  onView?: (row: any) => void;
+  onEdit?: (row: any) => void;
+  onDelete?: (row: any) => void;
+  actions?: (row: any) => React.ReactNode;
+  pageSize?: number;
+  showPagination?: boolean;
+  emptyMessage?: string;
+  totalCount?: number;
 }
 
-export function EnhancedDataTable<T extends Record<string, any>>({
+export default function EnhancedDataTable({
   data,
   columns,
   title,
   searchPlaceholder = "Search...",
   isLoading = false,
   onRefresh,
-  onExport,
+  onView,
+  onEdit,
+  onDelete,
   actions,
-  defaultSort = { field: "createdAt" as keyof T, direction: "desc" },
-  defaultPageSize = 20
-}: EnhancedDataTableProps<T>) {
+  pageSize = 10,
+  showPagination = true,
+  emptyMessage = "No data found",
+  totalCount
+}: EnhancedDataTableProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [sortColumn, setSortColumn] = useState<string>("");
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(defaultPageSize);
-  const [sortField, setSortField] = useState<keyof T>(defaultSort.field);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(defaultSort.direction);
   const [filters, setFilters] = useState<Record<string, string>>({});
+  const [pageSizeValue, setPageSizeValue] = useState(pageSize);
 
-  // Apply filters, search, and sorting
-  const processedData = useMemo(() => {
-    let filtered = data;
+  // Filter data based on search term and column filters
+  const filteredData = useMemo(() => {
+    let result = [...data];
 
-    // Apply search
+    // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(item =>
-        Object.values(item).some(value =>
-          String(value).toLowerCase().includes(searchTerm.toLowerCase())
-        )
+      result = result.filter(row =>
+        columns.some(col => {
+          const value = row[col.key];
+          return value && value.toString().toLowerCase().includes(searchTerm.toLowerCase());
+        })
       );
     }
 
-    // Apply column filters
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value !== "all") {
-        filtered = filtered.filter(item => {
-          const itemValue = String(item[key]).toLowerCase();
-          return itemValue.includes(value.toLowerCase());
+    // Apply column-specific filters
+    Object.entries(filters).forEach(([columnKey, filterValue]) => {
+      if (filterValue) {
+        result = result.filter(row => {
+          const value = row[columnKey];
+          const column = columns.find(col => col.key === columnKey);
+          
+          if (column?.filterType === 'select') {
+            return value === filterValue;
+          } else {
+            return value && value.toString().toLowerCase().includes(filterValue.toLowerCase());
+          }
         });
       }
     });
 
-    // Apply sorting - newest first by default
-    filtered.sort((a, b) => {
-      let aValue = a[sortField];
-      let bValue = b[sortField];
+    return result;
+  }, [data, searchTerm, filters, columns]);
+
+  // Sort data
+  const sortedData = useMemo(() => {
+    if (!sortColumn) {
+      // Default sort by creation date (newest first) if available
+      const hasCreatedAt = data.length > 0 && 'createdAt' in data[0];
+      const hasDate = data.length > 0 && 'date' in data[0];
+      const hasInvoiceDate = data.length > 0 && 'invoiceDate' in data[0];
       
-      // Handle date strings
-      if (typeof aValue === 'string' && aValue.includes('T')) {
-        aValue = new Date(aValue).getTime();
-        bValue = new Date(bValue).getTime();
+      if (hasCreatedAt) {
+        return [...filteredData].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      } else if (hasInvoiceDate) {
+        return [...filteredData].sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime());
+      } else if (hasDate) {
+        return [...filteredData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      }
+      return filteredData;
+    }
+
+    return [...filteredData].sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+      
+      // Handle different data types
+      if (aValue instanceof Date && bValue instanceof Date) {
+        return sortDirection === 'asc' 
+          ? aValue.getTime() - bValue.getTime()
+          : bValue.getTime() - aValue.getTime();
       }
       
-      if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-      return 0;
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      // String comparison
+      const aStr = aValue?.toString() || '';
+      const bStr = bValue?.toString() || '';
+      return sortDirection === 'asc' 
+        ? aStr.localeCompare(bStr)
+        : bStr.localeCompare(aStr);
     });
-
-    return filtered;
-  }, [data, searchTerm, filters, sortField, sortDirection]);
+  }, [filteredData, sortColumn, sortDirection]);
 
   // Pagination
-  const totalPages = Math.ceil(processedData.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedData = processedData.slice(startIndex, startIndex + pageSize);
+  const totalPages = Math.ceil(sortedData.length / pageSizeValue);
+  const startIndex = (currentPage - 1) * pageSizeValue;
+  const paginatedData = showPagination 
+    ? sortedData.slice(startIndex, startIndex + pageSizeValue)
+    : sortedData;
 
-  const handleSort = (field: keyof T) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+  // Reset to first page when data changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filters, sortColumn, sortDirection]);
+
+  const handleSort = (columnKey: string) => {
+    const column = columns.find(col => col.key === columnKey);
+    if (!column?.sortable) return;
+
+    if (sortColumn === columnKey) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
-      setSortField(field);
-      setSortDirection("desc"); // Default to desc for new field (newest first)
+      setSortColumn(columnKey);
+      setSortDirection('asc');
     }
   };
 
   const handleFilterChange = (columnKey: string, value: string) => {
-    setFilters(prev => ({ ...prev, [columnKey]: value }));
-    setCurrentPage(1); // Reset to first page when filtering
+    setFilters(prev => ({
+      ...prev,
+      [columnKey]: value
+    }));
   };
 
-  const getSortIcon = (field: keyof T) => {
-    if (sortField !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return sortDirection === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />;
+  const clearFilters = () => {
+    setFilters({});
+    setSearchTerm("");
   };
 
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  const getSortIcon = (columnKey: string) => {
+    if (sortColumn !== columnKey) return null;
+    return sortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />;
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
+    <Card>
+      <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            {title}
+            <Badge variant="outline" className="text-xs">
+              {totalCount || sortedData.length} total
+            </Badge>
+          </CardTitle>
           <div className="flex items-center gap-2">
             {onRefresh && (
               <Button
@@ -146,118 +208,146 @@ export function EnhancedDataTable<T extends Record<string, any>>({
                 disabled={isLoading}
               >
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            )}
-            {onExport && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onExport}
-              >
-                <Download className="h-4 w-4" />
-                Export
               </Button>
             )}
           </div>
         </div>
         
-        <div className="flex items-center gap-4 mt-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-            />
+        {/* Search and Filters */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearFilters}
+              disabled={!searchTerm && Object.keys(filters).length === 0}
+            >
+              Clear
+            </Button>
           </div>
           
-          {/* Column Filters */}
-          {columns.filter(col => col.filterable).map(column => (
-            <Select
-              key={String(column.key)}
-              value={filters[String(column.key)] || "all"}
-              onValueChange={(value) => handleFilterChange(String(column.key), value)}
-            >
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder={`Filter ${column.label}`} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All {column.label}</SelectItem>
-                {column.filterOptions?.map(option => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ))}
-
-          <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(Number(value))}>
-            <SelectTrigger className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-            </SelectContent>
-          </Select>
+          {/* Column-specific filters */}
+          <div className="flex flex-wrap gap-2">
+            {columns.filter(col => col.filterable).map(column => (
+              <div key={column.key} className="min-w-[150px]">
+                {column.filterType === 'select' && column.filterOptions ? (
+                  <Select
+                    value={filters[column.key] || ""}
+                    onValueChange={(value) => handleFilterChange(column.key, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={`Filter ${column.title}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All {column.title}</SelectItem>
+                      {column.filterOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder={`Filter ${column.title}`}
+                    value={filters[column.key] || ""}
+                    onChange={(e) => handleFilterChange(column.key, e.target.value)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </CardHeader>
-
-      <CardContent className="p-0">
+      
+      <CardContent>
         <div className="rounded-md border">
           <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((column) => (
-                  <TableHead
-                    key={String(column.key)}
-                    className={column.sortable ? "cursor-pointer hover:bg-muted/50 select-none" : ""}
+                  <TableHead 
+                    key={column.key}
+                    className={`${column.sortable ? 'cursor-pointer hover:bg-muted' : ''} ${column.width || ''}`}
                     onClick={() => column.sortable && handleSort(column.key)}
                   >
                     <div className="flex items-center gap-2">
-                      {column.label}
+                      {column.title}
                       {column.sortable && getSortIcon(column.key)}
                     </div>
                   </TableHead>
                 ))}
-                {actions && <TableHead className="w-20">Actions</TableHead>}
+                {(onView || onEdit || onDelete || actions) && (
+                  <TableHead className="w-[100px]">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length + (actions ? 1 : 0)} className="h-24 text-center">
-                    <div className="flex items-center justify-center">
-                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                  <TableCell colSpan={columns.length + 1} className="text-center py-8">
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="h-4 w-4 animate-spin" />
                       Loading...
                     </div>
                   </TableCell>
                 </TableRow>
               ) : paginatedData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length + (actions ? 1 : 0)} className="h-24 text-center">
-                    No data found
+                  <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedData.map((item, index) => (
-                  <TableRow key={item.id || index}>
+                paginatedData.map((row, index) => (
+                  <TableRow key={row.id || index}>
                     {columns.map((column) => (
-                      <TableCell key={String(column.key)}>
-                        {column.render
-                          ? column.render(item[column.key], item)
-                          : String(item[column.key] || "—")
-                        }
+                      <TableCell key={column.key}>
+                        {column.render ? column.render(row[column.key], row) : row[column.key]}
                       </TableCell>
                     ))}
-                    {actions && (
+                    {(onView || onEdit || onDelete || actions) && (
                       <TableCell>
-                        {actions(item)}
+                        {actions ? (
+                          actions(row)
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {onView && (
+                                <DropdownMenuItem onClick={() => onView(row)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View
+                                </DropdownMenuItem>
+                              )}
+                              {onEdit && (
+                                <DropdownMenuItem onClick={() => onEdit(row)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {onDelete && (
+                                <DropdownMenuItem onClick={() => onDelete(row)}>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </TableCell>
                     )}
                   </TableRow>
@@ -266,18 +356,33 @@ export function EnhancedDataTable<T extends Record<string, any>>({
             </TableBody>
           </Table>
         </div>
-
+        
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="text-sm text-muted-foreground">
-              Showing {startIndex + 1} to {Math.min(startIndex + pageSize, processedData.length)} of {processedData.length} entries
+        {showPagination && totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(startIndex + pageSizeValue, sortedData.length)} of {sortedData.length} entries
+              </span>
+              <Select value={pageSizeValue.toString()} onValueChange={(value) => setPageSizeValue(Number(value))}>
+                <SelectTrigger className="w-[70px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">per page</span>
             </div>
+            
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => goToPage(1)}
+                onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
               >
                 <ChevronsLeft className="h-4 w-4" />
@@ -285,18 +390,18 @@ export function EnhancedDataTable<T extends Record<string, any>>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => goToPage(currentPage - 1)}
+                onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-medium px-2">
+              <span className="text-sm font-medium">
                 Page {currentPage} of {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => goToPage(currentPage + 1)}
+                onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -304,7 +409,7 @@ export function EnhancedDataTable<T extends Record<string, any>>({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => goToPage(totalPages)}
+                onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
               >
                 <ChevronsRight className="h-4 w-4" />

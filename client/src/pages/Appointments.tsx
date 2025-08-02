@@ -18,6 +18,7 @@ import { insertAppointmentSchema, type Appointment, type InsertAppointment, type
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays, startOfWeek, endOfWeek, isSameDay } from "date-fns";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 
 export default function Appointments() {
   const [open, setOpen] = useState(false);
@@ -29,6 +30,123 @@ export default function Appointments() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Define columns for EnhancedDataTable
+  const appointmentColumns: Column[] = [
+    {
+      key: 'appointmentId',
+      title: 'Appointment #',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">{value}</div>
+      )
+    },
+    {
+      key: 'patientName',
+      title: 'Patient',
+      sortable: true,
+      filterable: true,
+      render: (value, appointment) => {
+        const patient = patients.find(p => p.id === appointment.patientId);
+        return (
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-xs">
+                {patient?.firstName?.[0]}{patient?.lastName?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-medium text-gray-900">
+                {patient?.firstName} {patient?.lastName}
+              </div>
+              <div className="text-sm text-gray-500">{patient?.phone}</div>
+            </div>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'appointmentDate',
+      title: 'Date & Time',
+      sortable: true,
+      render: (value, appointment) => (
+        <div className="text-sm">
+          <div className="font-medium">{new Date(value).toLocaleDateString()}</div>
+          <div className="text-gray-500">{appointment.appointmentTime}</div>
+        </div>
+      )
+    },
+    {
+      key: 'service',
+      title: 'Service',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="text-sm text-gray-900">{value}</div>
+      )
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'scheduled', label: 'Scheduled' },
+        { value: 'confirmed', label: 'Confirmed' },
+        { value: 'in-progress', label: 'In Progress' },
+        { value: 'completed', label: 'Completed' },
+        { value: 'cancelled', label: 'Cancelled' },
+        { value: 'no-show', label: 'No Show' }
+      ],
+      render: (value) => (
+        <Badge variant={getStatusVariant(value)}>
+          {value}
+        </Badge>
+      )
+    },
+    {
+      key: 'assignedDoctorId',
+      title: 'Doctor',
+      sortable: true,
+      filterable: true,
+      render: (value) => {
+        const doctor = doctors.find(d => d.id === value);
+        return (
+          <div className="text-sm text-gray-900">
+            {doctor ? `Dr. ${doctor.name}` : 'Unassigned'}
+          </div>
+        );
+      }
+    },
+    {
+      key: 'appointmentFee',
+      title: 'Fee',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm font-medium">${value?.toFixed(2) || '0.00'}</div>
+      )
+    },
+    {
+      key: 'paymentStatus',
+      title: 'Payment',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'partial', label: 'Partial' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ],
+      render: (value) => (
+        <Badge variant={value === 'paid' ? 'default' : value === 'pending' ? 'secondary' : 'outline'}>
+          {value}
+        </Badge>
+      )
+    }
+  ];
 
   const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments"],
@@ -127,6 +245,19 @@ export default function Appointments() {
       });
     },
   });
+
+  // Helper function for status badge variants
+  const getStatusVariant = (status: string) => {
+    const variants = {
+      scheduled: "secondary" as const,
+      confirmed: "default" as const,
+      "in-progress": "secondary" as const,
+      completed: "default" as const,
+      cancelled: "destructive" as const,
+      "no-show": "outline" as const
+    };
+    return variants[status as keyof typeof variants] || "secondary";
+  };
 
   const deleteAppointmentMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -1031,144 +1162,78 @@ export default function Appointments() {
               </Select>
             </div>
 
-          {/* Appointments Table - Same format as Patients */}
-          <Card>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Appointment #</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Patient Name</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Service</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Date & Time</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAppointments.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center py-12">
-                        <div className="text-gray-500">
-                          <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                          <h3 className="text-lg font-medium mb-2">No appointments scheduled</h3>
-                          <p>Start by scheduling your first appointment</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredAppointments.map((appointment: any) => {
-                      const patient = patients.find(p => p.id === (appointment.patientId || appointment.customerId));
-                      const store = stores.find(s => s.id === appointment.storeId);
-                      return (
-                        <tr key={appointment.id} className="border-b border-gray-100 hover:bg-gray-50">
-                          <td className="py-4 px-6">
-                            <div className="font-medium text-blue-600">APT-{appointment.id.slice(0, 8)}</div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="flex items-center space-x-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="text-xs">
-                                  {patient?.firstName?.[0] || 'P'}{patient?.lastName?.[0] || 'A'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {patient?.firstName || 'Unknown'} {patient?.lastName || 'Patient'}
-                                </div>
-                                <div className="text-sm text-gray-500">{patient?.phone || patient?.patientCode || 'No phone'}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="text-sm">
-                              <div className="text-gray-900">{appointment.service}</div>
-                              {appointment.appointmentFee && (
-                                <div className="text-gray-500">${parseFloat(appointment.appointmentFee).toFixed(2)}</div>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="text-sm">
-                              <div className="text-gray-900">{new Date(appointment.appointmentDate).toLocaleDateString()}</div>
-                              <div className="text-gray-500">{new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <div className="space-y-1">
-                              <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>
-                                {appointment.status}
-                              </Badge>
-                              {appointment.paymentStatus && (
-                                <Badge variant={appointment.paymentStatus === 'paid' ? 'default' : 'secondary'} className="text-xs">
-                                  {appointment.paymentStatus}
-                                </Badge>
-                              )}
-                            </div>
-                          </td>
-                          <td className="py-4 px-6">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem onClick={() => setSelectedAppointment(appointment)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setEditingAppointment(appointment)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit Patient
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => generateAppointmentReport(appointment)}>
-                                  <Printer className="mr-2 h-4 w-4" />
-                                  Print Report
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => generateAppointmentInvoice(appointment)}>
-                                  <Receipt className="mr-2 h-4 w-4" />
-                                  Generate Invoice
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => shareByEmail(appointment)}>
-                                  <Share2 className="mr-2 h-4 w-4" />
-                                  Share by Email
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => shareByQREmail(appointment)}>
-                                  <QrCode className="mr-2 h-4 w-4" />
-                                  QR Code Email
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => shareByWhatsApp(appointment)}>
-                                  <MessageSquare className="mr-2 h-4 w-4" />
-                                  Share WhatsApp
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {appointment.paymentStatus === 'pending' && (
-                                  <DropdownMenuItem 
-                                    onClick={() => markAsPaidMutation.mutate(appointment.id)}
-                                    className="text-green-600"
-                                  >
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Mark as Paid
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(appointment.id)}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Cancel Appointment
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          {/* Enhanced Appointments Table with Pagination, Filtering, and Sorting */}
+          <EnhancedDataTable
+            data={appointments as Appointment[]}
+            columns={appointmentColumns}
+            title="Appointment Management"
+            searchPlaceholder="Search appointments by patient name, service, or appointment ID..."
+            isLoading={isLoading}
+            onRefresh={() => {
+              queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+            }}
+            onView={(appointment) => {
+              setSelectedAppointment(appointment);
+              setDetailsOpen(true);
+            }}
+            onEdit={(appointment) => {
+              setEditingAppointment(appointment);
+              form.reset({
+                ...appointment,
+                appointmentDate: new Date(appointment.appointmentDate),
+              });
+              setOpen(true);
+            }}
+            actions={(appointment) => (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => {
+                    setSelectedAppointment(appointment);
+                    setDetailsOpen(true);
+                  }}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    setEditingAppointment(appointment);
+                    form.reset({
+                      ...appointment,
+                      appointmentDate: new Date(appointment.appointmentDate),
+                    });
+                    setOpen(true);
+                  }}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => {
+                    updateAppointmentStatusMutation.mutate({
+                      id: appointment.id,
+                      status: appointment.status === 'completed' ? 'scheduled' : 'completed'
+                    });
+                  }}>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    {appointment.status === 'completed' ? 'Mark Pending' : 'Mark Completed'}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-red-600"
+                    onClick={() => deleteAppointmentMutation.mutate(appointment.id)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Cancel
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+            pageSize={10}
+            showPagination={true}
+            emptyMessage="No appointments scheduled. Start booking appointments for your patients."
+            totalCount={appointments.length}
+          />
         </TabsContent>
 
         {/* Calendar View Tab */}
