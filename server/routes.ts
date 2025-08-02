@@ -328,17 +328,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     customerId: z.string().min(1),
     storeId: z.string().min(1),
     dueDate: z.string().min(1),
-    taxRate: z.number().min(0).max(100),
-    discountAmount: z.number().min(0),
+    taxRate: z.union([z.number(), z.string()]).transform(val => 
+      typeof val === 'string' ? parseFloat(val) : val
+    ),
+    discountAmount: z.union([z.number(), z.string()]).transform(val => 
+      typeof val === 'string' ? parseFloat(val) : val
+    ),
+    paymentMethod: z.string().optional(),
     notes: z.string().optional(),
     items: z.array(z.object({
       productId: z.string(),
       productName: z.string(),
       description: z.string().optional(),
       quantity: z.number().int().positive(),
-      unitPrice: z.number().min(0),
-      discount: z.number().min(0).max(100),
-      total: z.number().min(0),
+      unitPrice: z.union([z.number(), z.string()]).transform(val => 
+        typeof val === 'string' ? parseFloat(val) : val
+      ),
+      discount: z.union([z.number(), z.string()]).transform(val => 
+        typeof val === 'string' ? parseFloat(val) : val
+      ),
+      total: z.union([z.number(), z.string()]).transform(val => 
+        typeof val === 'string' ? parseFloat(val) : val
+      ),
     })),
   });
 
@@ -347,10 +358,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createInvoiceSchema.parse(req.body);
       const { items, ...invoiceData } = validatedData;
       
-      // Calculate totals properly
-      const subtotal = items.reduce((sum, item) => sum + (typeof item.total === 'number' ? item.total : parseFloat(item.total || "0")), 0);
-      const taxAmount = subtotal * ((typeof invoiceData.taxRate === 'number' ? invoiceData.taxRate : parseFloat(invoiceData.taxRate?.toString() || "0")) / 100);
-      const discountAmount = typeof invoiceData.discountAmount === 'number' ? invoiceData.discountAmount : parseFloat(invoiceData.discountAmount?.toString() || "0");
+      // Calculate totals properly - all values are now numbers thanks to Zod transforms
+      const subtotal = items.reduce((sum, item) => sum + item.total, 0);
+      const taxAmount = subtotal * (invoiceData.taxRate / 100);
+      const discountAmount = invoiceData.discountAmount;
       const total = subtotal + taxAmount - discountAmount;
       
       // Add invoice specific fields with proper calculations
@@ -371,6 +382,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       console.log(`🧾 CREATING INVOICE: ${invoiceWithDefaults.invoiceNumber} - Subtotal: $${subtotal}, Tax: $${taxAmount}, Total: $${total}`);
+      console.log(`DEBUG INVOICE DATA:`, JSON.stringify(invoiceWithDefaults, null, 2));
       
       const invoice = await storage.createInvoice(invoiceWithDefaults, items);
       res.status(201).json(invoice);
