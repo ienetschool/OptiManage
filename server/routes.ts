@@ -306,11 +306,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             appointmentId: appointment.id,
             storeId: validatedData.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
             invoiceDate: new Date(),
-            dueDate: dueDate.toISOString().split('T')[0],
-            subtotal: fee.toString(),
-            taxAmount: (fee * 0.08).toString(),
-            discountAmount: "0",
-            total: (fee * 1.08).toString(),
+            dueDate: dueDate.toISOString().split('T')[0], // string format for date field
+            subtotal: fee.toString(), // decimal as string
+            taxAmount: (fee * 0.08).toString(), // decimal as string
+            discountAmount: "0.00", // decimal as string with proper format
+            total: (fee * 1.08).toString(), // decimal as string
             paymentStatus: 'paid',
             paymentMethod: validatedData.paymentMethod || 'cash',
             paymentDate: new Date(),
