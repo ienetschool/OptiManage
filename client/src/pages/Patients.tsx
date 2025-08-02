@@ -1935,7 +1935,7 @@ export default function Patients() {
             pageSize={10}
             showPagination={true}
             emptyMessage="No patients found. Start by registering your first patient."
-            totalCount={patients.length}
+            totalCount={(patients as Patient[]).length}
           />
         </TabsContent>
 
@@ -2536,9 +2536,9 @@ export default function Patients() {
                     // Get all related data for comprehensive multi-page printing
                     const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id);
                     const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id);
-                    const patientInvoices = (invoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                    const patientInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
                     
-                    generateMultiPagePatientPDF(selectedPatient, patientAppointments, patientPrescriptions, patientInvoices);
+                    generateMultiPagePatientPDF(selectedPatient as any, patientAppointments, patientPrescriptions, patientInvoices);
                   }
                 }}
               >
@@ -2553,9 +2553,9 @@ export default function Patients() {
                     // Get all related data for comprehensive multi-page PDF
                     const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id);
                     const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id);
-                    const patientInvoices = (invoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                    const patientInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
                     
-                    generateMultiPagePatientPDF(selectedPatient, patientAppointments, patientPrescriptions, patientInvoices);
+                    generateMultiPagePatientPDF(selectedPatient as any, patientAppointments, patientPrescriptions, patientInvoices);
                   }
                 }}
               >
@@ -3310,9 +3310,9 @@ export default function Patients() {
                     // Generate and share comprehensive multi-page PDF
                     const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id);
                     const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id);
-                    const patientInvoices = (invoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                    const patientInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
                     
-                    generateMultiPagePatientPDF(selectedPatient, patientAppointments, patientPrescriptions, patientInvoices);
+                    generateMultiPagePatientPDF(selectedPatient as any, patientAppointments, patientPrescriptions, patientInvoices);
                     setShareModalOpen(false);
                   }}
                 >
