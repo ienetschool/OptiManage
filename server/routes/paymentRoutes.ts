@@ -241,7 +241,7 @@ export function registerPaymentRoutes(app: Express) {
           success: true,
           message: "Payment processed successfully and invoice generated",
           paymentId: id,
-          invoiceNumber: invoiceData.invoiceNumber
+          invoiceNumber: `INV-APT-${Date.now()}`
         });
 
       } else if (type === 'inv') {
