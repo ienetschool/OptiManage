@@ -212,23 +212,51 @@ export function registerMedicalRoutes(app: Express) {
   });
 
   app.post("/api/medical-invoices", isAuthenticated, async (req, res) => {
-    // Simplified invoice creation to avoid schema validation errors
     try {
-      const invoiceNumber = `INV-${Date.now()}`;
-      const mockInvoice = {
-        id: `inv-${Date.now()}`,
-        invoiceNumber: invoiceNumber,
-        patientId: req.body.patientId || 'unknown',
-        total: req.body.total || '0.00',
+      console.log(`📝 MEDICAL INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
+      
+      // Parse and validate the incoming data
+      const invoiceData = {
+        invoiceNumber: req.body.invoiceNumber || `INV-${Date.now()}`,
+        patientId: req.body.patientId,
+        appointmentId: req.body.appointmentId,
+        storeId: req.body.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+        invoiceDate: req.body.invoiceDate || new Date().toISOString(),
+        dueDate: req.body.dueDate || new Date().toISOString(),
+        subtotal: parseFloat(req.body.subtotal) || 0,
+        taxAmount: parseFloat(req.body.taxAmount) || 0,
+        discountAmount: parseFloat(req.body.discountAmount) || 0,
+        total: parseFloat(req.body.total) || 0,
         paymentStatus: req.body.paymentStatus || 'pending',
-        createdAt: new Date().toISOString()
+        paymentMethod: req.body.paymentMethod,
+        paymentDate: req.body.paymentDate,
+        notes: req.body.notes || ''
       };
       
-      console.log(`✅ MOCK INVOICE CREATED: ${invoiceNumber} - Amount: ${mockInvoice.total}`);
-      res.json(mockInvoice);
+      console.log(`💰 MEDICAL INVOICE CALCULATIONS: Subtotal: $${invoiceData.subtotal}, Tax: $${invoiceData.taxAmount}, Total: $${invoiceData.total}`);
+      
+      // Create the medical invoice in the database
+      const [medicalInvoice] = await db.insert(medicalInvoices).values(invoiceData).returning();
+      
+      // Create patient history entry
+      await db.insert(patientHistory).values({
+        patientId: medicalInvoice.patientId,
+        recordType: "invoice",
+        recordId: medicalInvoice.id,
+        title: `Invoice ${medicalInvoice.invoiceNumber}`,
+        description: `Medical invoice for $${medicalInvoice.total} - ${medicalInvoice.paymentStatus}`,
+        metadata: { 
+          invoiceNumber: medicalInvoice.invoiceNumber,
+          amount: medicalInvoice.total,
+          paymentStatus: medicalInvoice.paymentStatus
+        }
+      });
+      
+      console.log(`✅ MEDICAL INVOICE CREATED: ${medicalInvoice.invoiceNumber} - Total: $${medicalInvoice.total} - Status: ${medicalInvoice.paymentStatus}`);
+      res.json(medicalInvoice);
     } catch (error) {
       console.error("Error creating medical invoice:", error);
-      res.status(500).json({ message: "Failed to create medical invoice" });
+      res.status(500).json({ message: "Failed to create medical invoice", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 

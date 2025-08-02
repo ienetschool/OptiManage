@@ -46,7 +46,8 @@ import {
   AlertTriangle,
   TrendingUp,
   Pill,
-  Eye as EyeIcon
+  Eye as EyeIcon,
+  RefreshCw
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -149,8 +150,8 @@ export default function Patients() {
     queryKey: ["/api/patients"],
   });
 
-  // Fetch appointments
-  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery({
+  // Fetch appointments - refresh when patient details dialog opens
+  const { data: appointments = [], isLoading: appointmentsLoading, refetch: refetchAppointments } = useQuery({
     queryKey: ["/api/appointments"],
   });
 
@@ -159,13 +160,13 @@ export default function Patients() {
     queryKey: ["/api/staff"],
   });
 
-  // Fetch prescriptions
-  const { data: prescriptions = [] } = useQuery({
+  // Fetch prescriptions - refresh when patient details dialog opens
+  const { data: prescriptions = [], refetch: refetchPrescriptions } = useQuery({
     queryKey: ["/api/prescriptions"],
   });
 
-  // Fetch medical invoices
-  const { data: medicalInvoices = [] } = useQuery({
+  // Fetch medical invoices - refresh when patient details dialog opens
+  const { data: medicalInvoices = [], refetch: refetchMedicalInvoices } = useQuery({
     queryKey: ["/api/medical-invoices"],
   });
 
@@ -208,6 +209,11 @@ export default function Patients() {
             ? appointmentData.id 
             : `APPT-${Date.now()}`;
             
+          // Proper calculation with number handling
+          const feeAmount = parseFloat(appointmentForm.appointmentFee) || 0;
+          const calculatedTax = feeAmount * 0.08; // 8% tax
+          const calculatedTotal = feeAmount + calculatedTax;
+          
           const invoiceData = {
             invoiceNumber: `INV-${Date.now()}`,
             patientId: appointmentForm.patientId,
@@ -215,10 +221,10 @@ export default function Patients() {
             storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
             invoiceDate: new Date().toISOString(),
             dueDate: new Date().toISOString(),
-            subtotal: parseFloat(appointmentForm.appointmentFee),
-            taxAmount: parseFloat(appointmentForm.appointmentFee) * 0.08, // 8% tax
+            subtotal: feeAmount,
+            taxAmount: calculatedTax,
             discountAmount: 0,
-            total: parseFloat(appointmentForm.appointmentFee) * 1.08,
+            total: calculatedTotal,
             paymentStatus: 'paid',
             paymentMethod: appointmentForm.paymentMethod,
             paymentDate: new Date().toISOString(),
@@ -1894,6 +1900,10 @@ export default function Patients() {
                             <DropdownMenuContent align="end" className="w-56">
                               <DropdownMenuItem onClick={() => {
                                 setSelectedPatient(patient);
+                                // Refresh all data when opening patient details
+                                refetchAppointments();
+                                refetchPrescriptions();
+                                refetchMedicalInvoices();
                                 setViewPatientOpen(true);
                               }}>
                                 <Eye className="mr-2 h-4 w-4" />
@@ -2776,9 +2786,21 @@ export default function Patients() {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Complete Appointment History</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length} Total Appointments
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length} Total Appointments
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        refetchAppointments();
+                        toast({ title: "Refreshed", description: "Appointment data updated" });
+                      }}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
                 {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length > 0 ? (
                   <div className="space-y-4">
@@ -3081,9 +3103,21 @@ export default function Patients() {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Billing & Invoice History</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length} Invoices
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length} Invoices
+                    </Badge>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        refetchMedicalInvoices();
+                        toast({ title: "Refreshed", description: "Billing data updated" });
+                      }}
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Billing Summary Cards */}
