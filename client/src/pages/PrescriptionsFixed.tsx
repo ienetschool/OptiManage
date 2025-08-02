@@ -1160,15 +1160,56 @@ OptiStore Pro Team`;
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Create New Prescription</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Create New Prescription
+              <Badge variant="outline" className="text-xs bg-red-50 text-red-700">
+                Fill all red (*) fields to submit
+              </Badge>
+            </DialogTitle>
           </DialogHeader>
+          
+          {/* Progress Indicator */}
+          <div className="bg-slate-100 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Required Fields Progress:</span>
+              <span className="text-blue-600 font-medium">
+                {(() => {
+                  const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                  const filledCount = requiredFields.filter(field => createForm.watch(field)).length;
+                  return `${filledCount}/${requiredFields.length} completed`;
+                })()}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{
+                  width: `${(() => {
+                    const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                    const filledCount = requiredFields.filter(field => createForm.watch(field)).length;
+                    return (filledCount / requiredFields.length) * 100;
+                  })()}%`
+                }}
+              ></div>
+            </div>
+          </div>
           
           <Form {...createForm}>
             <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
               <Tabs defaultValue="patient-info" className="w-full">
                 <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="patient-info">Patient Info</TabsTrigger>
-                  <TabsTrigger value="vision">Vision Prescription</TabsTrigger>
+                  <TabsTrigger value="patient-info" className="relative">
+                    Patient Info
+                    {!createForm.watch('patientId') && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="vision" className="relative">
+                    Vision Prescription
+                    {!createForm.watch('prescriptionType') && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    )}
+                  </TabsTrigger>
                   <TabsTrigger value="clinical">Clinical Details</TabsTrigger>
                   <TabsTrigger value="additional">Additional Info</TabsTrigger>
                 </TabsList>
@@ -1182,10 +1223,14 @@ OptiStore Pro Team`;
                         name="patientId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Select Patient</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              Select Patient 
+                              <span className="text-red-500 font-bold">*</span>
+                              <span className="text-xs text-gray-500">(Required)</span>
+                            </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
+                                <SelectTrigger className={`${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
                                   <SelectValue placeholder="Choose patient..." />
                                 </SelectTrigger>
                               </FormControl>
@@ -1207,23 +1252,27 @@ OptiStore Pro Team`;
                         name="prescriptionType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Service Type</FormLabel>
+                            <FormLabel className="flex items-center gap-1">
+                              Service Type 
+                              <span className="text-red-500 font-bold">*</span>
+                              <span className="text-xs text-gray-500">(Required)</span>
+                            </FormLabel>
                             <Select onValueChange={(value) => {
                               field.onChange(value);
                               // Reset form sections when service type changes
                               handleServiceTypeChange(value);
                             }} value={field.value}>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue />
+                                <SelectTrigger className={`${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                                  <SelectValue placeholder="Select service type..." />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                                <SelectItem value="contact_lens">Contact Lens Fitting</SelectItem>
-                                <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                                <SelectItem value="fitting_followup">Follow-up Visit</SelectItem>
-                                <SelectItem value="visit_consultation">General Consultation</SelectItem>
+                                <SelectItem value="eye_examination">👁️ Eye Examination</SelectItem>
+                                <SelectItem value="contact_lens">📱 Contact Lens Fitting</SelectItem>
+                                <SelectItem value="fitting_glasses">👓 Glasses Fitting</SelectItem>
+                                <SelectItem value="fitting_followup">🔄 Follow-up Visit</SelectItem>
+                                <SelectItem value="visit_consultation">💬 General Consultation</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1237,17 +1286,21 @@ OptiStore Pro Team`;
                       name="doctorId"
                       render={({ field }) => (
                         <FormItem className="mt-4">
-                          <FormLabel>Prescribing Doctor</FormLabel>
+                          <FormLabel className="flex items-center gap-1">
+                            Prescribing Doctor 
+                            <span className="text-red-500 font-bold">*</span>
+                            <span className="text-xs text-gray-500">(Required)</span>
+                          </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select doctor..." />
+                              <SelectTrigger className={`${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                                <SelectValue placeholder="Select prescribing doctor..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {staff.map((doctor) => (
                                 <SelectItem key={doctor.id} value={doctor.id}>
-                                  Dr. {doctor.firstName} {doctor.lastName}
+                                  👨‍⚕️ Dr. {doctor.firstName} {doctor.lastName}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -1704,21 +1757,70 @@ OptiStore Pro Team`;
                 </TabsContent>
               </Tabs>
               
-              <div className="flex justify-end space-x-3 pt-6 border-t">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCreateOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={createPrescriptionMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {createPrescriptionMutation.isPending ? "Creating..." : "Create Prescription"}
-                </Button>
+              <div className="flex justify-between items-center pt-6 border-t">
+                {/* Validation Status */}
+                <div className="flex items-center gap-2 text-sm">
+                  {(() => {
+                    const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                    const filledCount = requiredFields.filter(field => createForm.watch(field)).length;
+                    const allFilled = filledCount === requiredFields.length;
+                    
+                    return allFilled ? (
+                      <div className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Ready to submit</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1 text-orange-600">
+                        <Clock className="h-4 w-4" />
+                        <span>{3 - filledCount} required field{3 - filledCount !== 1 ? 's' : ''} remaining</span>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="flex space-x-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCreateOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={createPrescriptionMutation.isPending || (() => {
+                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                      return !requiredFields.every(field => createForm.watch(field));
+                    })()}
+                    className={`${(() => {
+                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                      const allFilled = requiredFields.every(field => createForm.watch(field));
+                      return allFilled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
+                    })()} transition-colors duration-200`}
+                  >
+                    {createPrescriptionMutation.isPending ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Creating...
+                      </div>
+                    ) : (() => {
+                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                      const allFilled = requiredFields.every(field => createForm.watch(field));
+                      return allFilled ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4" />
+                          Create Prescription
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Complete Required Fields
+                        </div>
+                      );
+                    })()}
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
