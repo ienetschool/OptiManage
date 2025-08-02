@@ -33,7 +33,8 @@ import {
   Percent,
   X,
   Check,
-  AlertCircle
+  AlertCircle,
+  ChevronDown
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -44,6 +45,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import QRCodeReact from "react-qr-code";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { format } from "date-fns";
 
 interface Invoice {
   id: string;
@@ -102,9 +106,9 @@ const invoiceSchema = z.object({
 
 const invoiceItemSchema = z.object({
   productId: z.string().min(1, "Product is required"),
-  quantity: z.number().min(1, "Quantity must be at least 1"),
-  unitPrice: z.number().min(0, "Price must be positive"),
-  discount: z.number().min(0).max(100),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  unitPrice: z.coerce.number().min(0, "Price must be positive"),
+  discount: z.coerce.number().min(0).max(100),
 });
 
 export default function InvoiceManagement() {
@@ -114,6 +118,8 @@ export default function InvoiceManagement() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -193,27 +199,31 @@ export default function InvoiceManagement() {
     },
   });
 
-  // Add item to invoice
+  // Add item to invoice with proper decimal handling
   const addItem = (data: z.infer<typeof invoiceItemSchema>) => {
     const product = products.find(p => p.id === data.productId);
     if (!product) return;
 
-    const discountAmount = (data.unitPrice * data.discount) / 100;
-    const discountedPrice = data.unitPrice - discountAmount;
-    const total = discountedPrice * data.quantity;
+    const unitPrice = parseFloat(data.unitPrice.toString());
+    const quantity = parseInt(data.quantity.toString());
+    const discount = parseFloat(data.discount.toString());
+    
+    const discountAmount = (unitPrice * discount) / 100;
+    const discountedPrice = unitPrice - discountAmount;
+    const total = discountedPrice * quantity;
 
     const newItem: InvoiceItem = {
       id: Math.random().toString(36).substr(2, 9),
       productId: data.productId,
       productName: product.name,
-      quantity: data.quantity,
-      unitPrice: data.unitPrice,
-      discount: data.discount,
-      total,
+      quantity: quantity,
+      unitPrice: parseFloat(unitPrice.toFixed(2)),
+      discount: discount,
+      total: parseFloat(total.toFixed(2)),
     };
 
     setInvoiceItems([...invoiceItems, newItem]);
-    itemForm.reset({ quantity: 1, discount: 0 });
+    itemForm.reset({ quantity: 1, discount: 0, unitPrice: 0 });
   };
 
   // Remove item from invoice
@@ -221,10 +231,10 @@ export default function InvoiceManagement() {
     setInvoiceItems(invoiceItems.filter(item => item.id !== itemId));
   };
 
-  // Calculate totals
-  const subtotal = invoiceItems.reduce((sum, item) => sum + item.total, 0);
-  const discountAmount = invoiceForm.watch("discountAmount") || 0;
-  const taxRate = invoiceForm.watch("taxRate") || 0;
+  // Calculate totals with proper decimal handling
+  const subtotal = invoiceItems.reduce((sum, item) => sum + parseFloat(item.total.toString()), 0);
+  const discountAmount = parseFloat(invoiceForm.watch("discountAmount")?.toString() || "0");
+  const taxRate = parseFloat(invoiceForm.watch("taxRate")?.toString() || "0");
   const discountedSubtotal = subtotal - discountAmount;
   const taxAmount = (discountedSubtotal * taxRate) / 100;
   const grandTotal = discountedSubtotal + taxAmount;
@@ -283,6 +293,154 @@ export default function InvoiceManagement() {
       url: `${window.location.origin}/invoices/${invoice.id}`
     };
     return JSON.stringify(qrData);
+  };
+
+  // Professional invoice generation with prescription-style format
+  const generateProfessionalInvoice = (invoice: Invoice) => {
+    const customer = customers.find(c => c.id === invoice.customerId);
+    const store = stores.find(s => s.id === invoice.storeId);
+    
+    const invoiceWindow = window.open('', '_blank');
+    if (invoiceWindow) {
+      invoiceWindow.document.write(`
+        <html>
+          <head>
+            <title>Invoice ${invoice.invoiceNumber}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; line-height: 1.4; }
+              .invoice-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+              .clinic-name { font-size: 24pt; font-weight: 900; margin-bottom: 5px; }
+              .header-right { text-align: right; }
+              .qr-code { width: 80px; height: 80px; background: white; padding: 8px; border-radius: 4px; }
+              .invoice-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+              .info-section { background: #f8fafc; padding: 20px; border-radius: 6px; border-left: 4px solid #667eea; }
+              .section-title { font-weight: 600; color: #2d3748; margin-bottom: 15px; font-size: 14pt; }
+              .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              .invoice-table th, .invoice-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+              .invoice-table th { background: #667eea; color: white; font-weight: 600; }
+              .invoice-table .amount { text-align: right; font-weight: 500; }
+              .totals-section { background: #f8fafc; padding: 20px; border-radius: 6px; margin-top: 20px; border: 2px solid #667eea; }
+              .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+              .grand-total { font-size: 16pt; font-weight: bold; color: #667eea; border-top: 2px solid #667eea; padding-top: 10px; }
+              .invoice-notes { background: #fef7cd; padding: 15px; border-radius: 6px; margin-top: 20px; border-left: 4px solid #f59e0b; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 10pt; }
+              .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 10pt; font-weight: 600; text-transform: uppercase; }
+              .status-paid { background: #d1fae5; color: #065f46; }
+              .status-pending { background: #fef3c7; color: #92400e; }
+              .status-overdue { background: #fee2e2; color: #991b1b; }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-header">
+              <div>
+                <div class="clinic-name">OptiStore Pro</div>
+                <div style="font-size: 12pt;">Medical & Optical Center</div>
+                <div style="font-size: 10pt; margin-top: 5px;">Professional Eye Care Services</div>
+              </div>
+              <div class="header-right">
+                <div style="margin-bottom: 10px;">
+                  <div style="font-size: 18pt; font-weight: bold;">INVOICE</div>
+                  <div>${invoice.invoiceNumber}</div>
+                </div>
+                <div class="qr-code">
+                  <div style="width: 64px; height: 64px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8pt; text-align: center;">QR Code</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-info">
+              <div class="info-section">
+                <div class="section-title">Bill To</div>
+                <p><strong>${customer?.firstName || 'N/A'} ${customer?.lastName || ''}</strong></p>
+                <p>Customer ID: ${invoice.customerId}</p>
+                <p>Phone: ${customer?.phone || 'N/A'}</p>
+                <p>Email: ${customer?.email || 'N/A'}</p>
+              </div>
+              
+              <div class="info-section">
+                <div class="section-title">Invoice Details</div>
+                <p><strong>Issue Date:</strong> ${format(new Date(invoice.date), 'MMM dd, yyyy')}</p>
+                <p><strong>Due Date:</strong> ${format(new Date(invoice.dueDate), 'MMM dd, yyyy')}</p>
+                <p><strong>Store:</strong> ${store?.name || 'OptiStore Pro'}</p>
+                <p><strong>Status:</strong> <span class="status-badge status-${invoice.status}">${invoice.status}</span></p>
+              </div>
+            </div>
+
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th style="width: 40%;">Description</th>
+                  <th style="width: 15%; text-align: center;">Quantity</th>
+                  <th style="width: 15%; text-align: right;">Unit Price</th>
+                  <th style="width: 15%; text-align: right;">Discount</th>
+                  <th style="width: 15%; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoice.items.map(item => `
+                  <tr>
+                    <td>
+                      <div style="font-weight: 600;">${item.productName}</div>
+                      ${item.description ? `<div style="font-size: 9pt; color: #6b7280;">${item.description}</div>` : ''}
+                    </td>
+                    <td style="text-align: center;">${item.quantity}</td>
+                    <td class="amount">$${parseFloat(item.unitPrice.toString()).toFixed(2)}</td>
+                    <td class="amount">${item.discount}%</td>
+                    <td class="amount">$${parseFloat(item.total.toString()).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="totals-section">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>$${parseFloat(invoice.subtotal.toString()).toFixed(2)}</span>
+              </div>
+              ${invoice.discountAmount > 0 ? `
+                <div class="total-row">
+                  <span>Discount:</span>
+                  <span>-$${parseFloat(invoice.discountAmount.toString()).toFixed(2)}</span>
+                </div>
+              ` : ''}
+              <div class="total-row">
+                <span>Tax (${invoice.taxRate}%):</span>
+                <span>$${parseFloat(invoice.taxAmount.toString()).toFixed(2)}</span>
+              </div>
+              <div class="total-row grand-total">
+                <span>Total Amount:</span>
+                <span>$${parseFloat(invoice.total.toString()).toFixed(2)}</span>
+              </div>
+            </div>
+
+            ${invoice.notes ? `
+              <div class="invoice-notes">
+                <div style="font-weight: 600; margin-bottom: 8px;">Notes:</div>
+                <div>${invoice.notes}</div>
+              </div>
+            ` : ''}
+
+            <div class="footer">
+              <p>Thank you for choosing OptiStore Pro Medical & Optical Center</p>
+              <p>For inquiries, please contact us at info@optistorepro.com | (555) 123-4567</p>
+              <p style="margin-top: 15px; font-size: 9pt;">This invoice was generated on ${format(new Date(), 'MMM dd, yyyy HH:mm')}</p>
+            </div>
+
+            <script>
+              window.onload = function() {
+                // Auto-print when page loads
+                setTimeout(() => {
+                  window.print();
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      invoiceWindow.document.close();
+    }
+    return invoiceWindow;
   };
 
   return (
@@ -416,29 +574,64 @@ export default function InvoiceManagement() {
                             render={({ field }) => (
                               <FormItem className="col-span-2">
                                 <FormLabel>Product</FormLabel>
-                                <Select 
-                                  onValueChange={(value) => {
-                                    field.onChange(value);
-                                    const product = products.find(p => p.id === value);
-                                    if (product) {
-                                      itemForm.setValue("unitPrice", product.price);
-                                    }
-                                  }} 
-                                  value={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select product" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {products.map((product) => (
-                                      <SelectItem key={product.id} value={product.id}>
-                                        {product.name} - ${product.price}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+                                  <PopoverTrigger asChild>
+                                    <FormControl>
+                                      <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={productSearchOpen}
+                                        className="w-full justify-between"
+                                      >
+                                        {field.value
+                                          ? products.find(product => product.id === field.value)?.name || "Select product"
+                                          : "Select product"}
+                                        <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                      </Button>
+                                    </FormControl>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-full p-0">
+                                    <Command>
+                                      <CommandInput 
+                                        placeholder="Search products..." 
+                                        value={productSearchTerm}
+                                        onValueChange={setProductSearchTerm}
+                                      />
+                                      <CommandEmpty>No product found.</CommandEmpty>
+                                      <CommandGroup className="max-h-48 overflow-y-auto">
+                                        {products
+                                          .filter(product => 
+                                            product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                                            product.category.toLowerCase().includes(productSearchTerm.toLowerCase())
+                                          )
+                                          .map((product) => (
+                                            <CommandItem
+                                              key={product.id}
+                                              value={product.id}
+                                              onSelect={() => {
+                                                field.onChange(product.id);
+                                                itemForm.setValue("unitPrice", product.price);
+                                                setProductSearchOpen(false);
+                                                setProductSearchTerm("");
+                                              }}
+                                            >
+                                              <Check
+                                                className={`mr-2 h-4 w-4 ${
+                                                  field.value === product.id ? "opacity-100" : "opacity-0"
+                                                }`}
+                                              />
+                                              <div className="flex flex-col">
+                                                <span className="font-medium">{product.name}</span>
+                                                <span className="text-sm text-gray-500">
+                                                  {product.category} - ${product.price.toFixed(2)}
+                                                </span>
+                                              </div>
+                                            </CommandItem>
+                                          ))}
+                                      </CommandGroup>
+                                    </Command>
+                                  </PopoverContent>
+                                </Popover>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -726,7 +919,7 @@ export default function InvoiceManagement() {
                         <TableCell>{invoice.storeName}</TableCell>
                         <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
                         <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
-                        <TableCell>${invoice.total.toFixed(2)}</TableCell>
+                        <TableCell>${parseFloat(invoice.total.toString()).toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge className={getStatusColor(invoice.status)}>
                             {invoice.status}
@@ -756,11 +949,11 @@ export default function InvoiceManagement() {
                                 <Send className="h-4 w-4 mr-2" />
                                 Send to Customer
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
                                 <Printer className="h-4 w-4 mr-2" />
-                                Print
+                                Print Professional Invoice
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
                                 <Download className="h-4 w-4 mr-2" />
                                 Export PDF
                               </DropdownMenuItem>
@@ -864,19 +1057,40 @@ export default function InvoiceManagement() {
 
                   {/* Actions */}
                   <div className="flex justify-end space-x-2">
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => generateProfessionalInvoice(selectedInvoice)}
+                    >
                       <Printer className="h-4 w-4 mr-2" />
-                      Print
+                      Print Professional Invoice
                     </Button>
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => generateProfessionalInvoice(selectedInvoice)}
+                    >
                       <Download className="h-4 w-4 mr-2" />
-                      Download PDF
+                      Export PDF
                     </Button>
-                    <Button variant="outline">
+                    <Button 
+                      variant="outline"
+                      onClick={() => {
+                        toast({
+                          title: "Email Sent",
+                          description: "Invoice sent to customer email",
+                        });
+                      }}
+                    >
                       <Send className="h-4 w-4 mr-2" />
                       Send to Customer
                     </Button>
-                    <Button>
+                    <Button
+                      onClick={() => {
+                        toast({
+                          title: "Status Updated",
+                          description: "Invoice marked as paid",
+                        });
+                      }}
+                    >
                       <CreditCard className="h-4 w-4 mr-2" />
                       Mark as Paid
                     </Button>

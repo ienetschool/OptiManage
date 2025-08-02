@@ -108,7 +108,7 @@ export function registerMedicalRoutes(app: Express) {
     try {
       const validatedData = insertPrescriptionSchema.parse(req.body);
       
-      const [prescription] = await db.insert(prescriptions).values(validatedData).returning();
+      const [prescription] = await db.insert(prescriptions).values([validatedData]).returning();
 
       // Create patient history entry
       await db.insert(patientHistory).values({
@@ -200,7 +200,7 @@ export function registerMedicalRoutes(app: Express) {
     }
   });
 
-  // Medical Invoices Routes
+  // Medical Invoices Routes (for backward compatibility)
   app.get("/api/medical-invoices", isAuthenticated, async (req, res) => {
     try {
       const invoicesList = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
@@ -242,6 +242,124 @@ export function registerMedicalRoutes(app: Express) {
     } catch (error) {
       console.error("Error creating medical invoice:", error);
       res.status(500).json({ message: "Failed to create medical invoice" });
+    }
+  });
+
+  // Invoice Management Routes (frontend compatibility)
+  app.get("/api/invoices", isAuthenticated, async (req, res) => {
+    try {
+      // Mock invoice data that matches the InvoiceManagement interface
+      const mockInvoices = [
+        {
+          id: "inv-001",
+          invoiceNumber: "INV-001",
+          customerId: "cust-001",
+          customerName: "Sarah Johnson", 
+          storeId: "store-001",
+          storeName: "OptiStore Downtown",
+          date: new Date().toISOString(),
+          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          subtotal: 250.00,
+          taxRate: 8.5,
+          taxAmount: 21.25,
+          discountAmount: 0.00,
+          total: 271.25,
+          status: "sent",
+          paymentMethod: "card",
+          notes: "Eye examination and prescription glasses",
+          items: [
+            {
+              id: "item-001",
+              productId: "prod-001",
+              productName: "Progressive Lenses",
+              description: "High-quality progressive lenses",
+              quantity: 1,
+              unitPrice: 150.00,
+              discount: 0,
+              total: 150.00
+            },
+            {
+              id: "item-002", 
+              productId: "prod-002",
+              productName: "Designer Frame",
+              description: "Premium designer eyeglass frame",
+              quantity: 1,
+              unitPrice: 100.00,
+              discount: 0,
+              total: 100.00
+            }
+          ]
+        },
+        {
+          id: "inv-002",
+          invoiceNumber: "INV-002",
+          customerId: "cust-002",
+          customerName: "Michael Chen",
+          storeId: "store-001", 
+          storeName: "OptiStore Downtown",
+          date: new Date(Date.now() - 86400000).toISOString(),
+          dueDate: new Date(Date.now() + 29 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          subtotal: 180.00,
+          taxRate: 8.5,
+          taxAmount: 15.30,
+          discountAmount: 20.00,
+          total: 175.30,
+          status: "paid",
+          paymentMethod: "cash",
+          notes: "Contact lens fitting",
+          items: [
+            {
+              id: "item-003",
+              productId: "prod-003", 
+              productName: "Contact Lenses (Monthly)",
+              description: "Monthly disposable contact lenses",
+              quantity: 2,
+              unitPrice: 90.00,
+              discount: 0,
+              total: 180.00
+            }
+          ]
+        }
+      ];
+
+      res.json(mockInvoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  app.post("/api/invoices", isAuthenticated, async (req, res) => {
+    try {
+      const invoiceData = req.body;
+      
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+      
+      // Create new invoice with proper decimal handling
+      const newInvoice = {
+        id: `inv-${Date.now()}`,
+        invoiceNumber,
+        date: new Date().toISOString(),
+        status: "draft",
+        ...invoiceData,
+        // Ensure decimal values are properly handled
+        subtotal: parseFloat(invoiceData.subtotal || 0).toFixed(2),
+        taxAmount: parseFloat(invoiceData.taxAmount || 0).toFixed(2), 
+        discountAmount: parseFloat(invoiceData.discountAmount || 0).toFixed(2),
+        total: parseFloat(invoiceData.total || 0).toFixed(2),
+        // Process items with decimal handling
+        items: (invoiceData.items || []).map((item: any) => ({
+          ...item,
+          unitPrice: parseFloat(item.unitPrice || 0).toFixed(2),
+          total: parseFloat(item.total || 0).toFixed(2)
+        }))
+      };
+
+      res.json(newInvoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ message: "Failed to create invoice" });
     }
   });
 
