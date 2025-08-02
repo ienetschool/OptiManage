@@ -125,7 +125,7 @@ export default function Appointments() {
       title: 'Fee',
       sortable: true,
       render: (value) => (
-        <div className="text-sm font-medium">${value?.toFixed(2) || '0.00'}</div>
+        <div className="text-sm font-medium">${value ? Number(value).toFixed(2) : '0.00'}</div>
       )
     },
     {
@@ -162,11 +162,16 @@ export default function Appointments() {
 
   const { data: doctors = [] } = useQuery<any[]>({
     queryKey: ["/api/staff"],
-    select: (data) => data.filter(staff => 
-      staff.role === 'doctor' || 
-      staff.position?.toLowerCase() === 'doctor' || 
-      staff.position?.toLowerCase() === 'optometrist'
-    ),
+    select: (data) => {
+      console.log('Raw staff data:', data);
+      const filtered = data.filter(staff => 
+        staff.role === 'doctor' || 
+        staff.position?.toLowerCase() === 'doctor' || 
+        staff.position?.toLowerCase() === 'optometrist'
+      );
+      console.log('Filtered doctors:', filtered);
+      return filtered;
+    },
   });
 
   // Available services for appointments
