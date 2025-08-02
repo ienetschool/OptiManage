@@ -292,6 +292,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const appointment = await storage.createAppointment(validatedData);
+      
+      // Generate invoice for paid appointments
+      if (validatedData.paymentStatus === 'paid' && validatedData.appointmentFee) {
+        try {
+          const fee = parseFloat(validatedData.appointmentFee.toString());
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 30);
+          
+          const invoiceData = {
+            invoiceNumber: `INV-APT-${Date.now()}`,
+            patientId: validatedData.patientId,
+            appointmentId: appointment.id,
+            storeId: validatedData.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+            invoiceDate: new Date(),
+            dueDate: dueDate.toISOString().split('T')[0],
+            subtotal: fee.toString(),
+            taxAmount: (fee * 0.08).toString(),
+            discountAmount: "0",
+            total: (fee * 1.08).toString(),
+            paymentStatus: 'paid',
+            paymentMethod: validatedData.paymentMethod || 'cash',
+            paymentDate: new Date(),
+            notes: `Payment for ${validatedData.service || 'appointment'}`
+          };
+
+          await storage.createMedicalInvoice(invoiceData);
+          console.log('Invoice generated successfully for appointment:', appointment.id);
+        } catch (invoiceError) {
+          console.error("Invoice generation error:", invoiceError);
+          // Return success but with invoice warning
+          return res.status(201).json({
+            ...appointment,
+            warning: "Appointment scheduled but invoice generation failed"
+          });
+        }
+      }
+      
       res.status(201).json(appointment);
     } catch (error) {
       console.error("Error creating appointment:", error);

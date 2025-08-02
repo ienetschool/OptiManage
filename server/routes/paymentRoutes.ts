@@ -212,29 +212,33 @@ export function registerPaymentRoutes(app: Express) {
         // Generate invoice for the appointment if fee exists
         if (appointment.appointmentFee) {
           const fee = parseFloat(appointment.appointmentFee.toString());
+          const dueDate = new Date();
+          dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
+          
           const invoiceData = {
             invoiceNumber: `INV-APT-${Date.now()}`,
             patientId: appointment.patientId,
             appointmentId: sourceId,
             storeId: appointment.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
-            invoiceDate: new Date().toISOString(),
-            dueDate: new Date().toISOString(),
-            subtotal: fee,
-            taxAmount: fee * 0.08,
-            discountAmount: 0,
-            total: fee * 1.08,
+            invoiceDate: new Date(),
+            dueDate: dueDate.toISOString().split('T')[0], // Date format for due date
+            subtotal: fee.toString(),
+            taxAmount: (fee * 0.08).toString(),
+            discountAmount: "0",
+            total: (fee * 1.08).toString(),
             paymentStatus: 'paid',
             paymentMethod: paymentMethod,
-            paymentDate: new Date().toISOString(),
+            paymentDate: new Date(),
             notes: `Payment for ${appointment.service} appointment`
           };
 
-          // Create medical invoice using the medical routes
-          const invoiceResponse = await fetch('http://localhost:5000/api/medical-invoices', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(invoiceData)
-          });
+          try {
+            // Create medical invoice directly via storage
+            await storage.createMedicalInvoice(invoiceData);
+          } catch (invoiceError) {
+            console.error("Invoice generation error:", invoiceError);
+            // Don't fail the payment if invoice generation fails
+          }
         }
 
         res.json({
