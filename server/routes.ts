@@ -355,14 +355,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
+      console.log(`📝 INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
+      
       const validatedData = createInvoiceSchema.parse(req.body);
       const { items, ...invoiceData } = validatedData;
+      
+      console.log(`✅ VALIDATION PASSED - Items:`, items.length);
       
       // Calculate totals properly - all values are now numbers thanks to Zod transforms
       const subtotal = items.reduce((sum, item) => sum + item.total, 0);
       const taxAmount = subtotal * (invoiceData.taxRate / 100);
       const discountAmount = invoiceData.discountAmount;
       const total = subtotal + taxAmount - discountAmount;
+      
+      console.log(`💰 CALCULATIONS: Subtotal: ${subtotal}, Tax: ${taxAmount}, Discount: ${discountAmount}, Total: ${total}`);
       
       // Add invoice specific fields with proper calculations
       const invoiceWithDefaults = {
@@ -381,14 +387,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total: total,
       };
       
-      console.log(`🧾 CREATING INVOICE: ${invoiceWithDefaults.invoiceNumber} - Subtotal: $${subtotal}, Tax: $${taxAmount}, Total: $${total}`);
-      console.log(`DEBUG INVOICE DATA:`, JSON.stringify(invoiceWithDefaults, null, 2));
-      
       const invoice = await storage.createInvoice(invoiceWithDefaults, items);
       res.status(201).json(invoice);
     } catch (error) {
       console.error("Error creating invoice:", error);
-      res.status(400).json({ message: "Failed to create invoice" });
+      if (error instanceof Error) {
+        console.error("Error details:", error.message);
+      }
+      res.status(400).json({ message: "Failed to create invoice", error: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 

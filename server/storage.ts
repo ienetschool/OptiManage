@@ -694,6 +694,21 @@ export class DatabaseStorage implements IStorage {
 
   async createInvoice(invoice: any, items: any[]): Promise<any> {
     try {
+      console.log(`💾 STORAGE: Creating invoice with data:`, JSON.stringify(invoice, null, 2));
+      
+      // Calculate amounts if not provided (backup calculation)
+      let subtotal = invoice.subtotal || 0;
+      let taxAmount = invoice.taxAmount || 0;
+      let total = invoice.total || 0;
+      
+      // If calculations are missing, compute them
+      if (subtotal === 0 && items.length > 0) {
+        subtotal = items.reduce((sum, item) => sum + parseFloat(item.total || "0"), 0);
+        taxAmount = subtotal * (parseFloat(invoice.taxRate || "0") / 100);
+        total = subtotal + taxAmount - parseFloat(invoice.discountAmount || "0");
+        console.log(`🔢 BACKUP CALCULATION: Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${total}`);
+      }
+      
       // Create the new invoice with proper formatting and preserve all calculated values
       const newInvoice = {
         id: `inv-${Date.now()}`,
@@ -704,11 +719,11 @@ export class DatabaseStorage implements IStorage {
         storeName: "OptiStore Pro",
         date: invoice.date || new Date().toISOString(),
         dueDate: invoice.dueDate,
-        subtotal: invoice.subtotal, // Preserve calculated values
-        taxRate: invoice.taxRate,
-        taxAmount: invoice.taxAmount,
-        discountAmount: invoice.discountAmount,
-        total: invoice.total,
+        subtotal: subtotal,
+        taxRate: parseFloat(invoice.taxRate || "0"),
+        taxAmount: taxAmount,
+        discountAmount: parseFloat(invoice.discountAmount || "0"),
+        total: total,
         status: invoice.status || 'draft',
         paymentMethod: invoice.paymentMethod,
         notes: invoice.notes,
