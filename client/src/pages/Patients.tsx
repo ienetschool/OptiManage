@@ -297,10 +297,11 @@ export default function Patients() {
       storeId: "5ff902af-3849-4ea6-945b-4d49175d6638", // Use the existing store from database
       appointmentDate: appointmentDateTime,
       service: appointmentForm.serviceType, // Map serviceType to service
-      appointmentFee: parseFloat(appointmentForm.appointmentFee),
+      appointmentFee: appointmentForm.appointmentFee ? Number(appointmentForm.appointmentFee) : undefined,
       paymentStatus: appointmentForm.paymentStatus,
       paymentMethod: appointmentForm.paymentMethod || null,
       paymentDate: appointmentForm.paymentStatus === 'paid' ? new Date() : null,
+      assignedDoctorId: appointmentForm.doctorId || null,
       notes: appointmentForm.notes || "",
       status: "scheduled"
     };
@@ -391,18 +392,87 @@ export default function Patients() {
               .print-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 20px; border: none; border-radius: 20px; cursor: pointer; font-size: 10pt; font-weight: 600; box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4); transition: all 0.3s ease; }
               .print-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(102, 126, 234, 0.6); }
               @media print { 
-                body { margin: 0; font-size: 9pt; -webkit-print-color-adjust: exact; color-adjust: exact; } 
+                * { -webkit-print-color-adjust: exact; color-adjust: exact; }
+                body { margin: 0; font-size: 9pt; overflow: visible; height: auto; }
                 .print-button { display: none !important; } 
-                .document-container { box-shadow: none; height: auto; min-height: auto; page-break-after: auto; }
-                .header { page-break-after: avoid; page-break-inside: avoid; }
-                .section { page-break-inside: avoid; break-inside: avoid; margin-bottom: 15px; }
-                .section-title { page-break-after: avoid; }
-                .info-grid { page-break-inside: avoid; }
-                .info-card { page-break-inside: avoid; }
-                .content { height: auto; min-height: auto; overflow: visible; }
-                .footer { height: auto; min-height: auto; page-break-inside: avoid; }
-                .patient-header { page-break-after: avoid; }
-                .medical-alert { page-break-inside: avoid; }
+                .document-container { 
+                  box-shadow: none; 
+                  height: auto !important; 
+                  min-height: auto !important; 
+                  max-width: none;
+                  width: 100%;
+                  page-break-after: auto; 
+                  overflow: visible;
+                }
+                .header { 
+                  page-break-after: avoid; 
+                  page-break-inside: avoid; 
+                  break-inside: avoid;
+                  height: auto !important;
+                  min-height: auto !important;
+                }
+                .content { 
+                  height: auto !important; 
+                  min-height: auto !important; 
+                  overflow: visible !important;
+                  page-break-after: auto;
+                }
+                .section { 
+                  page-break-inside: avoid; 
+                  break-inside: avoid; 
+                  margin-bottom: 12px;
+                  orphans: 3;
+                  widows: 3;
+                }
+                .section-title { 
+                  page-break-after: avoid; 
+                  break-after: avoid;
+                  orphans: 3;
+                }
+                .info-grid { 
+                  page-break-inside: auto; 
+                  break-inside: auto;
+                }
+                .info-card { 
+                  page-break-inside: avoid; 
+                  break-inside: avoid; 
+                }
+                .appointment-item,
+                .prescription-item,
+                .assessment-item { 
+                  page-break-inside: avoid; 
+                  break-inside: avoid; 
+                }
+                .footer { 
+                  height: auto !important; 
+                  min-height: auto !important; 
+                  page-break-inside: avoid; 
+                  margin-top: 15px;
+                }
+                .patient-header { 
+                  page-break-after: avoid; 
+                  break-after: avoid;
+                }
+                .medical-alert { 
+                  page-break-inside: avoid; 
+                  break-inside: avoid;
+                }
+                .billing-overview {
+                  page-break-inside: avoid;
+                  break-inside: avoid;
+                }
+                .payment-history {
+                  page-break-inside: auto;
+                }
+                .clinical-assessment {
+                  page-break-inside: auto;
+                }
+                .appointment-history {
+                  page-break-inside: auto;
+                }
+                .prescription-details {
+                  page-break-inside: auto;
+                }
               }
             </style>
           </head>
@@ -693,11 +763,18 @@ export default function Patients() {
 
                 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
                 <script>
-                  // Header QR Code
-                  const headerCanvas = document.getElementById('header-qr-canvas');
-                  const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}, DOB: ${patient.dateOfBirth}';
-                  QRCode.toCanvas(headerCanvas, patientData, { width: 34, height: 34, margin: 1 }, function (error) {
-                    if (error) console.error(error);
+                  // Wait for DOM and QRCode library to load
+                  document.addEventListener('DOMContentLoaded', function() {
+                    setTimeout(function() {
+                      // Header QR Code
+                      const headerCanvas = document.getElementById('header-qr-canvas');
+                      if (headerCanvas && window.QRCode) {
+                        const patientData = 'Patient: ${patient.firstName} ${patient.lastName}, ID: ${patient.patientCode}, Phone: ${patient.phone}, DOB: ${patient.dateOfBirth}';
+                        QRCode.toCanvas(headerCanvas, patientData, { width: 38, height: 38, margin: 1 }, function (error) {
+                          if (error) console.error('QR Code Error:', error);
+                        });
+                      }
+                    }, 500);
                   });
                 </script>
               </div>
@@ -2024,7 +2101,30 @@ export default function Patients() {
                           </SelectContent>
                         </Select>
                       </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Assign Doctor</Label>
+                        <Select 
+                          value={appointmentForm.doctorId} 
+                          onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, doctorId: value }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select doctor (optional)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {(staff as any[])?.filter(member => 
+                              member.position === 'Doctor' || member.position === 'Optometrist'
+                            ).map((doctor: any) => (
+                              <SelectItem key={doctor.id} value={doctor.id}>
+                                Dr. {doctor.firstName} {doctor.lastName} - {doctor.position}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Appointment Date *</Label>
                         <Input

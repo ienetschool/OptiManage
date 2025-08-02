@@ -320,11 +320,12 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
     typeof val === 'string' ? new Date(val) : val
   ),
   appointmentFee: z.union([z.string(), z.number()]).transform((val) => 
-    typeof val === 'number' ? val.toString() : val
+    Number(val)
   ).optional(),
   paymentDate: z.union([z.string(), z.date()]).transform((val) => 
     typeof val === 'string' ? new Date(val) : val
-  ).optional(),
+  ).optional().nullable(),
+  assignedDoctorId: z.string().optional().nullable(),
 });
 
 export const insertSaleSchema = createInsertSchema(sales).omit({
