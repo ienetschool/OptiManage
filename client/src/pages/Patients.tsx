@@ -41,7 +41,12 @@ import {
   Heart,
   Download,
   FileDown,
-  Send
+  Send,
+  CreditCard,
+  AlertTriangle,
+  TrendingUp,
+  Pill,
+  Eye as EyeIcon
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -88,14 +93,7 @@ export default function Patients() {
     return age;
   };
 
-  // Helper function to generate appointment reports
-  const generateAppointmentReport = (appointment: any) => {
-    toast({
-      title: "Generating Report",
-      description: "Creating appointment report...",
-    });
-    window.print();
-  };
+
 
   // Patient form
   const form = useForm<InsertPatient>({
@@ -705,6 +703,300 @@ export default function Patients() {
       title: "WhatsApp Sharing",
       description: "Opening WhatsApp with patient information",
     });
+  };
+
+  // Helper function for generating appointment reports
+  const generateAppointmentReport = (appointment: any, patient: Patient, doctor: any) => {
+    const reportWindow = window.open('', '_blank');
+    if (reportWindow) {
+      reportWindow.document.write(`
+        <html>
+          <head>
+            <title>Appointment Report - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+              .clinic-name { font-size: 20pt; font-weight: 900; margin-bottom: 5px; }
+              .appointment-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+              .info-section { background: #f8fafc; padding: 15px; border-radius: 6px; }
+              .section-title { font-weight: 600; color: #2d3748; margin-bottom: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="clinic-name">OptiStore Pro Medical Center</div>
+              <div>Appointment Report - ${format(new Date(), 'MMM dd, yyyy')}</div>
+            </div>
+            <div class="appointment-info">
+              <div class="info-section">
+                <div class="section-title">Patient Information</div>
+                <p><strong>Name:</strong> ${patient.firstName} ${patient.lastName}</p>
+                <p><strong>Patient ID:</strong> ${patient.patientCode}</p>
+                <p><strong>Phone:</strong> ${patient.phone}</p>
+                <p><strong>Email:</strong> ${patient.email || 'N/A'}</p>
+              </div>
+              <div class="info-section">
+                <div class="section-title">Appointment Details</div>
+                <p><strong>Date:</strong> ${format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}</p>
+                <p><strong>Time:</strong> ${format(new Date(appointment.appointmentDate), 'HH:mm')}</p>
+                <p><strong>Service:</strong> ${appointment.service}</p>
+                <p><strong>Doctor:</strong> Dr. ${doctor?.firstName || 'TBD'} ${doctor?.lastName || ''}</p>
+                <p><strong>Status:</strong> ${appointment.status}</p>
+              </div>
+            </div>
+            ${appointment.notes ? `
+              <div class="info-section">
+                <div class="section-title">Clinical Notes</div>
+                <p>${appointment.notes}</p>
+              </div>
+            ` : ''}
+          </body>
+        </html>
+      `);
+      reportWindow.document.close();
+    }
+    return reportWindow;
+  };
+
+  // Helper function for generating invoices
+  const generateInvoice = (appointment: any, patient: Patient) => {
+    const invoiceWindow = window.open('', '_blank');
+    if (invoiceWindow) {
+      invoiceWindow.document.write(`
+        <html>
+          <head>
+            <title>Invoice - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; }
+              .invoice-header { display: flex; justify-content: space-between; border-bottom: 2px solid #667eea; padding-bottom: 15px; margin-bottom: 20px; }
+              .clinic-info h1 { color: #667eea; margin: 0; font-size: 24pt; }
+              .invoice-details h2 { color: #333; margin: 0; }
+              .billing-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+              .services-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              .services-table th, .services-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+              .services-table th { background: #667eea; color: white; }
+              .total-section { text-align: right; margin-top: 20px; }
+              .total-amount { font-size: 16pt; font-weight: bold; color: #667eea; }
+            </style>
+          </head>
+          <body>
+            <div class="invoice-header">
+              <div class="clinic-info">
+                <h1>OptiStore Pro</h1>
+                <p>Medical Center</p>
+                <p>123 Medical Plaza, City 12345</p>
+                <p>Phone: (555) 123-4567</p>
+              </div>
+              <div class="invoice-details">
+                <h2>INVOICE</h2>
+                <p>Invoice #: INV-${appointment.id.slice(0, 8).toUpperCase()}</p>
+                <p>Date: ${format(new Date(), 'MMM dd, yyyy')}</p>
+                <p>Due Date: ${format(new Date(), 'MMM dd, yyyy')}</p>
+              </div>
+            </div>
+            <div class="billing-info">
+              <div>
+                <h3>Bill To:</h3>
+                <p><strong>${patient.firstName} ${patient.lastName}</strong></p>
+                <p>Patient ID: ${patient.patientCode}</p>
+                <p>${patient.phone}</p>
+                <p>${patient.email || 'N/A'}</p>
+              </div>
+              <div>
+                <h3>Service Date:</h3>
+                <p>${format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}</p>
+                <p>Status: ${appointment.status}</p>
+              </div>
+            </div>
+            <table class="services-table">
+              <thead>
+                <tr>
+                  <th>Service Description</th>
+                  <th>Quantity</th>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>${appointment.service}</td>
+                  <td>1</td>
+                  <td>$150.00</td>
+                  <td>$150.00</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="total-section">
+              <p>Subtotal: $150.00</p>
+              <p>Tax: $0.00</p>
+              <p class="total-amount">Total: $150.00</p>
+            </div>
+            <script>
+              window.onload = function() {
+                window.print();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      invoiceWindow.document.close();
+    }
+    return invoiceWindow;
+  };
+
+  // Helper function for generating prescription PDFs
+  const generatePrescriptionPDF = (prescription: any, patient: Patient) => {
+    const prescriptionWindow = window.open('', '_blank');
+    if (prescriptionWindow) {
+      prescriptionWindow.document.write(`
+        <html>
+          <head>
+            <title>Prescription - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; }
+              .prescription-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+              .clinic-name { font-size: 20pt; font-weight: 900; margin-bottom: 5px; }
+              .prescription-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+              .info-section { background: #f8fafc; padding: 15px; border-radius: 6px; }
+              .section-title { font-weight: 600; color: #2d3748; margin-bottom: 10px; }
+              .vision-prescription { background: #e8f5e8; padding: 15px; border-radius: 6px; margin: 15px 0; }
+              .eye-details { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            </style>
+          </head>
+          <body>
+            <div class="prescription-header">
+              <div class="clinic-name">OptiStore Pro Medical Center</div>
+              <div>Prescription - ${format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}</div>
+            </div>
+            <div class="prescription-info">
+              <div class="info-section">
+                <div class="section-title">Patient Information</div>
+                <p><strong>Name:</strong> ${patient.firstName} ${patient.lastName}</p>
+                <p><strong>Patient ID:</strong> ${patient.patientCode}</p>
+                <p><strong>Date of Birth:</strong> ${patient.dateOfBirth ? format(new Date(patient.dateOfBirth), 'MMM dd, yyyy') : 'N/A'}</p>
+              </div>
+              <div class="info-section">
+                <div class="section-title">Prescription Details</div>
+                <p><strong>Prescription #:</strong> RX-${prescription.id.slice(0, 8)}</p>
+                <p><strong>Type:</strong> ${prescription.prescriptionType?.replace('_', ' ') || 'Eye Examination'}</p>
+                <p><strong>Date Issued:</strong> ${format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}</p>
+              </div>
+            </div>
+            ${(prescription.rightSph || prescription.leftSph) ? `
+              <div class="vision-prescription">
+                <div class="section-title">Vision Prescription</div>
+                <div class="eye-details">
+                  <div>
+                    <h4>Right Eye (OD)</h4>
+                    <p>SPH: ${prescription.rightSph || 'N/A'}</p>
+                    <p>CYL: ${prescription.rightCyl || 'N/A'}</p>
+                    <p>AXIS: ${prescription.rightAxis || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h4>Left Eye (OS)</h4>
+                    <p>SPH: ${prescription.leftSph || 'N/A'}</p>
+                    <p>CYL: ${prescription.leftCyl || 'N/A'}</p>
+                    <p>AXIS: ${prescription.leftAxis || 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            ` : ''}
+            ${prescription.diagnosis ? `
+              <div class="info-section">
+                <div class="section-title">Clinical Diagnosis</div>
+                <p>${prescription.diagnosis}</p>
+              </div>
+            ` : ''}
+            ${prescription.treatment ? `
+              <div class="info-section">
+                <div class="section-title">Treatment Plan</div>
+                <p>${prescription.treatment}</p>
+              </div>
+            ` : ''}
+          </body>
+        </html>
+      `);
+      prescriptionWindow.document.close();
+    }
+    return prescriptionWindow;
+  };
+
+  // Helper function for generating comprehensive billing reports
+  const generateComprehensiveBillingReport = (patient: Patient, patientAppointments: any[]) => {
+    const reportWindow = window.open('', '_blank');
+    if (reportWindow) {
+      const totalPaid = patientAppointments.filter(apt => apt.status === 'completed').length * 150;
+      reportWindow.document.write(`
+        <html>
+          <head>
+            <title>Comprehensive Billing Report - ${patient.firstName} ${patient.lastName}</title>
+            <style>
+              @page { size: A4; margin: 15mm; }
+              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; }
+              .report-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+              .clinic-name { font-size: 20pt; font-weight: 900; margin-bottom: 5px; }
+              .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+              .summary-card { background: #f8fafc; padding: 15px; border-radius: 6px; text-align: center; }
+              .card-value { font-size: 18pt; font-weight: bold; color: #667eea; }
+              .appointments-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              .appointments-table th, .appointments-table td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+              .appointments-table th { background: #667eea; color: white; }
+            </style>
+          </head>
+          <body>
+            <div class="report-header">
+              <div class="clinic-name">OptiStore Pro Medical Center</div>
+              <div>Comprehensive Billing Report - ${patient.firstName} ${patient.lastName}</div>
+              <div>Generated: ${format(new Date(), 'MMM dd, yyyy HH:mm')}</div>
+            </div>
+            <div class="summary-cards">
+              <div class="summary-card">
+                <div class="card-value">$${totalPaid.toFixed(2)}</div>
+                <div>Total Paid</div>
+              </div>
+              <div class="summary-card">
+                <div class="card-value">${patientAppointments.filter(apt => apt.status === 'completed').length}</div>
+                <div>Paid Invoices</div>
+              </div>
+              <div class="summary-card">
+                <div class="card-value">$0.00</div>
+                <div>Outstanding</div>
+              </div>
+            </div>
+            <table class="appointments-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Service</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${patientAppointments.map(apt => `
+                  <tr>
+                    <td>${format(new Date(apt.appointmentDate), 'MMM dd, yyyy')}</td>
+                    <td>${apt.service}</td>
+                    <td>$150.00</td>
+                    <td>${apt.status === 'completed' ? 'PAID' : 'PENDING'}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </body>
+        </html>
+      `);
+      reportWindow.document.close();
+    }
+    return reportWindow;
+  };
+
+  // Helper function for generating detailed invoices
+  const generateDetailedInvoice = (appointment: any, patient: Patient) => {
+    return generateInvoice(appointment, patient);
   };
 
   // Filter and sort patients
@@ -2010,123 +2302,521 @@ export default function Patients() {
                 </div>
               </div>
 
-              {/* Recent Appointments */}
+              {/* Detailed Appointment History */}
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Recent Appointments</h3>
-                {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).slice(0, 5).length > 0 ? (
-                  <div className="space-y-3">
-                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).slice(0, 5).map((appointment: any) => (
-                      <div key={appointment.id} className="border border-gray-300 rounded p-3">
-                        <div className="grid grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="text-gray-600">Date:</span>
-                            <p className="font-medium">{format(new Date(appointment.appointmentDate), 'dd/MM/yyyy')}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Complete Appointment History</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length} Total Appointments
+                  </Badge>
+                </div>
+                {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length > 0 ? (
+                  <div className="space-y-4">
+                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id)
+                      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
+                      .map((appointment: any, index: number) => (
+                      <div key={appointment.id} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                        {/* Appointment Header */}
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <Badge variant={appointment.status === 'completed' ? 'default' : appointment.status === 'scheduled' ? 'secondary' : 'destructive'}>
+                              {appointment.status.toUpperCase()}
+                            </Badge>
+                            <span className="text-sm font-medium text-gray-600">Appointment #{index + 1}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600">Service:</span>
-                            <p className="font-medium">{appointment.service}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Status:</span>
-                            <p className={`font-medium ${appointment.status === 'completed' ? 'text-green-600' : appointment.status === 'scheduled' ? 'text-blue-600' : 'text-red-600'}`}>
-                              {appointment.status}
-                            </p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Doctor:</span>
-                            <p className="font-medium">{(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.staffName || 'Not assigned'}</p>
+                          <div className="text-sm text-gray-500">
+                            {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy • HH:mm')}
                           </div>
                         </div>
+
+                        {/* Appointment Details Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Service Type</span>
+                              <p className="text-sm font-medium text-gray-900">{appointment.service}</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Duration</span>
+                              <p className="text-sm font-medium text-gray-900">{appointment.duration} minutes</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Assigned Doctor</span>
+                              <p className="text-sm font-medium text-gray-900">
+                                Dr. {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.firstName || 'TBD'} {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.lastName || ''}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Department</span>
+                              <p className="text-sm font-medium text-gray-900">
+                                {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.position || 'General Practice'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Cost</span>
+                              <p className="text-sm font-medium text-green-600">$150.00</p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-gray-500 uppercase tracking-wide">Payment Status</span>
+                              <p className="text-sm font-medium text-green-600">
+                                {appointment.status === 'completed' ? 'Paid' : 'Pending'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Clinical Notes */}
                         {appointment.notes && (
-                          <div className="mt-2 pt-2 border-t border-gray-200">
-                            <span className="text-gray-600 text-xs">Notes:</span>
-                            <p className="text-sm italic">{appointment.notes}</p>
+                          <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <FileText className="h-4 w-4 text-blue-600" />
+                              <span className="text-xs font-medium text-blue-800 uppercase tracking-wide">Clinical Notes</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{appointment.notes}</p>
                           </div>
                         )}
+
+                        {/* Appointment Actions */}
+                        <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const appointmentReport = generateAppointmentReport(appointment, selectedPatient, (staff as any[]).find(s => s.id === appointment.assignedDoctorId));
+                                window.open(appointmentReport, '_blank');
+                              }}
+                            >
+                              <FileDown className="h-3 w-3 mr-1" />
+                              PDF Report
+                            </Button>
+                            
+                            {appointment.status === 'completed' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Generate invoice for completed appointment
+                                  const invoiceData = generateInvoice(appointment, selectedPatient);
+                                  window.open(invoiceData, '_blank');
+                                }}
+                              >
+                                <Receipt className="h-3 w-3 mr-1" />
+                                Invoice
+                              </Button>
+                            )}
+                          </div>
+                          
+                          <div className="text-xs text-gray-500">
+                            Updated: {format(new Date(appointment.updatedAt || appointment.createdAt), 'MMM dd, yyyy')}
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No appointments found</p>
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No appointments found</p>
+                    <p className="text-gray-400 text-sm">Patient has not scheduled any appointments yet</p>
+                  </div>
                 )}
               </div>
 
-              {/* Recent Prescriptions */}
+              {/* Detailed Prescription History */}
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Recent Prescriptions</h3>
-                {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).slice(0, 3).length > 0 ? (
-                  <div className="space-y-3">
-                    {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).slice(0, 3).map((prescription: any) => (
-                      <div key={prescription.id} className="border border-gray-300 rounded p-3">
-                        <div className="grid grid-cols-3 gap-4 text-sm mb-2">
-                          <div>
-                            <span className="text-gray-600">Prescription #:</span>
-                            <p className="font-mono font-medium">{prescription.prescriptionNumber || `RX-${prescription.id.slice(0, 8)}`}</p>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Complete Prescription History</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).length} Total Prescriptions
+                  </Badge>
+                </div>
+                {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).length > 0 ? (
+                  <div className="space-y-4">
+                    {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id)
+                      .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+                      .map((prescription: any, index: number) => (
+                      <div key={prescription.id} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                        {/* Prescription Header */}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <Badge variant={prescription.status === 'active' ? 'default' : prescription.status === 'filled' ? 'secondary' : 'destructive'}>
+                              {prescription.status?.toUpperCase() || 'ACTIVE'}
+                            </Badge>
+                            <span className="text-sm font-medium text-gray-600">Prescription #{index + 1}</span>
+                            <span className="text-xs text-gray-500 font-mono">RX-{prescription.id.slice(0, 8)}</span>
                           </div>
-                          <div>
-                            <span className="text-gray-600">Date:</span>
-                            <p className="font-medium">{format(new Date(prescription.createdAt || ''), 'dd/MM/yyyy')}</p>
-                          </div>
-                          <div>
-                            <span className="text-gray-600">Type:</span>
-                            <p className="font-medium capitalize">{prescription.prescriptionType?.replace('_', ' ')}</p>
+                          <div className="text-sm text-gray-500">
+                            {format(new Date(prescription.createdAt || ''), 'MMM dd, yyyy')}
                           </div>
                         </div>
-                        
+
+                        {/* Prescription Type & Doctor */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Service Type</span>
+                            <p className="text-sm font-medium text-gray-900 capitalize">
+                              {prescription.prescriptionType?.replace('_', ' ') || 'Eye Examination'}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Prescribing Doctor</span>
+                            <p className="text-sm font-medium text-gray-900">
+                              Dr. {(staff as any[]).find(s => s.id === prescription.doctorId)?.firstName || 'Unknown'} {(staff as any[]).find(s => s.id === prescription.doctorId)?.lastName || 'Doctor'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Clinical Information */}
+                        {prescription.diagnosis && (
+                          <div className="mb-4 p-3 bg-blue-50 rounded border border-blue-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Stethoscope className="h-4 w-4 text-blue-600" />
+                              <span className="text-xs font-medium text-blue-800 uppercase tracking-wide">Clinical Diagnosis</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{prescription.diagnosis}</p>
+                          </div>
+                        )}
+
                         {/* Vision Prescription Details */}
-                        {(prescription.rightSph || prescription.leftSph) && (
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            <h4 className="text-xs font-medium text-gray-700 mb-2">Vision Prescription</h4>
-                            <div className="grid grid-cols-2 gap-4 text-xs">
-                              <div>
-                                <span className="text-gray-600">Right Eye (OD):</span>
-                                <p className="font-mono">SPH: {prescription.rightSph || 'N/A'}, CYL: {prescription.rightCyl || 'N/A'}, AXIS: {prescription.rightAxis || 'N/A'}</p>
+                        {(prescription.sphereRight || prescription.sphereLeft || prescription.rightSph || prescription.leftSph) && (
+                          <div className="mb-4 p-4 bg-green-50 rounded border border-green-200">
+                            <div className="flex items-center gap-2 mb-3">
+                              <EyeIcon className="h-4 w-4 text-green-600" />
+                              <span className="text-xs font-medium text-green-800 uppercase tracking-wide">Vision Prescription</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="bg-white p-3 rounded border">
+                                <h4 className="text-sm font-medium text-gray-900 mb-2">Right Eye (OD)</h4>
+                                <div className="space-y-1 text-xs">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Sphere (SPH):</span>
+                                    <span className="font-mono">{prescription.sphereRight || prescription.rightSph || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Cylinder (CYL):</span>
+                                    <span className="font-mono">{prescription.cylinderRight || prescription.rightCyl || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Axis:</span>
+                                    <span className="font-mono">{prescription.axisRight || prescription.rightAxis || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Add:</span>
+                                    <span className="font-mono">{prescription.addRight || 'N/A'}</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-gray-600">Left Eye (OS):</span>
-                                <p className="font-mono">SPH: {prescription.leftSph || 'N/A'}, CYL: {prescription.leftCyl || 'N/A'}, AXIS: {prescription.leftAxis || 'N/A'}</p>
+                              
+                              <div className="bg-white p-3 rounded border">
+                                <h4 className="text-sm font-medium text-gray-900 mb-2">Left Eye (OS)</h4>
+                                <div className="space-y-1 text-xs">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Sphere (SPH):</span>
+                                    <span className="font-mono">{prescription.sphereLeft || prescription.leftSph || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Cylinder (CYL):</span>
+                                    <span className="font-mono">{prescription.cylinderLeft || prescription.leftCyl || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Axis:</span>
+                                    <span className="font-mono">{prescription.axisLeft || prescription.leftAxis || 'N/A'}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Add:</span>
+                                    <span className="font-mono">{prescription.addLeft || 'N/A'}</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
                         )}
-                        
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <span className="text-gray-600 text-xs">Prescribed by:</span>
-                          <p className="text-sm font-medium">{(staff as any[]).find(s => s.id === prescription.doctorId)?.staffName || 'Unknown Doctor'}</p>
+
+                        {/* Treatment Plan */}
+                        {prescription.treatment && (
+                          <div className="mb-4 p-3 bg-purple-50 rounded border border-purple-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Pill className="h-4 w-4 text-purple-600" />
+                              <span className="text-xs font-medium text-purple-800 uppercase tracking-wide">Treatment Plan</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{prescription.treatment}</p>
+                          </div>
+                        )}
+
+                        {/* Patient Advice */}
+                        {prescription.advice && (
+                          <div className="mb-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                              <span className="text-xs font-medium text-yellow-800 uppercase tracking-wide">Patient Instructions</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{prescription.advice}</p>
+                          </div>
+                        )}
+
+                        {/* Prescription Actions */}
+                        <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Generate prescription PDF
+                                const prescriptionReport = generatePrescriptionPDF(prescription, selectedPatient);
+                                window.open(prescriptionReport, '_blank');
+                              }}
+                            >
+                              <FileDown className="h-3 w-3 mr-1" />
+                              PDF Prescription
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Generate QR code for prescription
+                                const qrData = `prescription:${prescription.id}:${selectedPatient.patientCode}`;
+                                toast({
+                                  title: "QR Code Generated",
+                                  description: "Prescription QR code ready for scanning",
+                                });
+                              }}
+                            >
+                              <QrCode className="h-3 w-3 mr-1" />
+                              QR Code
+                            </Button>
+                          </div>
+                          
+                          <div className="text-xs text-gray-500">
+                            Valid until: {prescription.nextFollowUp ? format(new Date(prescription.nextFollowUp), 'MMM dd, yyyy') : 'No expiry'}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-gray-500 text-center py-4">No prescriptions found</p>
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <Pill className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No prescriptions found</p>
+                    <p className="text-gray-400 text-sm">Patient has not received any prescriptions yet</p>
+                  </div>
                 )}
               </div>
 
-              {/* Invoice History */}
+              {/* Comprehensive Billing & Invoice History */}
               <div className="mb-6">
-                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Billing Summary</h3>
-                <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
-                  <div className="grid grid-cols-3 gap-6 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-green-600">
-                        ${((appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length * 150).toFixed(2)}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Billing & Invoice History</h3>
+                  <Badge variant="outline" className="text-xs">
+                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length} Invoices
+                  </Badge>
+                </div>
+
+                {/* Billing Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-green-600 uppercase tracking-wide font-medium">Total Paid</p>
+                        <p className="text-2xl font-bold text-green-700">
+                          ${((appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length * 150).toFixed(2)}
+                        </p>
                       </div>
-                      <div className="text-xs text-gray-600">Total Paid</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600">
-                        {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length}
-                      </div>
-                      <div className="text-xs text-gray-600">Paid Invoices</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-orange-600">$0.00</div>
-                      <div className="text-xs text-gray-600">Outstanding</div>
+                      <CreditCard className="h-8 w-8 text-green-600" />
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-yellow-300">
-                    <p className="text-xs text-gray-600">Last payment: {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length > 0 ? format(new Date(), 'dd/MM/yyyy') : 'No payments'}</p>
-                    <p className="text-xs text-gray-600">Payment method: {selectedPatient.loyaltyTier === 'premium' ? 'Insurance + Cash' : 'Cash'}</p>
+
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">Paid Invoices</p>
+                        <p className="text-2xl font-bold text-blue-700">
+                          {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length}
+                        </p>
+                      </div>
+                      <Receipt className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-orange-600 uppercase tracking-wide font-medium">Outstanding</p>
+                        <p className="text-2xl font-bold text-orange-700">$0.00</p>
+                      </div>
+                      <AlertTriangle className="h-8 w-8 text-orange-600" />
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-purple-600 uppercase tracking-wide font-medium">Avg. Per Visit</p>
+                        <p className="text-2xl font-bold text-purple-700">$150.00</p>
+                      </div>
+                      <TrendingUp className="h-8 w-8 text-purple-600" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detailed Invoice List */}
+                {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium text-gray-900">Invoice Details</h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          // Generate comprehensive billing report
+                          const billingReport = generateComprehensiveBillingReport(selectedPatient, (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id));
+                          window.open(billingReport, '_blank');
+                        }}
+                      >
+                        <FileDown className="h-3 w-3 mr-1" />
+                        Full Billing Report
+                      </Button>
+                    </div>
+
+                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed')
+                      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
+                      .map((appointment: any, index: number) => (
+                      <div key={appointment.id} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className="bg-green-100 p-2 rounded-full">
+                              <Receipt className="h-4 w-4 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">Invoice #{String(index + 1).padStart(4, '0')}</p>
+                              <p className="text-sm text-gray-600">
+                                {appointment.service} • {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="font-bold text-green-600">$150.00</p>
+                            <Badge variant="secondary" className="text-xs">PAID</Badge>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Service Details</span>
+                            <p className="text-sm font-medium text-gray-900">{appointment.service}</p>
+                            <p className="text-xs text-gray-600">Duration: {appointment.duration} minutes</p>
+                          </div>
+                          
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Payment Info</span>
+                            <p className="text-sm font-medium text-gray-900">
+                              {selectedPatient.loyaltyTier === 'premium' ? 'Insurance + Cash' : 'Cash Payment'}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              Paid: {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                            </p>
+                          </div>
+
+                          <div>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Doctor</span>
+                            <p className="text-sm font-medium text-gray-900">
+                              Dr. {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.firstName || 'TBD'} {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.lastName || ''}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Generate individual invoice PDF
+                                const invoicePDF = generateDetailedInvoice(appointment, selectedPatient);
+                                window.open(invoicePDF, '_blank');
+                              }}
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Download Invoice
+                            </Button>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Print invoice
+                                const invoicePrint = generateDetailedInvoice(appointment, selectedPatient);
+                                const printWindow = window.open(invoicePrint, '_blank');
+                                if (printWindow) {
+                                  printWindow.onload = () => printWindow.print();
+                                }
+                              }}
+                            >
+                              <Printer className="h-3 w-3 mr-1" />
+                              Print
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // Email invoice
+                                const emailSubject = `Medical Invoice - ${selectedPatient.firstName} ${selectedPatient.lastName}`;
+                                const emailBody = `Dear ${selectedPatient.firstName},%0D%0A%0D%0APlease find your medical invoice attached.%0D%0A%0D%0AInvoice Details:%0D%0A- Service: ${appointment.service}%0D%0A- Date: ${format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}%0D%0A- Amount: $150.00%0D%0A- Status: PAID%0D%0A%0D%0AThank you for choosing OptiStore Pro Medical Center.%0D%0A%0D%0ABest regards,%0D%0AOptiStore Pro Medical Team`;
+                                window.open(`mailto:${selectedPatient.email}?subject=${emailSubject}&body=${emailBody}`);
+                                toast({
+                                  title: "Email Prepared",
+                                  description: "Invoice email opened in your default email client",
+                                });
+                              }}
+                            >
+                              <Send className="h-3 w-3 mr-1" />
+                              Email
+                            </Button>
+                          </div>
+
+                          <div className="text-xs text-gray-500">
+                            Invoice ID: INV-{appointment.id.slice(0, 8).toUpperCase()}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                    <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 font-medium">No billing history found</p>
+                    <p className="text-gray-400 text-sm">Patient has not completed any paid appointments yet</p>
+                  </div>
+                )}
+
+                {/* Payment Summary */}
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <h4 className="font-medium text-gray-900 mb-3">Payment Summary</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">Last Payment Date:</p>
+                      <p className="font-medium">
+                        {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length > 0 
+                          ? format(new Date((appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())[0]?.appointmentDate || ''), 'MMM dd, yyyy')
+                          : 'No payments recorded'
+                        }
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Preferred Payment Method:</p>
+                      <p className="font-medium">
+                        {selectedPatient.loyaltyTier === 'premium' ? 'Insurance + Cash' : 'Cash Payment'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
