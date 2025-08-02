@@ -648,10 +648,13 @@ export class DatabaseStorage implements IStorage {
       }));
 
       // Get invoices from the database
+      console.log(`🔍 QUERYING DATABASE FOR INVOICES...`);
       const dbInvoices = await db.select().from(invoices).orderBy(desc(invoices.createdAt));
+      console.log(`📊 FOUND ${dbInvoices.length} INVOICES IN DATABASE`);
       
       // Get all invoice items for these invoices
       const dbInvoiceItems = await db.select().from(invoiceItems);
+      console.log(`📦 FOUND ${dbInvoiceItems.length} INVOICE ITEMS IN DATABASE`);
       
       // Convert database invoices to the expected format
       const databaseInvoices = dbInvoices.map(invoice => ({
@@ -753,11 +756,12 @@ export class DatabaseStorage implements IStorage {
   async createInvoice(invoice: any, items: any[]): Promise<any> {
     try {
       console.log(`💾 STORAGE: Creating invoice with data:`, JSON.stringify(invoice, null, 2));
+      console.log(`💾 STORAGE: Creating invoice items:`, JSON.stringify(items, null, 2));
       
       // Calculate amounts if not provided (backup calculation)
-      let subtotal = invoice.subtotal || 0;
-      let taxAmount = invoice.taxAmount || 0;
-      let total = invoice.total || 0;
+      let subtotal = parseFloat(invoice.subtotal || "0");
+      let taxAmount = parseFloat(invoice.taxAmount || "0");
+      let total = parseFloat(invoice.total || "0");
       
       // If calculations are missing, compute them
       if (subtotal === 0 && items.length > 0) {
@@ -767,11 +771,14 @@ export class DatabaseStorage implements IStorage {
         console.log(`🔢 BACKUP CALCULATION: Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${total}`);
       }
       
+      console.log(`🏁 ATTEMPTING DATABASE INSERT...`);
+      console.log(`📊 Final values: Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${total}`);
+      
       // Insert invoice into database
-      const [newInvoice] = await db.insert(invoices).values({
+      const insertData = {
         invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
         customerId: invoice.customerId || null,
-        storeId: invoice.storeId,
+        storeId: invoice.storeId || "default-store",
         subtotal: subtotal.toString(),
         taxRate: parseFloat(invoice.taxRate || "0").toString(),
         taxAmount: taxAmount.toString(),
@@ -780,44 +787,37 @@ export class DatabaseStorage implements IStorage {
         status: invoice.status || 'draft',
         paymentMethod: invoice.paymentMethod || null,
         notes: invoice.notes || null,
-      }).returning();
+      };
       
-      console.log(`🔥 INVOICE INSERTED TO DATABASE:`, newInvoice.id, newInvoice.invoiceNumber);
+      console.log(`📤 INSERT DATA:`, JSON.stringify(insertData, null, 2));
+      
+      const [newInvoice] = await db.insert(invoices).values(insertData).returning();
+      
+      console.log(`🔥 INVOICE INSERTED TO DATABASE SUCCESS:`, newInvoice.id, newInvoice.invoiceNumber);
+      
+      // Verify the insert by querying back
+      const verifyInvoice = await db.select().from(invoices).where(eq(invoices.id, newInvoice.id));
+      console.log(`✅ VERIFICATION - Invoice found in DB:`, verifyInvoice.length > 0);
       
       // Insert invoice items
       if (items && items.length > 0) {
         const invoiceItemsData = items.map(item => ({
           invoiceId: newInvoice.id,
           productId: item.productId || null,
-          productName: item.productName,
+          productName: item.productName || "Unknown Product",
           description: item.description || null,
-          quantity: item.quantity || 1,
+          quantity: parseInt(item.quantity) || 1,
           unitPrice: parseFloat(item.unitPrice || "0").toString(),
           discount: parseFloat(item.discount || "0").toString(),
           total: parseFloat(item.total || "0").toString(),
         }));
         
+        console.log(`📦 INSERTING INVOICE ITEMS:`, JSON.stringify(invoiceItemsData, null, 2));
         await db.insert(invoiceItems).values(invoiceItemsData);
         console.log(`🔥 INSERTED ${items.length} INVOICE ITEMS`);
       }
       
-      // Create payment record if not draft
-      if (newInvoice.status !== 'draft') {
-        const paymentRecord = {
-          id: `pay-${Date.now()}`,
-          invoiceId: newInvoice.invoiceNumber,
-          customerName: "Customer", // Will be resolved
-          amount: total,
-          paymentMethod: newInvoice.paymentMethod || 'pending',
-          status: newInvoice.status === 'paid' ? 'completed' : 'pending',
-          transactionId: `TXN-${Date.now()}`,
-          paymentDate: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-        console.log(`📄 PAYMENT RECORD CREATED:`, paymentRecord.id);
-      }
-      
-      console.log(`✅ INVOICE CREATED & STORED IN DB: ${newInvoice.invoiceNumber} - Total: $${total}`);
+      console.log(`✅ INVOICE CREATION COMPLETE: ${newInvoice.invoiceNumber} - Total: $${total}`);
       
       // Return in expected format
       return {
@@ -850,7 +850,8 @@ export class DatabaseStorage implements IStorage {
         }))
       };
     } catch (error) {
-      console.error("Error creating invoice:", error);
+      console.error(`❌ ERROR CREATING INVOICE:`, error);
+      console.error(`❌ ERROR STACK:`, error.stack);
       throw error;
     }
   }
