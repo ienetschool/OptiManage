@@ -117,6 +117,13 @@ export interface IStorage {
   createStaff(staff: any): Promise<any>;
   updateStaff(id: string, staff: any): Promise<any>;
   deleteStaff(id: string): Promise<void>;
+
+  // Invoice operations
+  getInvoices(): Promise<any[]>;
+  getInvoice(id: string): Promise<any | undefined>;
+  createInvoice(invoice: any, items: any[]): Promise<any>;
+  updateInvoice(id: string, invoice: any): Promise<any>;
+  deleteInvoice(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -569,6 +576,81 @@ export class DatabaseStorage implements IStorage {
   async deleteStaff(id: string): Promise<void> {
     // Mock deletion for now
     console.log(`Staff member ${id} deleted`);
+  }
+
+  // Invoice operations
+  async getInvoices(): Promise<any[]> {
+    // For now, return mock data since we don't have invoice tables yet
+    return [
+      {
+        id: "inv-001",
+        invoiceNumber: "INV-001",
+        customerId: "cust-001",
+        customerName: "Sarah Johnson",
+        storeId: "store-001",
+        storeName: "OptiStore Downtown",
+        date: new Date().toISOString(),
+        dueDate: "2025-09-01",
+        subtotal: 250,
+        taxRate: 8.5,
+        taxAmount: 21.25,
+        discountAmount: 0,
+        total: 271.25,
+        status: "sent",
+        paymentMethod: "card",
+        notes: "Eye examination and prescription glasses",
+        items: [
+          {
+            id: "item-001",
+            productId: "prod-001",
+            productName: "Progressive Lenses",
+            description: "High-quality progressive lenses",
+            quantity: 1,
+            unitPrice: 150,
+            discount: 0,
+            total: 150
+          },
+          {
+            id: "item-002",
+            productId: "prod-002",
+            productName: "Designer Frame",
+            description: "Premium designer eyeglass frame",
+            quantity: 1,
+            unitPrice: 100,
+            discount: 0,
+            total: 100
+          }
+        ]
+      }
+    ];
+  }
+
+  async getInvoice(id: string): Promise<any | undefined> {
+    const invoices = await this.getInvoices();
+    return invoices.find(inv => inv.id === id);
+  }
+
+  async createInvoice(invoice: any, items: any[]): Promise<any> {
+    const newInvoice = {
+      id: `inv-${Date.now()}`,
+      invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
+      date: new Date().toISOString(),
+      status: 'draft',
+      ...invoice,
+      items: items.map((item, index) => ({
+        id: `item-${Date.now()}-${index}`,
+        ...item
+      }))
+    };
+    return newInvoice;
+  }
+
+  async updateInvoice(id: string, invoice: any): Promise<any> {
+    return invoice;
+  }
+
+  async deleteInvoice(id: string): Promise<void> {
+    // Implementation for deletion
   }
 }
 

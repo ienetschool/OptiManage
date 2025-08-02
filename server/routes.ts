@@ -282,6 +282,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoice routes
+  app.get('/api/invoices', isAuthenticated, async (req, res) => {
+    try {
+      const invoices = await storage.getInvoices();
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ message: "Failed to fetch invoices" });
+    }
+  });
+
+  const createInvoiceSchema = z.object({
+    customerId: z.string().min(1),
+    storeId: z.string().min(1),
+    dueDate: z.string().min(1),
+    taxRate: z.number().min(0).max(100),
+    discountAmount: z.number().min(0),
+    notes: z.string().optional(),
+    items: z.array(z.object({
+      productId: z.string(),
+      productName: z.string(),
+      description: z.string().optional(),
+      quantity: z.number().int().positive(),
+      unitPrice: z.number().min(0),
+      discount: z.number().min(0).max(100),
+      total: z.number().min(0),
+    })),
+  });
+
+  app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = createInvoiceSchema.parse(req.body);
+      const { items, ...invoiceData } = validatedData;
+      
+      // Add invoice specific fields
+      const invoiceWithDefaults = {
+        ...invoiceData,
+        invoiceNumber: `INV-${Date.now()}`,
+        date: new Date().toISOString(),
+        status: 'draft',
+        subtotal: items.reduce((sum, item) => sum + item.total, 0),
+        taxAmount: (items.reduce((sum, item) => sum + item.total, 0) * (invoiceData.taxRate / 100)),
+        total: (items.reduce((sum, item) => sum + item.total, 0) * (1 + invoiceData.taxRate / 100)) - invoiceData.discountAmount,
+      };
+      
+      const invoice = await storage.createInvoice(invoiceWithDefaults, items);
+      res.status(201).json(invoice);
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      res.status(400).json({ message: "Failed to create invoice" });
+    }
+  });
+
   // Sales routes
   app.get('/api/sales', isAuthenticated, async (req, res) => {
     try {

@@ -320,148 +320,512 @@ export default function InvoiceManagement() {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
     
-    const invoiceWindow = window.open('', '_blank');
+    const invoiceWindow = window.open('', '_blank', 'width=900,height=1200');
     if (invoiceWindow) {
       invoiceWindow.document.write(`
         <html>
           <head>
-            <title>Invoice ${invoice.invoiceNumber}</title>
+            <title>Professional Invoice - ${invoice.invoiceNumber}</title>
+            <meta charset="UTF-8">
             <style>
-              @page { size: A4; margin: 15mm; }
-              body { font-family: 'Arial', sans-serif; margin: 0; padding: 20px; font-size: 11pt; color: #333; line-height: 1.4; }
-              .invoice-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-              .clinic-name { font-size: 24pt; font-weight: 900; margin-bottom: 5px; }
-              .header-right { text-align: right; }
-              .qr-code { width: 80px; height: 80px; background: white; padding: 8px; border-radius: 4px; }
-              .invoice-info { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
-              .info-section { background: #f8fafc; padding: 20px; border-radius: 6px; border-left: 4px solid #667eea; }
-              .section-title { font-weight: 600; color: #2d3748; margin-bottom: 15px; font-size: 14pt; }
-              .invoice-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-              .invoice-table th, .invoice-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-              .invoice-table th { background: #667eea; color: white; font-weight: 600; }
-              .invoice-table .amount { text-align: right; font-weight: 500; }
-              .totals-section { background: #f8fafc; padding: 20px; border-radius: 6px; margin-top: 20px; border: 2px solid #667eea; }
-              .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-              .grand-total { font-size: 16pt; font-weight: bold; color: #667eea; border-top: 2px solid #667eea; padding-top: 10px; }
-              .invoice-notes { background: #fef7cd; padding: 15px; border-radius: 6px; margin-top: 20px; border-left: 4px solid #f59e0b; }
-              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 10pt; }
-              .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 10pt; font-weight: 600; text-transform: uppercase; }
-              .status-paid { background: #d1fae5; color: #065f46; }
-              .status-pending { background: #fef3c7; color: #92400e; }
-              .status-overdue { background: #fee2e2; color: #991b1b; }
+              @page { 
+                size: A4; 
+                margin: 15mm; 
+                -webkit-print-color-adjust: exact; 
+                color-adjust: exact; 
+              }
+              * { box-sizing: border-box; margin: 0; padding: 0; }
+              body { 
+                font-family: 'Segoe UI', 'Arial', sans-serif; 
+                font-size: 10pt; 
+                line-height: 1.5; 
+                color: #2d3748; 
+                max-width: 210mm; 
+                margin: 0 auto; 
+                background: white; 
+                padding: 0; 
+              }
+              .document-container { 
+                width: 100%; 
+                min-height: 297mm; 
+                padding: 15mm; 
+                background: white; 
+                position: relative; 
+              }
+              
+              /* Header Section */
+              .invoice-header { 
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%); 
+                color: white; 
+                padding: 25px 30px; 
+                border-radius: 12px; 
+                margin-bottom: 25px; 
+                display: grid; 
+                grid-template-columns: 2fr 1fr; 
+                gap: 30px; 
+                align-items: center; 
+                box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3); 
+              }
+              .company-info h1 { 
+                font-size: 28pt; 
+                font-weight: 900; 
+                margin-bottom: 8px; 
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.2); 
+              }
+              .company-tagline { 
+                font-size: 11pt; 
+                opacity: 0.95; 
+                margin-bottom: 4px; 
+              }
+              .company-address { 
+                font-size: 9pt; 
+                opacity: 0.85; 
+                line-height: 1.4; 
+              }
+              .invoice-meta { 
+                text-align: right; 
+                background: rgba(255,255,255,0.1); 
+                padding: 20px; 
+                border-radius: 8px; 
+                backdrop-filter: blur(10px); 
+              }
+              .invoice-title { 
+                font-size: 22pt; 
+                font-weight: 800; 
+                margin-bottom: 8px; 
+                text-transform: uppercase; 
+                letter-spacing: 1px; 
+              }
+              .invoice-number { 
+                font-size: 14pt; 
+                font-weight: 600; 
+                margin-bottom: 15px; 
+                background: rgba(255,255,255,0.15); 
+                padding: 8px 15px; 
+                border-radius: 6px; 
+                display: inline-block; 
+              }
+              .qr-section { 
+                background: white; 
+                padding: 8px; 
+                border-radius: 6px; 
+                text-align: center; 
+                width: 70px; 
+                height: 70px; 
+                margin: 0 auto; 
+              }
+              
+              /* Invoice Details Grid */
+              .invoice-details { 
+                display: grid; 
+                grid-template-columns: 1fr 1fr; 
+                gap: 25px; 
+                margin-bottom: 30px; 
+              }
+              .detail-card { 
+                background: #f8fafc; 
+                border: 1px solid #e2e8f0; 
+                border-radius: 10px; 
+                padding: 20px; 
+                border-left: 5px solid #3b82f6; 
+              }
+              .detail-card h3 { 
+                color: #1e40af; 
+                font-size: 12pt; 
+                font-weight: 700; 
+                margin-bottom: 15px; 
+                text-transform: uppercase; 
+                letter-spacing: 0.5px; 
+              }
+              .detail-item { 
+                margin-bottom: 8px; 
+                display: flex; 
+                justify-content: space-between; 
+              }
+              .detail-label { 
+                font-weight: 600; 
+                color: #4a5568; 
+              }
+              .detail-value { 
+                color: #2d3748; 
+              }
+              
+              /* Items Table */
+              .items-section { 
+                margin: 30px 0; 
+              }
+              .section-header { 
+                background: #1e40af; 
+                color: white; 
+                padding: 15px 20px; 
+                border-radius: 8px 8px 0 0; 
+                font-size: 12pt; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                letter-spacing: 0.5px; 
+              }
+              .items-table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                background: white; 
+                border: 1px solid #e2e8f0; 
+                border-top: none; 
+                border-radius: 0 0 8px 8px; 
+                overflow: hidden; 
+              }
+              .items-table th { 
+                background: #f1f5f9; 
+                color: #1e40af; 
+                padding: 15px 12px; 
+                text-align: left; 
+                font-weight: 700; 
+                font-size: 9pt; 
+                text-transform: uppercase; 
+                letter-spacing: 0.3px; 
+                border-bottom: 2px solid #e2e8f0; 
+              }
+              .items-table td { 
+                padding: 15px 12px; 
+                border-bottom: 1px solid #f1f5f9; 
+                vertical-align: top; 
+              }
+              .items-table tr:nth-child(even) { 
+                background: #fafbfc; 
+              }
+              .items-table tr:hover { 
+                background: #e6f3ff; 
+              }
+              .item-name { 
+                font-weight: 600; 
+                color: #2d3748; 
+                margin-bottom: 3px; 
+              }
+              .item-description { 
+                font-size: 8pt; 
+                color: #6b7280; 
+                font-style: italic; 
+              }
+              .amount { 
+                text-align: right; 
+                font-weight: 600; 
+                font-family: 'Courier New', monospace; 
+              }
+              .quantity { 
+                text-align: center; 
+                font-weight: 600; 
+              }
+              
+              /* Totals Section */
+              .totals-container { 
+                margin-top: 30px; 
+                display: grid; 
+                grid-template-columns: 1.5fr 1fr; 
+                gap: 25px; 
+              }
+              .payment-info { 
+                background: #f0f9ff; 
+                border: 1px solid #bae6fd; 
+                border-radius: 10px; 
+                padding: 20px; 
+              }
+              .payment-info h4 { 
+                color: #0369a1; 
+                font-size: 11pt; 
+                font-weight: 700; 
+                margin-bottom: 15px; 
+                text-transform: uppercase; 
+              }
+              .totals-section { 
+                background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+                border: 2px solid #3b82f6; 
+                border-radius: 12px; 
+                padding: 25px; 
+                box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1); 
+              }
+              .total-row { 
+                display: flex; 
+                justify-content: space-between; 
+                align-items: center; 
+                padding: 8px 0; 
+                border-bottom: 1px solid #e2e8f0; 
+              }
+              .total-row:last-child { 
+                border-bottom: none; 
+              }
+              .total-label { 
+                font-weight: 600; 
+                color: #4a5568; 
+              }
+              .total-amount { 
+                font-weight: 700; 
+                font-family: 'Courier New', monospace; 
+                color: #2d3748; 
+              }
+              .grand-total { 
+                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); 
+                color: white; 
+                margin: 15px -10px -10px; 
+                padding: 20px; 
+                border-radius: 8px; 
+                font-size: 14pt; 
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.2); 
+              }
+              .grand-total .total-amount { 
+                color: white; 
+                font-size: 16pt; 
+              }
+              
+              /* Notes and Footer */
+              .notes-section { 
+                background: #fef7cd; 
+                border: 1px solid #fbbf24; 
+                border-left: 5px solid #f59e0b; 
+                border-radius: 8px; 
+                padding: 20px; 
+                margin: 25px 0; 
+              }
+              .notes-title { 
+                color: #92400e; 
+                font-weight: 700; 
+                margin-bottom: 10px; 
+                font-size: 11pt; 
+              }
+              .notes-content { 
+                color: #78350f; 
+                line-height: 1.6; 
+              }
+              .footer { 
+                text-align: center; 
+                margin-top: 40px; 
+                padding: 25px; 
+                background: #f8fafc; 
+                border-radius: 10px; 
+                border-top: 3px solid #3b82f6; 
+              }
+              .footer-title { 
+                color: #1e40af; 
+                font-size: 12pt; 
+                font-weight: 700; 
+                margin-bottom: 10px; 
+              }
+              .footer-contact { 
+                color: #4a5568; 
+                font-size: 9pt; 
+                margin-bottom: 5px; 
+              }
+              .footer-timestamp { 
+                color: #9ca3af; 
+                font-size: 8pt; 
+                margin-top: 15px; 
+                font-style: italic; 
+              }
+              
+              /* Status Badge */
+              .status-badge { 
+                display: inline-block; 
+                padding: 6px 15px; 
+                border-radius: 20px; 
+                font-size: 8pt; 
+                font-weight: 700; 
+                text-transform: uppercase; 
+                letter-spacing: 0.5px; 
+              }
+              .status-paid { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+              .status-pending { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+              .status-overdue { background: #fee2e2; color: #991b1b; border: 1px solid #ef4444; }
+              .status-draft { background: #e0e7ff; color: #3730a3; border: 1px solid #6366f1; }
+              
+              @media print {
+                body { font-size: 9pt; }
+                .document-container { padding: 10mm; }
+                .invoice-header { padding: 20px 25px; }
+                .detail-card { padding: 15px; }
+                .items-table th, .items-table td { padding: 10px 8px; }
+                .totals-section { padding: 20px; }
+                .footer { padding: 20px; }
+              }
             </style>
           </head>
           <body>
-            <div class="invoice-header">
-              <div>
-                <div class="clinic-name">OptiStore Pro</div>
-                <div style="font-size: 12pt;">Medical & Optical Center</div>
-                <div style="font-size: 10pt; margin-top: 5px;">Professional Eye Care Services</div>
-              </div>
-              <div class="header-right">
-                <div style="margin-bottom: 10px;">
-                  <div style="font-size: 18pt; font-weight: bold;">INVOICE</div>
-                  <div>${invoice.invoiceNumber}</div>
+            <div class="document-container">
+              <!-- Header -->
+              <div class="invoice-header">
+                <div class="company-info">
+                  <h1>OptiStore Pro</h1>
+                  <div class="company-tagline">Professional Medical & Optical Center</div>
+                  <div class="company-address">
+                    123 Healthcare Blvd, Medical District<br>
+                    New York, NY 10001 | (555) 123-4567<br>
+                    info@optistorepro.com | www.optistorepro.com
+                  </div>
                 </div>
-                <div class="qr-code">
-                  <svg style="width: 64px; height: 64px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="100" height="100" fill="white"/>
-                    <rect x="10" y="10" width="15" height="15" fill="black"/>
-                    <rect x="75" y="10" width="15" height="15" fill="black"/>
-                    <rect x="10" y="75" width="15" height="15" fill="black"/>
-                    <rect x="30" y="30" width="40" height="40" fill="none" stroke="black" stroke-width="2"/>
-                    <circle cx="50" cy="50" r="8" fill="black"/>
-                    <text x="50" y="95" text-anchor="middle" font-size="6" fill="black">${invoice.invoiceNumber}</text>
-                  </svg>
+                <div class="invoice-meta">
+                  <div class="invoice-title">Invoice</div>
+                  <div class="invoice-number">${invoice.invoiceNumber}</div>
+                  <div class="qr-section">
+                    <canvas id="qr-canvas" width="54" height="54"></canvas>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div class="invoice-info">
-              <div class="info-section">
-                <div class="section-title">Bill To</div>
-                <p><strong>${customer?.firstName || 'N/A'} ${customer?.lastName || ''}</strong></p>
-                <p>Customer ID: ${invoice.customerId}</p>
-                <p>Phone: ${customer?.phone || 'N/A'}</p>
-                <p>Email: ${customer?.email || 'N/A'}</p>
               </div>
               
-              <div class="info-section">
-                <div class="section-title">Invoice Details</div>
-                <p><strong>Issue Date:</strong> ${format(new Date(invoice.date), 'MMM dd, yyyy')}</p>
-                <p><strong>Due Date:</strong> ${format(new Date(invoice.dueDate), 'MMM dd, yyyy')}</p>
-                <p><strong>Store:</strong> ${store?.name || 'OptiStore Pro'}</p>
-                <p><strong>Status:</strong> <span class="status-badge status-${invoice.status}">${invoice.status}</span></p>
+              <!-- Invoice Details -->
+              <div class="invoice-details">
+                <div class="detail-card">
+                  <h3>Bill To</h3>
+                  <div class="detail-item">
+                    <span class="detail-label">Customer:</span>
+                    <span class="detail-value">${customer?.firstName || 'N/A'} ${customer?.lastName || ''}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Customer ID:</span>
+                    <span class="detail-value">${invoice.customerId.substring(0, 8)}...</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${customer?.phone || 'N/A'}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${customer?.email || 'N/A'}</span>
+                  </div>
+                </div>
+                
+                <div class="detail-card">
+                  <h3>Invoice Details</h3>
+                  <div class="detail-item">
+                    <span class="detail-label">Issue Date:</span>
+                    <span class="detail-value">${format(new Date(invoice.date), 'MMM dd, yyyy')}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Due Date:</span>
+                    <span class="detail-value">${format(new Date(invoice.dueDate), 'MMM dd, yyyy')}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Store:</span>
+                    <span class="detail-value">${store?.name || 'OptiStore Pro'}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value"><span class="status-badge status-${invoice.status}">${invoice.status}</span></span>
+                  </div>
+                </div>
               </div>
-            </div>
-
-            <table class="invoice-table">
-              <thead>
-                <tr>
-                  <th style="width: 40%;">Description</th>
-                  <th style="width: 15%; text-align: center;">Quantity</th>
-                  <th style="width: 15%; text-align: right;">Unit Price</th>
-                  <th style="width: 15%; text-align: right;">Discount</th>
-                  <th style="width: 15%; text-align: right;">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoice.items.map(item => `
-                  <tr>
-                    <td>
-                      <div style="font-weight: 600;">${item.productName}</div>
-                      ${item.description ? `<div style="font-size: 9pt; color: #6b7280;">${item.description}</div>` : ''}
-                    </td>
-                    <td style="text-align: center;">${item.quantity}</td>
-                    <td class="amount">$${parseFloat(item.unitPrice.toString()).toFixed(2)}</td>
-                    <td class="amount">${item.discount}%</td>
-                    <td class="amount">$${parseFloat(item.total.toString()).toFixed(2)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <div class="totals-section">
-              <div class="total-row">
-                <span>Subtotal:</span>
-                <span>$${parseFloat(invoice.subtotal.toString()).toFixed(2)}</span>
+              
+              <!-- Items Section -->
+              <div class="items-section">
+                <div class="section-header">Services & Products</div>
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 45%;">Description</th>
+                      <th style="width: 12%;">Qty</th>
+                      <th style="width: 15%;">Unit Price</th>
+                      <th style="width: 13%;">Discount</th>
+                      <th style="width: 15%;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${invoice.items.map(item => `
+                      <tr>
+                        <td>
+                          <div class="item-name">${item.productName}</div>
+                          ${item.description ? `<div class="item-description">${item.description}</div>` : ''}
+                        </td>
+                        <td class="quantity">${item.quantity}</td>
+                        <td class="amount">$${parseFloat(item.unitPrice.toString()).toFixed(2)}</td>
+                        <td class="amount">${item.discount}%</td>
+                        <td class="amount">$${parseFloat(item.total.toString()).toFixed(2)}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
               </div>
-              ${invoice.discountAmount > 0 ? `
-                <div class="total-row">
-                  <span>Discount:</span>
-                  <span>-$${parseFloat(invoice.discountAmount.toString()).toFixed(2)}</span>
+              
+              <!-- Totals Container -->
+              <div class="totals-container">
+                <div class="payment-info">
+                  <h4>Payment Information</h4>
+                  <div class="detail-item">
+                    <span class="detail-label">Payment Method:</span>
+                    <span class="detail-value">${invoice.paymentMethod || 'Pending'}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Tax Rate:</span>
+                    <span class="detail-value">${(invoice.taxRate || 8.5)}%</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Currency:</span>
+                    <span class="detail-value">USD ($)</span>
+                  </div>
+                  <div style="margin-top: 15px; padding: 10px; background: rgba(59, 130, 246, 0.1); border-radius: 6px; font-size: 8pt; color: #1e40af;">
+                    <strong>Scan QR code above for quick payment processing</strong>
+                  </div>
+                </div>
+                
+                <div class="totals-section">
+                  <div class="total-row">
+                    <span class="total-label">Subtotal:</span>
+                    <span class="total-amount">$${parseFloat(invoice.subtotal.toString()).toFixed(2)}</span>
+                  </div>
+                  ${invoice.discountAmount > 0 ? `
+                    <div class="total-row">
+                      <span class="total-label">Discount:</span>
+                      <span class="total-amount">-$${parseFloat(invoice.discountAmount.toString()).toFixed(2)}</span>
+                    </div>
+                  ` : ''}
+                  <div class="total-row">
+                    <span class="total-label">Tax (${(invoice.taxRate || 8.5)}%):</span>
+                    <span class="total-amount">$${parseFloat(invoice.taxAmount.toString()).toFixed(2)}</span>
+                  </div>
+                  <div class="total-row grand-total">
+                    <span class="total-label">TOTAL AMOUNT:</span>
+                    <span class="total-amount">$${parseFloat(invoice.total.toString()).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              ${invoice.notes ? `
+                <div class="notes-section">
+                  <div class="notes-title">Additional Notes:</div>
+                  <div class="notes-content">${invoice.notes}</div>
                 </div>
               ` : ''}
-              <div class="total-row">
-                <span>Tax (${(invoice.taxRate || 8.5)}%):</span>
-                <span>$${parseFloat(invoice.taxAmount.toString()).toFixed(2)}</span>
-              </div>
-              <div class="total-row grand-total">
-                <span>Total Amount:</span>
-                <span>$${parseFloat(invoice.total.toString()).toFixed(2)}</span>
+              
+              <!-- Footer -->
+              <div class="footer">
+                <div class="footer-title">Thank You for Choosing OptiStore Pro</div>
+                <div class="footer-contact">Professional Medical & Optical Center</div>
+                <div class="footer-contact">For questions about this invoice, please contact us at billing@optistorepro.com</div>
+                <div class="footer-contact">Phone: (555) 123-4567 | Website: www.optistorepro.com</div>
+                <div class="footer-timestamp">
+                  Invoice generated on ${format(new Date(), 'MMMM dd, yyyy \'at\' HH:mm')} | Document ID: ${invoice.invoiceNumber}
+                </div>
               </div>
             </div>
-
-            ${invoice.notes ? `
-              <div class="invoice-notes">
-                <div style="font-weight: 600; margin-bottom: 8px;">Notes:</div>
-                <div>${invoice.notes}</div>
-              </div>
-            ` : ''}
-
-            <div class="footer">
-              <p>Thank you for choosing OptiStore Pro Medical & Optical Center</p>
-              <p>For inquiries, please contact us at info@optistorepro.com | (555) 123-4567</p>
-              <p style="margin-top: 15px; font-size: 9pt;">This invoice was generated on ${format(new Date(), 'MMM dd, yyyy HH:mm')}</p>
-            </div>
-
+            
+            <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
             <script>
-              window.onload = function() {
-                // Auto-print when page loads
-                setTimeout(() => {
-                  window.print();
-                }, 500);
-              };
+              document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(function() {
+                  const canvas = document.getElementById('qr-canvas');
+                  if (canvas && window.QRCode) {
+                    const qrData = 'Invoice: ${invoice.invoiceNumber}, Amount: $${parseFloat(invoice.total.toString()).toFixed(2)}, Due: ${format(new Date(invoice.dueDate), 'yyyy-MM-dd')}';
+                    QRCode.toCanvas(canvas, qrData, { 
+                      width: 54, 
+                      height: 54, 
+                      margin: 1,
+                      color: { dark: '#1e40af', light: '#ffffff' }
+                    }, function (error) {
+                      if (error) console.error('QR Code Error:', error);
+                    });
+                  }
+                  
+                  // Auto-print after a brief delay
+                  setTimeout(() => {
+                    window.print();
+                  }, 1000);
+                }, 300);
+              });
             </script>
           </body>
         </html>
