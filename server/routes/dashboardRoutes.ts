@@ -7,7 +7,8 @@ import {
   products, 
   storeInventory, 
   stores,
-  users 
+  users,
+  patients
 } from "@shared/schema";
 import { count, desc, eq, gte, sum, sql, and } from "drizzle-orm";
 import { isAuthenticated } from "../oauthAuth";
@@ -18,14 +19,14 @@ export function registerDashboardRoutes(app: Express) {
     try {
       // Get simple counts from the database with real data
       const customersCount = await db.select({ count: count() }).from(customers);
-      const patientsCount = await db.select({ count: count() }).from(patients);
       const productsCount = await db.select({ count: count() }).from(products);
       const storesCount = await db.select({ count: count() }).from(stores);
+      const appointmentsCount = await db.select({ count: count() }).from(appointments);
 
       // Return dashboard data with real counts
       const dashboardData = {
-        totalAppointments: 0, // No appointments yet
-        totalPatients: (customersCount[0]?.count || 0) + (patientsCount[0]?.count || 0),
+        totalAppointments: appointmentsCount[0]?.count || 0,
+        totalPatients: customersCount[0]?.count || 0, // Using customers as patients for now
         totalSales: 0, // No sales yet
         totalRevenue: 0,
         appointmentsToday: 0,
