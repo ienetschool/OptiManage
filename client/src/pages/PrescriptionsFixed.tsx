@@ -28,7 +28,10 @@ import {
   FileDown,
   Zap,
   CheckCircle,
-  Clock
+  Clock,
+  Stethoscope,
+  UserCheck,
+  CalendarCheck
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -74,6 +77,10 @@ export default function PrescriptionsFixed() {
 
   const { data: staff = [] } = useQuery<any[]>({
     queryKey: ["/api/staff"],
+  });
+
+  const { data: appointments = [] } = useQuery<any[]>({
+    queryKey: ["/api/appointments"],
   });
 
   // Create prescription form
@@ -542,6 +549,8 @@ OptiStore Pro Team`;
             return prescriptionDate.getMonth() === currentMonth;
           case "patients":
             return true; // Show all for patients tab
+          case "doctor-appointments":
+            return true; // Show all for doctor appointments tab
           default:
             return true;
         }
@@ -619,6 +628,15 @@ OptiStore Pro Team`;
         >
           <Users className="h-4 w-4" />
           <span>Patients ({patients.length})</span>
+        </div>
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+            activeTab === "doctor-appointments" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("doctor-appointments")}
+        >
+          <Stethoscope className="h-4 w-4" />
+          <span>Doctor Appointments ({appointments.filter(apt => apt.status === 'confirmed' && apt.doctorId).length})</span>
         </div>
       </div>
 
@@ -699,10 +717,119 @@ OptiStore Pro Team`;
           </Button>
         </div>
 
-        {/* Prescriptions Table */}
-        <Card>
-          <CardContent className="p-0">
-            {isLoading ? (
+        {/* Conditional Content based on Active Tab */}
+        {activeTab === "doctor-appointments" ? (
+          // Doctor Appointments Tab Content
+          <Card>
+            <CardContent className="p-0">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Pending Doctor Appointments</h3>
+                    <p className="text-sm text-gray-600">Appointments waiting for prescription creation</p>
+                  </div>
+                  <Badge variant="outline" className="px-3 py-1">
+                    {appointments.filter(apt => apt.status === 'confirmed' && apt.doctorId && 
+                      !prescriptions.some(p => p.appointmentId === apt.id)).length} Pending
+                  </Badge>
+                </div>
+
+                {appointments.filter(apt => apt.status === 'confirmed' && apt.doctorId && 
+                  !prescriptions.some(p => p.appointmentId === apt.id)).length === 0 ? (
+                  <div className="text-center py-12">
+                    <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending appointments</h3>
+                    <p className="text-gray-600">All doctor appointments have been processed.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {appointments
+                      .filter(apt => apt.status === 'confirmed' && apt.doctorId && 
+                        !prescriptions.some(p => p.appointmentId === apt.id))
+                      .map((appointment) => {
+                        const patient = patients.find(p => p.id === appointment.patientId);
+                        const doctor = staff.find(d => d.id === appointment.doctorId);
+                        return (
+                          <div key={appointment.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-4">
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <UserCheck className="h-6 w-6 text-blue-600" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-semibold text-gray-900">
+                                    {patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'}
+                                  </h4>
+                                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span>ID: {patient?.patientCode}</span>
+                                    <span>•</span>
+                                    <span>Service: {appointment.service}</span>
+                                    <span>•</span>
+                                    <span>Doctor: {doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unknown'}</span>
+                                  </div>
+                                  <p className="text-sm text-gray-500 mt-1">
+                                    {new Date(appointment.appointmentDate).toLocaleDateString()} at {new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <Badge 
+                                  variant="secondary" 
+                                  className="bg-green-100 text-green-800 border-green-200"
+                                >
+                                  Doctor Assigned
+                                </Badge>
+                                <Button
+                                  onClick={() => {
+                                    // Auto-fill prescription form with appointment data
+                                    createForm.reset({
+                                      prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
+                                      patientId: appointment.patientId,
+                                      doctorId: appointment.doctorId,
+                                      storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+                                      prescriptionType: appointment.service?.includes('eye') ? 'eye_examination' : 
+                                                      appointment.service?.includes('contact') ? 'contact_lens' : 'eye_examination',
+                                      appointmentId: appointment.id,
+                                      status: "active",
+                                      prescriptionDate: new Date().toISOString(),
+                                    });
+                                    setCurrentServiceType(appointment.service?.includes('eye') ? 'eye_examination' : 
+                                                        appointment.service?.includes('contact') ? 'contact_lens' : 'eye_examination');
+                                    setCreateOpen(true);
+                                    
+                                    toast({
+                                      title: "Prescription Form Ready",
+                                      description: `Auto-filled for ${patient?.firstName} ${patient?.lastName}`,
+                                    });
+                                  }}
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Create Prescription
+                                </Button>
+                              </div>
+                            </div>
+                            
+                            {appointment.notes && (
+                              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                                <p className="text-sm text-gray-700">
+                                  <strong>Notes:</strong> {appointment.notes}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          // Regular Prescriptions Table
+          <Card>
+            <CardContent className="p-0">
+              {isLoading ? (
               <div className="p-8 space-y-4">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="animate-pulse flex space-x-4">
@@ -840,6 +967,7 @@ OptiStore Pro Team`;
             )}
           </CardContent>
         </Card>
+        )}
       </div>
 
       {/* Quick Prescription Dialog */}
