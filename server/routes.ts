@@ -19,7 +19,8 @@ import {
   insertSaleSchema,
   insertCategorySchema,
   insertSupplierSchema,
-  doctors
+  doctors,
+  staff
 } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -267,22 +268,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
       
-      // Validate assigned doctor ID exists in doctors table if provided
+      // Validate assigned doctor ID exists in staff table if provided (since doctors are stored in staff table)
       if (validatedData.assignedDoctorId) {
         // Check if it's a valid UUID format
         if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(validatedData.assignedDoctorId)) {
+          console.log(`Invalid doctor ID format: ${validatedData.assignedDoctorId}, setting to null`);
           validatedData.assignedDoctorId = null;
         } else {
-          // Check if doctor exists in database
+          // Check if doctor exists in staff table (where doctors are actually stored)
           try {
-            const doctorExists = await db.select({ id: doctors.id })
-              .from(doctors)
-              .where(eq(doctors.id, validatedData.assignedDoctorId))
-              .limit(1);
+            const staffMembers = await storage.getStaff();
+            const doctorExists = staffMembers.find(member => member.id === validatedData.assignedDoctorId);
             
-            if (doctorExists.length === 0) {
-              console.log(`Doctor ${validatedData.assignedDoctorId} not found, setting to null`);
+            if (!doctorExists) {
+              console.log(`Doctor ${validatedData.assignedDoctorId} not found in staff table, setting to null`);
               validatedData.assignedDoctorId = null;
+            } else {
+              console.log(`✅ Doctor ${validatedData.assignedDoctorId} (Dr. ${doctorExists.firstName} ${doctorExists.lastName}) validated and assigned to appointment`);
             }
           } catch (doctorCheckError) {
             console.error("Error checking doctor existence:", doctorCheckError);
