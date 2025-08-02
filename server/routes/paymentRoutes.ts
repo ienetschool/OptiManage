@@ -208,12 +208,37 @@ export function registerPaymentRoutes(app: Express) {
           return res.status(404).json({ message: "Appointment not found" });
         }
 
-        // Update appointment with payment information
-        await storage.updateAppointment(sourceId, {
+        // PAYMENT STATUS VALIDATION: Assign doctor when payment is completed
+        let updateData: any = {
           paymentStatus: 'paid',
           paymentMethod: paymentMethod,
           paymentDate: new Date()
-        });
+        };
+
+        // If appointment was pending and now paid, assign a doctor
+        if (appointment.paymentStatus === 'pending') {
+          // Get available doctors
+          const availableDoctors = await storage.getStaff();
+          const doctors = availableDoctors.filter(staff => 
+            staff.position && (
+              staff.position.toLowerCase().includes('doctor') || 
+              staff.position.toLowerCase().includes('optometrist')
+            )
+          );
+          
+          if (doctors.length > 0) {
+            // Assign the first available doctor
+            const doctorToAssign = doctors[0].id;
+            updateData.assignedDoctorId = doctorToAssign;
+            
+            console.log(`🩺 DOCTOR ASSIGNED: Payment completed for appointment ${sourceId}, assigned doctor ${doctorToAssign}`);
+          } else {
+            console.log(`⚠️ NO DOCTORS AVAILABLE: Payment completed but no doctors found to assign to appointment ${sourceId}`);
+          }
+        }
+
+        // Update appointment with payment information and doctor assignment
+        await storage.updateAppointment(sourceId, updateData);
 
         // Generate invoice for the appointment if fee exists
         if (appointment.appointmentFee) {
