@@ -38,7 +38,10 @@ import {
   Clock,
   X,
   CheckCircle,
-  Heart
+  Heart,
+  Download,
+  FileDown,
+  Send
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
