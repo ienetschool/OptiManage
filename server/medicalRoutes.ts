@@ -215,21 +215,25 @@ export function registerMedicalRoutes(app: Express) {
     try {
       console.log(`📝 MEDICAL INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
       
-      // Parse and validate the incoming data to match schema exactly
+      // Parse and validate the incoming data with proper string formatting for PostgreSQL
+      const invoiceDate = req.body.invoiceDate ? new Date(req.body.invoiceDate) : new Date();
+      const dueDate = req.body.dueDate ? new Date(req.body.dueDate) : new Date();
+      const paymentDate = req.body.paymentDate ? new Date(req.body.paymentDate) : null;
+      
       const invoiceData = {
         invoiceNumber: req.body.invoiceNumber || `INV-${Date.now()}`,
         patientId: req.body.patientId,
         appointmentId: req.body.appointmentId,
         storeId: req.body.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
-        invoiceDate: req.body.invoiceDate ? new Date(req.body.invoiceDate) : new Date(),
-        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : new Date(),
+        invoiceDate: invoiceDate.toISOString(),
+        dueDate: dueDate.toISOString().split('T')[0], // date type needs YYYY-MM-DD format
         subtotal: (parseFloat(req.body.subtotal) || 0).toFixed(2),
         taxAmount: (parseFloat(req.body.taxAmount) || 0).toFixed(2),
         discountAmount: (parseFloat(req.body.discountAmount) || 0).toFixed(2),
         total: (parseFloat(req.body.total) || 0).toFixed(2),
         paymentStatus: req.body.paymentStatus || 'pending',
         paymentMethod: req.body.paymentMethod,
-        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : null,
+        paymentDate: paymentDate ? paymentDate.toISOString() : null,
         notes: req.body.notes || ''
       };
       
