@@ -547,8 +547,7 @@ OptiStore Pro Team`;
             const prescriptionDate = new Date(prescription.createdAt || '');
             const currentMonth = new Date().getMonth();
             return prescriptionDate.getMonth() === currentMonth;
-          case "patients":
-            return true; // Show all for patients tab
+
           case "doctor-appointments":
             return true; // Show all for doctor appointments tab
           default:
@@ -620,15 +619,7 @@ OptiStore Pro Team`;
             return prescriptionDate.getMonth() === currentMonth;
           }).length})</span>
         </div>
-        <div 
-          className={`flex items-center gap-2 pb-4 cursor-pointer ${
-            activeTab === "patients" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
-          }`}
-          onClick={() => setActiveTab("patients")}
-        >
-          <Users className="h-4 w-4" />
-          <span>Patients ({patients.length})</span>
-        </div>
+
         <div 
           className={`flex items-center gap-2 pb-4 cursor-pointer ${
             activeTab === "doctor-appointments" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
@@ -636,7 +627,7 @@ OptiStore Pro Team`;
           onClick={() => setActiveTab("doctor-appointments")}
         >
           <Stethoscope className="h-4 w-4" />
-          <span>Doctor Appointments ({appointments.filter(apt => apt.status === 'confirmed' && apt.doctorId).length})</span>
+          <span>Doctor Appointments ({appointments.filter(apt => apt.doctorId && !prescriptions.some(p => p.appointmentId === apt.id)).length})</span>
         </div>
       </div>
 
@@ -729,12 +720,12 @@ OptiStore Pro Team`;
                     <p className="text-sm text-gray-600">Appointments waiting for prescription creation</p>
                   </div>
                   <Badge variant="outline" className="px-3 py-1">
-                    {appointments.filter(apt => apt.status === 'confirmed' && apt.doctorId && 
+                    {appointments.filter(apt => apt.doctorId && 
                       !prescriptions.some(p => p.appointmentId === apt.id)).length} Pending
                   </Badge>
                 </div>
 
-                {appointments.filter(apt => apt.status === 'confirmed' && apt.doctorId && 
+                {appointments.filter(apt => apt.doctorId && 
                   !prescriptions.some(p => p.appointmentId === apt.id)).length === 0 ? (
                   <div className="text-center py-12">
                     <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -744,7 +735,7 @@ OptiStore Pro Team`;
                 ) : (
                   <div className="space-y-4">
                     {appointments
-                      .filter(apt => apt.status === 'confirmed' && apt.doctorId && 
+                      .filter(apt => apt.doctorId && 
                         !prescriptions.some(p => p.appointmentId === apt.id))
                       .map((appointment) => {
                         const patient = patients.find(p => p.id === appointment.patientId);
@@ -773,12 +764,20 @@ OptiStore Pro Team`;
                                 </div>
                               </div>
                               <div className="flex items-center space-x-3">
-                                <Badge 
-                                  variant="secondary" 
-                                  className="bg-green-100 text-green-800 border-green-200"
-                                >
-                                  Doctor Assigned
-                                </Badge>
+                                <div className="flex flex-col space-y-1">
+                                  <Badge 
+                                    variant="secondary" 
+                                    className="bg-green-100 text-green-800 border-green-200"
+                                  >
+                                    Doctor Assigned
+                                  </Badge>
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs"
+                                  >
+                                    Status: {appointment.status}
+                                  </Badge>
+                                </div>
                                 <Button
                                   onClick={() => {
                                     // Auto-fill prescription form with appointment data
