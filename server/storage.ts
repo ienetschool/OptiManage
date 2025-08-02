@@ -13,6 +13,8 @@ import {
   customFieldsConfig,
   emailTemplates,
   communicationLog,
+  invoices,
+  invoiceItems,
   type User,
   type UpsertUser,
   type Store,
@@ -645,7 +647,43 @@ export class DatabaseStorage implements IStorage {
         items: [] // Items would be fetched separately in a real implementation
       }));
 
-      // Get manually created invoices from database or local storage
+      // Get invoices from the database
+      const dbInvoices = await db.select().from(invoices).orderBy(desc(invoices.createdAt));
+      
+      // Get all invoice items for these invoices
+      const dbInvoiceItems = await db.select().from(invoiceItems);
+      
+      // Convert database invoices to the expected format
+      const databaseInvoices = dbInvoices.map(invoice => ({
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        customerId: invoice.customerId,
+        customerName: invoice.customerId ? "Customer" : "Guest Customer",
+        storeId: invoice.storeId,
+        storeName: "OptiStore Pro",
+        date: invoice.date?.toISOString() || new Date().toISOString(),
+        dueDate: invoice.dueDate ? invoice.dueDate.toString() : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        subtotal: parseFloat(invoice.subtotal.toString()),
+        taxRate: parseFloat(invoice.taxRate?.toString() || "0"),
+        taxAmount: parseFloat(invoice.taxAmount?.toString() || "0"),
+        discountAmount: parseFloat(invoice.discountAmount?.toString() || "0"),
+        total: parseFloat(invoice.total.toString()),
+        status: invoice.status,
+        paymentMethod: invoice.paymentMethod,
+        paymentDate: invoice.paymentDate?.toISOString(),
+        notes: invoice.notes || "",
+        items: dbInvoiceItems.filter(item => item.invoiceId === invoice.id).map(item => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: parseFloat(item.unitPrice.toString()),
+          discount: parseFloat(item.discount?.toString() || "0"),
+          total: parseFloat(item.total.toString())
+        }))
+      }));
+
       // For now, include sample data for testing
       const manualInvoices = [
         {
@@ -690,8 +728,8 @@ export class DatabaseStorage implements IStorage {
         }
       ];
 
-      const allInvoices = [...realInvoices, ...manualInvoices, ...globalCreatedInvoices];
-      console.log(`🚨 RETURNING ${allInvoices.length} total invoices (${realInvoices.length} from sales, ${manualInvoices.length} manual, ${globalCreatedInvoices.length} created)`);
+      const allInvoices = [...databaseInvoices, ...realInvoices, ...manualInvoices];
+      console.log(`🚨 RETURNING ${allInvoices.length} total invoices (${databaseInvoices.length} from DB, ${realInvoices.length} from sales, ${manualInvoices.length} manual)`);
       
       // Debug log to show what we're returning
       if (globalCreatedInvoices.length > 0) {
@@ -729,24 +767,77 @@ export class DatabaseStorage implements IStorage {
         console.log(`🔢 BACKUP CALCULATION: Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${total}`);
       }
       
-      // Create the new invoice with proper formatting and preserve all calculated values
-      const newInvoice = {
-        id: invoice.id || `inv-${Date.now()}`,
+      // Insert invoice into database
+      const [newInvoice] = await db.insert(invoices).values({
         invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
-        customerId: invoice.customerId,
-        customerName: "Customer", // Will be resolved when fetching
+        customerId: invoice.customerId || null,
         storeId: invoice.storeId,
-        storeName: "OptiStore Pro",
-        date: invoice.date || new Date().toISOString(),
-        dueDate: invoice.dueDate,
-        subtotal: subtotal,
-        taxRate: parseFloat(invoice.taxRate || "0"),
-        taxAmount: taxAmount,
-        discountAmount: parseFloat(invoice.discountAmount || "0"),
-        total: total,
+        subtotal: subtotal.toString(),
+        taxRate: parseFloat(invoice.taxRate || "0").toString(),
+        taxAmount: taxAmount.toString(),
+        discountAmount: parseFloat(invoice.discountAmount || "0").toString(),
+        total: total.toString(),
         status: invoice.status || 'draft',
-        paymentMethod: invoice.paymentMethod,
-        notes: invoice.notes,
+        paymentMethod: invoice.paymentMethod || null,
+        notes: invoice.notes || null,
+      }).returning();
+      
+      console.log(`🔥 INVOICE INSERTED TO DATABASE:`, newInvoice.id, newInvoice.invoiceNumber);
+      
+      // Insert invoice items
+      if (items && items.length > 0) {
+        const invoiceItemsData = items.map(item => ({
+          invoiceId: newInvoice.id,
+          productId: item.productId || null,
+          productName: item.productName,
+          description: item.description || null,
+          quantity: item.quantity || 1,
+          unitPrice: parseFloat(item.unitPrice || "0").toString(),
+          discount: parseFloat(item.discount || "0").toString(),
+          total: parseFloat(item.total || "0").toString(),
+        }));
+        
+        await db.insert(invoiceItems).values(invoiceItemsData);
+        console.log(`🔥 INSERTED ${items.length} INVOICE ITEMS`);
+      }
+      
+      // Create payment record if not draft
+      if (newInvoice.status !== 'draft') {
+        const paymentRecord = {
+          id: `pay-${Date.now()}`,
+          invoiceId: newInvoice.invoiceNumber,
+          customerName: "Customer", // Will be resolved
+          amount: total,
+          paymentMethod: newInvoice.paymentMethod || 'pending',
+          status: newInvoice.status === 'paid' ? 'completed' : 'pending',
+          transactionId: `TXN-${Date.now()}`,
+          paymentDate: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+        console.log(`📄 PAYMENT RECORD CREATED:`, paymentRecord.id);
+      }
+      
+      console.log(`✅ INVOICE CREATED & STORED IN DB: ${newInvoice.invoiceNumber} - Total: $${total}`);
+      
+      // Return in expected format
+      return {
+        id: newInvoice.id,
+        invoiceNumber: newInvoice.invoiceNumber,
+        customerId: newInvoice.customerId,
+        customerName: "Customer", // Will be resolved when fetching
+        storeId: newInvoice.storeId,
+        storeName: "OptiStore Pro",
+        date: newInvoice.date?.toISOString() || new Date().toISOString(),
+        dueDate: newInvoice.dueDate?.toString() || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        subtotal: parseFloat(newInvoice.subtotal || "0"),
+        taxRate: parseFloat(newInvoice.taxRate || "0"),
+        taxAmount: parseFloat(newInvoice.taxAmount || "0"),
+        discountAmount: parseFloat(newInvoice.discountAmount || "0"),
+        total: parseFloat(newInvoice.total || "0"),
+        status: newInvoice.status,
+        paymentMethod: newInvoice.paymentMethod,
+        paymentDate: newInvoice.paymentDate?.toISOString(),
+        notes: newInvoice.notes,
         items: items.map((item, index) => ({
           id: `item-${Date.now()}-${index}`,
           productId: item.productId,
@@ -758,33 +849,6 @@ export class DatabaseStorage implements IStorage {
           total: parseFloat(item.total || "0")
         }))
       };
-      
-      // Store in global memory so it persists across requests
-      globalCreatedInvoices.push(newInvoice);
-      console.log(`🔥 AFTER PUSH: globalCreatedInvoices now has ${globalCreatedInvoices.length} items`);
-      console.log(`🔥 LATEST INVOICE ID:`, newInvoice.id);
-      
-      // Also create a payment record for this invoice if it's not draft
-      if (newInvoice.status !== 'draft') {
-        const paymentRecord = {
-          id: `pay-${Date.now()}`,
-          invoiceId: newInvoice.invoiceNumber,
-          customerName: newInvoice.customerName,
-          amount: newInvoice.total,
-          paymentMethod: newInvoice.paymentMethod || 'pending',
-          status: newInvoice.status === 'paid' ? 'completed' : 'pending',
-          transactionId: `TXN-${Date.now()}`,
-          paymentDate: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        };
-        // You might want to store this in a global payments array too
-      }
-      
-      console.log(`✅ INVOICE CREATED & STORED: ${newInvoice.invoiceNumber} - Subtotal: $${newInvoice.subtotal}, Tax: $${newInvoice.taxAmount}, Total: $${newInvoice.total}`);
-      console.log(`📊 CURRENT CREATED INVOICES COUNT: ${globalCreatedInvoices.length}`);
-      console.log(`📝 GLOBAL CREATED INVOICES ARRAY:`, JSON.stringify(globalCreatedInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber })), null, 2));
-      
-      return newInvoice;
     } catch (error) {
       console.error("Error creating invoice:", error);
       throw error;
