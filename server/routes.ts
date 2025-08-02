@@ -19,7 +19,10 @@ import {
   insertSaleSchema,
   insertCategorySchema,
   insertSupplierSchema,
+  doctors
 } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { addTestRoutes } from "./testAuth";
 
@@ -264,10 +267,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
       
-      // If assigned_doctor_id is provided and not a valid UUID, set it to null
-      if (validatedData.assignedDoctorId && 
-          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(validatedData.assignedDoctorId)) {
-        validatedData.assignedDoctorId = null;
+      // Validate assigned doctor ID exists in doctors table if provided
+      if (validatedData.assignedDoctorId) {
+        // Check if it's a valid UUID format
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(validatedData.assignedDoctorId)) {
+          validatedData.assignedDoctorId = null;
+        } else {
+          // Check if doctor exists in database
+          try {
+            const doctorExists = await db.select({ id: doctors.id })
+              .from(doctors)
+              .where(eq(doctors.id, validatedData.assignedDoctorId))
+              .limit(1);
+            
+            if (doctorExists.length === 0) {
+              console.log(`Doctor ${validatedData.assignedDoctorId} not found, setting to null`);
+              validatedData.assignedDoctorId = null;
+            }
+          } catch (doctorCheckError) {
+            console.error("Error checking doctor existence:", doctorCheckError);
+            validatedData.assignedDoctorId = null;
+          }
+        }
       }
       
       const appointment = await storage.createAppointment(validatedData);

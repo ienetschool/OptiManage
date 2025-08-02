@@ -429,358 +429,298 @@ export const generateMultiPagePatientPDF = (
                 </div>
               </div>
             </div>
-            ${patient.pupillaryDistance ? `
-              <div class="info-row">
-                <span class="info-label">Pupillary Distance (PD):</span>
-                <span class="info-value">${patient.pupillaryDistance} mm</span>
-              </div>
-            ` : ''}
-          </div>
-        ` : ''}
-
-        <!-- Page 2: Medical History -->
-        <div class="page-break">
-          <div class="profile-header">
-            <div class="clinic-name">Medical History & Clinical Information</div>
-            <div>Patient: ${patient.firstName} ${patient.lastName} (${patient.patientCode})</div>
-          </div>
-
-          <!-- Medical History -->
-          <div class="medical-section no-break">
-            <div class="section-title">Medical History</div>
-            <div class="info-row">
-              <span class="info-label">Medical History:</span>
-              <span class="info-value">${patient.medicalHistory || 'No significant medical history recorded'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Current Medications:</span>
-              <span class="info-value">${patient.currentMedications || 'None reported'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Allergies:</span>
-              <span class="info-value">${patient.allergies || 'No known allergies'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Family Medical History:</span>
-              <span class="info-value">${patient.familyMedicalHistory || 'No family history reported'}</span>
-            </div>
-          </div>
-
-          <!-- Eye Health -->
-          <div class="medical-section no-break">
-            <div class="section-title">Eye Health Information</div>
-            <div class="info-row">
-              <span class="info-label">Previous Eye Conditions:</span>
-              <span class="info-value">${patient.previousEyeConditions || 'None reported'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Last Eye Exam:</span>
-              <span class="info-value">${patient.lastEyeExamDate ? format(new Date(patient.lastEyeExamDate), 'MMM dd, yyyy') : 'Not recorded'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Risk Factors:</span>
-              <span class="info-value">${patient.riskFactors || 'None identified'}</span>
-            </div>
-          </div>
-
-          <!-- Lifestyle Information -->
-          <div class="medical-section no-break">
-            <div class="section-title">Lifestyle Information</div>
-            <div class="patient-info-grid">
-              <div>
-                <div class="info-row">
-                  <span class="info-label">Smoking Status:</span>
-                  <span class="info-value">${patient.smokingStatus || 'Not recorded'}</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Exercise Frequency:</span>
-                  <span class="info-value">${patient.exerciseFrequency || 'Not recorded'}</span>
-                </div>
-              </div>
-              <div>
-                <div class="info-row">
-                  <span class="info-label">Alcohol Consumption:</span>
-                  <span class="info-value">${patient.alcoholConsumption || 'Not recorded'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Clinical Notes -->
-          ${patient.doctorNotes ? `
-            <div class="medical-notes no-break">
-              <div class="section-title">Clinical Notes</div>
-              <p style="margin: 0; line-height: 1.6;">${patient.doctorNotes}</p>
-            </div>
-          ` : ''}
-
-          <!-- Treatment Plan -->
-          ${patient.treatmentPlan ? `
-            <div class="medical-notes no-break">
-              <div class="section-title">Current Treatment Plan</div>
-              <p style="margin: 0; line-height: 1.6;">${patient.treatmentPlan}</p>
-            </div>
-          ` : ''}
-
-          <!-- Medical Alerts -->
-          ${patient.medicalAlerts ? `
-            <div class="emergency-info no-break">
-              <div class="section-title">⚠️ Medical Alerts</div>
-              <p style="margin: 0; line-height: 1.6; font-weight: 600;">${patient.medicalAlerts}</p>
-            </div>
-          ` : ''}
-        </div>
-
-        <!-- Page 3: Appointment History -->
-        ${appointments.length > 0 ? `
-          <div class="page-break">
-            <div class="profile-header">
-              <div class="clinic-name">Appointment History</div>
-              <div>Patient: ${patient.firstName} ${patient.lastName} (${patient.patientCode})</div>
-            </div>
-
-            <table class="appointments-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Service</th>
-                  <th>Status</th>
-                  <th>Doctor</th>
-                  <th>Fee</th>
-                  <th>Payment</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${appointments.map(apt => `
-                  <tr>
-                    <td>${format(new Date(apt.appointmentDate), 'MMM dd, yyyy')}</td>
-                    <td>${apt.service || 'General Consultation'}</td>
-                    <td><span class="status-badge status-${apt.status || 'scheduled'}">${apt.status || 'Scheduled'}</span></td>
-                    <td>${apt.assignedDoctorId ? 'Dr. Professional' : 'To be assigned'}</td>
-                    <td>$${apt.appointmentFee || '0.00'}</td>
-                    <td><span class="status-badge status-${apt.paymentStatus || 'pending'}">${apt.paymentStatus || 'Pending'}</span></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
             
-            ${appointments.some(apt => apt.notes) ? `
-              <div class="medical-notes no-break">
-                <div class="section-title">Appointment Notes</div>
-                ${appointments.filter(apt => apt.notes).map(apt => `
-                  <div style="margin-bottom: 10px; padding: 8px; background: white; border-radius: 4px;">
-                    <strong>${format(new Date(apt.appointmentDate), 'MMM dd, yyyy')}:</strong> ${apt.notes}
-                  </div>
-                `).join('')}
+            ${patient.pupillaryDistance ? `
+              <div class="info-row" style="margin-top: 15px; text-align: center;">
+                <span class="info-label">Pupillary Distance (PD):</span>
+                <span class="info-value" style="font-weight: bold; color: #667eea;">${patient.pupillaryDistance} mm</span>
               </div>
             ` : ''}
           </div>
         ` : ''}
 
-        <!-- Page 4: Prescription History -->
-        ${prescriptions.length > 0 ? `
-          <div class="page-break">
-            <div class="profile-header">
-              <div class="clinic-name">Prescription History</div>
-              <div>Patient: ${patient.firstName} ${patient.lastName} (${patient.patientCode})</div>
-            </div>
-
-            <table class="prescriptions-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Prescription #</th>
-                  <th>Type</th>
-                  <th>Doctor</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${prescriptions.map(rx => `
-                  <tr>
-                    <td>${format(new Date(rx.prescriptionDate || rx.createdAt), 'MMM dd, yyyy')}</td>
-                    <td>RX-${rx.prescriptionNumber || rx.id.slice(0, 8)}</td>
-                    <td>${rx.prescriptionType?.replace('_', ' ') || 'Eye Examination'}</td>
-                    <td>Dr. Professional</td>
-                    <td><span class="status-badge status-${rx.status || 'active'}">${rx.status || 'Active'}</span></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <!-- Detailed Prescription Information -->
-            ${prescriptions.map(rx => `
-              <div class="prescription-section no-break">
-                <div class="section-title">Prescription Details - ${format(new Date(rx.prescriptionDate || rx.createdAt), 'MMM dd, yyyy')}</div>
-                
-                ${(rx.sphereRight || rx.sphereLeft || rx.rightSph || rx.leftSph) ? `
-                  <div class="vision-prescription">
-                    <div class="eye-details">
-                      <div class="eye-title">Right Eye (OD)</div>
-                      <div class="info-row">
-                        <span class="info-label">SPH:</span>
-                        <span class="info-value">${rx.sphereRight || rx.rightSph || 'N/A'}</span>
-                      </div>
-                      <div class="info-row">
-                        <span class="info-label">CYL:</span>
-                        <span class="info-value">${rx.cylinderRight || rx.rightCyl || 'N/A'}</span>
-                      </div>
-                      <div class="info-row">
-                        <span class="info-label">AXIS:</span>
-                        <span class="info-value">${rx.axisRight || rx.rightAxis || 'N/A'}</span>
-                      </div>
-                    </div>
-                    
-                    <div class="eye-details">
-                      <div class="eye-title">Left Eye (OS)</div>
-                      <div class="info-row">
-                        <span class="info-label">SPH:</span>
-                        <span class="info-value">${rx.sphereLeft || rx.leftSph || 'N/A'}</span>
-                      </div>
-                      <div class="info-row">
-                        <span class="info-label">CYL:</span>
-                        <span class="info-value">${rx.cylinderLeft || rx.leftCyl || 'N/A'}</span>
-                      </div>
-                      <div class="info-row">
-                        <span class="info-label">AXIS:</span>
-                        <span class="info-value">${rx.axisLeft || rx.leftAxis || 'N/A'}</span>
-                      </div>
-                    </div>
-                  </div>
-                ` : ''}
-                
-                ${rx.diagnosis ? `
-                  <div class="info-row">
-                    <span class="info-label">Diagnosis:</span>
-                    <span class="info-value">${rx.diagnosis}</span>
-                  </div>
-                ` : ''}
-                
-                ${rx.treatment ? `
-                  <div class="info-row">
-                    <span class="info-label">Treatment:</span>
-                    <span class="info-value">${rx.treatment}</span>
-                  </div>
-                ` : ''}
+        <!-- Medical History -->
+        <div class="medical-section no-break">
+          <div class="section-title">Medical History & Conditions</div>
+          <div class="patient-info-grid">
+            <div>
+              <div class="info-row">
+                <span class="info-label">Allergies:</span>
+                <span class="info-value">${patient.allergies || 'None reported'}</span>
               </div>
-            `).join('')}
-          </div>
-        ` : ''}
-
-        <!-- Page 5: Billing & Financial Summary -->
-        ${invoices.length > 0 ? `
-          <div class="page-break">
-            <div class="profile-header">
-              <div class="clinic-name">Billing & Financial Summary</div>
-              <div>Patient: ${patient.firstName} ${patient.lastName} (${patient.patientCode})</div>
+              <div class="info-row">
+                <span class="info-label">Current Medications:</span>
+                <span class="info-value">${patient.currentMedications || 'None reported'}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Previous Eye Conditions:</span>
+                <span class="info-value">${patient.previousEyeConditions || 'None reported'}</span>
+              </div>
             </div>
-
-            <table class="invoices-table">
-              <thead>
-                <tr>
-                  <th>Invoice #</th>
-                  <th>Date</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Payment Method</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoices.map(inv => `
-                  <tr>
-                    <td>${inv.invoiceNumber}</td>
-                    <td>${format(new Date(inv.date), 'MMM dd, yyyy')}</td>
-                    <td>$${parseFloat(inv.total || '0').toFixed(2)}</td>
-                    <td><span class="status-badge status-${inv.status || 'pending'}">${inv.status || 'Pending'}</span></td>
-                    <td>${inv.paymentMethod || 'N/A'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-
-            <div class="financial-section no-break">
-              <div class="section-title">Financial Summary</div>
-              <div class="patient-info-grid">
-                <div>
-                  <div class="info-row">
-                    <span class="info-label">Total Invoices:</span>
-                    <span class="info-value">${totalInvoices}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Total Amount:</span>
-                    <span class="info-value">$${totalAmount.toFixed(2)}</span>
-                  </div>
-                </div>
-                <div>
-                  <div class="info-row">
-                    <span class="info-label">Paid Amount:</span>
-                    <span class="info-value">$${invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0).toFixed(2)}</span>
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">Outstanding:</span>
-                    <span class="info-value">$${invoices.filter(inv => inv.status !== 'paid').reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0).toFixed(2)}</span>
-                  </div>
-                </div>
+            <div>
+              <div class="info-row">
+                <span class="info-label">Family Medical History:</span>
+                <span class="info-value">${patient.familyMedicalHistory || 'None reported'}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Risk Factors:</span>
+                <span class="info-value">${patient.riskFactors || 'None identified'}</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Last Eye Exam:</span>
+                <span class="info-value">${patient.lastEyeExamDate ? format(new Date(patient.lastEyeExamDate), 'MMM dd, yyyy') : 'Not recorded'}</span>
               </div>
             </div>
           </div>
-        ` : ''}
-
-        <!-- Footer with QR Code -->
-        <div class="page-break">
-          <div class="profile-header">
-            <div class="clinic-name">Patient Access & Contact Information</div>
-            <div>Quick Access QR Code & Contact Details</div>
-          </div>
-
-          <div class="qr-section no-break">
-            <div class="section-title">Patient Portal QR Code</div>
-            <p style="margin: 10px 0;">Scan this QR code to access your patient portal and medical records:</p>
-            <div style="margin: 20px 0; font-family: monospace; font-size: 24pt; letter-spacing: 2px;">
-              🔳 QR CODE PLACEHOLDER 🔳
+          
+          ${patient.medicalHistory ? `
+            <div class="medical-notes">
+              <div class="section-title">General Medical History</div>
+              <p style="line-height: 1.6; margin: 0;">${patient.medicalHistory}</p>
             </div>
-            <p style="font-size: 10pt; color: #666;">Patient ID: ${patient.patientCode}</p>
-          </div>
+          ` : ''}
+        </div>
 
-          <div class="info-section no-break">
-            <div class="section-title">Contact OptiStore Pro Medical Center</div>
-            <div class="patient-info-grid">
-              <div>
-                <div class="info-row">
-                  <span class="info-label">Phone:</span>
-                  <span class="info-value">+1 (555) 123-4567</span>
-                </div>
-                <div class="info-row">
-                  <span class="info-label">Email:</span>
-                  <span class="info-value">info@optistorepro.com</span>
-                </div>
+        <!-- Lifestyle Factors -->
+        <div class="lifestyle-section no-break">
+          <div class="section-title">Lifestyle & Health Factors</div>
+          <div class="patient-info-grid">
+            <div>
+              <div class="info-row">
+                <span class="info-label">Smoking Status:</span>
+                <span class="info-value">${patient.smokingStatus || 'Not specified'}</span>
               </div>
-              <div>
-                <div class="info-row">
-                  <span class="info-label">Address:</span>
-                  <span class="info-value">123 Medical Plaza, Suite 100<br>Healthcare City, HC 12345</span>
-                </div>
+              <div class="info-row">
+                <span class="info-label">Alcohol Consumption:</span>
+                <span class="info-value">${patient.alcoholConsumption || 'Not specified'}</span>
               </div>
             </div>
-          </div>
-
-          <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f7fafc; border-radius: 6px;">
-            <p style="margin: 0; font-size: 10pt; color: #666;">
-              This comprehensive medical profile was generated on ${format(new Date(), 'MMMM dd, yyyy')} at ${format(new Date(), 'h:mm a')}<br>
-              Contains ${totalAppointments} appointments, ${totalPrescriptions} prescriptions, and ${totalInvoices} billing records<br>
-              For the most up-to-date information, please visit our patient portal or contact our office.
-            </p>
+            <div>
+              <div class="info-row">
+                <span class="info-label">Exercise Frequency:</span>
+                <span class="info-value">${patient.exerciseFrequency || 'Not specified'}</span>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Doctor Notes and Treatment Plan -->
+        ${(patient.doctorNotes || patient.treatmentPlan) ? `
+          <div class="medical-notes no-break">
+            <div class="section-title">Clinical Notes & Treatment Plan</div>
+            ${patient.doctorNotes ? `
+              <div style="margin-bottom: 15px;">
+                <div style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">Doctor's Notes:</div>
+                <p style="line-height: 1.6; margin: 0;">${patient.doctorNotes}</p>
+              </div>
+            ` : ''}
+            ${patient.treatmentPlan ? `
+              <div>
+                <div style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">Treatment Plan:</div>
+                <p style="line-height: 1.6; margin: 0;">${patient.treatmentPlan}</p>
+              </div>
+            ` : ''}
+            ${patient.followUpDate ? `
+              <div style="margin-top: 15px; padding: 10px; background: #e6fffa; border-radius: 6px; border-left: 4px solid #319795;">
+                <div style="font-weight: 600; color: #234e52;">Next Follow-up:</div>
+                <div style="color: #2c7a7b; font-weight: 500;">${format(new Date(patient.followUpDate), 'EEEE, MMMM dd, yyyy')}</div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+
+        <!-- Medical Alerts -->
+        ${patient.medicalAlerts ? `
+          <div class="emergency-info no-break">
+            <div class="section-title">⚠️ Medical Alerts</div>
+            <p style="font-weight: 600; color: #742a2a; margin: 0; line-height: 1.6;">${patient.medicalAlerts}</p>
+          </div>
+        ` : ''}
+
+        <!-- Page 2: Appointments History -->
+        <div class="page-break">
+          <div class="profile-header">
+            <div class="clinic-name">OptiStore Pro Medical Center</div>
+            <div class="patient-name">Appointment History - ${patient.firstName} ${patient.lastName}</div>
+            <div style="font-size: 10pt;">Complete appointment records and clinical visits</div>
+          </div>
+
+          <div class="appointments-section">
+            <div class="section-title">Appointment History (${totalAppointments} visits)</div>
+            ${appointments.length > 0 ? `
+              <table class="appointments-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Service Type</th>
+                    <th>Doctor</th>
+                    <th>Status</th>
+                    <th>Fee</th>
+                    <th>Payment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${appointments.map(apt => `
+                    <tr>
+                      <td>
+                        <div style="font-weight: 600;">${format(new Date(apt.appointmentDate), 'MMM dd, yyyy')}</div>
+                        <div style="font-size: 9pt; color: #666;">${apt.appointmentTime || 'Time not set'}</div>
+                      </td>
+                      <td>
+                        <div style="font-weight: 500;">${apt.serviceType || 'General Consultation'}</div>
+                        ${apt.notes ? `<div style="font-size: 9pt; color: #666; margin-top: 3px;">${apt.notes.substring(0, 50)}${apt.notes.length > 50 ? '...' : ''}</div>` : ''}
+                      </td>
+                      <td>${apt.assignedDoctorId ? `Dr. ${apt.assignedDoctorId.substring(0, 12)}...` : 'Not assigned'}</td>
+                      <td><span class="status-badge status-${apt.status || 'scheduled'}">${apt.status || 'Scheduled'}</span></td>
+                      <td style="font-weight: 600;">$${parseFloat(apt.appointmentFee || '0').toFixed(2)}</td>
+                      <td><span class="status-badge status-${apt.paymentStatus || 'pending'}">${apt.paymentStatus || 'Pending'}</span></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 14pt; margin-bottom: 10px;">No appointments found</div>
+                <div style="font-size: 10pt;">This patient has no recorded appointments yet.</div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- Page 3: Prescriptions History -->
+        <div class="page-break">
+          <div class="profile-header">
+            <div class="clinic-name">OptiStore Pro Medical Center</div>
+            <div class="patient-name">Prescription History - ${patient.firstName} ${patient.lastName}</div>
+            <div style="font-size: 10pt;">Complete prescription records and medications</div>
+          </div>
+
+          <div class="prescriptions-section">
+            <div class="section-title">Prescription History (${totalPrescriptions} prescriptions)</div>
+            ${prescriptions.length > 0 ? `
+              <table class="prescriptions-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Prescription Code</th>
+                    <th>Doctor</th>
+                    <th>Diagnosis</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${prescriptions.map(rx => `
+                    <tr>
+                      <td>${format(new Date(rx.createdAt || new Date()), 'MMM dd, yyyy')}</td>
+                      <td style="font-weight: 600; color: #667eea;">${rx.prescriptionCode || 'N/A'}</td>
+                      <td>${rx.doctorId ? `Dr. ${rx.doctorId.substring(0, 12)}...` : 'Not specified'}</td>
+                      <td>
+                        <div style="font-weight: 500;">${rx.diagnosis || 'General prescription'}</div>
+                        ${rx.symptoms ? `<div style="font-size: 9pt; color: #666; margin-top: 3px;">Symptoms: ${rx.symptoms.substring(0, 40)}${rx.symptoms.length > 40 ? '...' : ''}</div>` : ''}
+                      </td>
+                      <td><span class="status-badge status-${rx.status || 'active'}">${rx.status || 'Active'}</span></td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 14pt; margin-bottom: 10px;">No prescriptions found</div>
+                <div style="font-size: 10pt;">This patient has no recorded prescriptions yet.</div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- Page 4: Billing & Financial History -->
+        <div class="page-break">
+          <div class="profile-header">
+            <div class="clinic-name">OptiStore Pro Medical Center</div>
+            <div class="patient-name">Billing History - ${patient.firstName} ${patient.lastName}</div>
+            <div style="font-size: 10pt;">Complete financial records and invoice history</div>
+          </div>
+
+          <div class="financial-section">
+            <div class="section-title">Financial Summary</div>
+            <div class="summary-cards">
+              <div class="summary-card">
+                <div class="card-value">$${totalAmount.toFixed(2)}</div>
+                <div class="card-label">Total Billed</div>
+              </div>
+              <div class="summary-card">
+                <div class="card-value">${invoices.filter(inv => inv.status === 'paid').length}</div>
+                <div class="card-label">Paid Invoices</div>
+              </div>
+              <div class="summary-card">
+                <div class="card-value">${invoices.filter(inv => inv.status === 'pending').length}</div>
+                <div class="card-label">Pending Invoices</div>
+              </div>
+              <div class="summary-card">
+                <div class="card-value">$${invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0).toFixed(2)}</div>
+                <div class="card-label">Outstanding</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="invoices-section">
+            <div class="section-title">Invoice History (${totalInvoices} invoices)</div>
+            ${invoices.length > 0 ? `
+              <table class="invoices-table">
+                <thead>
+                  <tr>
+                    <th>Invoice #</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Payment Method</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${invoices.map(inv => `
+                    <tr>
+                      <td style="font-weight: 600; color: #667eea;">${inv.invoiceNumber || inv.id}</td>
+                      <td>${format(new Date(inv.date || new Date()), 'MMM dd, yyyy')}</td>
+                      <td>
+                        <div style="font-weight: 500;">${inv.notes || 'Medical services'}</div>
+                        ${inv.dueDate ? `<div style="font-size: 9pt; color: #666;">Due: ${format(new Date(inv.dueDate), 'MMM dd, yyyy')}</div>` : ''}
+                      </td>
+                      <td style="font-weight: 600;">$${parseFloat(inv.total || '0').toFixed(2)}</td>
+                      <td><span class="status-badge status-${inv.status || 'pending'}">${inv.status || 'Pending'}</span></td>
+                      <td style="text-transform: capitalize;">${inv.paymentMethod || 'Not specified'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 14pt; margin-bottom: 10px;">No invoices found</div>
+                <div style="font-size: 10pt;">This patient has no recorded billing history yet.</div>
+              </div>
+            `}
+          </div>
+        </div>
+
+        <!-- Footer for all pages -->
+        <div style="margin-top: 40px; padding: 20px; background: #f8fafc; border-radius: 8px; text-align: center; border-top: 3px solid #667eea;">
+          <div style="color: #2d3748; font-weight: 600; margin-bottom: 10px; font-size: 12pt;">OptiStore Pro Medical Center</div>
+          <div style="color: #4a5568; font-size: 10pt; margin-bottom: 5px;">123 Healthcare Blvd, Medical District, New York, NY 10001</div>
+          <div style="color: #4a5568; font-size: 10pt; margin-bottom: 5px;">Phone: (555) 123-4567 | Email: info@optistorepro.com</div>
+          <div style="color: #9ca3af; font-size: 9pt; margin-top: 15px; font-style: italic;">
+            This report contains confidential medical information. Generated on ${format(new Date(), 'MMMM dd, yyyy')} at ${format(new Date(), 'h:mm a')}
+          </div>
+        </div>
+
       </body>
     </html>
   `);
 
   printWindow.document.close();
   
-  // Auto-print after a short delay to ensure content is loaded
+  // Add QR code generation if needed
   setTimeout(() => {
     printWindow.print();
+    printWindow.close();
   }, 1000);
 
   return printWindow;

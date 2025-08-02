@@ -1907,7 +1907,46 @@ export default function Patients() {
                                 const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === patient.id);
                                 const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === patient.id);
                                 const patientInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === patient.id);
-                                generateMultiPagePatientPDF(patient, patientAppointments, patientPrescriptions, patientInvoices);
+                                
+                                // Handle nullable fields for PDF generation
+                                const patientForPDF = {
+                                  ...patient,
+                                  dateOfBirth: patient.dateOfBirth || '', // Handle null dateOfBirth
+                                  address: patient.address || '',
+                                  emergencyContact: patient.emergencyContact || '',
+                                  emergencyPhone: patient.emergencyPhone || '',
+                                  bloodGroup: patient.bloodGroup || '',
+                                  allergies: patient.allergies || '',
+                                  medicalHistory: patient.medicalHistory || '',
+                                  currentMedications: patient.currentMedications || '',
+                                  previousEyeConditions: patient.previousEyeConditions || '',
+                                  lastEyeExamDate: patient.lastEyeExamDate || '',
+                                  currentPrescription: patient.currentPrescription || '',
+                                  riskFactors: patient.riskFactors || '',
+                                  familyMedicalHistory: patient.familyMedicalHistory || '',
+                                  smokingStatus: patient.smokingStatus || '',
+                                  alcoholConsumption: patient.alcoholConsumption || '',
+                                  exerciseFrequency: patient.exerciseFrequency || '',
+                                  rightEyeSphere: patient.rightEyeSphere || '',
+                                  rightEyeCylinder: patient.rightEyeCylinder || '',
+                                  rightEyeAxis: patient.rightEyeAxis || '',
+                                  leftEyeSphere: patient.leftEyeSphere || '',
+                                  leftEyeCylinder: patient.leftEyeCylinder || '',
+                                  leftEyeAxis: patient.leftEyeAxis || '',
+                                  pupillaryDistance: patient.pupillaryDistance || '',
+                                  doctorNotes: patient.doctorNotes || '',
+                                  treatmentPlan: patient.treatmentPlan || '',
+                                  followUpDate: patient.followUpDate || '',
+                                  medicalAlerts: patient.medicalAlerts || '',
+                                  createdAt: patient.createdAt?.toString() || new Date().toISOString()
+                                };
+                                
+                                generateMultiPagePatientPDF(patientForPDF, patientAppointments, patientPrescriptions, patientInvoices);
+                                
+                                toast({
+                                  title: "Complete Medical Profile Generated",
+                                  description: "Multi-page patient profile with all medical history, appointments, and billing information has been generated for printing.",
+                                });
                               }}>
                                 <Printer className="mr-2 h-4 w-4" />
                                 Print Complete Profile
@@ -3453,7 +3492,15 @@ export default function Patients() {
                   if (selectedAppointment) {
                     const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
                     const assignedDoctor = (staff as any[]).find(s => s.id === selectedAppointment.assignedDoctorId);
-                    generateAppointmentReport(selectedAppointment, patient, assignedDoctor);
+                    if (patient) {
+                      generateAppointmentReport(selectedAppointment, patient, assignedDoctor);
+                    } else {
+                      toast({
+                        title: "Error",
+                        description: "Patient information not found for this appointment.",
+                        variant: "destructive",
+                      });
+                    }
                   }
                   setViewAppointmentOpen(false);
                 }}>

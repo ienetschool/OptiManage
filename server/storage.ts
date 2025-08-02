@@ -300,7 +300,11 @@ export class DatabaseStorage implements IStorage {
 
   async createSale(sale: InsertSale, items: Omit<SaleItem, 'id' | 'saleId'>[]): Promise<Sale> {
     return await db.transaction(async (tx) => {
-      const [newSale] = await tx.insert(sales).values([sale]).returning();
+      const saleData = {
+        ...sale,
+        staffId: sale.staffId || 'system' // Provide default value for staffId
+      };
+      const [newSale] = await tx.insert(sales).values([saleData]).returning();
       
       const saleItemsToInsert = items.map(item => ({
         ...item,
@@ -487,7 +491,7 @@ export class DatabaseStorage implements IStorage {
     // Handle array field options properly
     const configData = {
       ...config,
-      fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions : undefined,
+      fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions as string[] : null,
     };
     const [newConfig] = await db.insert(customFieldsConfig).values([configData]).returning();
     return newConfig;
@@ -497,7 +501,7 @@ export class DatabaseStorage implements IStorage {
     // Handle array field options properly
     const configData = {
       ...config,
-      fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions : undefined,
+      fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions as string[] : null,
     };
     const [updatedConfig] = await db
       .update(customFieldsConfig)
@@ -601,51 +605,80 @@ export class DatabaseStorage implements IStorage {
     console.log(`Staff member ${id} deleted`);
   }
 
-  // Invoice operations
+  // Invoice operations - Include invoices from Quick Sales and created invoices
   async getInvoices(): Promise<any[]> {
-    // For now, return mock data since we don't have invoice tables yet
-    return [
-      {
-        id: "inv-001",
-        invoiceNumber: "INV-001",
-        customerId: "cust-001",
-        customerName: "Sarah Johnson",
-        storeId: "store-001",
-        storeName: "OptiStore Downtown",
-        date: new Date().toISOString(),
-        dueDate: "2025-09-01",
-        subtotal: 250,
-        taxRate: 8.5,
-        taxAmount: 21.25,
+    try {
+      // Get real sales data to create invoices from Quick Sales
+      const sales = await this.getSales();
+      const realInvoices = sales.map(sale => ({
+        id: `invoice-${sale.id}`,
+        invoiceNumber: `INV-${sale.id.slice(-8)}`,
+        customerId: sale.customerId || "guest",
+        customerName: sale.customerId ? "Customer" : "Guest Customer", // Will be resolved in frontend
+        storeId: sale.storeId,
+        storeName: "OptiStore Pro",
+        date: sale.createdAt || new Date().toISOString(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        subtotal: parseFloat(sale.subtotal || "0"),
+        taxRate: parseFloat(sale.taxAmount || "0") > 0 ? 10 : 0,
+        taxAmount: parseFloat(sale.taxAmount || "0"),
         discountAmount: 0,
-        total: 271.25,
-        status: "sent",
-        paymentMethod: "card",
-        notes: "Eye examination and prescription glasses",
-        items: [
-          {
-            id: "item-001",
-            productId: "prod-001",
-            productName: "Progressive Lenses",
-            description: "High-quality progressive lenses",
-            quantity: 1,
-            unitPrice: 150,
-            discount: 0,
-            total: 150
-          },
-          {
-            id: "item-002",
-            productId: "prod-002",
-            productName: "Designer Frame",
-            description: "Premium designer eyeglass frame",
-            quantity: 1,
-            unitPrice: 100,
-            discount: 0,
-            total: 100
-          }
-        ]
-      }
-    ];
+        total: parseFloat(sale.total || "0"),
+        status: sale.paymentStatus === "paid" ? "paid" : "pending",
+        paymentMethod: sale.paymentMethod || "cash",
+        notes: sale.notes || `Quick Sale - ${sale.paymentMethod}`,
+        items: [] // Items would be fetched separately in a real implementation
+      }));
+
+      // Add manually created invoices (sample data)
+      const manualInvoices = [
+        {
+          id: "inv-001",
+          invoiceNumber: "INV-001",
+          customerId: "cust-001",
+          customerName: "Sarah Johnson",
+          storeId: "store-001",
+          storeName: "OptiStore Downtown",
+          date: new Date().toISOString(),
+          dueDate: "2025-09-01",
+          subtotal: 250,
+          taxRate: 8.5,
+          taxAmount: 21.25,
+          discountAmount: 0,
+          total: 271.25,
+          status: "sent",
+          paymentMethod: "card",
+          notes: "Eye examination and prescription glasses",
+          items: [
+            {
+              id: "item-001",
+              productId: "prod-001",
+              productName: "Progressive Lenses",
+              description: "High-quality progressive lenses",
+              quantity: 1,
+              unitPrice: 150,
+              discount: 0,
+              total: 150
+            },
+            {
+              id: "item-002",
+              productId: "prod-002",
+              productName: "Designer Frame",
+              description: "Premium designer eyeglass frame",
+              quantity: 1,
+              unitPrice: 100,
+              discount: 0,
+              total: 100
+            }
+          ]
+        }
+      ];
+
+      return [...realInvoices, ...manualInvoices];
+    } catch (error) {
+      console.error("Error getting invoices:", error);
+      return [];
+    }
   }
 
   async getInvoice(id: string): Promise<any | undefined> {

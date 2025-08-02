@@ -124,10 +124,22 @@ export default function InvoiceManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Queries
+  // Queries - Enhanced to show both manual and QuickSale invoices
   const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
   });
+
+  // Enhance invoice data with customer names
+  const enrichedInvoices = React.useMemo(() => {
+    return invoices.map(invoice => {
+      const customer = customers.find(c => c.id === invoice.customerId);
+      return {
+        ...invoice,
+        customerName: customer ? `${customer.firstName} ${customer.lastName}` : 
+                    invoice.customerName || 'Guest Customer'
+      };
+    });
+  }, [invoices, customers]);
 
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -287,8 +299,8 @@ export default function InvoiceManagement() {
     createInvoiceMutation.mutate(invoiceData);
   };
 
-  // Filter invoices
-  const filteredInvoices = invoices.filter(invoice => {
+  // Filter invoices - Use enriched invoices with customer names
+  const filteredInvoices = enrichedInvoices.filter(invoice => {
     const matchesSearch = 
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase());

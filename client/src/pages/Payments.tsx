@@ -17,8 +17,16 @@ import {
   RefreshCw,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  Eye,
+  Printer,
+  Share2,
+  MoreVertical,
+  Send,
+  Receipt
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Payment {
   id: string;
@@ -90,6 +98,148 @@ export default function Payments() {
   const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
   const completedPayments = payments.filter(p => p.status === "completed");
   const pendingPayments = payments.filter(p => p.status === "pending");
+
+  // Payment Actions Component
+  const PaymentActions = ({ payment }: { payment: Payment }) => {
+    const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
+    
+    const handlePrintPayment = () => {
+      // Generate and print payment receipt
+      const printContent = `
+        <html>
+          <head><title>Payment Receipt - ${payment.id}</title></head>
+          <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2>Payment Receipt</h2>
+            <p><strong>Payment ID:</strong> ${payment.id}</p>
+            <p><strong>Customer:</strong> ${payment.customerName}</p>
+            <p><strong>Amount:</strong> $${payment.amount.toFixed(2)}</p>
+            <p><strong>Method:</strong> ${payment.paymentMethod}</p>
+            <p><strong>Status:</strong> ${payment.status}</p>
+            <p><strong>Date:</strong> ${new Date(payment.paymentDate).toLocaleDateString()}</p>
+            ${payment.transactionId ? `<p><strong>Transaction ID:</strong> ${payment.transactionId}</p>` : ''}
+          </body>
+        </html>
+      `;
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
+    const handleSharePayment = () => {
+      const shareData = {
+        title: `Payment Receipt - ${payment.customerName}`,
+        text: `Payment of $${payment.amount.toFixed(2)} from ${payment.customerName}`,
+        url: window.location.href
+      };
+      
+      if (navigator.share) {
+        navigator.share(shareData);
+      } else {
+        navigator.clipboard.writeText(`Payment Receipt\nCustomer: ${payment.customerName}\nAmount: $${payment.amount.toFixed(2)}\nStatus: ${payment.status}`);
+        toast({
+          title: "Copied to clipboard",
+          description: "Payment details copied to clipboard.",
+        });
+      }
+    };
+
+    const handlePayNow = () => {
+      if (payment.status === "pending") {
+        // Simulate payment processing
+        toast({
+          title: "Processing Payment",
+          description: "Redirecting to payment gateway...",
+        });
+        // In a real app, this would redirect to payment processor
+      }
+    };
+
+    return (
+      <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={() => setViewDetailsOpen(true)}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Details
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handlePrintPayment}>
+              <Printer className="h-4 w-4 mr-2" />
+              Print Receipt
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSharePayment}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {payment.status === "pending" && (
+              <DropdownMenuItem onClick={handlePayNow} className="text-green-600">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Pay Now
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => window.open(`mailto:${payment.customerName}?subject=Payment Receipt&body=Your payment of $${payment.amount.toFixed(2)} has been processed.`)}>
+              <Send className="h-4 w-4 mr-2" />
+              Email Receipt
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Dialog open={viewDetailsOpen} onOpenChange={setViewDetailsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Payment Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Payment ID</label>
+                  <p className="text-sm">{payment.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Invoice ID</label>
+                  <p className="text-sm">{payment.invoiceId}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Customer</label>
+                  <p className="text-sm">{payment.customerName}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Amount</label>
+                  <p className="text-sm font-bold">${payment.amount.toFixed(2)}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Method</label>
+                  <p className="text-sm capitalize">{payment.paymentMethod}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Status</label>
+                  <Badge variant={getStatusBadge(payment.status)}>{payment.status}</Badge>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">Payment Date</label>
+                  <p className="text-sm">{new Date(payment.paymentDate).toLocaleDateString()}</p>
+                </div>
+                {payment.transactionId && (
+                  <div>
+                    <label className="text-sm font-medium text-slate-600">Transaction ID</label>
+                    <p className="text-sm">{payment.transactionId}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -216,7 +366,7 @@ export default function Payments() {
           <CardTitle>Payment History</CardTitle>
           <CardDescription>All payment transactions and their status</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-[600px] overflow-y-auto">
           {isLoading ? (
             <div className="text-center py-8">
               <p className="text-slate-500">Loading payments...</p>
@@ -229,7 +379,7 @@ export default function Payments() {
           ) : (
             <div className="space-y-4">
               {payments.map((payment) => (
-                <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
+                <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-all duration-200 group">
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                       {getStatusIcon(payment.status)}
@@ -254,9 +404,12 @@ export default function Payments() {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">${payment.amount.toFixed(2)}</p>
-                    <p className="text-sm text-slate-500 capitalize">{payment.paymentMethod}</p>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <p className="text-lg font-bold">${payment.amount.toFixed(2)}</p>
+                      <p className="text-sm text-slate-500 capitalize">{payment.paymentMethod}</p>
+                    </div>
+                    <PaymentActions payment={payment} />
                   </div>
                 </div>
               ))}
