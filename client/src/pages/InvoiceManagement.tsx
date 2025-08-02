@@ -99,8 +99,8 @@ const invoiceSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   storeId: z.string().min(1, "Store is required"),
   dueDate: z.string().min(1, "Due date is required"),
-  taxRate: z.number().min(0).max(100),
-  discountAmount: z.number().min(0),
+  taxRate: z.coerce.number().min(0).max(100),
+  discountAmount: z.coerce.number().min(0),
   notes: z.string().optional(),
 });
 
@@ -160,23 +160,39 @@ export default function InvoiceManagement() {
   // Mutations
   const createInvoiceMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("Creating invoice with data:", data);
       const response = await fetch("/api/invoices", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create invoice");
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Invoice creation failed:", errorData);
+        throw new Error(`Failed to create invoice: ${response.status}`);
+      }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (invoiceData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       toast({
         title: "Success",
         description: "Invoice created successfully.",
       });
       setInvoiceDialogOpen(false);
-      invoiceForm.reset();
+      invoiceForm.reset({
+        taxRate: 8.5,
+        discountAmount: 0,
+      });
       setInvoiceItems([]);
+    },
+    onError: (error: any) => {
+      console.error("Invoice creation error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create invoice.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -251,12 +267,16 @@ export default function InvoiceManagement() {
     }
 
     const invoiceData = {
+      invoiceNumber: `INV-${Date.now()}`,
+      date: new Date().toISOString(),
+      status: "draft",
       ...data,
       items: invoiceItems,
-      subtotal,
-      taxAmount,
-      total: grandTotal,
-      discountAmount: discountAmount,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      total: parseFloat(grandTotal.toFixed(2)),
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      taxRate: data.taxRate || 8.5,
     };
 
     createInvoiceMutation.mutate(invoiceData);
@@ -295,7 +315,7 @@ export default function InvoiceManagement() {
     return JSON.stringify(qrData);
   };
 
-  // Professional invoice generation with prescription-style format
+  // Professional A4-sized invoice generation
   const generateProfessionalInvoice = (invoice: Invoice) => {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
@@ -344,7 +364,15 @@ export default function InvoiceManagement() {
                   <div>${invoice.invoiceNumber}</div>
                 </div>
                 <div class="qr-code">
-                  <div style="width: 64px; height: 64px; background: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8pt; text-align: center;">QR Code</div>
+                  <svg style="width: 64px; height: 64px;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100" height="100" fill="white"/>
+                    <rect x="10" y="10" width="15" height="15" fill="black"/>
+                    <rect x="75" y="10" width="15" height="15" fill="black"/>
+                    <rect x="10" y="75" width="15" height="15" fill="black"/>
+                    <rect x="30" y="30" width="40" height="40" fill="none" stroke="black" stroke-width="2"/>
+                    <circle cx="50" cy="50" r="8" fill="black"/>
+                    <text x="50" y="95" text-anchor="middle" font-size="6" fill="black">${invoice.invoiceNumber}</text>
+                  </svg>
                 </div>
               </div>
             </div>
@@ -405,7 +433,7 @@ export default function InvoiceManagement() {
                 </div>
               ` : ''}
               <div class="total-row">
-                <span>Tax (${invoice.taxRate}%):</span>
+                <span>Tax (${(invoice.taxRate || 8.5)}%):</span>
                 <span>$${parseFloat(invoice.taxAmount.toString()).toFixed(2)}</span>
               </div>
               <div class="total-row grand-total">
