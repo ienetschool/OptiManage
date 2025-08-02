@@ -128,8 +128,20 @@ export default function Patients() {
     serviceType: "",
     doctorId: "",
     notes: "",
-    status: "scheduled"
+    status: "scheduled",
+    appointmentFee: "",
+    paymentStatus: "pending",
+    paymentMethod: ""
   });
+
+  // Service fee mapping
+  const serviceFees = {
+    "eye-exam": "150.00",
+    "contact-lens": "120.00", 
+    "glasses-fitting": "100.00",
+    "follow-up": "75.00",
+    "consultation": "200.00"
+  };
 
   // Fetch patients
   const { data: patients = [], isLoading } = useQuery({
@@ -182,10 +194,53 @@ export default function Patients() {
   // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/appointments", data);
+      const response = await apiRequest("POST", "/api/appointments", data);
+      return response;
     },
-    onSuccess: () => {
+    onSuccess: async (appointmentData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      
+      // If payment is marked as paid, automatically generate invoice
+      if (appointmentForm.paymentStatus === 'paid') {
+        try {
+          const invoiceData = {
+            invoiceNumber: `INV-${Date.now()}`,
+            patientId: appointmentForm.patientId,
+            appointmentId: appointmentData.id,
+            storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+            invoiceDate: new Date(),
+            dueDate: new Date(),
+            subtotal: parseFloat(appointmentForm.appointmentFee),
+            taxAmount: parseFloat(appointmentForm.appointmentFee) * 0.08, // 8% tax
+            discountAmount: 0,
+            total: parseFloat(appointmentForm.appointmentFee) * 1.08,
+            paymentStatus: 'paid',
+            paymentMethod: appointmentForm.paymentMethod,
+            paymentDate: new Date(),
+            notes: `Payment for ${appointmentForm.serviceType} appointment`
+          };
+          
+          await apiRequest("POST", "/api/medical-invoices", invoiceData);
+          queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+          
+          toast({
+            title: "Success",
+            description: "Appointment scheduled and invoice generated successfully.",
+          });
+        } catch (error) {
+          toast({
+            title: "Warning",
+            description: "Appointment scheduled but invoice generation failed.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Success",
+          description: "Appointment scheduled successfully.",
+        });
+      }
+      
       setAppointmentOpen(false);
       setAppointmentForm({
         patientId: "",
@@ -194,11 +249,10 @@ export default function Patients() {
         serviceType: "",
         doctorId: "",
         notes: "",
-        status: "scheduled"
-      });
-      toast({
-        title: "Success",
-        description: "Appointment scheduled successfully.",
+        status: "scheduled",
+        appointmentFee: "",
+        paymentStatus: "pending",
+        paymentMethod: ""
       });
     },
     onError: () => {
@@ -216,10 +270,19 @@ export default function Patients() {
 
   const onAppointmentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!appointmentForm.patientId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime || !appointmentForm.serviceType) {
+    if (!appointmentForm.patientId || !appointmentForm.appointmentDate || !appointmentForm.appointmentTime || !appointmentForm.serviceType || !appointmentForm.appointmentFee) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (appointmentForm.paymentStatus === 'paid' && !appointmentForm.paymentMethod) {
+      toast({
+        title: "Payment Method Required",
+        description: "Please select a payment method for paid appointments.",
         variant: "destructive",
       });
       return;
@@ -234,6 +297,10 @@ export default function Patients() {
       storeId: "5ff902af-3849-4ea6-945b-4d49175d6638", // Use the existing store from database
       appointmentDate: appointmentDateTime,
       service: appointmentForm.serviceType, // Map serviceType to service
+      appointmentFee: parseFloat(appointmentForm.appointmentFee),
+      paymentStatus: appointmentForm.paymentStatus,
+      paymentMethod: appointmentForm.paymentMethod || null,
+      paymentDate: appointmentForm.paymentStatus === 'paid' ? new Date() : null,
       notes: appointmentForm.notes || "",
       status: "scheduled"
     };
@@ -1760,17 +1827,21 @@ export default function Patients() {
                         <Label>Service Type *</Label>
                         <Select 
                           value={appointmentForm.serviceType} 
-                          onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, serviceType: value }))}
+                          onValueChange={(value) => setAppointmentForm(prev => ({ 
+                            ...prev, 
+                            serviceType: value, 
+                            appointmentFee: serviceFees[value as keyof typeof serviceFees] || ""
+                          }))}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Select service" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="eye-exam">Eye Examination</SelectItem>
-                            <SelectItem value="contact-lens">Contact Lens Fitting</SelectItem>
-                            <SelectItem value="glasses-fitting">Glasses Fitting</SelectItem>
-                            <SelectItem value="follow-up">Follow-up Visit</SelectItem>
-                            <SelectItem value="consultation">Consultation</SelectItem>
+                            <SelectItem value="eye-exam">Eye Examination - $150.00</SelectItem>
+                            <SelectItem value="contact-lens">Contact Lens Fitting - $120.00</SelectItem>
+                            <SelectItem value="glasses-fitting">Glasses Fitting - $100.00</SelectItem>
+                            <SelectItem value="follow-up">Follow-up Visit - $75.00</SelectItem>
+                            <SelectItem value="consultation">Consultation - $200.00</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -1792,6 +1863,58 @@ export default function Patients() {
                           onChange={(e) => setAppointmentForm(prev => ({ ...prev, appointmentTime: e.target.value }))}
                         />
                       </div>
+
+                      <div className="space-y-2">
+                        <Label>Appointment Fee *</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={appointmentForm.appointmentFee}
+                          onChange={(e) => setAppointmentForm(prev => ({ ...prev, appointmentFee: e.target.value }))}
+                          placeholder="0.00"
+                          className="text-lg font-semibold"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Payment Status</Label>
+                        <Select 
+                          value={appointmentForm.paymentStatus} 
+                          onValueChange={(value) => setAppointmentForm(prev => ({ 
+                            ...prev, 
+                            paymentStatus: value,
+                            paymentDate: value === 'paid' ? new Date().toISOString().split('T')[0] : ""
+                          }))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select payment status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending Payment</SelectItem>
+                            <SelectItem value="paid">Paid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {appointmentForm.paymentStatus === 'paid' && (
+                        <div className="space-y-2">
+                          <Label>Payment Method *</Label>
+                          <Select 
+                            value={appointmentForm.paymentMethod} 
+                            onValueChange={(value) => setAppointmentForm(prev => ({ ...prev, paymentMethod: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cash">Cash</SelectItem>
+                              <SelectItem value="card">Credit/Debit Card</SelectItem>
+                              <SelectItem value="insurance">Insurance</SelectItem>
+                              <SelectItem value="online">Online Payment</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
 
                       <div className="space-y-2 md:col-span-2">
                         <Label>Notes</Label>
@@ -1827,6 +1950,8 @@ export default function Patients() {
                     <th className="text-left py-4 px-6 font-medium text-gray-600">Patient Name</th>
                     <th className="text-left py-4 px-6 font-medium text-gray-600">Service</th>
                     <th className="text-left py-4 px-6 font-medium text-gray-600">Date & Time</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Fee</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">Payment</th>
                     <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
                     <th className="text-left py-4 px-6 font-medium text-gray-600">Actions</th>
                   </tr>
@@ -1834,7 +1959,7 @@ export default function Patients() {
                 <tbody>
                   {(appointments as any[]).length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="text-center py-12">
+                      <td colSpan={8} className="text-center py-12">
                         <div className="text-gray-500">
                           <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
                           <h3 className="text-lg font-medium mb-2">No appointments scheduled</h3>
@@ -1871,6 +1996,19 @@ export default function Patients() {
                             <div className="text-gray-900">{new Date(appointment.appointmentDate).toLocaleDateString()}</div>
                             <div className="text-gray-500">{new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
                           </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <div className="text-sm font-medium text-gray-900">
+                            ${parseFloat(appointment.appointmentFee || 0).toFixed(2)}
+                          </div>
+                        </td>
+                        <td className="py-4 px-6">
+                          <Badge variant={appointment.paymentStatus === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                            {(appointment.paymentStatus || 'pending').toUpperCase()}
+                          </Badge>
+                          {appointment.paymentMethod && (
+                            <div className="text-xs text-gray-500 mt-1">{appointment.paymentMethod}</div>
+                          )}
                         </td>
                         <td className="py-4 px-6">
                           <Badge variant={appointment.status === 'scheduled' ? 'default' : 'secondary'}>

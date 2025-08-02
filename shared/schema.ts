@@ -139,6 +139,9 @@ export const appointments = pgTable("appointments", {
   duration: integer("duration").default(60), // minutes
   service: varchar("service").notNull(),
   appointmentFee: decimal("appointment_fee", { precision: 10, scale: 2 }),
+  paymentStatus: varchar("payment_status").default('pending'), // pending, paid, refunded, cancelled
+  paymentMethod: varchar("payment_method"), // cash, card, insurance, online
+  paymentDate: timestamp("payment_date"),
   status: varchar("status").default('scheduled'), // scheduled, confirmed, checked-in, in-progress, completed, cancelled, no-show
   priority: varchar("priority").default('normal'), // low, normal, high, urgent
   notes: text("notes"),
