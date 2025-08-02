@@ -294,9 +294,8 @@ export default function Patients() {
       // If payment is marked as paid, automatically generate invoice
       if (appointmentForm.paymentStatus === 'paid') {
         try {
-          const appointmentId = typeof appointmentData === 'object' && appointmentData && 'id' in appointmentData 
-            ? appointmentData.id 
-            : `APPT-${Date.now()}`;
+          // Use the actual appointment ID from the created appointment
+          const appointmentId = appointmentData?.id;
             
           // Proper calculation with number handling
           const feeAmount = parseFloat(appointmentForm.appointmentFee) || 0;
@@ -306,7 +305,7 @@ export default function Patients() {
           const invoiceData = {
             invoiceNumber: `INV-${Date.now()}`,
             patientId: appointmentForm.patientId,
-            appointmentId: appointmentId,
+            appointmentId: appointmentId, // Use actual UUID from created appointment
             storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
             invoiceDate: new Date(),
             dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now

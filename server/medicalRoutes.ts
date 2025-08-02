@@ -215,11 +215,10 @@ export function registerMedicalRoutes(app: Express) {
     try {
       console.log(`📝 MEDICAL INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
       
-      // Validate and parse using the insert schema
-      const validatedData = insertMedicalInvoiceSchema.parse({
+      // Validate and parse using the insert schema - exclude appointmentId if not valid UUID
+      const invoiceData = {
         invoiceNumber: req.body.invoiceNumber || `INV-${Date.now()}`,
         patientId: req.body.patientId,
-        appointmentId: req.body.appointmentId,
         storeId: req.body.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
         subtotal: (parseFloat(req.body.subtotal) || 0).toFixed(2),
         taxAmount: (parseFloat(req.body.taxAmount) || 0).toFixed(2),
@@ -229,7 +228,15 @@ export function registerMedicalRoutes(app: Express) {
         paymentMethod: req.body.paymentMethod,
         paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : null,
         notes: req.body.notes || ''
-      });
+      };
+
+      // Only include appointmentId if it's a valid UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (req.body.appointmentId && uuidRegex.test(req.body.appointmentId)) {
+        invoiceData.appointmentId = req.body.appointmentId;
+      }
+
+      const validatedData = insertMedicalInvoiceSchema.parse(invoiceData);
       
       console.log(`💰 MEDICAL INVOICE CALCULATIONS: Subtotal: $${validatedData.subtotal}, Tax: $${validatedData.taxAmount}, Total: $${validatedData.total}`);
       
