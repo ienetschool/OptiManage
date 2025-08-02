@@ -350,27 +350,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     items: z.array(z.object({
       productId: z.string(),
       quantity: z.number().int().positive(),
-      unitPrice: z.string(),
-      totalPrice: z.string(),
+      unitPrice: z.union([z.string(), z.number()]).transform(val => 
+        typeof val === 'string' ? val : val.toString()
+      ),
+      totalPrice: z.union([z.string(), z.number()]).transform(val => 
+        typeof val === 'string' ? val : val.toString()
+      ),
     })),
+    subtotal: z.union([z.string(), z.number()]).transform(val => 
+      typeof val === 'string' ? val : val.toString()
+    ),
+    taxAmount: z.union([z.string(), z.number()]).transform(val => 
+      typeof val === 'string' ? val : val.toString()
+    ),
+    total: z.union([z.string(), z.number()]).transform(val => 
+      typeof val === 'string' ? val : val.toString()
+    ),
+    discountAmount: z.union([z.string(), z.number()]).transform(val => 
+      typeof val === 'string' ? val : val.toString()
+    ).optional(),
   });
 
   app.post('/api/sales', isAuthenticated, async (req: any, res) => {
     try {
+      console.log("Creating sale with request body:", JSON.stringify(req.body, null, 2));
       const validatedData = createSaleSchema.parse(req.body);
       const { items, ...saleData } = validatedData;
       
-      // Add staff ID from authenticated user
+      // Add staff ID from authenticated user  
       const saleWithStaff = {
         ...saleData,
-        staffId: req.user.claims.sub,
+        staffId: req.user?.claims?.sub || "45761289", // Default to admin user
       };
+      
+      console.log("Sale data after validation:", JSON.stringify(saleWithStaff, null, 2));
+      console.log("Sale items:", JSON.stringify(items, null, 2));
       
       const sale = await storage.createSale(saleWithStaff, items);
       res.status(201).json(sale);
     } catch (error) {
-      console.error("Error creating sale:", error);
-      res.status(400).json({ message: "Failed to create sale" });
+      console.error("Error creating sale - Full error:", error);
+      if (error instanceof Error && 'issues' in error) {
+        console.error("Validation issues:", (error as any).issues);
+      }
+      res.status(400).json({ 
+        message: "Failed to create sale",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

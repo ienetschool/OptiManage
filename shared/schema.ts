@@ -331,6 +331,9 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
 export const insertSaleSchema = createInsertSchema(sales).omit({
   id: true,
   createdAt: true,
+}).extend({
+  staffId: z.string().optional(),
+  customerId: z.string().optional().nullable(),
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({

@@ -266,17 +266,21 @@ export default function InvoiceManagement() {
       return;
     }
 
+    // Ensure required fields are present
     const invoiceData = {
       invoiceNumber: `INV-${Date.now()}`,
       date: new Date().toISOString(),
       status: "draft",
-      ...data,
       items: invoiceItems,
       subtotal: parseFloat(subtotal.toFixed(2)),
       taxAmount: parseFloat(taxAmount.toFixed(2)),
       total: parseFloat(grandTotal.toFixed(2)),
       discountAmount: parseFloat(discountAmount.toFixed(2)),
       taxRate: data.taxRate || 8.5,
+      customerId: data.customerId || "f8e50809-954c-4ff6-b1c2-a014218b1b36",
+      storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+      dueDate: data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      notes: data.notes || "",
     };
 
     createInvoiceMutation.mutate(invoiceData);

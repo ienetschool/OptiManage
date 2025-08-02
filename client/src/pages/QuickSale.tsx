@@ -192,7 +192,8 @@ export default function QuickSale({ onClose }: QuickSaleProps) {
     }
 
     const saleData = {
-      customerId: selectedCustomer || null,
+      customerId: selectedCustomer || undefined,
+      storeId: "5ff902af-3849-4ea6-945b-4d49175d6638", // Default store
       items: cart.map(item => {
         const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
         return {

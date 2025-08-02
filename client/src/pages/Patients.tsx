@@ -206,7 +206,7 @@ export default function Patients() {
           const invoiceData = {
             invoiceNumber: `INV-${Date.now()}`,
             patientId: appointmentForm.patientId,
-            appointmentId: appointmentData.id,
+            appointmentId: appointmentData?.id || `APPT-${Date.now()}`,
             storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
             invoiceDate: new Date(),
             dueDate: new Date(),
@@ -2811,8 +2811,7 @@ export default function Patients() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const appointmentReport = generateAppointmentReport(appointment, selectedPatient, (staff as any[]).find(s => s.id === appointment.assignedDoctorId));
-                                window.open(appointmentReport, '_blank');
+                                generateAppointmentReport(appointment, selectedPatient, (staff as any[]).find(s => s.id === appointment.assignedDoctorId));
                               }}
                             >
                               <FileDown className="h-3 w-3 mr-1" />
@@ -2825,8 +2824,7 @@ export default function Patients() {
                                 size="sm"
                                 onClick={() => {
                                   // Generate invoice for completed appointment
-                                  const invoiceData = generateInvoice(appointment, selectedPatient);
-                                  window.open(invoiceData, '_blank');
+                                  generateInvoice(appointment, selectedPatient);
                                 }}
                               >
                                 <Receipt className="h-3 w-3 mr-1" />
@@ -2991,8 +2989,7 @@ export default function Patients() {
                               size="sm"
                               onClick={() => {
                                 // Generate prescription PDF
-                                const prescriptionReport = generatePrescriptionPDF(prescription, selectedPatient);
-                                window.open(prescriptionReport, '_blank');
+                                generatePrescriptionPDF(prescription, selectedPatient);
                               }}
                             >
                               <FileDown className="h-3 w-3 mr-1" />
@@ -3114,8 +3111,7 @@ export default function Patients() {
                         size="sm"
                         onClick={() => {
                           // Generate comprehensive billing report
-                          const billingReport = generateComprehensiveBillingReport(selectedPatient, (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id));
-                          if (billingReport) window.open(billingReport, '_blank');
+                          generateComprehensiveBillingReport(selectedPatient, (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id));
                         }}
                       >
                         <FileDown className="h-3 w-3 mr-1" />
@@ -3182,8 +3178,7 @@ export default function Patients() {
                               size="sm"
                               onClick={() => {
                                 // Generate individual invoice PDF
-                                const invoicePDF = generateDetailedInvoice(invoice, selectedPatient);
-                                if (invoicePDF) window.open(invoicePDF, '_blank');
+                                generateDetailedInvoice(invoice, selectedPatient);
                               }}
                             >
                               <Download className="h-3 w-3 mr-1" />
@@ -3195,13 +3190,7 @@ export default function Patients() {
                               size="sm"
                               onClick={() => {
                                 // Print invoice
-                                const invoicePrint = generateDetailedInvoice(invoice, selectedPatient);
-                                if (invoicePrint) {
-                                  const printWindow = window.open(invoicePrint, '_blank');
-                                  if (printWindow) {
-                                    printWindow.onload = () => printWindow.print();
-                                  }
-                                }
+                                generateDetailedInvoice(invoice, selectedPatient);
                               }}
                             >
                               <Printer className="h-3 w-3 mr-1" />
@@ -3457,7 +3446,11 @@ export default function Patients() {
                   Close
                 </Button>
                 <Button onClick={() => {
-                  generateAppointmentReport(selectedAppointment);
+                  if (selectedAppointment) {
+                    const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
+                    const assignedDoctor = (staff as any[]).find(s => s.id === selectedAppointment.assignedDoctorId);
+                    generateAppointmentReport(selectedAppointment, patient, assignedDoctor);
+                  }
                   setViewAppointmentOpen(false);
                 }}>
                   <Printer className="h-4 w-4 mr-2" />

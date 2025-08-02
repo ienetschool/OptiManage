@@ -260,14 +260,25 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
-    const [newAppointment] = await db.insert(appointments).values(appointment).returning();
+    // Convert number appointmentFee to string if needed
+    const appointmentData = {
+      ...appointment,
+      appointmentFee: appointment.appointmentFee ? appointment.appointmentFee.toString() : undefined,
+    };
+    const [newAppointment] = await db.insert(appointments).values(appointmentData).returning();
     return newAppointment;
   }
 
   async updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment> {
+    // Convert number appointmentFee to string if needed
+    const appointmentData = {
+      ...appointment,
+      appointmentFee: appointment.appointmentFee ? appointment.appointmentFee.toString() : undefined,
+      updatedAt: new Date()
+    };
     const [updatedAppointment] = await db
       .update(appointments)
-      .set({ ...appointment, updatedAt: new Date() })
+      .set(appointmentData)
       .where(eq(appointments.id, id))
       .returning();
     return updatedAppointment;
@@ -298,20 +309,22 @@ export class DatabaseStorage implements IStorage {
       
       await tx.insert(saleItems).values(saleItemsToInsert);
       
-      // Update inventory
-      for (const item of items) {
-        await tx
-          .update(storeInventory)
-          .set({
-            quantity: sql`${storeInventory.quantity} - ${item.quantity}`,
-            updatedAt: new Date(),
-          })
-          .where(
-            and(
-              eq(storeInventory.storeId, sale.storeId),
-              eq(storeInventory.productId, item.productId)
-            )
-          );
+      // Update inventory (optional - only if storeId is provided)
+      if (sale.storeId) {
+        for (const item of items) {
+          await tx
+            .update(storeInventory)
+            .set({
+              quantity: sql`${storeInventory.quantity} - ${item.quantity}`,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(storeInventory.storeId, sale.storeId),
+                eq(storeInventory.productId, item.productId)
+              )
+            );
+        }
       }
       
       return newSale;
@@ -471,14 +484,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomFieldConfig(config: InsertCustomFieldConfig): Promise<CustomFieldConfig> {
-    const [newConfig] = await db.insert(customFieldsConfig).values(config).returning();
+    // Handle array field options properly
+    const configData = {
+      ...config,
+      fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions : undefined,
+    };
+    const [newConfig] = await db.insert(customFieldsConfig).values(configData).returning();
     return newConfig;
   }
 
   async updateCustomFieldConfig(id: string, config: Partial<InsertCustomFieldConfig>): Promise<CustomFieldConfig> {
+    // Handle array field options properly
+    const configData = {
+      ...config,
+      fieldOptions: Array.isArray(config.fieldOptions) ? config.fieldOptions : undefined,
+    };
     const [updatedConfig] = await db
       .update(customFieldsConfig)
-      .set(config)
+      .set(configData)
       .where(eq(customFieldsConfig.id, id))
       .returning();
     return updatedConfig;
