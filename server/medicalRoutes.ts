@@ -261,7 +261,7 @@ export function registerMedicalRoutes(app: Express) {
   });
 
   // Invoice Management Routes (frontend compatibility)
-  app.get("/api/invoices", isAuthenticated, async (req, res) => {
+  app.get("/api/medical-invoices", isAuthenticated, async (req, res) => {
     try {
       // Mock invoice data that matches the InvoiceManagement interface
       const mockInvoices = [

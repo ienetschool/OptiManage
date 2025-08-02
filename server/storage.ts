@@ -129,9 +129,16 @@ export interface IStorage {
   createMedicalInvoice(invoice: any): Promise<any>;
 }
 
+// Global in-memory storage for created invoices (persists across requests)
+const globalCreatedInvoices: any[] = [];
+
 export class DatabaseStorage implements IStorage {
-  // In-memory storage for created invoices until database schema is implemented
-  private createdInvoices: any[] = [];
+  // Reference to global storage
+  private get createdInvoices(): any[] {
+    return globalCreatedInvoices;
+  }
+  
+
   // User operations (mandatory for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -613,6 +620,9 @@ export class DatabaseStorage implements IStorage {
   // Invoice operations - Include invoices from Quick Sales and created invoices
   async getInvoices(): Promise<any[]> {
     try {
+      console.log(`🚨 STORAGE.getInvoices() CALLED - globalCreatedInvoices has ${globalCreatedInvoices.length} items`);
+      console.log(`🚨 GLOBAL INVOICES:`, globalCreatedInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber })));
+      
       // Get real sales data to create invoices from Quick Sales
       const sales = await this.getSales();
       const realInvoices = sales.map(sale => ({
@@ -680,7 +690,17 @@ export class DatabaseStorage implements IStorage {
         }
       ];
 
-      return [...realInvoices, ...manualInvoices, ...this.createdInvoices];
+      const allInvoices = [...realInvoices, ...manualInvoices, ...this.createdInvoices];
+      console.log(`🚨 RETURNING ${allInvoices.length} total invoices (${realInvoices.length} from sales, ${manualInvoices.length} manual, ${this.createdInvoices.length} created)`);
+      
+      // Debug log to show what we're returning
+      if (this.createdInvoices.length > 0) {
+        console.log(`✅ INCLUDING CREATED INVOICES:`, this.createdInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber, total: inv.total })));
+      }
+      
+      console.log(`🚨 FINAL INVOICE IDS BEING RETURNED:`, allInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber })));
+      
+      return allInvoices;
     } catch (error) {
       console.error("Error getting invoices:", error);
       return [];
@@ -739,10 +759,12 @@ export class DatabaseStorage implements IStorage {
         }))
       };
       
-      // Store in memory so it appears in the invoice list
-      this.createdInvoices.push(newInvoice);
+      // Store in global memory so it persists across requests
+      globalCreatedInvoices.push(newInvoice);
       
       console.log(`✅ INVOICE CREATED & STORED: ${newInvoice.invoiceNumber} - Subtotal: $${newInvoice.subtotal}, Tax: $${newInvoice.taxAmount}, Total: $${newInvoice.total}`);
+      console.log(`📊 CURRENT CREATED INVOICES COUNT: ${globalCreatedInvoices.length}`);
+      console.log(`📝 GLOBAL CREATED INVOICES ARRAY:`, JSON.stringify(globalCreatedInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber })), null, 2));
       
       return newInvoice;
     } catch (error) {

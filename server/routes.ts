@@ -316,7 +316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice routes
   app.get('/api/invoices', isAuthenticated, async (req, res) => {
     try {
+      console.log(`🚨 ROUTE: /api/invoices called`);
       const invoices = await storage.getInvoices();
+      console.log(`🚨 ROUTE: Got ${invoices.length} invoices from storage`);
       res.json(invoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
@@ -1007,7 +1009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Register medical practice routes
-  registerMedicalRoutes(app);
+  // registerMedicalRoutes(app); // Already registered above to avoid route conflicts
   
   // Register HR management routes
   registerHRRoutes(app);

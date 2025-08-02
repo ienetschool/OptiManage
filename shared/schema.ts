@@ -624,6 +624,48 @@ export const medicalInterventions = pgTable("medical_interventions", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Regular business invoices for retail customers
+export const invoices = pgTable("invoices", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  invoiceNumber: varchar("invoice_number", { length: 20 }).unique().notNull(),
+  customerId: varchar("customer_id").references(() => customers.id),
+  storeId: varchar("store_id").references(() => stores.id).notNull(),
+  
+  date: timestamp("date").defaultNow(),
+  dueDate: date("due_date"),
+  
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).default("0"),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default("0"),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  
+  status: varchar("status", { length: 20 }).default("draft"), // draft, sent, paid, overdue, cancelled
+  paymentMethod: varchar("payment_method", { length: 20 }), // cash, card, check, digital
+  paymentDate: timestamp("payment_date"),
+  
+  notes: text("notes"),
+  customFields: jsonb("custom_fields"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Invoice items for regular invoices
+export const invoiceItems = pgTable("invoice_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  invoiceId: uuid("invoice_id").references(() => invoices.id).notNull(),
+  productId: varchar("product_id").references(() => products.id),
+  productName: varchar("product_name", { length: 255 }).notNull(),
+  description: text("description"),
+  quantity: integer("quantity").notNull().default(1),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  discount: decimal("discount", { precision: 5, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Medical invoices (enhanced billing)
 export const medicalInvoices = pgTable("medical_invoices", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -691,6 +733,12 @@ export type StaffProfile = typeof staffProfiles.$inferSelect;
 export type AppointmentAction = typeof appointmentActions.$inferSelect;
 export type AppointmentPrescription = typeof appointmentPrescriptions.$inferSelect;
 export type RolePermission = typeof rolePermissions.$inferSelect;
+
+// Invoice types
+export type Invoice = typeof invoices.$inferSelect;
+export type InvoiceItem = typeof invoiceItems.$inferSelect;
+export type InsertInvoice = typeof invoices.$inferInsert;
+export type InsertInvoiceItem = typeof invoiceItems.$inferInsert;
 
 // Medical practice types
 export type Doctor = typeof doctors.$inferSelect;
