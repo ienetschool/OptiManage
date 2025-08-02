@@ -130,6 +130,8 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // In-memory storage for created invoices until database schema is implemented
+  private createdInvoices: any[] = [];
   // User operations (mandatory for Replit Auth)
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -633,7 +635,8 @@ export class DatabaseStorage implements IStorage {
         items: [] // Items would be fetched separately in a real implementation
       }));
 
-      // Add manually created invoices (sample data)
+      // Get manually created invoices from database or local storage
+      // For now, include sample data for testing
       const manualInvoices = [
         {
           id: "inv-001",
@@ -677,7 +680,7 @@ export class DatabaseStorage implements IStorage {
         }
       ];
 
-      return [...realInvoices, ...manualInvoices];
+      return [...realInvoices, ...manualInvoices, ...this.createdInvoices];
     } catch (error) {
       console.error("Error getting invoices:", error);
       return [];
@@ -690,18 +693,47 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoice(invoice: any, items: any[]): Promise<any> {
-    const newInvoice = {
-      id: `inv-${Date.now()}`,
-      invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
-      date: new Date().toISOString(),
-      status: 'draft',
-      ...invoice,
-      items: items.map((item, index) => ({
-        id: `item-${Date.now()}-${index}`,
-        ...item
-      }))
-    };
-    return newInvoice;
+    try {
+      console.log(`✅ INVOICE CREATED: ${invoice.invoiceNumber || `INV-${Date.now()}`} - Amount: ${invoice.total}`);
+      
+      // Create the new invoice with proper formatting
+      const newInvoice = {
+        id: `inv-${Date.now()}`,
+        invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
+        customerId: invoice.customerId,
+        customerName: "Customer", // Will be resolved when fetching
+        storeId: invoice.storeId,
+        storeName: "OptiStore Pro",
+        date: new Date().toISOString(),
+        dueDate: invoice.dueDate,
+        subtotal: parseFloat(invoice.subtotal || "0"),
+        taxRate: parseFloat(invoice.taxRate || "0"),
+        taxAmount: parseFloat(invoice.taxAmount || "0"),
+        discountAmount: parseFloat(invoice.discountAmount || "0"),
+        total: parseFloat(invoice.total || "0"),
+        status: invoice.status || 'draft',
+        paymentMethod: invoice.paymentMethod,
+        notes: invoice.notes,
+        items: items.map((item, index) => ({
+          id: `item-${Date.now()}-${index}`,
+          productId: item.productId,
+          productName: item.productName,
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: parseFloat(item.unitPrice || "0"),
+          discount: parseFloat(item.discount || "0"),
+          total: parseFloat(item.total || "0")
+        }))
+      };
+      
+      // Store in memory so it appears in the invoice list
+      this.createdInvoices.push(newInvoice);
+      
+      return newInvoice;
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      throw error;
+    }
   }
 
   async updateInvoice(id: string, invoice: any): Promise<any> {
