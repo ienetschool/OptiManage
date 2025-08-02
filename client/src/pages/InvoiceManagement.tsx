@@ -1019,7 +1019,7 @@ export default function InvoiceManagement() {
                                               value={product.id}
                                               onSelect={() => {
                                                 field.onChange(product.id);
-                                                itemForm.setValue("unitPrice", product.price);
+                                                itemForm.setValue("unitPrice", Number(product.price));
                                                 setProductSearchOpen(false);
                                                 setProductSearchTerm("");
                                               }}
@@ -1032,7 +1032,7 @@ export default function InvoiceManagement() {
                                               <div className="flex flex-col">
                                                 <span className="font-medium">{product.name}</span>
                                                 <span className="text-sm text-gray-500">
-                                                  {product.category} - ${product.price.toFixed(2)}
+                                                  {product.category} - ${Number(product.price).toFixed(2)}
                                                 </span>
                                               </div>
                                             </CommandItem>
