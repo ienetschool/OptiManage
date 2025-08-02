@@ -153,11 +153,11 @@ export default function Sales() {
     resolver: zodResolver(insertSaleSchema),
     defaultValues: {
       storeId: "",
-      customerId: undefined,
+      customerId: null,
       staffId: "",
-      subtotal: 0,
-      taxAmount: 0,
-      total: 0,
+      subtotal: "0",
+      taxAmount: "0",
+      total: "0",
       paymentMethod: "cash",
       paymentStatus: "completed",
       notes: "",
@@ -414,7 +414,7 @@ export default function Sales() {
                                 step="0.01" 
                                 placeholder="0.00"
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                onChange={(e) => field.onChange(e.target.value)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -434,7 +434,7 @@ export default function Sales() {
                                 step="0.01" 
                                 placeholder="0.00"
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                onChange={(e) => field.onChange(e.target.value)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -454,7 +454,7 @@ export default function Sales() {
                                 step="0.01" 
                                 placeholder="0.00"
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                onChange={(e) => field.onChange(e.target.value)}
                               />
                             </FormControl>
                             <FormMessage />
