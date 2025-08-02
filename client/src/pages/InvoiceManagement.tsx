@@ -278,9 +278,11 @@ export default function InvoiceManagement() {
     },
     onSuccess: (invoiceData) => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       toast({
         title: "Success",
-        description: "Invoice created successfully.",
+        description: "Invoice created successfully and visible in the system.",
       });
       setInvoiceDialogOpen(false);
       invoiceForm.reset({

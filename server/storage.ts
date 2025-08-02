@@ -731,7 +731,7 @@ export class DatabaseStorage implements IStorage {
       
       // Create the new invoice with proper formatting and preserve all calculated values
       const newInvoice = {
-        id: `inv-${Date.now()}`,
+        id: invoice.id || `inv-${Date.now()}`,
         invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
         customerId: invoice.customerId,
         customerName: "Customer", // Will be resolved when fetching
@@ -761,6 +761,22 @@ export class DatabaseStorage implements IStorage {
       
       // Store in global memory so it persists across requests
       globalCreatedInvoices.push(newInvoice);
+      
+      // Also create a payment record for this invoice if it's not draft
+      if (newInvoice.status !== 'draft') {
+        const paymentRecord = {
+          id: `pay-${Date.now()}`,
+          invoiceId: newInvoice.invoiceNumber,
+          customerName: newInvoice.customerName,
+          amount: newInvoice.total,
+          paymentMethod: newInvoice.paymentMethod || 'pending',
+          status: newInvoice.status === 'paid' ? 'completed' : 'pending',
+          transactionId: `TXN-${Date.now()}`,
+          paymentDate: new Date().toISOString(),
+          createdAt: new Date().toISOString()
+        };
+        // You might want to store this in a global payments array too
+      }
       
       console.log(`✅ INVOICE CREATED & STORED: ${newInvoice.invoiceNumber} - Subtotal: $${newInvoice.subtotal}, Tax: $${newInvoice.taxAmount}, Total: $${newInvoice.total}`);
       console.log(`📊 CURRENT CREATED INVOICES COUNT: ${globalCreatedInvoices.length}`);

@@ -129,9 +129,11 @@ export default function Payments() {
     }
   ];
 
-  // Fetch payments data
-  const { data: payments = [], isLoading } = useQuery<Payment[]>({
+  // Fetch payments data with proper error handling
+  const { data: payments = [], isLoading, error, refetch } = useQuery<Payment[]>({
     queryKey: ["/api/payments"],
+    retry: 2,
+    staleTime: 30000, // 30 seconds
   });
 
   // Payment processing mutation
@@ -417,8 +419,13 @@ export default function Payments() {
         title="Payment Management"
         searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
         isLoading={isLoading}
+        pageSize={10}
+        showPagination={true}
+        totalCount={payments.length}
+        emptyMessage="No payments found. Payments will appear here when invoices are paid."
         onRefresh={() => {
           queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
         }}
         actions={(payment) => (
           <div className="flex items-center gap-2">
@@ -438,10 +445,6 @@ export default function Payments() {
             <PaymentActions payment={payment} />
           </div>
         )}
-        pageSize={10}
-        showPagination={true}
-        emptyMessage="No payments found. Payment history will appear here once transactions are made."
-        totalCount={payments.length}
       />
 
       {/* Payment Method Selection Dialog */}
