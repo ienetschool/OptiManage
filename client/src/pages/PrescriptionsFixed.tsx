@@ -60,7 +60,7 @@ export default function PrescriptionsFixed() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [viewPrescription, setViewPrescription] = useState<Prescription | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("doctor-appointments");
   const [sortBy, setSortBy] = useState("date");
   const [currentServiceType, setCurrentServiceType] = useState("eye_examination");
   const { toast } = useToast();
@@ -580,31 +580,57 @@ OptiStore Pro Team`;
       {/* Header Tabs */}
       <div className="flex items-center gap-8 border-b">
         <div 
-          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+          className={`flex items-center gap-2 pb-4 cursor-pointer relative ${
+            activeTab === "doctor-appointments" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
+          }`}
+          onClick={() => setActiveTab("doctor-appointments")}
+        >
+          <Stethoscope className="h-4 w-4" />
+          <span>Doctor Appointments ({appointments.filter(apt => apt.assignedDoctorId && !prescriptions.some(p => p.appointmentId === apt.id)).length})</span>
+          {appointments.filter(apt => apt.assignedDoctorId && !prescriptions.some(p => p.appointmentId === apt.id)).length > 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+          )}
+        </div>
+        <div 
+          className={`flex items-center gap-2 pb-4 cursor-pointer relative ${
             activeTab === "all" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
           }`}
           onClick={() => setActiveTab("all")}
         >
           <FileText className="h-4 w-4" />
           <span className="font-medium">All Prescriptions ({prescriptions.length})</span>
+          {prescriptions.filter(p => {
+            const createdDate = new Date(p.createdAt || '');
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            return createdDate > yesterday;
+          }).length > 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          )}
         </div>
         <div 
-          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+          className={`flex items-center gap-2 pb-4 cursor-pointer relative ${
             activeTab === "active" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
           }`}
           onClick={() => setActiveTab("active")}
         >
           <CheckCircle className="h-4 w-4" />
           <span>Active ({prescriptions.filter(p => p.status === 'active').length})</span>
+          {prescriptions.filter(p => p.status === 'active' && new Date(p.createdAt || '') > new Date(Date.now() - 24*60*60*1000)).length > 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          )}
         </div>
         <div 
-          className={`flex items-center gap-2 pb-4 cursor-pointer ${
+          className={`flex items-center gap-2 pb-4 cursor-pointer relative ${
             activeTab === "pending" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
           }`}
           onClick={() => setActiveTab("pending")}
         >
           <Clock className="h-4 w-4" />
           <span>Pending ({prescriptions.filter(p => p.status === 'pending').length})</span>
+          {prescriptions.filter(p => p.status === 'pending').length > 0 && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+          )}
         </div>
         <div 
           className={`flex items-center gap-2 pb-4 cursor-pointer ${
@@ -618,16 +644,6 @@ OptiStore Pro Team`;
             const currentMonth = new Date().getMonth();
             return prescriptionDate.getMonth() === currentMonth;
           }).length})</span>
-        </div>
-
-        <div 
-          className={`flex items-center gap-2 pb-4 cursor-pointer ${
-            activeTab === "doctor-appointments" ? "border-b-2 border-blue-500 text-blue-600" : "text-gray-500 hover:text-blue-600"
-          }`}
-          onClick={() => setActiveTab("doctor-appointments")}
-        >
-          <Stethoscope className="h-4 w-4" />
-          <span>Doctor Appointments ({appointments.filter(apt => apt.assignedDoctorId && !prescriptions.some(p => p.appointmentId === apt.id)).length})</span>
         </div>
       </div>
 
@@ -673,34 +689,63 @@ OptiStore Pro Team`;
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search prescriptions..."
+                placeholder={activeTab === "doctor-appointments" ? "Search appointments..." : "Search prescriptions..."}
                 className="pl-10 w-64"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="filled">Filled</SelectItem>
-                <SelectItem value="expired">Expired</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Sort by Date</SelectItem>
-                <SelectItem value="patient">Sort by Patient</SelectItem>
-                <SelectItem value="status">Sort by Status</SelectItem>
-                <SelectItem value="number">Sort by Number</SelectItem>
-              </SelectContent>
-            </Select>
+{activeTab !== "doctor-appointments" ? (
+              <>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="filled">Filled</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">Sort by Date</SelectItem>
+                    <SelectItem value="patient">Sort by Patient</SelectItem>
+                    <SelectItem value="status">Sort by Status</SelectItem>
+                    <SelectItem value="number">Sort by Number</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            ) : (
+              <>
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Appointments</SelectItem>
+                    <SelectItem value="assigned_to_doctor">Assigned to Doctor</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">Sort by Date</SelectItem>
+                    <SelectItem value="patient">Sort by Patient</SelectItem>
+                    <SelectItem value="service">Sort by Service</SelectItem>
+                    <SelectItem value="doctor">Sort by Doctor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </>
+            )}
           </div>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
@@ -735,13 +780,56 @@ OptiStore Pro Team`;
                 ) : (
                   <div className="space-y-4">
                     {appointments
-                      .filter(apt => apt.assignedDoctorId && 
-                        !prescriptions.some(p => p.appointmentId === apt.id))
+                      .filter(apt => {
+                        const hasDoctor = apt.assignedDoctorId && !prescriptions.some(p => p.appointmentId === apt.id);
+                        if (!hasDoctor) return false;
+                        
+                        // Search filter
+                        const patient = patients.find(p => p.id === apt.patientId);
+                        const doctor = staff.find(d => d.id === apt.assignedDoctorId);
+                        const patientName = patient ? `${patient.firstName} ${patient.lastName}` : '';
+                        const doctorName = doctor ? `${doctor.firstName} ${doctor.lastName}` : '';
+                        const searchMatch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                          doctorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                          apt.service?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                          apt.id.toLowerCase().includes(searchTerm.toLowerCase());
+                        if (searchTerm && !searchMatch) return false;
+                        
+                        // Status filter
+                        if (selectedStatus !== "all" && apt.status !== selectedStatus) return false;
+                        
+                        return true;
+                      })
+                      .sort((a, b) => {
+                        const patientA = patients.find(p => p.id === a.patientId);
+                        const patientB = patients.find(p => p.id === b.patientId);
+                        const doctorA = staff.find(d => d.id === a.assignedDoctorId);
+                        const doctorB = staff.find(d => d.id === b.assignedDoctorId);
+                        
+                        switch (sortBy) {
+                          case "patient":
+                            const nameA = patientA ? `${patientA.firstName} ${patientA.lastName}` : '';
+                            const nameB = patientB ? `${patientB.firstName} ${patientB.lastName}` : '';
+                            return nameA.localeCompare(nameB);
+                          case "service":
+                            return (a.service || '').localeCompare(b.service || '');
+                          case "doctor":
+                            const docNameA = doctorA ? `${doctorA.firstName} ${doctorA.lastName}` : '';
+                            const docNameB = doctorB ? `${doctorB.firstName} ${doctorB.lastName}` : '';
+                            return docNameA.localeCompare(docNameB);
+                          case "date":
+                          default:
+                            return new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime();
+                        }
+                      })
                       .map((appointment) => {
                         const patient = patients.find(p => p.id === appointment.patientId);
                         const doctor = staff.find(d => d.id === appointment.assignedDoctorId);
+                        const isNew = new Date(appointment.createdAt || '').getTime() > Date.now() - 24*60*60*1000;
                         return (
-                          <div key={appointment.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                          <div key={appointment.id} className={`bg-white border rounded-lg p-6 hover:shadow-md transition-shadow ${
+                            isNew ? 'border-green-300 shadow-green-50 bg-green-50/30' : 'border-gray-200'
+                          }`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-4">
                                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">

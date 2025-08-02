@@ -1192,10 +1192,19 @@ export default function Patients() {
                       </td>
                     </tr>
                   ) : (
-                    filteredPatients.map((patient: Patient) => (
-                      <tr key={patient.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    filteredPatients.map((patient: Patient) => {
+                      const isNew = new Date(patient.createdAt || '').getTime() > Date.now() - 24*60*60*1000;
+                      return (
+                        <tr key={patient.id} className={`border-b border-gray-100 hover:bg-gray-50 ${
+                          isNew ? 'bg-green-50/50 border-green-200' : ''
+                        }`}>
                         <td className="py-4 px-6">
-                          <div className="font-medium text-blue-600">{patient.patientCode}</div>
+                          <div className="flex items-center space-x-2">
+                            <div className="font-medium text-blue-600">{patient.patientCode}</div>
+                            {isNew && (
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            )}
+                          </div>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center space-x-3">
@@ -1290,8 +1299,9 @@ export default function Patients() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
-                      </tr>
-                    ))
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
