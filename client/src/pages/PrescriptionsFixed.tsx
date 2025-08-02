@@ -1061,8 +1061,39 @@ OptiStore Pro Team`;
       <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Quick Prescription</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Quick Prescription
+              <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-300">
+                Fill all red (*) fields
+              </Badge>
+            </DialogTitle>
           </DialogHeader>
+          
+          {/* Progress Indicator for Quick Form */}
+          <div className="bg-slate-100 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Required Fields:</span>
+              <span className="text-blue-600 font-medium">
+                {(() => {
+                  const requiredFields = ['patientId', 'prescriptionType', 'diagnosis'];
+                  const filledCount = requiredFields.filter(field => quickForm.watch(field)).length;
+                  return `${filledCount}/${requiredFields.length} completed`;
+                })()}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{
+                  width: `${(() => {
+                    const requiredFields = ['patientId', 'prescriptionType', 'diagnosis'];
+                    const filledCount = requiredFields.filter(field => quickForm.watch(field)).length;
+                    return (filledCount / requiredFields.length) * 100;
+                  })()}%`
+                }}
+              ></div>
+            </div>
+          </div>
           
           <Form {...quickForm}>
             <form onSubmit={quickForm.handleSubmit(onQuickSubmit)} className="space-y-4">
@@ -1071,17 +1102,21 @@ OptiStore Pro Team`;
                 name="patientId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Select Patient</FormLabel>
+                    <FormLabel className="flex items-center gap-1">
+                      Select Patient 
+                      <span className="text-red-500 font-bold">*</span>
+                      <span className="text-xs text-gray-500">(Required)</span>
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className={`${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
                           <SelectValue placeholder="Choose patient..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {patients.map((patient) => (
                           <SelectItem key={patient.id} value={patient.id}>
-                            {patient.firstName} {patient.lastName}
+                            {patient.firstName} {patient.lastName} ({patient.patientCode})
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1096,19 +1131,23 @@ OptiStore Pro Team`;
                 name="prescriptionType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Service Type</FormLabel>
+                    <FormLabel className="flex items-center gap-1">
+                      Service Type 
+                      <span className="text-red-500 font-bold">*</span>
+                      <span className="text-xs text-gray-500">(Required)</span>
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
+                        <SelectTrigger className={`${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                          <SelectValue placeholder="Select service type..." />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="eye_examination">Eye Examination</SelectItem>
-                        <SelectItem value="contact_lens">Contact Lens</SelectItem>
-                        <SelectItem value="fitting_glasses">Glasses Fitting</SelectItem>
-                        <SelectItem value="fitting_followup">Follow-up</SelectItem>
-                        <SelectItem value="visit_consultation">Consultation</SelectItem>
+                        <SelectItem value="eye_examination">👁️ Eye Examination</SelectItem>
+                        <SelectItem value="contact_lens">📱 Contact Lens Fitting</SelectItem>
+                        <SelectItem value="fitting_glasses">👓 Glasses Fitting</SelectItem>
+                        <SelectItem value="fitting_followup">🔄 Follow-up Visit</SelectItem>
+                        <SelectItem value="visit_consultation">💬 General Consultation</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -1121,11 +1160,15 @@ OptiStore Pro Team`;
                 name="diagnosis"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Quick Notes</FormLabel>
+                    <FormLabel className="flex items-center gap-1">
+                      Quick Notes 
+                      <span className="text-red-500 font-bold">*</span>
+                      <span className="text-xs text-gray-500">(Required)</span>
+                    </FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Brief diagnosis or notes..." 
-                        className="h-20" 
+                        className={`h-20 ${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}
                         {...field} 
                         value={field.value || ""} 
                       />
@@ -1145,10 +1188,33 @@ OptiStore Pro Team`;
                 </Button>
                 <Button
                   type="submit"
-                  disabled={createPrescriptionMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={createPrescriptionMutation.isPending || !quickForm.watch('patientId') || !quickForm.watch('prescriptionType') || !quickForm.watch('diagnosis')}
+                  className={`transition-all duration-300 ${
+                    quickForm.watch('patientId') && quickForm.watch('prescriptionType') && quickForm.watch('diagnosis')
+                      ? 'bg-green-600 hover:bg-green-700' 
+                      : 'bg-gray-400 cursor-not-allowed'
+                  }`}
                 >
-                  {createPrescriptionMutation.isPending ? "Creating..." : "Create Quick Prescription"}
+                  {createPrescriptionMutation.isPending ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      {quickForm.watch('patientId') && quickForm.watch('prescriptionType') && quickForm.watch('diagnosis') ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Create Quick Prescription
+                        </>
+                      ) : (
+                        <>
+                          <Clock className="h-4 w-4 mr-2" />
+                          Complete Required Fields
+                        </>
+                      )}
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
