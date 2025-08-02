@@ -1240,7 +1240,7 @@ OptiStore Pro Team`;
               <span className="font-medium">Required Fields Progress:</span>
               <span className="text-blue-600 font-medium">
                 {(() => {
-                  const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                  const requiredFields = ['patientId', 'prescriptionType', 'doctorId', 'diagnosis', 'treatment', 'status'];
                   const filledCount = requiredFields.filter(field => createForm.watch(field)).length;
                   return `${filledCount}/${requiredFields.length} completed`;
                 })()}
@@ -1251,7 +1251,7 @@ OptiStore Pro Team`;
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
                 style={{
                   width: `${(() => {
-                    const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                    const requiredFields = ['patientId', 'prescriptionType', 'doctorId', 'diagnosis', 'treatment', 'status'];
                     const filledCount = requiredFields.filter(field => createForm.watch(field)).length;
                     return (filledCount / requiredFields.length) * 100;
                   })()}%`
@@ -1276,8 +1276,18 @@ OptiStore Pro Team`;
                       <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="clinical">Clinical Details</TabsTrigger>
-                  <TabsTrigger value="additional">Additional Info</TabsTrigger>
+                  <TabsTrigger value="clinical" className="relative">
+                    Clinical Details
+                    {!createForm.watch('diagnosis') && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="additional" className="relative">
+                    Additional Info
+                    {!createForm.watch('status') && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    )}
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="patient-info" className="space-y-6">
@@ -1703,11 +1713,15 @@ OptiStore Pro Team`;
                       name="diagnosis"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Clinical Diagnosis</FormLabel>
+                          <FormLabel className="flex items-center gap-1">
+                            Clinical Diagnosis 
+                            <span className="text-red-500 font-bold">*</span>
+                            <span className="text-xs text-gray-500">(Required for medical prescription)</span>
+                          </FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="Patient diagnosis, findings, and clinical observations..." 
-                              className="h-32" 
+                              className={`h-32 ${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}
                               {...field} 
                               value={field.value || ""} 
                             />
@@ -1722,11 +1736,15 @@ OptiStore Pro Team`;
                       name="treatment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Treatment Plan & Recommendations</FormLabel>
+                          <FormLabel className="flex items-center gap-1">
+                            Treatment Plan & Recommendations 
+                            <span className="text-red-500 font-bold">*</span>
+                            <span className="text-xs text-gray-500">(Required for complete prescription)</span>
+                          </FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="Recommended treatment, medications, and follow-up instructions..." 
-                              className="h-32" 
+                              className={`h-32 ${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}
                               {...field} 
                               value={field.value || ""} 
                             />
@@ -1801,11 +1819,15 @@ OptiStore Pro Team`;
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Prescription Status</FormLabel>
+                          <FormLabel className="flex items-center gap-1">
+                            Prescription Status 
+                            <span className="text-red-500 font-bold">*</span>
+                            <span className="text-xs text-gray-500">(Required)</span>
+                          </FormLabel>
                           <Select onValueChange={field.onChange} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue />
+                              <SelectTrigger className={`${!field.value ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'}`}>
+                                <SelectValue placeholder="Select prescription status..." />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -1827,7 +1849,7 @@ OptiStore Pro Team`;
                 {/* Validation Status */}
                 <div className="flex items-center gap-2 text-sm">
                   {(() => {
-                    const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                    const requiredFields = ['patientId', 'prescriptionType', 'doctorId', 'diagnosis', 'treatment', 'status'];
                     const filledCount = requiredFields.filter(field => createForm.watch(field)).length;
                     const allFilled = filledCount === requiredFields.length;
                     
@@ -1839,7 +1861,7 @@ OptiStore Pro Team`;
                     ) : (
                       <div className="flex items-center gap-1 text-orange-600">
                         <Clock className="h-4 w-4" />
-                        <span>{3 - filledCount} required field{3 - filledCount !== 1 ? 's' : ''} remaining</span>
+                        <span>{6 - filledCount} required field{6 - filledCount !== 1 ? 's' : ''} remaining</span>
                       </div>
                     );
                   })()}
@@ -1856,11 +1878,11 @@ OptiStore Pro Team`;
                   <Button
                     type="submit"
                     disabled={createPrescriptionMutation.isPending || (() => {
-                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId', 'diagnosis', 'treatment', 'status'];
                       return !requiredFields.every(field => createForm.watch(field));
                     })()}
                     className={`${(() => {
-                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId', 'diagnosis', 'treatment', 'status'];
                       const allFilled = requiredFields.every(field => createForm.watch(field));
                       return allFilled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
                     })()} transition-colors duration-200`}
@@ -1871,7 +1893,7 @@ OptiStore Pro Team`;
                         Creating...
                       </div>
                     ) : (() => {
-                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId'];
+                      const requiredFields = ['patientId', 'prescriptionType', 'doctorId', 'diagnosis', 'treatment', 'status'];
                       const allFilled = requiredFields.every(field => createForm.watch(field));
                       return allFilled ? (
                         <div className="flex items-center gap-2">
