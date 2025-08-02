@@ -215,21 +215,21 @@ export function registerMedicalRoutes(app: Express) {
     try {
       console.log(`📝 MEDICAL INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
       
-      // Parse and validate the incoming data
+      // Parse and validate the incoming data  
       const invoiceData = {
         invoiceNumber: req.body.invoiceNumber || `INV-${Date.now()}`,
         patientId: req.body.patientId,
         appointmentId: req.body.appointmentId,
         storeId: req.body.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
-        invoiceDate: req.body.invoiceDate ? new Date(req.body.invoiceDate) : new Date(),
-        dueDate: req.body.dueDate ? new Date(req.body.dueDate) : new Date(),
+        invoiceDate: req.body.invoiceDate ? new Date(req.body.invoiceDate).toISOString() : new Date().toISOString(),
+        dueDate: req.body.dueDate ? new Date(req.body.dueDate).toISOString() : new Date().toISOString(),
         subtotal: parseFloat(req.body.subtotal) || 0,
         taxAmount: parseFloat(req.body.taxAmount) || 0,
         discountAmount: parseFloat(req.body.discountAmount) || 0,
         total: parseFloat(req.body.total) || 0,
         paymentStatus: req.body.paymentStatus || 'pending',
         paymentMethod: req.body.paymentMethod,
-        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : null,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate).toISOString() : null,
         notes: req.body.notes || ''
       };
       
