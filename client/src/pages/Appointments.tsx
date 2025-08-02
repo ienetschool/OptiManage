@@ -115,7 +115,7 @@ export default function Appointments() {
         const doctor = doctors.find(d => d.id === value);
         return (
           <div className="text-sm text-gray-900">
-            {doctor ? `Dr. ${doctor.name}` : 'Unassigned'}
+            {doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unassigned'}
           </div>
         );
       }
@@ -162,7 +162,11 @@ export default function Appointments() {
 
   const { data: doctors = [] } = useQuery<any[]>({
     queryKey: ["/api/staff"],
-    select: (data) => data.filter(staff => staff.position === 'Doctor' || staff.position === 'Optometrist'),
+    select: (data) => data.filter(staff => 
+      staff.role === 'doctor' || 
+      staff.position?.toLowerCase() === 'doctor' || 
+      staff.position?.toLowerCase() === 'optometrist'
+    ),
   });
 
   // Available services for appointments
