@@ -2531,9 +2531,18 @@ export default function Patients() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.print()}
+                onClick={() => {
+                  if (selectedPatient) {
+                    // Get all related data for comprehensive multi-page printing
+                    const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id);
+                    const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id);
+                    const patientInvoices = (invoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                    
+                    generateMultiPagePatientPDF(selectedPatient, patientAppointments, patientPrescriptions, patientInvoices);
+                  }
+                }}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Printer className="h-4 w-4 mr-2" />
                 Print
               </Button>
               <Button
@@ -2541,7 +2550,12 @@ export default function Patients() {
                 size="sm"
                 onClick={() => {
                   if (selectedPatient) {
-                    generatePatientPDF(selectedPatient);
+                    // Get all related data for comprehensive multi-page PDF
+                    const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id);
+                    const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id);
+                    const patientInvoices = (invoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                    
+                    generateMultiPagePatientPDF(selectedPatient, patientAppointments, patientPrescriptions, patientInvoices);
                   }
                 }}
               >
@@ -3293,8 +3307,12 @@ export default function Patients() {
                   variant="outline" 
                   className="h-20 flex flex-col items-center justify-center space-y-2"
                   onClick={() => {
-                    // Generate and share PDF
-                    generatePatientPDF(selectedPatient);
+                    // Generate and share comprehensive multi-page PDF
+                    const patientAppointments = (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id);
+                    const patientPrescriptions = (prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id);
+                    const patientInvoices = (invoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                    
+                    generateMultiPagePatientPDF(selectedPatient, patientAppointments, patientPrescriptions, patientInvoices);
                     setShareModalOpen(false);
                   }}
                 >
