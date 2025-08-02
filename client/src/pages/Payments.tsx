@@ -47,6 +47,40 @@ export default function Payments() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [methodFilter, setMethodFilter] = useState("all");
   const [dateRange, setDateRange] = useState("30d");
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [paymentMethodDialog, setPaymentMethodDialog] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+
+  // Payment processing mutation
+  const processPaymentMutation = useMutation({
+    mutationFn: async ({ paymentId, paymentMethod }: { paymentId: string; paymentMethod: string }) => {
+      const response = await fetch(`/api/payments/${paymentId}/process`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethod }),
+      });
+      if (!response.ok) throw new Error("Failed to process payment");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+      toast({
+        title: "Payment Processed",
+        description: "Payment completed successfully and invoice generated.",
+      });
+      setPaymentMethodDialog(false);
+      setSelectedPayment(null);
+      setSelectedPaymentMethod("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Payment Failed",
+        description: "Failed to process payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const { data: payments = [], isLoading } = useQuery<Payment[]>({
     queryKey: ["/api/payments", searchTerm, statusFilter, methodFilter, dateRange],
@@ -148,12 +182,8 @@ export default function Payments() {
 
     const handlePayNow = () => {
       if (payment.status === "pending") {
-        // Simulate payment processing
-        toast({
-          title: "Processing Payment",
-          description: "Redirecting to payment gateway...",
-        });
-        // In a real app, this would redirect to payment processor
+        setSelectedPayment(payment);
+        setPaymentMethodDialog(true);
       }
     };
 
@@ -417,6 +447,57 @@ export default function Payments() {
           )}
         </CardContent>
       </Card>
+
+      {/* Payment Method Selection Dialog */}
+      <Dialog open={paymentMethodDialog} onOpenChange={setPaymentMethodDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Payment Method</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-600">
+              Processing payment for {selectedPayment?.customerName} - ${selectedPayment?.amount.toFixed(2)}
+            </p>
+            <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose payment method..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="card">Credit/Debit Card</SelectItem>
+                <SelectItem value="check">Check</SelectItem>
+                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                <SelectItem value="digital_wallet">Digital Wallet</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setPaymentMethodDialog(false);
+                  setSelectedPayment(null);
+                  setSelectedPaymentMethod("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (selectedPayment && selectedPaymentMethod) {
+                    processPaymentMutation.mutate({
+                      paymentId: selectedPayment.id,
+                      paymentMethod: selectedPaymentMethod
+                    });
+                  }
+                }}
+                disabled={!selectedPaymentMethod || processPaymentMutation.isPending}
+              >
+                {processPaymentMutation.isPending ? "Processing..." : "Process Payment"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

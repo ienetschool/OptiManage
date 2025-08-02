@@ -181,4 +181,96 @@ export function registerPaymentRoutes(app: Express) {
       res.status(500).json({ message: "Failed to update payment" });
     }
   });
+
+  // Process payment endpoint for "Pay Now" functionality
+  app.post("/api/payments/:id/process", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { paymentMethod } = req.body;
+
+      if (!paymentMethod) {
+        return res.status(400).json({ message: "Payment method is required" });
+      }
+
+      // Extract payment type and source ID from payment ID
+      const [type, sourceId] = id.split('-');
+      
+      if (type === 'apt') {
+        // Update appointment payment status
+        const appointment = await storage.getAppointment(sourceId);
+        if (!appointment) {
+          return res.status(404).json({ message: "Appointment not found" });
+        }
+
+        // Update appointment with payment information
+        await storage.updateAppointment(sourceId, {
+          paymentStatus: 'paid',
+          paymentMethod: paymentMethod,
+          paymentDate: new Date()
+        });
+
+        // Generate invoice for the appointment if fee exists
+        if (appointment.appointmentFee) {
+          const fee = parseFloat(appointment.appointmentFee.toString());
+          const invoiceData = {
+            invoiceNumber: `INV-APT-${Date.now()}`,
+            patientId: appointment.patientId,
+            appointmentId: sourceId,
+            storeId: appointment.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+            invoiceDate: new Date().toISOString(),
+            dueDate: new Date().toISOString(),
+            subtotal: fee,
+            taxAmount: fee * 0.08,
+            discountAmount: 0,
+            total: fee * 1.08,
+            paymentStatus: 'paid',
+            paymentMethod: paymentMethod,
+            paymentDate: new Date().toISOString(),
+            notes: `Payment for ${appointment.service} appointment`
+          };
+
+          // Create medical invoice using the medical routes
+          const invoiceResponse = await fetch('http://localhost:5000/api/medical-invoices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(invoiceData)
+          });
+        }
+
+        res.json({
+          success: true,
+          message: "Payment processed successfully and invoice generated",
+          paymentId: id,
+          invoiceNumber: invoiceData.invoiceNumber
+        });
+
+      } else if (type === 'inv') {
+        // Update invoice payment status
+        const invoice = await storage.getInvoice(sourceId);
+        if (!invoice) {
+          return res.status(404).json({ message: "Invoice not found" });
+        }
+
+        await storage.updateInvoice(sourceId, {
+          status: 'paid',
+          paymentMethod: paymentMethod,
+          paymentDate: new Date()
+        });
+
+        res.json({
+          success: true,
+          message: "Payment processed successfully",
+          paymentId: id,
+          invoiceNumber: invoice.invoiceNumber
+        });
+
+      } else {
+        return res.status(400).json({ message: "Invalid payment type" });
+      }
+
+    } catch (error) {
+      console.error("Error processing payment:", error);
+      res.status(500).json({ message: "Failed to process payment" });
+    }
+  });
 }

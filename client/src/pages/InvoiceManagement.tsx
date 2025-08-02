@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,6 +129,10 @@ export default function InvoiceManagement() {
     queryKey: ["/api/invoices"],
   });
 
+  const { data: customers = [] } = useQuery<any[]>({
+    queryKey: ["/api/customers"],
+  });
+
   // Enhance invoice data with customer names
   const enrichedInvoices = React.useMemo(() => {
     return invoices.map(invoice => {
@@ -140,10 +144,6 @@ export default function InvoiceManagement() {
       };
     });
   }, [invoices, customers]);
-
-  const { data: customers = [] } = useQuery<Customer[]>({
-    queryKey: ["/api/customers"],
-  });
 
   const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],

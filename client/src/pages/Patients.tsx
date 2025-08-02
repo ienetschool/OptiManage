@@ -204,20 +204,24 @@ export default function Patients() {
       // If payment is marked as paid, automatically generate invoice
       if (appointmentForm.paymentStatus === 'paid') {
         try {
+          const appointmentId = typeof appointmentData === 'object' && appointmentData && 'id' in appointmentData 
+            ? appointmentData.id 
+            : `APPT-${Date.now()}`;
+            
           const invoiceData = {
             invoiceNumber: `INV-${Date.now()}`,
             patientId: appointmentForm.patientId,
-            appointmentId: appointmentData?.id || `APPT-${Date.now()}`,
+            appointmentId: appointmentId,
             storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
-            invoiceDate: new Date(),
-            dueDate: new Date(),
+            invoiceDate: new Date().toISOString(),
+            dueDate: new Date().toISOString(),
             subtotal: parseFloat(appointmentForm.appointmentFee),
             taxAmount: parseFloat(appointmentForm.appointmentFee) * 0.08, // 8% tax
             discountAmount: 0,
             total: parseFloat(appointmentForm.appointmentFee) * 1.08,
             paymentStatus: 'paid',
             paymentMethod: appointmentForm.paymentMethod,
-            paymentDate: new Date(),
+            paymentDate: new Date().toISOString(),
             notes: `Payment for ${appointmentForm.serviceType} appointment`
           };
           
@@ -229,9 +233,10 @@ export default function Patients() {
             description: "Appointment scheduled and invoice generated successfully.",
           });
         } catch (error) {
+          console.error("Invoice generation error:", error);
           toast({
             title: "Warning",
-            description: "Appointment scheduled but invoice generation failed.",
+            description: "Appointment scheduled but invoice generation failed. Please check the invoice manually.",
             variant: "destructive",
           });
         }
