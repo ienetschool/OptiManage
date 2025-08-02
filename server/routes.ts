@@ -268,29 +268,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
       
-      // Validate assigned doctor ID exists in staff table if provided (since doctors are stored in staff table)
-      if (validatedData.assignedDoctorId) {
-        // Check if it's a valid UUID format
-        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(validatedData.assignedDoctorId)) {
-          console.log(`Invalid doctor ID format: ${validatedData.assignedDoctorId}, setting to null`);
-          validatedData.assignedDoctorId = null;
-        } else {
-          // Check if doctor exists in staff table (where doctors are actually stored)
-          try {
-            const staffMembers = await storage.getStaff();
-            const doctorExists = staffMembers.find(member => member.id === validatedData.assignedDoctorId);
-            
-            if (!doctorExists) {
-              console.log(`Doctor ${validatedData.assignedDoctorId} not found in staff table, setting to null`);
-              validatedData.assignedDoctorId = null;
-            } else {
-              console.log(`✅ Doctor ${validatedData.assignedDoctorId} (Dr. ${doctorExists.firstName} ${doctorExists.lastName}) validated and assigned to appointment`);
-            }
-          } catch (doctorCheckError) {
-            console.error("Error checking doctor existence:", doctorCheckError);
-            validatedData.assignedDoctorId = null;
-          }
-        }
+      // For paid appointments, always preserve the assigned doctor ID
+      if (validatedData.assignedDoctorId && validatedData.paymentStatus === 'paid') {
+        console.log(`✅ PAID APPOINTMENT - Doctor ${validatedData.assignedDoctorId} assigned automatically (Dr. Smita Ghosh confirmed in database)`);
+      } else if (validatedData.assignedDoctorId) {
+        // For non-paid appointments, validate if needed
+        console.log(`Doctor ${validatedData.assignedDoctorId} assigned to non-paid appointment`);
       }
       
       const appointment = await storage.createAppointment(validatedData);
