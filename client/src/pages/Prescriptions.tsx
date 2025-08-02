@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { 
   Plus, 
   Search, 
@@ -168,6 +169,97 @@ export default function Prescriptions() {
     
     return matchesSearch && matchesStatus && matchesType;
   });
+
+  // Define columns for EnhancedDataTable
+  const prescriptionColumns: Column[] = [
+    {
+      key: 'prescriptionNumber',
+      title: 'Prescription #',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="flex items-center space-x-2">
+          <QrCode className="h-4 w-4 text-slate-400" />
+          <span className="font-mono text-sm">{value}</span>
+        </div>
+      )
+    },
+    {
+      key: 'patientId',
+      title: 'Patient',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="flex items-center space-x-2">
+          <User className="h-4 w-4 text-slate-400" />
+          <span>{getPatientName(value)}</span>
+        </div>
+      )
+    },
+    {
+      key: 'doctorId',
+      title: 'Doctor',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="flex items-center space-x-2">
+          <Stethoscope className="h-4 w-4 text-slate-400" />
+          <span>{getDoctorName(value)}</span>
+        </div>
+      )
+    },
+    {
+      key: 'prescriptionType',
+      title: 'Type',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'glasses', label: 'Glasses' },
+        { value: 'contact_lenses', label: 'Contact Lenses' },
+        { value: 'medication', label: 'Medication' }
+      ],
+      render: (value) => (
+        <Badge variant="outline" className="capitalize">
+          {value.replace('_', ' ')}
+        </Badge>
+      )
+    },
+    {
+      key: 'createdAt',
+      title: 'Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">
+          <div className="font-medium">{format(new Date(value), 'MMM dd, yyyy')}</div>
+          <div className="text-gray-500">{format(new Date(value), 'HH:mm')}</div>
+        </div>
+      )
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'active', label: 'Active' },
+        { value: 'filled', label: 'Filled' },
+        { value: 'expired', label: 'Expired' }
+      ],
+      render: (value) => (
+        <Badge 
+          className={
+            value === 'active' ? 'bg-emerald-100 text-emerald-800' :
+            value === 'filled' ? 'bg-blue-100 text-blue-800' :
+            'bg-red-100 text-red-800'
+          }
+        >
+          {value}
+        </Badge>
+      )
+    }
+  ];
 
   const getPatientName = (patientId: string) => {
     const patient = patients.find(p => p.id === patientId);
@@ -1191,132 +1283,47 @@ OptiStore Pro Medical Center - Comprehensive Patient Care
             </Dialog>
           </div>
 
-          {/* Prescriptions Table */}
-          <Card className="border-slate-200">
-            <CardHeader>
-              <CardTitle>Prescription Records</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/6"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredPrescriptions.length === 0 ? (
-                <div className="text-center py-12">
-                  <FileText className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No prescriptions found</h3>
-                  <p className="text-slate-600 mb-6">
-                    {searchTerm ? "Try adjusting your search criteria." : "Create your first prescription to get started."}
-                  </p>
-                  {!searchTerm && (
-                    <Button 
-                      onClick={() => setOpen(true)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Prescription
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Prescription #</TableHead>
-                        <TableHead>Patient</TableHead>
-                        <TableHead>Doctor</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPrescriptions.map((prescription) => (
-                        <TableRow key={prescription.id}>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <QrCode className="h-4 w-4 text-slate-400" />
-                              <span className="font-mono text-sm">{prescription.prescriptionNumber}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <User className="h-4 w-4 text-slate-400" />
-                              <span>{getPatientName(prescription.patientId)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Stethoscope className="h-4 w-4 text-slate-400" />
-                              <span>{getDoctorName(prescription.doctorId)}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="capitalize">
-                              {prescription.prescriptionType.replace('_', ' ')}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm">
-                              {format(new Date(prescription.createdAt), 'MMM dd, yyyy')}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={
-                                prescription.status === 'active' 
-                                  ? 'bg-emerald-100 text-emerald-800' 
-                                  : prescription.status === 'filled'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-red-100 text-red-800'
-                              }
-                            >
-                              {prescription.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewPrescription(prescription)}
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownloadPDF(prescription)}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleSendEmail(prescription)}
-                              >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Enhanced Prescriptions Table with Pagination, Filtering, and Sorting */}
+          <EnhancedDataTable
+            data={prescriptions}
+            columns={prescriptionColumns}
+            title="Prescription Management"
+            searchPlaceholder="Search prescriptions by number, patient name, or diagnosis..."
+            isLoading={isLoading}
+            pageSize={10}
+            showPagination={true}
+            totalCount={prescriptions.length}
+            emptyMessage="No prescriptions found. Prescriptions will appear here when created."
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] })}
+            actions={(prescription) => (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleViewPrescription(prescription)}
+                  title="View Details"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadPDF(prescription)}
+                  title="Download PDF"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleSendEmail(prescription)}
+                  title="Send Email"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          />
           </TabsContent>
 
           <TabsContent value="glasses" className="space-y-6">

@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { 
   Plus, 
   Search, 
@@ -52,6 +53,101 @@ export default function Sales() {
   const { data: customers = [] } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
   });
+
+  // Define columns for EnhancedDataTable
+  const salesColumns: Column[] = [
+    {
+      key: 'id',
+      title: 'Sale ID',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">#{value.slice(-8)}</div>
+      )
+    },
+    {
+      key: 'createdAt',
+      title: 'Date & Time',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">
+          <div className="font-medium">{format(new Date(value), 'MMM dd, yyyy')}</div>
+          <div className="text-gray-500">{format(new Date(value), 'HH:mm')}</div>
+        </div>
+      )
+    },
+    {
+      key: 'customerId',
+      title: 'Customer',
+      sortable: true,
+      filterable: true,
+      render: (value, sale) => {
+        const customer = customers.find(c => c.id === value);
+        return (
+          <div className="flex items-center space-x-2">
+            <User className="h-4 w-4 text-slate-400" />
+            <span className="text-sm">
+              {customer ? `${customer.firstName} ${customer.lastName}` : 'Walk-in Customer'}
+            </span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'paymentMethod',
+      title: 'Payment Method',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'cash', label: 'Cash' },
+        { value: 'card', label: 'Card' },
+        { value: 'check', label: 'Check' },
+        { value: 'digital', label: 'Digital' }
+      ],
+      render: (value) => {
+        const icons = { cash: Banknote, card: CreditCard, check: Receipt, digital: DollarSign };
+        const Icon = icons[value as keyof typeof icons] || DollarSign;
+        return (
+          <div className="flex items-center space-x-2">
+            <Icon className="h-4 w-4 text-slate-600" />
+            <span className="text-sm capitalize">{value}</span>
+          </div>
+        );
+      }
+    },
+    {
+      key: 'total',
+      title: 'Amount',
+      sortable: true,
+      render: (value) => (
+        <div className="text-lg font-bold">${parseFloat(value.toString()).toFixed(2)}</div>
+      )
+    },
+    {
+      key: 'paymentStatus',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'completed', label: 'Completed' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'failed', label: 'Failed' }
+      ],
+      render: (value) => (
+        <Badge 
+          className={
+            value === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+            value === 'pending' ? 'bg-amber-100 text-amber-800' :
+            'bg-red-100 text-red-800'
+          }
+        >
+          {value}
+        </Badge>
+      )
+    }
+  ];
 
   const form = useForm<InsertSale>({
     resolver: zodResolver(insertSaleSchema),
@@ -403,123 +499,29 @@ export default function Sales() {
             </Dialog>
           </div>
 
-          {/* Sales Table */}
-          <Card className="border-slate-200">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Recent Transactions</span>
-                <Button variant="outline" size="sm">
-                  <Printer className="mr-2 h-4 w-4" />
-                  Export
+          {/* Enhanced Sales Table with Pagination, Filtering, and Sorting */}
+          <EnhancedDataTable
+            data={sales}
+            columns={salesColumns}
+            title="Sales Management"
+            searchPlaceholder="Search sales by customer, payment method, or transaction details..."
+            isLoading={isLoading}
+            pageSize={10}
+            showPagination={true}
+            totalCount={sales.length}
+            emptyMessage="No sales found. Sales will appear here when transactions are processed."
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["/api/sales"] })}
+            actions={(sale) => (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" title="View Details">
+                  <Eye className="h-4 w-4" />
                 </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="animate-pulse flex space-x-4">
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                      <div className="h-4 bg-slate-200 rounded w-1/4"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : filteredSales.length === 0 ? (
-                <div className="text-center py-12">
-                  <Receipt className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">No sales found</h3>
-                  <p className="text-slate-600 mb-6">
-                    {searchTerm ? "Try adjusting your search criteria." : "Get started by processing your first sale."}
-                  </p>
-                  {!searchTerm && (
-                    <Button 
-                      onClick={() => setOpen(true)}
-                      className="bg-emerald-600 hover:bg-emerald-700"
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      New Sale
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Customer</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredSales.map((sale) => {
-                        const PaymentIcon = paymentMethodIcons[sale.paymentMethod as keyof typeof paymentMethodIcons] || DollarSign;
-                        return (
-                          <TableRow key={sale.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Calendar className="h-4 w-4 text-slate-400" />
-                                <span className="text-sm">
-                                  {format(new Date(sale.createdAt), 'MMM dd, yyyy HH:mm')}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <User className="h-4 w-4 text-slate-400" />
-                                <span className="text-sm">
-                                  {sale.customerId ? 'Registered Customer' : 'Walk-in'}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <PaymentIcon className="h-4 w-4 text-slate-600" />
-                                <span className="text-sm capitalize">{sale.paymentMethod}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm font-semibold">
-                                ${parseFloat(sale.total.toString()).toFixed(2)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge 
-                                className={
-                                  sale.paymentStatus === 'completed' 
-                                    ? 'bg-emerald-100 text-emerald-800' 
-                                    : sale.paymentStatus === 'pending'
-                                    ? 'bg-amber-100 text-amber-800'
-                                    : 'bg-red-100 text-red-800'
-                                }
-                              >
-                                {sale.paymentStatus}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-1">
-                                <Button variant="outline" size="sm">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button variant="outline" size="sm">
-                                  <Printer className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                <Button variant="outline" size="sm" title="Print Receipt">
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          />
         </div>
       </main>
     </>
