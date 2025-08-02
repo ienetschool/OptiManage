@@ -193,7 +193,13 @@ export function registerPaymentRoutes(app: Express) {
       }
 
       // Extract payment type and source ID from payment ID
-      const [type, sourceId] = id.split('-');
+      // Payment ID format: apt-dcd6e7f3-a070-4959-8273-f0b6bef103c3
+      // We need to extract the UUID part after 'apt-'
+      const parts = id.split('-');
+      const type = parts[0]; // 'apt'
+      const sourceId = parts.slice(1).join('-'); // 'dcd6e7f3-a070-4959-8273-f0b6bef103c3'
+      
+      console.log(`Processing payment: ${id}, type: ${type}, sourceId: ${sourceId}`);
       
       if (type === 'apt') {
         // Update appointment payment status
