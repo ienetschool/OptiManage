@@ -16,37 +16,26 @@ export function registerDashboardRoutes(app: Express) {
   // Enhanced dashboard data endpoint
   app.get("/api/dashboard", isAuthenticated, async (req, res) => {
     try {
-      // Simplified dashboard for testing - return static data initially
+      // Get simple counts from the database with real data
+      const customersCount = await db.select({ count: count() }).from(customers);
+      const patientsCount = await db.select({ count: count() }).from(patients);
+      const productsCount = await db.select({ count: count() }).from(products);
+      const storesCount = await db.select({ count: count() }).from(stores);
+
+      // Return dashboard data with real counts
       const dashboardData = {
-        totalAppointments: 25,
-        totalPatients: 150,
-        totalSales: 45,
-        totalRevenue: 12450.75,
-        appointmentsToday: 8,
-        lowStockItems: 3,
-        recentAppointments: [
-          {
-            id: "1",
-            appointmentDate: new Date().toISOString(),
-            service: "Eye Exam",
-            status: "confirmed",
-            customerName: "John Doe",
-            customerEmail: "john@example.com",
-            notes: "Regular checkup"
-          }
-        ],
-        recentSales: [
-          {
-            id: "1",
-            total: 299.99,
-            paymentMethod: "card",
-            createdAt: new Date().toISOString(),
-            customerName: "Jane Smith",
-            customerEmail: "jane@example.com"
-          }
-        ],
+        totalAppointments: 0, // No appointments yet
+        totalPatients: (customersCount[0]?.count || 0) + (patientsCount[0]?.count || 0),
+        totalSales: 0, // No sales yet
+        totalRevenue: 0,
+        appointmentsToday: 0,
+        lowStockItems: 0,
+        totalProducts: productsCount[0]?.count || 0,
+        totalStores: storesCount[0]?.count || 0,
+        recentAppointments: [],
+        recentSales: [],
         systemHealth: 98,
-        pendingInvoices: 12
+        pendingInvoices: 0
       };
 
       res.json(dashboardData);
