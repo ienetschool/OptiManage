@@ -215,32 +215,26 @@ export function registerMedicalRoutes(app: Express) {
     try {
       console.log(`📝 MEDICAL INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
       
-      // Parse and validate the incoming data with proper string formatting for PostgreSQL
-      const invoiceDate = req.body.invoiceDate ? new Date(req.body.invoiceDate) : new Date();
-      const dueDate = req.body.dueDate ? new Date(req.body.dueDate) : new Date();
-      const paymentDate = req.body.paymentDate ? new Date(req.body.paymentDate) : null;
-      
-      const invoiceData = {
+      // Validate and parse using the insert schema
+      const validatedData = insertMedicalInvoiceSchema.parse({
         invoiceNumber: req.body.invoiceNumber || `INV-${Date.now()}`,
         patientId: req.body.patientId,
         appointmentId: req.body.appointmentId,
         storeId: req.body.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
-        invoiceDate: invoiceDate.toISOString(),
-        dueDate: dueDate.toISOString().split('T')[0], // date type needs YYYY-MM-DD format
         subtotal: (parseFloat(req.body.subtotal) || 0).toFixed(2),
         taxAmount: (parseFloat(req.body.taxAmount) || 0).toFixed(2),
         discountAmount: (parseFloat(req.body.discountAmount) || 0).toFixed(2),
         total: (parseFloat(req.body.total) || 0).toFixed(2),
         paymentStatus: req.body.paymentStatus || 'pending',
         paymentMethod: req.body.paymentMethod,
-        paymentDate: paymentDate ? paymentDate.toISOString() : null,
+        paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : null,
         notes: req.body.notes || ''
-      };
+      });
       
-      console.log(`💰 MEDICAL INVOICE CALCULATIONS: Subtotal: $${invoiceData.subtotal}, Tax: $${invoiceData.taxAmount}, Total: $${invoiceData.total}`);
+      console.log(`💰 MEDICAL INVOICE CALCULATIONS: Subtotal: $${validatedData.subtotal}, Tax: $${validatedData.taxAmount}, Total: $${validatedData.total}`);
       
       // Create the medical invoice in the database
-      const [medicalInvoice] = await db.insert(medicalInvoices).values([invoiceData]).returning();
+      const [medicalInvoice] = await db.insert(medicalInvoices).values(validatedData).returning();
       
       // Create patient history entry
       await db.insert(patientHistory).values({
