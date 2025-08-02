@@ -439,6 +439,20 @@ export default function Payments() {
                       <p className="text-lg font-bold">${payment.amount.toFixed(2)}</p>
                       <p className="text-sm text-slate-500 capitalize">{payment.paymentMethod}</p>
                     </div>
+                    {/* Prominent Pay Now Button for Pending Payments */}
+                    {payment.status === "pending" && (
+                      <Button 
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setPaymentMethodDialog(true);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Pay Now
+                      </Button>
+                    )}
                     <PaymentActions payment={payment} />
                   </div>
                 </div>
