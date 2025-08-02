@@ -54,42 +54,48 @@ export default function Sales() {
     queryKey: ["/api/customers"],
   });
 
-  const { data: patients = [] } = useQuery({
-    queryKey: ["/api/patients"],
-  });
-
-  // Combine customers and patients for the dropdown
-  const allCustomers = [
-    ...customers,
-    ...patients.map((patient: any) => ({
-      id: patient.id,
-      firstName: patient.firstName,
-      lastName: patient.lastName,
-      email: patient.email,
-      phone: patient.phone
-    }))
-  ];
-
   // Define columns for EnhancedDataTable
   const salesColumns: Column[] = [
     {
-      key: 'createdAt',
-      title: 'Date',
+      key: 'id',
+      title: 'Sale ID',
       sortable: true,
-      render: (value) => format(new Date(value), 'MMM dd, yyyy HH:mm')
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">#{value.slice(-8)}</div>
+      )
+    },
+    {
+      key: 'createdAt',
+      title: 'Date & Time',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">
+          <div className="font-medium">{format(new Date(value), 'MMM dd, yyyy')}</div>
+          <div className="text-gray-500">{format(new Date(value), 'HH:mm')}</div>
+        </div>
+      )
     },
     {
       key: 'customerId',
       title: 'Customer',
       sortable: true,
-      render: (value) => {
-        const customer = allCustomers.find(c => c.id === value);
-        return customer ? `${customer.firstName} ${customer.lastName}` : 'Guest Customer';
+      filterable: true,
+      render: (value, sale) => {
+        const customer = customers.find(c => c.id === value);
+        return (
+          <div className="flex items-center space-x-2">
+            <User className="h-4 w-4 text-slate-400" />
+            <span className="text-sm">
+              {customer ? `${customer.firstName} ${customer.lastName}` : 'Walk-in Customer'}
+            </span>
+          </div>
+        );
       }
     },
     {
       key: 'paymentMethod',
-      title: 'Payment',
+      title: 'Payment Method',
       sortable: true,
       filterable: true,
       filterType: 'select',
@@ -99,16 +105,16 @@ export default function Sales() {
         { value: 'check', label: 'Check' },
         { value: 'digital', label: 'Digital' }
       ],
-      render: (value) => (
-        <Badge className={
-          value === 'cash' ? 'bg-green-100 text-green-800' :
-          value === 'card' ? 'bg-blue-100 text-blue-800' :
-          value === 'check' ? 'bg-orange-100 text-orange-800' :
-          'bg-purple-100 text-purple-800'
-        }>
-          {value}
-        </Badge>
-      )
+      render: (value) => {
+        const icons = { cash: Banknote, card: CreditCard, check: Receipt, digital: DollarSign };
+        const Icon = icons[value as keyof typeof icons] || DollarSign;
+        return (
+          <div className="flex items-center space-x-2">
+            <Icon className="h-4 w-4 text-slate-600" />
+            <span className="text-sm capitalize">{value}</span>
+          </div>
+        );
+      }
     },
     {
       key: 'total',
@@ -219,13 +225,34 @@ export default function Sales() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Total Sales</p>
-                    <p className="text-2xl font-bold text-slate-900">${totalSales.toFixed(2)}</p>
-                    <p className="text-xs text-slate-500">
-                      {filteredSales.length} transactions
+                    <p className="text-2xl font-bold text-slate-900">
+                      ${totalSales.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-emerald-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +12.5% from last period
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <DollarSign className="text-emerald-600 h-6 w-6" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Transactions</p>
+                    <p className="text-2xl font-bold text-slate-900">{filteredSales.length}</p>
+                    <p className="text-xs text-emerald-600 flex items-center mt-1">
+                      <TrendingUp className="h-3 w-3 mr-1" />
+                      +8.2% from last period
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <DollarSign className="text-blue-600 h-6 w-6" />
+                    <Receipt className="text-blue-600 h-6 w-6" />
                   </div>
                 </div>
               </CardContent>
@@ -236,30 +263,16 @@ export default function Sales() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Average Sale</p>
-                    <p className="text-2xl font-bold text-slate-900">${avgSaleAmount.toFixed(2)}</p>
-                    <p className="text-xs text-slate-500">
-                      Per transaction
+                    <p className="text-2xl font-bold text-slate-900">
+                      ${avgSaleAmount.toFixed(2)}
                     </p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <TrendingUp className="text-green-600 h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Card Payments</p>
-                    <p className="text-2xl font-bold text-slate-900">{cardSales}</p>
-                    <p className="text-xs text-slate-500">
-                      {cashSales} cash payments
+                    <p className="text-xs text-red-600 flex items-center mt-1">
+                      <TrendingDown className="h-3 w-3 mr-1" />
+                      -2.1% from last period
                     </p>
                   </div>
                   <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <CreditCard className="text-purple-600 h-6 w-6" />
+                    <TrendingUp className="text-purple-600 h-6 w-6" />
                   </div>
                 </div>
               </CardContent>
@@ -352,7 +365,7 @@ export default function Sales() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {allCustomers.map((customer) => (
+                                  {customers.map((customer) => (
                                     <SelectItem key={customer.id} value={customer.id}>
                                       {customer.firstName} {customer.lastName}
                                     </SelectItem>
@@ -499,6 +512,171 @@ export default function Sales() {
                 Quick Sale
               </Button>
             </div>
+
+          {/* Enhanced Sales Table with Pagination, Filtering, and Sorting */}
+          <EnhancedDataTable
+            data={sales}
+            columns={salesColumns}
+            title="Sales Management"
+            searchPlaceholder="Search sales by customer, payment method, or transaction details..."
+            isLoading={isLoading}
+            pageSize={10}
+            showPagination={true}
+            totalCount={sales.length}
+            emptyMessage="No sales found. Sales will appear here when transactions are processed."
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ["/api/sales"] })}
+            actions={(sale) => (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" title="View Details">
+                  <Eye className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" title="Print Receipt">
+                  <Printer className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          />
+        </div>
+      </main>
+    </>
+  );
+}
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {customers.map((customer) => (
+                                  <SelectItem key={customer.id} value={customer.id}>
+                                    {customer.firstName} {customer.lastName}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="paymentMethod"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Payment Method</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="cash">💵 Cash</SelectItem>
+                                <SelectItem value="card">💳 Credit/Debit Card</SelectItem>
+                                <SelectItem value="check">📄 Check</SelectItem>
+                                <SelectItem value="digital">📱 Digital Payment</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="subtotal"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subtotal</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="taxAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tax</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="total"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Total</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                placeholder="0.00"
+                                {...field}
+                                onChange={(e) => field.onChange(e.target.value)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Transaction notes..." {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={createSaleMutation.isPending}
+                        className="bg-emerald-600 hover:bg-emerald-700"
+                      >
+                        {createSaleMutation.isPending ? "Processing..." : "Complete Sale"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Enhanced Sales Table with Pagination, Filtering, and Sorting */}

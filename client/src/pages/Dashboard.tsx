@@ -170,7 +170,7 @@ export default function Dashboard() {
       title: "Process Sale",
       description: "Quick sale transaction",
       icon: Receipt,
-      action: () => navigate('/invoices'),
+      action: () => navigate('/sales'),
       color: "bg-purple-500 hover:bg-purple-600"
     },
     {

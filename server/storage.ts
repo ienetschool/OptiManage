@@ -690,12 +690,12 @@ export class DatabaseStorage implements IStorage {
         }
       ];
 
-      const allInvoices = [...realInvoices, ...manualInvoices, ...this.createdInvoices];
-      console.log(`🚨 RETURNING ${allInvoices.length} total invoices (${realInvoices.length} from sales, ${manualInvoices.length} manual, ${this.createdInvoices.length} created)`);
+      const allInvoices = [...realInvoices, ...manualInvoices, ...globalCreatedInvoices];
+      console.log(`🚨 RETURNING ${allInvoices.length} total invoices (${realInvoices.length} from sales, ${manualInvoices.length} manual, ${globalCreatedInvoices.length} created)`);
       
       // Debug log to show what we're returning
-      if (this.createdInvoices.length > 0) {
-        console.log(`✅ INCLUDING CREATED INVOICES:`, this.createdInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber, total: inv.total })));
+      if (globalCreatedInvoices.length > 0) {
+        console.log(`✅ INCLUDING CREATED INVOICES:`, globalCreatedInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber, total: inv.total })));
       }
       
       console.log(`🚨 FINAL INVOICE IDS BEING RETURNED:`, allInvoices.map(inv => ({ id: inv.id, invoiceNumber: inv.invoiceNumber })));

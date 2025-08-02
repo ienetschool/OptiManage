@@ -224,6 +224,22 @@ export default function InvoiceManagement() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const { data: patients = [] } = useQuery({
+    queryKey: ["/api/patients"],
+  });
+
+  // Combine customers and patients for the dropdown
+  const allCustomers = [
+    ...customers,
+    ...patients.map((patient: any) => ({
+      id: patient.id,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      email: patient.email,
+      phone: patient.phone
+    }))
+  ];
+
   // Enhance invoice data with customer names
   const enrichedInvoices = React.useMemo(() => {
     return invoices.map(invoice => {
@@ -1017,10 +1033,10 @@ export default function InvoiceManagement() {
                               <SelectContent>
                                 {customersLoading ? (
                                   <SelectItem value="" disabled>Loading customers...</SelectItem>
-                                ) : customers.length === 0 ? (
+                                ) : allCustomers.length === 0 ? (
                                   <SelectItem value="" disabled>No customers found</SelectItem>
                                 ) : (
-                                  customers.map((customer) => (
+                                  allCustomers.map((customer) => (
                                     <SelectItem key={customer.id} value={customer.id}>
                                       {customer.firstName} {customer.lastName}
                                     </SelectItem>
