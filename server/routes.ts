@@ -347,16 +347,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = createInvoiceSchema.parse(req.body);
       const { items, ...invoiceData } = validatedData;
       
-      // Add invoice specific fields
+      // Calculate totals properly
+      const subtotal = items.reduce((sum, item) => sum + (typeof item.total === 'number' ? item.total : parseFloat(item.total || "0")), 0);
+      const taxAmount = subtotal * ((typeof invoiceData.taxRate === 'number' ? invoiceData.taxRate : parseFloat(invoiceData.taxRate?.toString() || "0")) / 100);
+      const discountAmount = typeof invoiceData.discountAmount === 'number' ? invoiceData.discountAmount : parseFloat(invoiceData.discountAmount?.toString() || "0");
+      const total = subtotal + taxAmount - discountAmount;
+      
+      // Add invoice specific fields with proper calculations
       const invoiceWithDefaults = {
-        ...invoiceData,
-        invoiceNumber: `INV-${Date.now()}`,
+        customerId: invoiceData.customerId,
+        storeId: invoiceData.storeId,
+        dueDate: invoiceData.dueDate,
+        taxRate: invoiceData.taxRate,
+        discountAmount: invoiceData.discountAmount,
+        paymentMethod: invoiceData.paymentMethod,
+        notes: invoiceData.notes,
+        invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
         date: new Date().toISOString(),
         status: 'draft',
-        subtotal: items.reduce((sum, item) => sum + item.total, 0),
-        taxAmount: (items.reduce((sum, item) => sum + item.total, 0) * (invoiceData.taxRate / 100)),
-        total: (items.reduce((sum, item) => sum + item.total, 0) * (1 + invoiceData.taxRate / 100)) - invoiceData.discountAmount,
+        subtotal: subtotal,
+        taxAmount: taxAmount,
+        total: total,
       };
+      
+      console.log(`🧾 CREATING INVOICE: ${invoiceWithDefaults.invoiceNumber} - Subtotal: $${subtotal}, Tax: $${taxAmount}, Total: $${total}`);
       
       const invoice = await storage.createInvoice(invoiceWithDefaults, items);
       res.status(201).json(invoice);

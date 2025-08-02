@@ -694,9 +694,7 @@ export class DatabaseStorage implements IStorage {
 
   async createInvoice(invoice: any, items: any[]): Promise<any> {
     try {
-      console.log(`✅ INVOICE CREATED: ${invoice.invoiceNumber || `INV-${Date.now()}`} - Amount: ${invoice.total}`);
-      
-      // Create the new invoice with proper formatting
+      // Create the new invoice with proper formatting and preserve all calculated values
       const newInvoice = {
         id: `inv-${Date.now()}`,
         invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
@@ -704,13 +702,13 @@ export class DatabaseStorage implements IStorage {
         customerName: "Customer", // Will be resolved when fetching
         storeId: invoice.storeId,
         storeName: "OptiStore Pro",
-        date: new Date().toISOString(),
+        date: invoice.date || new Date().toISOString(),
         dueDate: invoice.dueDate,
-        subtotal: parseFloat(invoice.subtotal || "0"),
-        taxRate: parseFloat(invoice.taxRate || "0"),
-        taxAmount: parseFloat(invoice.taxAmount || "0"),
-        discountAmount: parseFloat(invoice.discountAmount || "0"),
-        total: parseFloat(invoice.total || "0"),
+        subtotal: invoice.subtotal, // Preserve calculated values
+        taxRate: invoice.taxRate,
+        taxAmount: invoice.taxAmount,
+        discountAmount: invoice.discountAmount,
+        total: invoice.total,
         status: invoice.status || 'draft',
         paymentMethod: invoice.paymentMethod,
         notes: invoice.notes,
@@ -728,6 +726,8 @@ export class DatabaseStorage implements IStorage {
       
       // Store in memory so it appears in the invoice list
       this.createdInvoices.push(newInvoice);
+      
+      console.log(`✅ INVOICE CREATED & STORED: ${newInvoice.invoiceNumber} - Subtotal: $${newInvoice.subtotal}, Tax: $${newInvoice.taxAmount}, Total: $${newInvoice.total}`);
       
       return newInvoice;
     } catch (error) {
