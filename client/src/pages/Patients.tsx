@@ -121,6 +121,11 @@ export default function Patients() {
     queryKey: ["/api/staff"],
   });
 
+  // Fetch prescriptions
+  const { data: prescriptions = [] } = useQuery({
+    queryKey: ["/api/prescriptions"],
+  });
+
   // Create patient mutation
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
