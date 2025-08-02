@@ -627,7 +627,7 @@ OptiStore Pro Team`;
           onClick={() => setActiveTab("doctor-appointments")}
         >
           <Stethoscope className="h-4 w-4" />
-          <span>Doctor Appointments ({appointments.filter(apt => apt.doctorId && !prescriptions.some(p => p.appointmentId === apt.id)).length})</span>
+          <span>Doctor Appointments ({appointments.filter(apt => apt.assignedDoctorId && !prescriptions.some(p => p.appointmentId === apt.id)).length})</span>
         </div>
       </div>
 
@@ -720,12 +720,12 @@ OptiStore Pro Team`;
                     <p className="text-sm text-gray-600">Appointments waiting for prescription creation</p>
                   </div>
                   <Badge variant="outline" className="px-3 py-1">
-                    {appointments.filter(apt => apt.doctorId && 
+                    {appointments.filter(apt => apt.assignedDoctorId && 
                       !prescriptions.some(p => p.appointmentId === apt.id)).length} Pending
                   </Badge>
                 </div>
 
-                {appointments.filter(apt => apt.doctorId && 
+                {appointments.filter(apt => apt.assignedDoctorId && 
                   !prescriptions.some(p => p.appointmentId === apt.id)).length === 0 ? (
                   <div className="text-center py-12">
                     <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -735,11 +735,11 @@ OptiStore Pro Team`;
                 ) : (
                   <div className="space-y-4">
                     {appointments
-                      .filter(apt => apt.doctorId && 
+                      .filter(apt => apt.assignedDoctorId && 
                         !prescriptions.some(p => p.appointmentId === apt.id))
                       .map((appointment) => {
                         const patient = patients.find(p => p.id === appointment.patientId);
-                        const doctor = staff.find(d => d.id === appointment.doctorId);
+                        const doctor = staff.find(d => d.id === appointment.assignedDoctorId);
                         return (
                           <div key={appointment.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                             <div className="flex items-center justify-between">
@@ -784,13 +784,13 @@ OptiStore Pro Team`;
                                     createForm.reset({
                                       prescriptionNumber: `RX-${Date.now().toString().slice(-6)}`,
                                       patientId: appointment.patientId,
-                                      doctorId: appointment.doctorId,
+                                      doctorId: appointment.assignedDoctorId,
                                       storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
                                       prescriptionType: appointment.service?.includes('eye') ? 'eye_examination' : 
                                                       appointment.service?.includes('contact') ? 'contact_lens' : 'eye_examination',
                                       appointmentId: appointment.id,
                                       status: "active",
-                                      prescriptionDate: new Date().toISOString(),
+                                      prescriptionDate: new Date(),
                                     });
                                     setCurrentServiceType(appointment.service?.includes('eye') ? 'eye_examination' : 
                                                         appointment.service?.includes('contact') ? 'contact_lens' : 'eye_examination');
