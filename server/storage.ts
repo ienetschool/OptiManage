@@ -761,6 +761,8 @@ export class DatabaseStorage implements IStorage {
       
       // Store in global memory so it persists across requests
       globalCreatedInvoices.push(newInvoice);
+      console.log(`🔥 AFTER PUSH: globalCreatedInvoices now has ${globalCreatedInvoices.length} items`);
+      console.log(`🔥 LATEST INVOICE ID:`, newInvoice.id);
       
       // Also create a payment record for this invoice if it's not draft
       if (newInvoice.status !== 'draft') {

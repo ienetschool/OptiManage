@@ -219,8 +219,9 @@ export default function InvoiceManagement() {
     queryKey: ["/api/invoices"],
   });
 
-  const { data: customers = [] } = useQuery<any[]>({
+  const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Enhance invoice data with customer names
@@ -277,12 +278,15 @@ export default function InvoiceManagement() {
       return response.json();
     },
     onSuccess: (invoiceData) => {
+      // Force refresh of invoice data
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.refetchQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      
       toast({
         title: "Success",
-        description: "Invoice created successfully and visible in the system.",
+        description: `Invoice ${invoiceData.invoiceNumber} created successfully and is now visible in the list.`,
       });
       setInvoiceDialogOpen(false);
       invoiceForm.reset({
@@ -1011,11 +1015,17 @@ export default function InvoiceManagement() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {customers.map((customer) => (
-                                  <SelectItem key={customer.id} value={customer.id}>
-                                    {customer.firstName} {customer.lastName}
-                                  </SelectItem>
-                                ))}
+                                {customersLoading ? (
+                                  <SelectItem value="" disabled>Loading customers...</SelectItem>
+                                ) : customers.length === 0 ? (
+                                  <SelectItem value="" disabled>No customers found</SelectItem>
+                                ) : (
+                                  customers.map((customer) => (
+                                    <SelectItem key={customer.id} value={customer.id}>
+                                      {customer.firstName} {customer.lastName}
+                                    </SelectItem>
+                                  ))
+                                )}
                               </SelectContent>
                             </Select>
                             <FormMessage />
