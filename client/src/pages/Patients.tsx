@@ -83,6 +83,94 @@ export default function Patients() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Define columns for EnhancedDataTable
+  const patientColumns: Column[] = [
+    {
+      key: 'patientCode',
+      title: 'Patient ID',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">{value}</div>
+      )
+    },
+    {
+      key: 'name',
+      title: 'Patient',
+      sortable: true,
+      filterable: true,
+      render: (value, patient) => (
+        <div className="flex items-center space-x-2">
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="text-xs">
+              {patient.firstName?.[0]}{patient.lastName?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium text-gray-900">
+              {patient.firstName} {patient.lastName}
+            </div>
+            <div className="text-sm text-gray-500">{patient.email}</div>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'phone',
+      title: 'Phone',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="text-gray-900">{value || 'N/A'}</div>
+      )
+    },
+    {
+      key: 'dateOfBirth',
+      title: 'Age',
+      sortable: true,
+      render: (value, patient) => (
+        <div className="text-gray-900">
+          {patient.dateOfBirth ? `${calculateAge(patient.dateOfBirth)} years` : 'N/A'}
+        </div>
+      )
+    },
+    {
+      key: 'loyaltyTier',
+      title: 'Loyalty',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <Badge 
+          variant={value === 'gold' ? 'default' : value === 'silver' ? 'secondary' : 'outline'}
+          className={
+            value === 'gold' ? 'bg-yellow-100 text-yellow-800' :
+            value === 'silver' ? 'bg-gray-100 text-gray-800' :
+            'bg-orange-100 text-orange-800'
+          }
+        >
+          {value?.charAt(0).toUpperCase() + value?.slice(1)}
+        </Badge>
+      )
+    },
+    {
+      key: 'isActive',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { label: 'All Statuses', value: 'all' },
+        { label: 'Active', value: 'true' },
+        { label: 'Inactive', value: 'false' }
+      ],
+      render: (value) => (
+        <Badge variant={value ? "default" : "secondary"}>
+          {value ? "Active" : "Inactive"}
+        </Badge>
+      )
+    }
+  ];
+
   // Helper function to calculate age
   const calculateAge = (dateOfBirth: string | null | undefined): number | string => {
     if (!dateOfBirth) return 'N/A';

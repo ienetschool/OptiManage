@@ -89,7 +89,7 @@ export default function EnhancedDataTable({
 
     // Apply column-specific filters
     Object.entries(filters).forEach(([columnKey, filterValue]) => {
-      if (filterValue) {
+      if (filterValue && filterValue !== 'all') {
         result = result.filter(row => {
           const value = row[columnKey];
           const column = columns.find(col => col.key === columnKey);
@@ -248,7 +248,7 @@ export default function EnhancedDataTable({
                       <SelectValue placeholder={`Filter ${column.title}`} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All {column.title}</SelectItem>
+                      <SelectItem value="all">All {column.title}</SelectItem>
                       {column.filterOptions.map(option => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
