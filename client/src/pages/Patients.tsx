@@ -151,6 +151,11 @@ export default function Patients() {
     queryKey: ["/api/prescriptions"],
   });
 
+  // Fetch medical invoices
+  const { data: medicalInvoices = [] } = useQuery({
+    queryKey: ["/api/medical-invoices"],
+  });
+
   // Create patient mutation
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
@@ -2615,7 +2620,7 @@ export default function Patients() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Billing & Invoice History</h3>
                   <Badge variant="outline" className="text-xs">
-                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length} Invoices
+                    {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length} Invoices
                   </Badge>
                 </div>
 
@@ -2626,7 +2631,10 @@ export default function Patients() {
                       <div>
                         <p className="text-xs text-green-600 uppercase tracking-wide font-medium">Total Paid</p>
                         <p className="text-2xl font-bold text-green-700">
-                          ${((appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length * 150).toFixed(2)}
+                          ${(medicalInvoices as any[])
+                            .filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus === 'paid')
+                            .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
+                            .toFixed(2)}
                         </p>
                       </div>
                       <CreditCard className="h-8 w-8 text-green-600" />
@@ -2638,7 +2646,7 @@ export default function Patients() {
                       <div>
                         <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">Paid Invoices</p>
                         <p className="text-2xl font-bold text-blue-700">
-                          {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length}
+                          {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus === 'paid').length}
                         </p>
                       </div>
                       <Receipt className="h-8 w-8 text-blue-600" />
@@ -2649,7 +2657,12 @@ export default function Patients() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-orange-600 uppercase tracking-wide font-medium">Outstanding</p>
-                        <p className="text-2xl font-bold text-orange-700">$0.00</p>
+                        <p className="text-2xl font-bold text-orange-700">
+                          ${(medicalInvoices as any[])
+                            .filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus !== 'paid')
+                            .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
+                            .toFixed(2)}
+                        </p>
                       </div>
                       <AlertTriangle className="h-8 w-8 text-orange-600" />
                     </div>
@@ -2659,7 +2672,15 @@ export default function Patients() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-xs text-purple-600 uppercase tracking-wide font-medium">Avg. Per Visit</p>
-                        <p className="text-2xl font-bold text-purple-700">$150.00</p>
+                        <p className="text-2xl font-bold text-purple-700">
+                          ${(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length > 0 
+                            ? ((medicalInvoices as any[])
+                                .filter(inv => inv.patientId === selectedPatient.id)
+                                .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0) / 
+                               (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length)
+                                .toFixed(2)
+                            : "0.00"}
+                        </p>
                       </div>
                       <TrendingUp className="h-8 w-8 text-purple-600" />
                     </div>
@@ -2667,7 +2688,7 @@ export default function Patients() {
                 </div>
 
                 {/* Detailed Invoice List */}
-                {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length > 0 ? (
+                {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length > 0 ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900">Invoice Details</h4>
@@ -2676,8 +2697,8 @@ export default function Patients() {
                         size="sm"
                         onClick={() => {
                           // Generate comprehensive billing report
-                          const billingReport = generateComprehensiveBillingReport(selectedPatient, (appointments as any[]).filter(apt => apt.patientId === selectedPatient.id));
-                          window.open(billingReport, '_blank');
+                          const billingReport = generateComprehensiveBillingReport(selectedPatient, (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id));
+                          if (billingReport) window.open(billingReport, '_blank');
                         }}
                       >
                         <FileDown className="h-3 w-3 mr-1" />
@@ -2685,50 +2706,54 @@ export default function Patients() {
                       </Button>
                     </div>
 
-                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed')
-                      .sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())
-                      .map((appointment: any, index: number) => (
-                      <div key={appointment.id} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+                    {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id)
+                      .sort((a, b) => new Date(b.invoiceDate || b.createdAt).getTime() - new Date(a.invoiceDate || a.createdAt).getTime())
+                      .map((invoice: any, index: number) => (
+                      <div key={invoice.id} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <div className="bg-green-100 p-2 rounded-full">
                               <Receipt className="h-4 w-4 text-green-600" />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">Invoice #{String(index + 1).padStart(4, '0')}</p>
+                              <p className="font-medium text-gray-900">{invoice.invoiceNumber}</p>
                               <p className="text-sm text-gray-600">
-                                {appointment.service} • {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                                {format(new Date(invoice.invoiceDate || invoice.createdAt), 'MMM dd, yyyy')}
+                                {invoice.notes && ` • ${invoice.notes.slice(0, 30)}...`}
                               </p>
                             </div>
                           </div>
 
                           <div className="text-right">
-                            <p className="font-bold text-green-600">$150.00</p>
-                            <Badge variant="secondary" className="text-xs">PAID</Badge>
+                            <p className="font-bold text-green-600">${parseFloat(invoice.total || 0).toFixed(2)}</p>
+                            <Badge variant={invoice.paymentStatus === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                              {(invoice.paymentStatus || 'pending').toUpperCase()}
+                            </Badge>
                           </div>
                         </div>
 
                         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Service Details</span>
-                            <p className="text-sm font-medium text-gray-900">{appointment.service}</p>
-                            <p className="text-xs text-gray-600">Duration: {appointment.duration} minutes</p>
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Invoice Details</span>
+                            <p className="text-sm font-medium text-gray-900">Subtotal: ${parseFloat(invoice.subtotal || 0).toFixed(2)}</p>
+                            <p className="text-xs text-gray-600">Tax: ${parseFloat(invoice.taxAmount || 0).toFixed(2)} | Discount: ${parseFloat(invoice.discountAmount || 0).toFixed(2)}</p>
                           </div>
                           
                           <div>
                             <span className="text-xs text-gray-500 uppercase tracking-wide">Payment Info</span>
-                            <p className="text-sm font-medium text-gray-900">
-                              {selectedPatient.loyaltyTier === 'premium' ? 'Insurance + Cash' : 'Cash Payment'}
-                            </p>
+                            <p className="text-sm font-medium text-gray-900">${parseFloat(invoice.total || 0).toFixed(2)} ({invoice.paymentMethod || 'N/A'})</p>
                             <p className="text-xs text-gray-600">
-                              Paid: {format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}
+                              {invoice.paymentDate ? `Paid: ${format(new Date(invoice.paymentDate), 'MMM dd, yyyy')}` : 'Payment pending'}
                             </p>
                           </div>
 
                           <div>
-                            <span className="text-xs text-gray-500 uppercase tracking-wide">Doctor</span>
-                            <p className="text-sm font-medium text-gray-900">
-                              Dr. {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.firstName || 'TBD'} {(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.lastName || ''}
+                            <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
+                            <p className={`text-sm font-medium ${invoice.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
+                              {invoice.paymentStatus === 'paid' ? 'Payment Complete' : 'Payment Pending'}
+                            </p>
+                            <p className="text-xs text-gray-600">
+                              {invoice.paymentStatus === 'paid' ? 'No outstanding balance' : `Due: ${format(new Date(invoice.dueDate || invoice.invoiceDate), 'MMM dd, yyyy')}`}
                             </p>
                           </div>
                         </div>
@@ -2740,8 +2765,8 @@ export default function Patients() {
                               size="sm"
                               onClick={() => {
                                 // Generate individual invoice PDF
-                                const invoicePDF = generateDetailedInvoice(appointment, selectedPatient);
-                                window.open(invoicePDF, '_blank');
+                                const invoicePDF = generateDetailedInvoice(invoice, selectedPatient);
+                                if (invoicePDF) window.open(invoicePDF, '_blank');
                               }}
                             >
                               <Download className="h-3 w-3 mr-1" />
@@ -2753,10 +2778,12 @@ export default function Patients() {
                               size="sm"
                               onClick={() => {
                                 // Print invoice
-                                const invoicePrint = generateDetailedInvoice(appointment, selectedPatient);
-                                const printWindow = window.open(invoicePrint, '_blank');
-                                if (printWindow) {
-                                  printWindow.onload = () => printWindow.print();
+                                const invoicePrint = generateDetailedInvoice(invoice, selectedPatient);
+                                if (invoicePrint) {
+                                  const printWindow = window.open(invoicePrint, '_blank');
+                                  if (printWindow) {
+                                    printWindow.onload = () => printWindow.print();
+                                  }
                                 }
                               }}
                             >
@@ -2769,8 +2796,8 @@ export default function Patients() {
                               size="sm"
                               onClick={() => {
                                 // Email invoice
-                                const emailSubject = `Medical Invoice - ${selectedPatient.firstName} ${selectedPatient.lastName}`;
-                                const emailBody = `Dear ${selectedPatient.firstName},%0D%0A%0D%0APlease find your medical invoice attached.%0D%0A%0D%0AInvoice Details:%0D%0A- Service: ${appointment.service}%0D%0A- Date: ${format(new Date(appointment.appointmentDate), 'MMM dd, yyyy')}%0D%0A- Amount: $150.00%0D%0A- Status: PAID%0D%0A%0D%0AThank you for choosing OptiStore Pro Medical Center.%0D%0A%0D%0ABest regards,%0D%0AOptiStore Pro Medical Team`;
+                                const emailSubject = `Medical Invoice ${invoice.invoiceNumber} - ${selectedPatient.firstName} ${selectedPatient.lastName}`;
+                                const emailBody = `Dear ${selectedPatient.firstName},%0D%0A%0D%0APlease find your medical invoice attached.%0D%0A%0D%0AInvoice Details:%0D%0A- Invoice: ${invoice.invoiceNumber}%0D%0A- Date: ${format(new Date(invoice.invoiceDate || invoice.createdAt), 'MMM dd, yyyy')}%0D%0A- Amount: $${parseFloat(invoice.total || 0).toFixed(2)}%0D%0A- Status: ${(invoice.paymentStatus || 'pending').toUpperCase()}%0D%0A%0D%0AThank you for choosing OptiStore Pro Medical Center.%0D%0A%0D%0ABest regards,%0D%0AOptiStore Pro Medical Team`;
                                 window.open(`mailto:${selectedPatient.email}?subject=${emailSubject}&body=${emailBody}`);
                                 toast({
                                   title: "Email Prepared",
@@ -2784,7 +2811,7 @@ export default function Patients() {
                           </div>
 
                           <div className="text-xs text-gray-500">
-                            Invoice ID: INV-{appointment.id.slice(0, 8).toUpperCase()}
+                            Invoice ID: {invoice.invoiceNumber}
                           </div>
                         </div>
                       </div>
@@ -2794,7 +2821,7 @@ export default function Patients() {
                   <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                     <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-500 font-medium">No billing history found</p>
-                    <p className="text-gray-400 text-sm">Patient has not completed any paid appointments yet</p>
+                    <p className="text-gray-400 text-sm">Patient has no invoices on record yet</p>
                   </div>
                 )}
 
@@ -2805,8 +2832,8 @@ export default function Patients() {
                     <div>
                       <p className="text-gray-600">Last Payment Date:</p>
                       <p className="font-medium">
-                        {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length > 0 
-                          ? format(new Date((appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').sort((a, b) => new Date(b.appointmentDate).getTime() - new Date(a.appointmentDate).getTime())[0]?.appointmentDate || ''), 'MMM dd, yyyy')
+                        {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentDate).length > 0 
+                          ? format(new Date((medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentDate).sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())[0]?.paymentDate || ''), 'MMM dd, yyyy')
                           : 'No payments recorded'
                         }
                       </p>
