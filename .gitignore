@@ -1,6 +1,70 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+.next/
+.nuxt/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
-server/public
-vite.config.ts.*
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Testing
+coverage/
+.coverage
+
+# Misc
+*.tgz
 *.tar.gz
+
+# Replit specific
+.replit
+.config/
+
+# Keep important backups but ignore large ones
+!database_backup_20250802_033702.sql
+!mysql_database_backup_complete.sql
+database_backup_*.sql
+!database_backup_complete.sql
+
+# Keep documentation
+!*.md
+!DEPLOYMENT_GUIDE.md
+!SYSTEM_DOCUMENTATION.md
