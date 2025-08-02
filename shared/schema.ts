@@ -536,7 +536,7 @@ export const prescriptions = pgTable("prescriptions", {
   prescriptionNumber: varchar("prescription_number", { length: 20 }).unique().notNull(),
   patientId: uuid("patient_id").references(() => patients.id).notNull(),
   doctorId: uuid("doctor_id").references(() => staff.id),
-  appointmentId: uuid("appointment_id").references(() => medicalAppointments.id),
+  appointmentId: varchar("appointment_id").references(() => appointments.id),
   storeId: varchar("store_id").references(() => stores.id),
   prescriptionDate: timestamp("prescription_date").defaultNow(),
   prescriptionType: varchar("prescription_type", { length: 50 }).notNull(), // glasses, contact_lenses, medication
