@@ -268,12 +268,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
       
-      // For paid appointments, always preserve the assigned doctor ID
-      if (validatedData.assignedDoctorId && validatedData.paymentStatus === 'paid') {
-        console.log(`✅ PAID APPOINTMENT - Doctor ${validatedData.assignedDoctorId} assigned automatically (Dr. Smita Ghosh confirmed in database)`);
-      } else if (validatedData.assignedDoctorId) {
-        // For non-paid appointments, validate if needed
-        console.log(`Doctor ${validatedData.assignedDoctorId} assigned to non-paid appointment`);
+      // Only assign doctors for PAID appointments - pending appointments should not have doctor assignment
+      console.log(`DEBUG: paymentStatus = "${validatedData.paymentStatus}", assignedDoctorId = "${validatedData.assignedDoctorId}"`);
+      
+      if (validatedData.assignedDoctorId) {
+        if (validatedData.paymentStatus === 'paid') {
+          console.log(`✅ PAID APPOINTMENT - Doctor ${validatedData.assignedDoctorId} assigned automatically`);
+        } else if (validatedData.paymentStatus === 'pending') {
+          // For pending payments, remove doctor assignment - doctor will be assigned when payment is completed
+          console.log(`⚠️ PENDING PAYMENT - Removing doctor assignment. Doctor will be assigned when payment is completed.`);
+          validatedData.assignedDoctorId = null;
+        } else {
+          // For other payment statuses, preserve assignment but log
+          console.log(`Doctor ${validatedData.assignedDoctorId} assigned to ${validatedData.paymentStatus} appointment`);
+        }
       }
       
       const appointment = await storage.createAppointment(validatedData);

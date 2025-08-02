@@ -96,6 +96,20 @@ export function registerAppointmentRoutes(app: Express) {
     try {
       const validatedData = insertAppointmentSchema.parse(req.body);
       
+      // Only assign doctors for PAID appointments - pending appointments should not have doctor assignment
+      if (validatedData.assignedDoctorId) {
+        if (validatedData.paymentStatus === 'paid') {
+          console.log(`✅ PAID APPOINTMENT - Doctor ${validatedData.assignedDoctorId} assigned automatically`);
+        } else if (validatedData.paymentStatus === 'pending') {
+          // For pending payments, remove doctor assignment - doctor will be assigned when payment is completed
+          console.log(`⚠️ PENDING PAYMENT - Removing doctor assignment. Doctor will be assigned when payment is completed.`);
+          validatedData.assignedDoctorId = null;
+        } else {
+          // For other payment statuses, preserve assignment but log
+          console.log(`Doctor ${validatedData.assignedDoctorId} assigned to ${validatedData.paymentStatus} appointment`);
+        }
+      }
+      
       const [appointment] = await db
         .insert(appointments)
         .values(validatedData)

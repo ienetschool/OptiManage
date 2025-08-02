@@ -62,6 +62,8 @@ Preferred communication style: Simple, everyday language.
 - **FINAL SOLUTION: Doctor Assignment for Paid Appointments** - Resolved foreign key constraint issue by ensuring doctors exist in both staff and doctors tables for proper appointment assignment
 - **VERIFIED: Complete Doctor Assignment Workflow** - Paid appointments now properly assign selected doctors with assignedDoctorId field correctly saved and visible in Doctor Appointments view
 - **DATABASE FIX: Doctor Table Synchronization** - Added missing doctor records to doctors table to resolve foreign key constraint violations during appointment creation with assigned doctors
+- **NEW: Payment Status Validation Logic** - Implemented validation that only assigns doctors to PAID appointments; pending appointments have doctor assignment removed until payment is completed
+- **VERIFIED: Payment Status Doctor Assignment** - Pending appointments correctly show assignedDoctorId as null, while paid appointments preserve doctor assignment as expected
 - Added comprehensive toast notifications for all user actions
 - Professional medical practice interface with proper authentication flow
 
