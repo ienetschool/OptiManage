@@ -55,10 +55,15 @@ export const generateMultiPagePatientPDF = (
   const printWindow = window.open('', '_blank');
   if (!printWindow) return;
 
+  // Calculate accurate statistics from real data
   const totalAppointments = appointments.length;
   const totalPrescriptions = prescriptions.length;
   const totalInvoices = invoices.length;
-  const totalAmount = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+  const totalAmount = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || inv.totalAmount || '0'), 0);
+  const paidInvoices = invoices.filter(inv => inv.status === 'paid' || inv.paymentStatus === 'paid');
+  const pendingInvoices = invoices.filter(inv => inv.status === 'pending' || inv.paymentStatus === 'pending');
+  const paidAmount = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || inv.totalAmount || '0'), 0);
+  const pendingAmount = pendingInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || inv.totalAmount || '0'), 0);
 
   printWindow.document.write(`
     <!DOCTYPE html>
@@ -68,7 +73,7 @@ export const generateMultiPagePatientPDF = (
         <style>
           @page { 
             size: A4; 
-            margin: 15mm; 
+            margin: 20mm 15mm; 
             @top-center {
               content: "OptiStore Pro Medical Center - Patient: ${patient.firstName} ${patient.lastName}";
               font-size: 10pt;
@@ -84,18 +89,25 @@ export const generateMultiPagePatientPDF = (
           body { 
             font-family: 'Arial', sans-serif; 
             margin: 0; 
-            padding: 0; 
+            padding: 10mm; 
             font-size: 11pt; 
             color: #333; 
-            line-height: 1.4;
+            line-height: 1.5;
+            background: white;
           }
           
           .page-break { 
             page-break-before: always; 
+            margin-top: 0;
+            padding-top: 20px;
           }
           
           .no-break { 
             page-break-inside: avoid; 
+          }
+          
+          .section-spacing {
+            margin-bottom: 25px;
           }
           
           .profile-header { 
@@ -315,7 +327,7 @@ export const generateMultiPagePatientPDF = (
         </div>
 
         <!-- Patient Summary Cards -->
-        <div class="summary-cards">
+        <div class="summary-cards section-spacing">
           <div class="summary-card">
             <div class="card-value">${totalAppointments}</div>
             <div class="card-label">Total Appointments</div>
@@ -335,7 +347,7 @@ export const generateMultiPagePatientPDF = (
         </div>
 
         <!-- Basic Information -->
-        <div class="patient-info-grid">
+        <div class="patient-info-grid section-spacing">
           <div class="info-section">
             <div class="section-title">Personal Information</div>
             <div class="info-row">
@@ -560,22 +572,31 @@ export const generateMultiPagePatientPDF = (
                   </tr>
                 </thead>
                 <tbody>
-                  ${appointments.map(apt => `
+                  ${appointments.map(apt => {
+                    const appointmentDate = apt.appointmentDate || apt.date || new Date();
+                    const appointmentTime = apt.appointmentTime || 'Time not set';
+                    const serviceType = apt.serviceType || 'General Consultation';
+                    const doctorName = apt.assignedDoctorId ? `Dr. ${apt.assignedDoctorId.substring(0, 12)}...` : 'Not assigned';
+                    const appointmentStatus = apt.status || 'scheduled';
+                    const paymentStatus = apt.paymentStatus || 'pending';
+                    const appointmentFee = parseFloat(apt.appointmentFee || '0');
+                    
+                    return `
                     <tr>
                       <td>
-                        <div style="font-weight: 600;">${format(new Date(apt.appointmentDate), 'MMM dd, yyyy')}</div>
-                        <div style="font-size: 9pt; color: #666;">${apt.appointmentTime || 'Time not set'}</div>
+                        <div style="font-weight: 600;">${format(new Date(appointmentDate), 'MMM dd, yyyy')}</div>
+                        <div style="font-size: 9pt; color: #666;">${appointmentTime}</div>
                       </td>
                       <td>
-                        <div style="font-weight: 500;">${apt.serviceType || 'General Consultation'}</div>
+                        <div style="font-weight: 500;">${serviceType}</div>
                         ${apt.notes ? `<div style="font-size: 9pt; color: #666; margin-top: 3px;">${apt.notes.substring(0, 50)}${apt.notes.length > 50 ? '...' : ''}</div>` : ''}
                       </td>
-                      <td>${apt.assignedDoctorId ? `Dr. ${apt.assignedDoctorId.substring(0, 12)}...` : 'Not assigned'}</td>
-                      <td><span class="status-badge status-${apt.status || 'scheduled'}">${apt.status || 'Scheduled'}</span></td>
-                      <td style="font-weight: 600;">$${parseFloat(apt.appointmentFee || '0').toFixed(2)}</td>
-                      <td><span class="status-badge status-${apt.paymentStatus || 'pending'}">${apt.paymentStatus || 'Pending'}</span></td>
-                    </tr>
-                  `).join('')}
+                      <td>${doctorName}</td>
+                      <td><span class="status-badge status-${appointmentStatus}">${appointmentStatus.charAt(0).toUpperCase() + appointmentStatus.slice(1)}</span></td>
+                      <td style="font-weight: 600;">$${appointmentFee.toFixed(2)}</td>
+                      <td><span class="status-badge status-${paymentStatus}">${paymentStatus.charAt(0).toUpperCase() + paymentStatus.slice(1)}</span></td>
+                    </tr>`;
+                  }).join('')}
                 </tbody>
               </table>
             ` : `
@@ -640,7 +661,7 @@ export const generateMultiPagePatientPDF = (
             <div style="font-size: 10pt;">Complete financial records and invoice history</div>
           </div>
 
-          <div class="financial-section">
+          <div class="financial-section section-spacing">
             <div class="section-title">Financial Summary</div>
             <div class="summary-cards">
               <div class="summary-card">
@@ -648,15 +669,15 @@ export const generateMultiPagePatientPDF = (
                 <div class="card-label">Total Billed</div>
               </div>
               <div class="summary-card">
-                <div class="card-value">${invoices.filter(inv => inv.status === 'paid').length}</div>
+                <div class="card-value">${paidInvoices.length}</div>
                 <div class="card-label">Paid Invoices</div>
               </div>
               <div class="summary-card">
-                <div class="card-value">${invoices.filter(inv => inv.status === 'pending').length}</div>
+                <div class="card-value">${pendingInvoices.length}</div>
                 <div class="card-label">Pending Invoices</div>
               </div>
               <div class="summary-card">
-                <div class="card-value">$${invoices.filter(inv => inv.status === 'pending').reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0).toFixed(2)}</div>
+                <div class="card-value">$${pendingAmount.toFixed(2)}</div>
                 <div class="card-label">Outstanding</div>
               </div>
             </div>
@@ -677,19 +698,26 @@ export const generateMultiPagePatientPDF = (
                   </tr>
                 </thead>
                 <tbody>
-                  ${invoices.map(inv => `
+                  ${invoices.map(inv => {
+                    const invoiceStatus = inv.status || inv.paymentStatus || 'pending';
+                    const invoiceAmount = parseFloat(inv.total || inv.totalAmount || '0');
+                    const invoiceDate = inv.date || inv.invoiceDate || inv.createdAt;
+                    const paymentMethod = inv.paymentMethod || 'Not specified';
+                    const displayStatus = invoiceStatus.charAt(0).toUpperCase() + invoiceStatus.slice(1);
+                    
+                    return `
                     <tr>
                       <td style="font-weight: 600; color: #667eea;">${inv.invoiceNumber || inv.id}</td>
-                      <td>${format(new Date(inv.date || new Date()), 'MMM dd, yyyy')}</td>
+                      <td>${invoiceDate ? format(new Date(invoiceDate), 'MMM dd, yyyy') : 'N/A'}</td>
                       <td>
-                        <div style="font-weight: 500;">${inv.notes || 'Medical services'}</div>
+                        <div style="font-weight: 500;">${inv.notes || inv.description || 'Medical services'}</div>
                         ${inv.dueDate ? `<div style="font-size: 9pt; color: #666;">Due: ${format(new Date(inv.dueDate), 'MMM dd, yyyy')}</div>` : ''}
                       </td>
-                      <td style="font-weight: 600;">$${parseFloat(inv.total || '0').toFixed(2)}</td>
-                      <td><span class="status-badge status-${inv.status || 'pending'}">${inv.status || 'Pending'}</span></td>
-                      <td style="text-transform: capitalize;">${inv.paymentMethod || 'Not specified'}</td>
-                    </tr>
-                  `).join('')}
+                      <td style="font-weight: 600;">$${invoiceAmount.toFixed(2)}</td>
+                      <td><span class="status-badge status-${invoiceStatus}">${displayStatus}</span></td>
+                      <td style="text-transform: capitalize;">${paymentMethod}</td>
+                    </tr>`;
+                  }).join('')}
                 </tbody>
               </table>
             ` : `
