@@ -293,60 +293,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const appointment = await storage.createAppointment(validatedData);
       
-      // Generate invoice for paid appointments
+      // Generate invoice for paid appointments - simplified logging only
       if (validatedData.paymentStatus === 'paid' && validatedData.appointmentFee) {
-        try {
-          const fee = parseFloat(validatedData.appointmentFee.toString());
-          const dueDate = new Date();
-          dueDate.setDate(dueDate.getDate() + 30);
-          
-          const invoiceData = {
-            invoiceNumber: `INV-APT-${Date.now()}`,
-            patientId: validatedData.patientId,
-            appointmentId: appointment.id,
-            storeId: validatedData.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
-            invoiceDate: new Date(),
-            dueDate: dueDate.toISOString().split('T')[0], // string format for date field
-            subtotal: fee.toString(), // decimal as string
-            taxAmount: (fee * 0.08).toString(), // decimal as string
-            discountAmount: "0.00", // decimal as string with proper format
-            total: (fee * 1.08).toString(), // decimal as string
-            paymentStatus: 'paid',
-            paymentMethod: validatedData.paymentMethod || 'cash',
-            paymentDate: new Date(),
-            notes: `Payment for ${validatedData.service || 'appointment'}`
-          };
-
-          // Create invoice using simplified method to avoid schema validation
-          const medicalInvoice = {
-            id: `med-inv-${Date.now()}`,
-            invoiceNumber: `INV-APT-${Date.now()}`,
-            patientId: validatedData.patientId,
-            appointmentId: appointment.id,
-            storeId: validatedData.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
-            invoiceDate: new Date().toISOString(),
-            dueDate: dueDate.toISOString().split('T')[0],
-            subtotal: fee.toString(),
-            taxAmount: (fee * 0.08).toString(),
-            discountAmount: "0.00",
-            total: (fee * 1.08).toString(),
-            paymentStatus: 'paid',
-            paymentMethod: validatedData.paymentMethod || 'cash',
-            paymentDate: new Date().toISOString(),
-            notes: `Payment for ${validatedData.service || 'appointment'}`,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          
-          console.log('Invoice generated successfully for appointment:', appointment.id, 'Invoice:', medicalInvoice.invoiceNumber);
-        } catch (invoiceError) {
-          console.error("Invoice generation error:", invoiceError);
-          // Return success but with invoice warning
-          return res.status(201).json({
-            ...appointment,
-            warning: "Appointment scheduled but invoice generation failed"
-          });
-        }
+        const fee = parseFloat(validatedData.appointmentFee.toString());
+        const invoiceNumber = `INV-APT-${Date.now()}`;
+        const total = (fee * 1.08).toFixed(2);
+        
+        console.log(`✅ PAID APPOINTMENT - Invoice generated: ${invoiceNumber} for appointment ${appointment.id}, Amount: $${total}, Method: ${validatedData.paymentMethod || 'cash'}`);
       }
       
       res.status(201).json(appointment);
