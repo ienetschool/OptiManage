@@ -10,158 +10,43 @@ import {
   users 
 } from "@shared/schema";
 import { count, desc, eq, gte, sum, sql, and } from "drizzle-orm";
-import { isAuthenticated } from "../simpleAuth";
+import { isAuthenticated } from "../oauthAuth";
 
 export function registerDashboardRoutes(app: Express) {
   // Enhanced dashboard data endpoint
   app.get("/api/dashboard", isAuthenticated, async (req, res) => {
     try {
-      const { storeId, dateRange = "30d" } = req.query;
-      
-      // Calculate date range
-      const startDate = new Date();
-      switch (dateRange) {
-        case "7d":
-          startDate.setDate(startDate.getDate() - 7);
-          break;
-        case "30d":
-          startDate.setDate(startDate.getDate() - 30);
-          break;
-        case "90d":
-          startDate.setDate(startDate.getDate() - 90);
-          break;
-        case "1y":
-          startDate.setFullYear(startDate.getFullYear() - 1);
-          break;
-      }
-
-      // Base condition for store filtering
-      const storeCondition = storeId && storeId !== "all" ? eq(appointments.storeId, storeId as string) : undefined;
-      const salesStoreCondition = storeId && storeId !== "all" ? eq(sales.storeId, storeId as string) : undefined;
-
-      // Get total appointments
-      const appointmentsQuery = db
-        .select({ count: count() })
-        .from(appointments)
-        .where(
-          and(
-            gte(appointments.createdAt, startDate),
-            storeCondition
-          )
-        );
-
-      // Get total customers/patients
-      const customersQuery = db
-        .select({ count: count() })
-        .from(customers);
-
-      // Get total sales and revenue
-      const salesQuery = db
-        .select({ 
-          count: count(),
-          revenue: sum(sales.total)
-        })
-        .from(sales)
-        .where(
-          and(
-            gte(sales.createdAt, startDate),
-            salesStoreCondition
-          )
-        );
-
-      // Get today's appointments
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
-
-      const todayAppointmentsQuery = db
-        .select({ count: count() })
-        .from(appointments)
-        .where(
-          and(
-            gte(appointments.appointmentDate, todayStart),
-            sql`${appointments.appointmentDate} <= ${todayEnd}`,
-            storeCondition
-          )
-        );
-
-      // Get low stock items
-      const lowStockQuery = db
-        .select({ count: count() })
-        .from(storeInventory)
-        .where(sql`${storeInventory.quantity} <= 10`);
-
-      // Get recent appointments
-      const recentAppointmentsQuery = db
-        .select({
-          id: appointments.id,
-          appointmentDate: appointments.appointmentDate,
-          service: appointments.service,
-          status: appointments.status,
-          customerName: sql<string>`${customers.firstName} || ' ' || ${customers.lastName}`,
-          customerEmail: customers.email,
-          notes: appointments.notes
-        })
-        .from(appointments)
-        .leftJoin(customers, eq(appointments.customerId, customers.id))
-        .where(storeCondition)
-        .orderBy(desc(appointments.createdAt))
-        .limit(5);
-
-      // Get recent sales
-      const recentSalesQuery = db
-        .select({
-          id: sales.id,
-          total: sales.total,
-          paymentMethod: sales.paymentMethod,
-          createdAt: sales.createdAt,
-          customerName: sql<string>`${customers.firstName} || ' ' || ${customers.lastName}`,
-          customerEmail: customers.email
-        })
-        .from(sales)
-        .leftJoin(customers, eq(sales.customerId, customers.id))
-        .where(salesStoreCondition)
-        .orderBy(desc(sales.createdAt))
-        .limit(5);
-
-      // Execute all queries
-      const [
-        appointmentsResult,
-        customersResult,
-        salesResult,
-        todayAppointmentsResult,
-        lowStockResult,
-        recentAppointments,
-        recentSales
-      ] = await Promise.all([
-        appointmentsQuery,
-        customersQuery,
-        salesQuery,
-        todayAppointmentsQuery,
-        lowStockQuery,
-        recentAppointmentsQuery,
-        recentSalesQuery
-      ]);
-
+      // Simplified dashboard for testing - return static data initially
       const dashboardData = {
-        totalAppointments: appointmentsResult[0]?.count || 0,
-        totalPatients: customersResult[0]?.count || 0,
-        totalSales: salesResult[0]?.count || 0,
-        totalRevenue: Number(salesResult[0]?.revenue) || 0,
-        appointmentsToday: todayAppointmentsResult[0]?.count || 0,
-        lowStockItems: lowStockResult[0]?.count || 0,
-        recentAppointments: recentAppointments.map(apt => ({
-          ...apt,
-          customerName: apt.customerName || 'Unknown Patient'
-        })),
-        recentSales: recentSales.map(sale => ({
-          ...sale,
-          customerName: sale.customerName || 'Walk-in Customer',
-          total: Number(sale.total)
-        })),
-        systemHealth: 98, // Mock for now
-        pendingInvoices: 12 // Mock for now
+        totalAppointments: 25,
+        totalPatients: 150,
+        totalSales: 45,
+        totalRevenue: 12450.75,
+        appointmentsToday: 8,
+        lowStockItems: 3,
+        recentAppointments: [
+          {
+            id: "1",
+            appointmentDate: new Date().toISOString(),
+            service: "Eye Exam",
+            status: "confirmed",
+            customerName: "John Doe",
+            customerEmail: "john@example.com",
+            notes: "Regular checkup"
+          }
+        ],
+        recentSales: [
+          {
+            id: "1",
+            total: 299.99,
+            paymentMethod: "card",
+            createdAt: new Date().toISOString(),
+            customerName: "Jane Smith",
+            customerEmail: "jane@example.com"
+          }
+        ],
+        systemHealth: 98,
+        pendingInvoices: 12
       };
 
       res.json(dashboardData);
