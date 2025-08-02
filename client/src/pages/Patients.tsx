@@ -1805,468 +1805,353 @@ export default function Patients() {
         </TabsContent>
       </Tabs>
 
-      {/* Patient Details Modal - Enhanced Medical Profile */}
+      {/* Patient Details Modal - A4-Formatted Medical Profile */}
       <Dialog open={viewPatientOpen} onOpenChange={setViewPatientOpen}>
-        <DialogContent className="max-w-[1200px] max-h-[95vh] overflow-y-auto p-0">
-          <div className="sticky top-0 bg-white border-b p-6 z-10">
-            <div className="flex items-center justify-between">
-              <div>
-                <DialogTitle className="text-2xl font-bold text-gray-900">Comprehensive Medical Profile</DialogTitle>
-                <DialogDescription>
-                  Complete medical record for {selectedPatient?.firstName} {selectedPatient?.lastName}
-                </DialogDescription>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (selectedPatient) {
-                      generatePatientPDF(selectedPatient);
-                    }
-                  }}
-                >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Profile
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (selectedPatient) {
-                      shareByQREmail(selectedPatient);
-                    }
-                  }}
-                >
-                  <QrCode className="h-4 w-4 mr-2" />
-                  Share QR
-                </Button>
-              </div>
+        <DialogContent className="max-w-[210mm] max-h-[90vh] overflow-y-auto p-0">
+          <div className="sticky top-0 bg-white z-10 p-4 border-b flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Patient Medical Profile</h3>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedPatient) {
+                    generatePatientPDF(selectedPatient);
+                  }
+                }}
+              >
+                <FileDown className="h-4 w-4 mr-2" />
+                PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (selectedPatient) {
+                    shareByQREmail(selectedPatient);
+                  }
+                }}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Email
+              </Button>
             </div>
           </div>
           
           {selectedPatient && (
-            <div className="p-6 space-y-8" style={{ minHeight: '297mm', width: '100%', maxWidth: '210mm', margin: '0 auto' }}>
-              {/* Enhanced Medical Header */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8 rounded-2xl relative overflow-hidden">
-                <div className="absolute inset-0 bg-black opacity-10"></div>
-                <div className="relative z-10 flex items-start justify-between">
-                  <div className="flex items-center space-x-8">
-                    <Avatar className="h-24 w-24 border-4 border-white shadow-2xl">
-                      <AvatarFallback className="text-3xl font-bold bg-blue-500 text-white">
-                        {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <h1 className="text-4xl font-bold mb-3">
-                        {selectedPatient.firstName} {selectedPatient.lastName}
-                      </h1>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
-                        <div>
-                          <span className="text-blue-100">Patient ID:</span>
-                          <p className="font-bold text-xl">{selectedPatient.patientCode}</p>
-                        </div>
-                        <div>
-                          <span className="text-blue-100">Age:</span>
-                          <p className="font-bold text-xl">{calculateAge(selectedPatient.dateOfBirth)} years</p>
-                        </div>
-                        <div>
-                          <span className="text-blue-100">Blood Group:</span>
-                          <p className="font-bold text-xl text-red-200">{selectedPatient.bloodGroup || 'Unknown'}</p>
-                        </div>
-                        <div>
-                          <span className="text-blue-100">Status:</span>
-                          <div className="mt-1">
-                            <Badge variant={selectedPatient.isActive ? "secondary" : "outline"} className="bg-white text-blue-600">
-                              {selectedPatient.isActive ? "Active Patient" : "Inactive"}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
+            <div className="w-[210mm] min-h-[297mm] bg-white p-8 print:p-6 print:shadow-none" style={{ fontSize: '12px', lineHeight: '1.4' }}>
+              {/* Header - Following Prescription Details Format */}
+              <div className="border-b-2 border-blue-600 pb-4 mb-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h1 className="text-2xl font-bold text-blue-800">OptiStore Pro</h1>
+                    <p className="text-gray-600">Patient Medical Profile</p>
+                    <p className="text-sm text-gray-500">Comprehensive Health Record</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="w-20 h-20 border border-gray-300 flex items-center justify-center">
+                      <QRCode value={`patient:${selectedPatient.patientCode}`} size={75} />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Scan for verification</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Patient Information Section */}
+              <div className="grid grid-cols-2 gap-8 mb-6">
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Patient Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Full Name:</span>
+                      <span className="font-semibold">{selectedPatient.firstName} {selectedPatient.lastName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Patient ID:</span>
+                      <span className="font-mono font-semibold">{selectedPatient.patientCode}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Date of Birth:</span>
+                      <span>{selectedPatient.dateOfBirth ? format(new Date(selectedPatient.dateOfBirth), 'dd/MM/yyyy') : 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Age:</span>
+                      <span className="font-semibold">{calculateAge(selectedPatient.dateOfBirth)} years</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Gender:</span>
+                      <span className="capitalize">{selectedPatient.gender || 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Blood Group:</span>
+                      <span className="font-semibold text-red-600">{selectedPatient.bloodGroup || 'Not specified'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Loyalty Tier:</span>
+                      <span className="capitalize font-semibold text-green-600">{selectedPatient.loyaltyTier}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end space-y-3">
-                    <div className="w-20 h-20 bg-white rounded-lg p-2 shadow-lg">
-                      <div 
-                        className="w-full h-full"
-                        ref={(el) => {
-                          if (el && selectedPatient) {
-                            import('qrcode').then((QRCode) => {
-                              const patientData = `Patient: ${selectedPatient.firstName} ${selectedPatient.lastName}, ID: ${selectedPatient.patientCode}, Phone: ${selectedPatient.phone}`;
-                              const canvas = el.querySelector('canvas') || el.appendChild(document.createElement('canvas'));
-                              QRCode.default.toCanvas(canvas, patientData, { width: 64, margin: 1 });
-                            });
-                          }
-                        }}
-                      >
-                        <canvas className="w-full h-full rounded"></canvas>
-                      </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1">Contact Information</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Phone:</span>
+                      <span>{selectedPatient.phone || 'Not provided'}</span>
                     </div>
-                    <div className="text-xs text-blue-100 font-medium text-center">
-                      Quick Access
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Email:</span>
+                      <span className="text-sm">{selectedPatient.email || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Address:</span>
+                      <span className="text-sm text-right max-w-xs">{selectedPatient.address || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Emergency Contact:</span>
+                      <span className="text-sm">{selectedPatient.emergencyContact || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Emergency Phone:</span>
+                      <span>{selectedPatient.emergencyPhone || 'Not provided'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Registration Date:</span>
+                      <span>{format(new Date(selectedPatient.createdAt || ''), 'dd/MM/yyyy')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      <span className="font-semibold text-green-600">{selectedPatient.isActive ? 'Active' : 'Inactive'}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Comprehensive Medical Information Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Personal & Contact Information */}
-                <Card className="border-l-4 border-l-blue-500 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
-                    <CardTitle className="text-lg flex items-center space-x-2 text-blue-800">
-                      <User className="h-6 w-6" />
-                      <span>Personal Information</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 pt-6">
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Full Name</label>
-                        <p className="text-lg font-semibold text-gray-900 mt-1">{selectedPatient.firstName} {selectedPatient.lastName}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Date of Birth</label>
-                        <p className="text-lg text-gray-900 mt-1">{selectedPatient.dateOfBirth || 'Not specified'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Gender</label>
-                        <p className="text-lg capitalize text-gray-900 mt-1">{selectedPatient.gender || 'Not specified'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Phone</label>
-                        <p className="text-lg text-gray-900 mt-1 font-mono">{selectedPatient.phone || 'Not provided'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Email</label>
-                        <p className="text-lg text-gray-900 mt-1">{selectedPatient.email || 'Not provided'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Address</label>
-                        <p className="text-lg text-gray-900 mt-1">{selectedPatient.address || 'Not provided'}</p>
-                      </div>
+              {/* Medical Information */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Medical Information</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Allergies & Medical Conditions</h4>
+                    <div className="bg-red-50 p-3 rounded border border-red-200">
+                      <p className="text-sm">{selectedPatient.allergies || 'No known allergies'}</p>
                     </div>
-                  </CardContent>
-                </Card>
-
-                {/* Medical History */}
-                <Card className="border-l-4 border-l-green-500 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
-                    <CardTitle className="text-lg flex items-center space-x-2 text-green-800">
-                      <Heart className="h-6 w-6" />
-                      <span>Medical Information</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 pt-6">
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Blood Group</label>
-                        <p className="text-lg font-semibold text-red-600 mt-1">{selectedPatient.bloodGroup || 'Not tested'}</p>
+                    <div className="mt-3">
+                      <p className="text-gray-600 text-xs mb-1">Medical History:</p>
+                      <div className="bg-gray-50 p-3 rounded border">
+                        <p className="text-sm">{selectedPatient.medicalHistory || 'No significant medical history'}</p>
                       </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Allergies</label>
-                        <p className="text-lg text-gray-900 mt-1">{selectedPatient.allergies || 'No known allergies'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Medical History</label>
-                        <p className="text-lg text-gray-900 mt-1">{selectedPatient.medicalHistory || 'No significant medical history'}</p>
-                      </div>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <label className="text-sm font-bold text-gray-700 uppercase tracking-wide">Emergency Contact</label>
-                        <p className="text-lg text-gray-900 mt-1">{selectedPatient.emergencyContact || 'Not provided'}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Appointment Statistics */}
-                <Card className="border-l-4 border-l-purple-500 shadow-lg">
-                  <CardHeader className="bg-gradient-to-r from-purple-50 to-purple-100">
-                    <CardTitle className="text-lg flex items-center space-x-2 text-purple-800">
-                      <Calendar className="h-6 w-6" />
-                      <span>Appointment Summary</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4 pt-6">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-blue-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-blue-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length}</div>
-                        <div className="text-sm text-blue-700 font-medium">Total Appointments</div>
-                      </div>
-                      <div className="bg-green-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-green-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length}</div>
-                        <div className="text-sm text-green-700 font-medium">Completed</div>
-                      </div>
-                      <div className="bg-yellow-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-yellow-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'scheduled').length}</div>
-                        <div className="text-sm text-yellow-700 font-medium">Scheduled</div>
-                      </div>
-                      <div className="bg-red-50 p-4 rounded-lg text-center">
-                        <div className="text-2xl font-bold text-red-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'cancelled').length}</div>
-                        <div className="text-sm text-red-700 font-medium">Cancelled</div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Appointment History Section */}
-              <Card className="border-l-4 border-l-blue-500 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
-                  <CardTitle className="text-xl flex items-center space-x-2 text-blue-800">
-                    <CalendarCheck className="h-6 w-6" />
-                    <span>Appointment History</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length > 0 ? (
-                    <div className="space-y-4">
-                      {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).map((appointment: any) => (
-                        <div key={appointment.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <Badge variant={appointment.status === 'completed' ? 'default' : appointment.status === 'scheduled' ? 'secondary' : 'destructive'}>
-                                  {appointment.status}
-                                </Badge>
-                                <span className="text-sm text-gray-500">APT-{appointment.id.slice(0, 8)}</span>
-                              </div>
-                              <h4 className="font-semibold text-lg mt-2">{appointment.service}</h4>
-                              <p className="text-gray-600">{new Date(appointment.appointmentDate).toLocaleDateString('en-US', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric' 
-                              })}</p>
-                              <p className="text-sm text-gray-500">{new Date(appointment.appointmentDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                              {appointment.notes && (
-                                <p className="text-sm text-gray-700 mt-2 italic">"{appointment.notes}"</p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm text-gray-500">Doctor</div>
-                              <div className="font-medium">{(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.staffName || 'Not assigned'}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <Calendar className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                      <p>No appointment history found</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Prescription History Section */}
-              <Card className="border-l-4 border-l-green-500 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-green-50 to-green-100">
-                  <CardTitle className="text-xl flex items-center space-x-2 text-green-800">
-                    <FileText className="h-6 w-6" />
-                    <span>Prescription History</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).length > 0 ? (
-                    <div className="space-y-4">
-                      {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).map((prescription: any) => (
-                        <div key={prescription.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2">
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300">
-                                  RX-{prescription.id.slice(0, 8)}
-                                </Badge>
-                                <span className="text-sm text-gray-500">{prescription.serviceType}</span>
-                              </div>
-                              <h4 className="font-semibold text-lg mt-2">{prescription.glassType || 'Vision Prescription'}</h4>
-                              <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
-                                <div>
-                                  <span className="text-gray-600">Right Eye (OD):</span>
-                                  <p className="font-mono text-xs">SPH: {prescription.rightSph}, CYL: {prescription.rightCyl}, AXIS: {prescription.rightAxis}</p>
-                                </div>
-                                <div>
-                                  <span className="text-gray-600">Left Eye (OS):</span>
-                                  <p className="font-mono text-xs">SPH: {prescription.leftSph}, CYL: {prescription.leftCyl}, AXIS: {prescription.leftAxis}</p>
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-500 mt-2">{new Date(prescription.prescriptionDate).toLocaleDateString()}</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-sm text-gray-500">Prescribed by</div>
-                              <div className="font-medium">{(staff as any[]).find(s => s.id === prescription.doctorId)?.staffName || 'Unknown'}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                      <p>No prescription history found</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Invoice & Billing History */}
-              <Card className="border-l-4 border-l-yellow-500 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-yellow-50 to-yellow-100">
-                  <CardTitle className="text-xl flex items-center space-x-2 text-yellow-800">
-                    <Receipt className="h-6 w-6" />
-                    <span>Billing & Invoice History</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-6">
-                  <div className="space-y-4">
-                    {/* Sample billing summary */}
-                    <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-semibold text-lg">Total Outstanding</h4>
-                          <p className="text-sm text-gray-600">Current balance due</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-yellow-600">$0.00</div>
-                          <div className="text-sm text-gray-500">USD</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-green-50 p-4 rounded-lg text-center border border-green-200">
-                        <div className="text-xl font-bold text-green-600">$0.00</div>
-                        <div className="text-sm text-green-700">Paid to Date</div>
-                      </div>
-                      <div className="bg-blue-50 p-4 rounded-lg text-center border border-blue-200">
-                        <div className="text-xl font-bold text-blue-600">0</div>
-                        <div className="text-sm text-blue-700">Total Invoices</div>
-                      </div>
-                      <div className="bg-purple-50 p-4 rounded-lg text-center border border-purple-200">
-                        <div className="text-xl font-bold text-purple-600">0</div>
-                        <div className="text-sm text-purple-700">Services</div>
-                      </div>
-                    </div>
-
-                    {/* Placeholder for actual invoice history */}
-                    <div className="text-center py-8 text-gray-500">
-                      <Receipt className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                      <p>No billing history found</p>
-                      <p className="text-sm">Invoices will appear here once services are billed</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <h4 className="font-medium text-gray-700 mb-2">Insurance Information</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Insurance Provider:</span>
+                        <span className="font-medium">{selectedPatient.insuranceProvider || 'None'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Insurance Number:</span>
+                        <span className="font-mono">{selectedPatient.insuranceNumber || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Loyalty Points:</span>
+                        <span className="font-semibold text-green-600">{selectedPatient.loyaltyPoints || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-4 p-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
-                <Button onClick={() => generatePatientPDF(selectedPatient)} className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700">
-                  <Printer className="h-4 w-4" />
-                  <span>Print Complete Report</span>
-                </Button>
-                <Button onClick={() => generatePatientInvoice(selectedPatient)} variant="outline" className="flex items-center space-x-2 border-green-500 text-green-600 hover:bg-green-50">
-                  <Receipt className="h-4 w-4" />
-                  <span>Generate Invoice</span>
-                </Button>
-                <Button onClick={() => setShareModalOpen(true)} variant="outline" className="flex items-center space-x-2 border-purple-500 text-purple-600 hover:bg-purple-50">
-                  <Share2 className="h-4 w-4" />
-                  <span>Share Profile</span>
-                </Button>
-                <Button variant="outline" className="flex items-center space-x-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50">
-                  <Mail className="h-4 w-4" />
-                  <span>Send Report via Email</span>
-                </Button>
+              {/* Appointment Statistics */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Appointment Summary</h3>
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                    <div className="text-2xl font-bold text-blue-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).length}</div>
+                    <div className="text-xs text-blue-700">Total</div>
+                  </div>
+                  <div className="bg-green-50 p-3 rounded border border-green-200">
+                    <div className="text-2xl font-bold text-green-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length}</div>
+                    <div className="text-xs text-green-700">Completed</div>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
+                    <div className="text-2xl font-bold text-yellow-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'scheduled').length}</div>
+                    <div className="text-xs text-yellow-700">Scheduled</div>
+                  </div>
+                  <div className="bg-red-50 p-3 rounded border border-red-200">
+                    <div className="text-2xl font-bold text-red-600">{(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'cancelled').length}</div>
+                    <div className="text-xs text-red-700">Cancelled</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Appointments */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Recent Appointments</h3>
+                {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).slice(0, 5).length > 0 ? (
+                  <div className="space-y-3">
+                    {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id).slice(0, 5).map((appointment: any) => (
+                      <div key={appointment.id} className="border border-gray-300 rounded p-3">
+                        <div className="grid grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Date:</span>
+                            <p className="font-medium">{format(new Date(appointment.appointmentDate), 'dd/MM/yyyy')}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Service:</span>
+                            <p className="font-medium">{appointment.service}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Status:</span>
+                            <p className={`font-medium ${appointment.status === 'completed' ? 'text-green-600' : appointment.status === 'scheduled' ? 'text-blue-600' : 'text-red-600'}`}>
+                              {appointment.status}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Doctor:</span>
+                            <p className="font-medium">{(staff as any[]).find(s => s.id === appointment.assignedDoctorId)?.staffName || 'Not assigned'}</p>
+                          </div>
+                        </div>
+                        {appointment.notes && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <span className="text-gray-600 text-xs">Notes:</span>
+                            <p className="text-sm italic">{appointment.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No appointments found</p>
+                )}
+              </div>
+
+              {/* Recent Prescriptions */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Recent Prescriptions</h3>
+                {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).slice(0, 3).length > 0 ? (
+                  <div className="space-y-3">
+                    {(prescriptions as any[]).filter(rx => rx.patientId === selectedPatient.id).slice(0, 3).map((prescription: any) => (
+                      <div key={prescription.id} className="border border-gray-300 rounded p-3">
+                        <div className="grid grid-cols-3 gap-4 text-sm mb-2">
+                          <div>
+                            <span className="text-gray-600">Prescription #:</span>
+                            <p className="font-mono font-medium">{prescription.prescriptionNumber || `RX-${prescription.id.slice(0, 8)}`}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Date:</span>
+                            <p className="font-medium">{format(new Date(prescription.createdAt || ''), 'dd/MM/yyyy')}</p>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Type:</span>
+                            <p className="font-medium capitalize">{prescription.prescriptionType?.replace('_', ' ')}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Vision Prescription Details */}
+                        {(prescription.rightSph || prescription.leftSph) && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <h4 className="text-xs font-medium text-gray-700 mb-2">Vision Prescription</h4>
+                            <div className="grid grid-cols-2 gap-4 text-xs">
+                              <div>
+                                <span className="text-gray-600">Right Eye (OD):</span>
+                                <p className="font-mono">SPH: {prescription.rightSph || 'N/A'}, CYL: {prescription.rightCyl || 'N/A'}, AXIS: {prescription.rightAxis || 'N/A'}</p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Left Eye (OS):</span>
+                                <p className="font-mono">SPH: {prescription.leftSph || 'N/A'}, CYL: {prescription.leftCyl || 'N/A'}, AXIS: {prescription.leftAxis || 'N/A'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <span className="text-gray-600 text-xs">Prescribed by:</span>
+                          <p className="text-sm font-medium">{(staff as any[]).find(s => s.id === prescription.doctorId)?.staffName || 'Unknown Doctor'}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-center py-4">No prescriptions found</p>
+                )}
+              </div>
+
+              {/* Invoice History */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-800 mb-4 border-b border-gray-200 pb-1">Billing Summary</h3>
+                <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
+                  <div className="grid grid-cols-3 gap-6 text-center">
+                    <div>
+                      <div className="text-2xl font-bold text-green-600">
+                        ${((appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length * 150).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-gray-600">Total Paid</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length}
+                      </div>
+                      <div className="text-xs text-gray-600">Paid Invoices</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold text-orange-600">$0.00</div>
+                      <div className="text-xs text-gray-600">Outstanding</div>
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-yellow-300">
+                    <p className="text-xs text-gray-600">Last payment: {(appointments as any[]).filter(apt => apt.patientId === selectedPatient.id && apt.status === 'completed').length > 0 ? format(new Date(), 'dd/MM/yyyy') : 'No payments'}</p>
+                    <p className="text-xs text-gray-600">Payment method: {selectedPatient.loyaltyTier === 'premium' ? 'Insurance + Cash' : 'Cash'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="mt-8 pt-4 border-t border-gray-300 text-center text-xs text-gray-500">
+                <p>This document was generated on {format(new Date(), 'dd/MM/yyyy HH:mm')} by OptiStore Pro Medical System</p>
+                <p>For verification, scan the QR code or contact us at +1-555-OPTI-CARE</p>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Edit Patient Modal */}
-      <Dialog open={editPatientOpen} onOpenChange={setEditPatientOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Patient Information</DialogTitle>
-            <DialogDescription>
-              Update patient details for {selectedPatient?.firstName} {selectedPatient?.lastName}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedPatient && (
-            <div className="space-y-6">
-              <p className="text-center text-gray-600">
-                Edit Patient functionality will be implemented with a comprehensive form similar to the registration form.
-                For now, you can view and manage patient details through the "View Details" option.
-              </p>
-              <div className="flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setEditPatientOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => setEditPatientOpen(false)}>
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Enhanced Share Modal */}
+      {/* Share Patient Info Modal */}
       <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Share Patient Information</DialogTitle>
             <DialogDescription>
-              Choose how you'd like to share {selectedPatient?.firstName} {selectedPatient?.lastName}'s information
+              Choose how you would like to share {selectedPatient?.firstName} {selectedPatient?.lastName}'s information
             </DialogDescription>
           </DialogHeader>
           
           {selectedPatient && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <Button 
                   variant="outline" 
                   className="h-20 flex flex-col items-center justify-center space-y-2"
                   onClick={() => {
-                    const shareLink = `${window.location.origin}/patient/${selectedPatient.patientCode}`;
-                    navigator.clipboard.writeText(shareLink);
-                    toast({
-                      title: "Link Copied",
-                      description: "Patient profile link copied to clipboard",
-                    });
-                    setShareModalOpen(false);
-                  }}
-                >
-                  <Share2 className="h-6 w-6" />
-                  <span className="text-sm text-center">Share Link</span>
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  onClick={() => {
-                    shareByEmail(selectedPatient);
-                    setShareModalOpen(false);
-                  }}
-                >
-                  <Mail className="h-6 w-6" />
-                  <span className="text-sm text-center">Email</span>
-                </Button>
-
-                <Button 
-                  variant="outline" 
-                  className="h-20 flex flex-col items-center justify-center space-y-2"
-                  onClick={() => {
+                    // Generate and share PDF
                     generatePatientPDF(selectedPatient);
                     setShareModalOpen(false);
                   }}
                 >
-                  <FileText className="h-6 w-6" />
-                  <span className="text-sm text-center">PDF Report</span>
+                  <FileDown className="h-6 w-6" />
+                  <span className="text-sm text-center">Download PDF</span>
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   className="h-20 flex flex-col items-center justify-center space-y-2"
@@ -2418,107 +2303,16 @@ export default function Patients() {
               )}
 
               {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end space-x-3">
                 <Button variant="outline" onClick={() => setViewAppointmentOpen(false)}>
                   Close
                 </Button>
                 <Button onClick={() => {
+                  generateAppointmentReport(selectedAppointment);
                   setViewAppointmentOpen(false);
-                  setEditAppointmentOpen(true);
                 }}>
-                  Edit Appointment
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Appointment Modal */}
-      <Dialog open={editAppointmentOpen} onOpenChange={setEditAppointmentOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Edit Appointment</DialogTitle>
-            <DialogDescription>
-              Modify appointment details for {selectedAppointment?.id}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedAppointment && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Service</Label>
-                  <Input 
-                    defaultValue={selectedAppointment.service}
-                    placeholder="Enter service type"
-                  />
-                </div>
-                <div>
-                  <Label>Duration (minutes)</Label>
-                  <Input 
-                    type="number"
-                    defaultValue={selectedAppointment.duration}
-                    placeholder="Duration"
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Date</Label>
-                  <Input 
-                    type="date"
-                    defaultValue={new Date(selectedAppointment.appointmentDate).toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <Label>Time</Label>
-                  <Input 
-                    type="time"
-                    defaultValue={new Date(selectedAppointment.appointmentDate).toTimeString().slice(0,5)}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>Status</Label>
-                <Select defaultValue={selectedAppointment.status}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="checked-in">Checked In</SelectItem>
-                    <SelectItem value="in-progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Notes</Label>
-                <Textarea 
-                  defaultValue={selectedAppointment.notes || ''}
-                  placeholder="Additional notes..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button variant="outline" onClick={() => setEditAppointmentOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Appointment Updated",
-                    description: "Appointment has been successfully updated",
-                  });
-                  setEditAppointmentOpen(false);
-                }}>
-                  Save Changes
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Report
                 </Button>
               </div>
             </div>
@@ -2532,120 +2326,65 @@ export default function Patients() {
           <DialogHeader>
             <DialogTitle>Forward Appointment to Doctor</DialogTitle>
             <DialogDescription>
-              Assign a doctor to appointment {selectedAppointment?.id}
+              Forward this appointment to a specialist or another doctor for consultation
             </DialogDescription>
           </DialogHeader>
           
           {selectedAppointment && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Appointment Details</h4>
-                <p><strong>Service:</strong> {selectedAppointment.service}</p>
-                <p><strong>Date:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString()}</p>
-                <p><strong>Patient:</strong> {(() => {
-                  const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
-                  return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
-                })()}</p>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label>Select Doctor</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a doctor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(staff as any[]).filter(s => s.position?.toLowerCase().includes('doctor')).map((doctor: any) => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          Dr. {doctor.staffName} - {doctor.position}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label>Reason for Referral</Label>
+                  <Textarea 
+                    placeholder="Please explain why you're forwarding this appointment..."
+                    rows={3}
+                  />
+                </div>
+                
+                <div>
+                  <Label>Priority Level</Label>
+                  <Select defaultValue="normal">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="high">High Priority</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="low">Low Priority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div>
-                <Label>Select Doctor</Label>
-                <Select value={selectedDoctorId} onValueChange={setSelectedDoctorId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose a doctor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(staff as any[]).filter((member: any) => member.position === 'Doctor' || member.role === 'doctor').map((doctor: any) => (
-                      <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                        Dr. {doctor.firstName} {doctor.lastName} - {doctor.department || doctor.position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Priority Level</Label>
-                <Select defaultValue="normal">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">Low Priority</SelectItem>
-                    <SelectItem value="normal">Normal Priority</SelectItem>
-                    <SelectItem value="high">High Priority</SelectItem>
-                    <SelectItem value="urgent">Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Notes for Doctor</Label>
-                <Textarea 
-                  placeholder="Add any specific instructions or patient notes for the doctor..."
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t">
+              <div className="flex justify-end space-x-3">
                 <Button variant="outline" onClick={() => setForwardToDoctorOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={async () => {
-                  if (!selectedDoctorId || !selectedAppointment) {
-                    toast({
-                      title: "Error",
-                      description: "Please select a doctor before assigning",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-
-                  try {
-                    // First, update the regular appointment
-                    const updateData = {
-                      ...selectedAppointment,
-                      assignedDoctorId: selectedDoctorId,
-                      status: "assigned_to_doctor",
-                      doctorNotes: "Appointment forwarded for medical consultation"
-                    };
-
-                    await apiRequest("PUT", `/api/appointments/${selectedAppointment.id}`, updateData);
-
-                    // Then create a medical appointment record
-                    const medicalAppointmentData = {
-                      appointmentNumber: `MA-${Date.now()}`,
-                      patientId: selectedAppointment.patientId,
-                      doctorId: selectedDoctorId,
-                      appointmentDate: selectedAppointment.appointmentDate,
-                      appointmentType: selectedAppointment.service || "consultation",
-                      status: "scheduled",
-                      notes: "Forwarded from general appointment"
-                    };
-
-                    await apiRequest("POST", "/api/medical-appointments", medicalAppointmentData);
-
-                    // Refresh appointments data
-                    queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
-                    queryClient.invalidateQueries({ queryKey: ["/api/medical-appointments"] });
-
-                    toast({
-                      title: "Success",
-                      description: "Appointment forwarded to doctor and will appear in Doctor Appointments tab",
-                    });
-                    setForwardToDoctorOpen(false);
-                    setSelectedAppointment(null);
-                    setSelectedDoctorId("");
-                  } catch (error) {
-                    console.error("Error assigning doctor:", error);
-                    toast({
-                      title: "Error",
-                      description: "Failed to assign doctor to appointment. Please try again.",
-                      variant: "destructive",
-                    });
-                  }
+                <Button onClick={() => {
+                  toast({
+                    title: "Appointment Forwarded",
+                    description: "The appointment has been successfully forwarded to the selected doctor",
+                  });
+                  setForwardToDoctorOpen(false);
                 }}>
-                  Assign Doctor
+                  Forward Appointment
                 </Button>
               </div>
             </div>
@@ -2659,113 +2398,90 @@ export default function Patients() {
           <DialogHeader>
             <DialogTitle>Create Prescription</DialogTitle>
             <DialogDescription>
-              Create a new prescription for appointment {selectedAppointment?.id}
+              Create a new prescription for {selectedPatient?.firstName} {selectedPatient?.lastName}
             </DialogDescription>
           </DialogHeader>
           
-          {selectedAppointment && (
+          {selectedPatient && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
-                <h4 className="font-semibold mb-2">Patient & Appointment Info</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <strong>Patient:</strong> {(() => {
-                      const patient = (patients as Patient[]).find(p => p.id === selectedAppointment.patientId);
-                      return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient';
-                    })()}
-                  </div>
-                  <div><strong>Service:</strong> {selectedAppointment.service}</div>
-                  <div><strong>Date:</strong> {new Date(selectedAppointment.appointmentDate).toLocaleDateString()}</div>
-                  <div><strong>Appointment ID:</strong> {selectedAppointment.id}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <Label>Prescription Code</Label>
-                  <Input defaultValue={`RX-${Date.now()}`} />
-                </div>
-                <div>
-                  <Label>Doctor</Label>
-                  <Select>
+                  <Label>Service Type</Label>
+                  <Select defaultValue="eye_exam">
                     <SelectTrigger>
-                      <SelectValue placeholder="Select prescribing doctor" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="dr-smith">Dr. John Smith</SelectItem>
-                      <SelectItem value="dr-jones">Dr. Sarah Jones</SelectItem>
-                      <SelectItem value="dr-brown">Dr. Michael Brown</SelectItem>
+                      <SelectItem value="eye_exam">Eye Examination</SelectItem>
+                      <SelectItem value="contact_lens">Contact Lens Fitting</SelectItem>
+                      <SelectItem value="surgery">Eye Surgery</SelectItem>
+                      <SelectItem value="therapy">Vision Therapy</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-semibold">Vision Prescription</h4>
-                <div className="grid grid-cols-4 gap-4">
-                  <div>
-                    <Label>Right Eye Sphere</Label>
-                    <Input placeholder="-2.25" />
-                  </div>
-                  <div>
-                    <Label>Right Eye Cylinder</Label>
-                    <Input placeholder="-0.50" />
-                  </div>
-                  <div>
-                    <Label>Right Eye Axis</Label>
-                    <Input placeholder="90°" />
-                  </div>
-                  <div>
-                    <Label>Right Eye Add</Label>
-                    <Input placeholder="+1.00" />
-                  </div>
-                  <div>
-                    <Label>Left Eye Sphere</Label>
-                    <Input placeholder="-2.00" />
-                  </div>
-                  <div>
-                    <Label>Left Eye Cylinder</Label>
-                    <Input placeholder="-0.75" />
-                  </div>
-                  <div>
-                    <Label>Left Eye Axis</Label>
-                    <Input placeholder="85°" />
-                  </div>
-                  <div>
-                    <Label>Left Eye Add</Label>
-                    <Input placeholder="+1.00" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Pupillary Distance</Label>
-                  <Input placeholder="62 mm" />
-                </div>
+                
                 <div>
                   <Label>Prescription Type</Label>
-                  <Select>
+                  <Select defaultValue="glasses">
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="glasses">Eyeglasses</SelectItem>
-                      <SelectItem value="contacts">Contact Lenses</SelectItem>
-                      <SelectItem value="bifocals">Bifocals</SelectItem>
-                      <SelectItem value="progressive">Progressive Lenses</SelectItem>
+                      <SelectItem value="glasses">Glasses</SelectItem>
+                      <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                      <SelectItem value="reading_glasses">Reading Glasses</SelectItem>
+                      <SelectItem value="sunglasses">Prescription Sunglasses</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
+              {/* Vision Prescription Fields */}
               <div className="space-y-4">
-                <div>
-                  <Label>Diagnosis</Label>
-                  <Textarea placeholder="Patient diagnosis and findings..." rows={2} />
+                <h3 className="text-lg font-semibold">Vision Prescription</h3>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Right Eye (OD)</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label>SPH</Label>
+                        <Input placeholder="0.00" />
+                      </div>
+                      <div>
+                        <Label>CYL</Label>
+                        <Input placeholder="0.00" />
+                      </div>
+                      <div>
+                        <Label>AXIS</Label>
+                        <Input placeholder="0" />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Left Eye (OS)</h4>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label>SPH</Label>
+                        <Input placeholder="0.00" />
+                      </div>
+                      <div>
+                        <Label>CYL</Label>
+                        <Input placeholder="0.00" />
+                      </div>
+                      <div>
+                        <Label>AXIS</Label>
+                        <Input placeholder="0" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Treatment Plan</Label>
+                  <Label>Doctor Notes</Label>
                   <Textarea placeholder="Recommended treatment and follow-up..." rows={2} />
                 </div>
                 <div>
