@@ -308,15 +308,15 @@ export default function Patients() {
             patientId: appointmentForm.patientId,
             appointmentId: appointmentId,
             storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
-            invoiceDate: new Date().toISOString(),
-            dueDate: new Date().toISOString(),
+            invoiceDate: new Date(),
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
             subtotal: feeAmount,
             taxAmount: calculatedTax,
             discountAmount: 0,
             total: calculatedTotal,
             paymentStatus: 'paid',
             paymentMethod: appointmentForm.paymentMethod,
-            paymentDate: new Date().toISOString(),
+            paymentDate: new Date(),
             notes: `Payment for ${appointmentForm.serviceType} appointment`
           };
           
