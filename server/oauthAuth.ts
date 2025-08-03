@@ -13,16 +13,15 @@ const emailUsers = new Map();
 export function setupOAuthAuth(app: Express) {
   // Session middleware
   app.use(session({
-    secret: process.env.SESSION_SECRET || 'dev-oauth-secret-key',
-    resave: true, // Force session save on every request
-    saveUninitialized: true, // Create session even if nothing stored
-    name: 'connect.sid', // Explicit session name
+    secret: 'optical-store-secret-key-2024',
+    resave: false,
+    saveUninitialized: false,
+    rolling: true, // Reset expiry on each request
     cookie: {
-      httpOnly: false, // Allow client-side access
-      secure: false, // Must be false for HTTP localhost
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-      sameSite: 'lax', // Important for browser compatibility
-      path: '/', // Ensure cookie is sent for all paths
+      httpOnly: false,
+      secure: false,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'none', // Allow cross-origin cookies
     },
   }));
 
@@ -224,7 +223,21 @@ export function setupOAuthAuth(app: Express) {
     console.log('✅ LOGIN: Session set for user:', mockUser.email);
     console.log('✅ LOGIN: Session ID:', req.sessionID);
     
-    res.redirect("/dashboard");
+    // Force session save before redirect
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Session save failed' });
+      }
+      
+      // Return JSON response instead of redirect for better browser handling
+      res.json({ 
+        success: true, 
+        user: mockUser,
+        redirect: '/dashboard',
+        message: 'Login successful'
+      });
+    });
   });
 
   // Logout

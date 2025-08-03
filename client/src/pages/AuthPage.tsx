@@ -83,14 +83,43 @@ export default function AuthPage() {
   const handleQuickLogin = async () => {
     setIsLoading(true);
     try {
-      // Use a simple window redirect to ensure proper session handling
-      window.location.href = "/api/login";
+      // Make a fetch request to login endpoint
+      const response = await fetch('/api/login', {
+        method: 'GET',
+        credentials: 'include', // Important for cookies
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Login successful, redirect to dashboard
+          window.location.href = '/dashboard';
+        } else {
+          toast({
+            title: "Login Failed",
+            description: data.message || "Unable to login. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Unable to login. Please try again.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
-        title: "Login Failed",
+        title: "Login Failed", 
         description: "Unable to login. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
