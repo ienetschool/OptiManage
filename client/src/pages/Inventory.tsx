@@ -36,10 +36,15 @@ export default function Inventory() {
   const [openProduct, setOpenProduct] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
+  const [openStockUpdate, setOpenStockUpdate] = useState(false);
+  const [openPurchaseOrder, setOpenPurchaseOrder] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedProductForStock, setSelectedProductForStock] = useState<Product | null>(null);
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [stockQuantity, setStockQuantity] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -57,14 +62,14 @@ export default function Inventory() {
   });
 
   // Real inventory data from API
-  const { data: storeInventory = [] } = useQuery({
+  const { data: storeInventory = [] } = useQuery<any[]>({
     queryKey: ["/api/store-inventory"],
     enabled: products.length > 0,
   });
 
   // Enhanced products with stock information
   const enrichedProducts = products.map(product => {
-    const inventory = storeInventory.find(inv => inv.productId === product.id);
+    const inventory = storeInventory.find((inv: any) => inv.productId === product.id);
     const category = categories.find(cat => cat.id === product.categoryId);
     const supplier = suppliers.find(sup => sup.id === product.supplierId);
     
@@ -75,7 +80,7 @@ export default function Inventory() {
       categoryName: category?.name || 'Uncategorized',
       supplierName: supplier?.name || 'No Supplier',
       stockStatus: inventory?.quantity === 0 ? 'out_of_stock' : 
-                  (inventory?.quantity || 0) <= product.reorderLevel ? 'low_stock' : 'in_stock',
+                  (inventory?.quantity || 0) <= (product.reorderLevel || 0) ? 'low_stock' : 'in_stock',
     };
   });
 
@@ -126,7 +131,7 @@ export default function Inventory() {
       if (initialStock && initialStock > 0) {
         await apiRequest("POST", "/api/store-inventory", {
           storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
-          productId: response.id,
+          productId: (response as any).id,
           quantity: initialStock,
           lastRestocked: new Date(),
         });
@@ -561,6 +566,60 @@ export default function Inventory() {
                               <FormLabel>SKU *</FormLabel>
                               <FormControl>
                                 <Input placeholder="RB-AV-001" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={productForm.control}
+                          name="barcode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Barcode</FormLabel>
+                              <FormControl>
+                                <div className="flex gap-2">
+                                  <Input 
+                                    placeholder="Enter barcode or leave blank to auto-generate" 
+                                    {...field} 
+                                    value={field.value || ""} 
+                                  />
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => {
+                                      const autoBarcode = `BC${Date.now().toString().slice(-8)}`;
+                                      productForm.setValue("barcode", autoBarcode);
+                                    }}
+                                  >
+                                    Auto Generate
+                                  </Button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={productForm.control}
+                          name="initialStock"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Initial Stock Quantity</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="number" 
+                                  min="0" 
+                                  placeholder="0" 
+                                  {...field} 
+                                  value={field.value || 0}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

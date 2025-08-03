@@ -86,6 +86,7 @@ export const products = pgTable("products", {
   name: varchar("name").notNull(),
   description: text("description"),
   sku: varchar("sku").unique().notNull(),
+  barcode: varchar("barcode").unique(), // Auto-generated or manual barcode
   categoryId: varchar("category_id").references(() => categories.id),
   supplierId: varchar("supplier_id").references(() => suppliers.id),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
@@ -104,6 +105,10 @@ export const storeInventory = pgTable("store_inventory", {
   storeId: varchar("store_id").references(() => stores.id).notNull(),
   productId: varchar("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").default(0),
+  reservedQuantity: integer("reserved_quantity").default(0), // Reserved for pending orders
+  minStock: integer("min_stock").default(0),
+  maxStock: integer("max_stock").default(100),
+  location: varchar("location"), // Shelf location or storage area
   lastRestocked: timestamp("last_restocked"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -293,6 +298,55 @@ export const saleItemRelations = relations(saleItems, ({ one }) => ({
   }),
 }));
 
+// Purchase Orders and Stock Management
+export const purchaseOrders = pgTable("purchase_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  purchaseOrderNumber: varchar("purchase_order_number").unique().notNull(),
+  supplierId: varchar("supplier_id").references(() => suppliers.id).notNull(),
+  storeId: varchar("store_id").references(() => stores.id).notNull(),
+  orderDate: timestamp("order_date").defaultNow(),
+  expectedDeliveryDate: date("expected_delivery_date"),
+  actualDeliveryDate: date("actual_delivery_date"),
+  status: varchar("status").default('pending'), // pending, ordered, partial, delivered, cancelled
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).default('0'),
+  taxAmount: decimal("tax_amount", { precision: 10, scale: 2 }).default('0'),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).default('0'),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  paymentStatus: varchar("payment_status").default('pending'), // pending, paid, partial
+  paymentMethod: varchar("payment_method"), // cash, card, check, bank_transfer
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const purchaseOrderItems = pgTable("purchase_order_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  purchaseOrderId: varchar("purchase_order_id").references(() => purchaseOrders.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  unitCost: decimal("unit_cost", { precision: 10, scale: 2 }).notNull(),
+  discount: decimal("discount", { precision: 5, scale: 2 }).default('0'),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  receivedQuantity: integer("received_quantity").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Stock Movements for tracking inventory changes
+export const stockMovements = pgTable("stock_movements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  storeId: varchar("store_id").references(() => stores.id).notNull(),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  movementType: varchar("movement_type").notNull(), // in, out, adjustment, transfer
+  quantity: integer("quantity").notNull(), // positive for in, negative for out
+  previousQuantity: integer("previous_quantity").notNull(),
+  newQuantity: integer("new_quantity").notNull(),
+  reference: varchar("reference"), // sale_id, purchase_order_id, etc.
+  referenceType: varchar("reference_type"), // sale, purchase, adjustment, transfer
+  reason: text("reason"),
+  userId: varchar("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertStoreSchema = createInsertSchema(stores).omit({
   id: true,
@@ -306,6 +360,24 @@ export const insertProductSchema = createInsertSchema(products).omit({
   updatedAt: true,
 }).extend({
   initialStock: z.number().int().min(0).optional(), // For initial stock quantity when creating product
+  barcode: z.string().optional(),
+});
+
+// Purchase order schemas
+export const insertPurchaseOrderSchema = createInsertSchema(purchaseOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPurchaseOrderItemSchema = createInsertSchema(purchaseOrderItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertStockMovementSchema = createInsertSchema(stockMovements).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({
@@ -388,6 +460,12 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertSystemSettings = z.infer<typeof insertSystemSettingsSchema>;
 export type InsertCustomFieldConfig = z.infer<typeof insertCustomFieldConfigSchema>;
+export type PurchaseOrder = typeof purchaseOrders.$inferSelect;
+export type PurchaseOrderItem = typeof purchaseOrderItems.$inferSelect;
+export type StockMovement = typeof stockMovements.$inferSelect;
+export type InsertPurchaseOrder = z.infer<typeof insertPurchaseOrderSchema>;
+export type InsertPurchaseOrderItem = z.infer<typeof insertPurchaseOrderItemSchema>;
+export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;
 
 // Staff Profiles with enhanced role management
 export const staffProfiles = pgTable("staff_profiles", {

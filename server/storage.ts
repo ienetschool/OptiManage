@@ -17,6 +17,9 @@ import {
   invoiceItems,
   patients,
   medicalInvoices,
+  purchaseOrders,
+  purchaseOrderItems,
+  stockMovements,
   type User,
   type UpsertUser,
   type Store,
@@ -39,6 +42,12 @@ import {
   type InsertSystemSettings,
   type CustomFieldConfig,
   type InsertCustomFieldConfig,
+  type PurchaseOrder,
+  type InsertPurchaseOrder,
+  type PurchaseOrderItem,
+  type InsertPurchaseOrderItem,
+  type StockMovement,
+  type InsertStockMovement,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, and, or } from "drizzle-orm";
