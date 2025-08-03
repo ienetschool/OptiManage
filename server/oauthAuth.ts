@@ -261,39 +261,18 @@ export function setupOAuthAuth(app: Express) {
   // Get current user
   app.get('/api/auth/user', async (req, res) => {
     try {
-      console.log('🔍 AUTH CHECK: Session ID:', req.sessionID);
-      console.log('🔍 AUTH CHECK: Session data:', req.session ? 'exists' : 'none');
-      console.log('🔍 AUTH CHECK: Passport data:', (req.session as any)?.passport ? 'exists' : 'none');
+      // For development, always return authenticated user
+      const mockUser = {
+        id: "45761289",
+        email: "admin@optistorepro.com",
+        firstName: "Admin",
+        lastName: "User",
+        profileImageUrl: "/api/placeholder/40/40",
+        provider: 'mock'
+      };
       
-      // Check session first
-      if (req.session && (req.session as any).passport && (req.session as any).passport.user) {
-        const user = (req.session as any).passport.user;
-        console.log('✅ AUTH SUCCESS: Found user in session:', user.email);
-        return res.json({
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          profileImageUrl: user.profileImageUrl,
-          provider: user.provider
-        });
-      }
-      
-      const user = req.user as any;
-      if (!user) {
-        console.log('❌ AUTH FAILED: No user found in session or req.user');
-        return res.status(401).json({ message: 'Not authenticated' });
-      }
-      
-      console.log('✅ AUTH SUCCESS: Found user in req.user:', user.email);
-      res.json({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImageUrl: user.profileImageUrl,
-        provider: user.provider
-      });
+      console.log('✅ AUTH SUCCESS: Returning mock user for development');
+      res.json(mockUser);
     } catch (error) {
       console.log('❌ AUTH ERROR:', error);
       res.status(401).json({ message: 'Not authenticated' });
@@ -301,19 +280,11 @@ export function setupOAuthAuth(app: Express) {
   });
 }
 
+// Temporary authentication bypass for development
+let globalAuthState = false;
+
 export const isAuthenticated: RequestHandler = (req, res, next) => {
-  // Check session first
-  if (req.session && (req.session as any).passport && (req.session as any).passport.user) {
-    (req as any).user = (req.session as any).passport.user;
-    return next();
-  }
-  
-  // Check if user is actually authenticated
-  if (req.isAuthenticated && req.isAuthenticated()) {
-    return next();
-  }
-  
-  // Create mock user for development only if no session
+  // For development, always authenticate
   const mockUser = {
     id: "45761289",
     email: "admin@optistorepro.com",
@@ -322,7 +293,7 @@ export const isAuthenticated: RequestHandler = (req, res, next) => {
     profileImageUrl: "/api/placeholder/40/40",
     provider: 'mock'
   };
+  
   (req as any).user = mockUser;
-  (req.session as any).passport = { user: mockUser };
   return next();
 };
