@@ -226,16 +226,33 @@ export function setupOAuthAuth(app: Express) {
   app.get("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
-        return res.status(500).json({ message: 'Logout error' });
+        console.error('Logout error:', err);
+        return res.redirect("/");
       }
-      res.redirect("/");
+      // Destroy session completely
+      req.session.destroy((destroyErr) => {
+        if (destroyErr) {
+          console.error('Session destroy error:', destroyErr);
+        }
+        res.clearCookie('connect.sid');
+        res.redirect("/");
+      });
     });
   });
 
   // Get current user
-  app.get('/api/auth/user', isAuthenticated, async (req, res) => {
+  app.get('/api/auth/user', async (req, res) => {
     try {
+      // Check if user is logged out (session destroyed)
+      if (!req.session || req.session.destroy) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
       const user = req.user as any;
+      if (!user) {
+        return res.status(401).json({ message: 'Not authenticated' });
+      }
+      
       res.json({
         id: user.id,
         email: user.email,
@@ -245,14 +262,23 @@ export function setupOAuthAuth(app: Express) {
         provider: user.provider
       });
     } catch (error) {
-      res.status(500).json({ message: 'Failed to fetch user' });
+      res.status(401).json({ message: 'Not authenticated' });
     }
   });
 }
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {
-  // For development, always bypass authentication and create mock user
-  // This ensures the application works in development environment
+  // Check if user is actually authenticated
+  if (req.isAuthenticated && req.isAuthenticated()) {
+    return next();
+  }
+  
+  // For development, check if session exists first
+  if (req.session && req.session.passport && req.session.passport.user) {
+    return next();
+  }
+  
+  // Create mock user for development only if no session
   (req as any).user = {
     id: "45761289",
     email: "admin@optistorepro.com",

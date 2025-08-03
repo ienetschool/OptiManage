@@ -476,14 +476,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   System Settings
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={async () => {
-                try {
-                  await fetch('/api/logout', { method: 'GET' });
-                  window.location.href = '/';
-                } catch (error) {
-                  console.error('Logout error:', error);
-                  window.location.href = '/api/logout';
-                }
+              <DropdownMenuItem onClick={() => {
+                window.location.href = '/api/logout';
               }}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
