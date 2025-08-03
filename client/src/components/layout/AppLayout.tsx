@@ -446,7 +446,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </DropdownMenu>
 
           {/* Website Link */}
-          <Button variant="ghost" size="sm" onClick={() => window.open('/', '_blank')} title="Visit Store Website">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => window.open('/', '_blank')} 
+            title="Visit Frontend Website"
+            className="hidden sm:flex items-center space-x-2"
+          >
+            <Globe className="h-4 w-4" />
+            <span>Visit Website</span>
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => window.open('/', '_blank')} 
+            title="Visit Frontend Website"
+            className="sm:hidden"
+          >
             <Globe className="h-5 w-5" />
           </Button>
 
