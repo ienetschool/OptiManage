@@ -77,10 +77,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
     queryKey: ["/api/products"]
   });
 
-  // Combine customers and patients for dropdown
+  // Combine customers and patients for dropdown with proper filtering
   const allCustomers = [
-    ...customers.map((c: any) => ({ ...c, type: 'customer' })),
-    ...patients.map((p: any) => ({ ...p, type: 'patient', name: p.name || `${p.firstName} ${p.lastName}` }))
+    ...customers.filter((c: any) => c && c.name).map((c: any) => ({ 
+      ...c, 
+      type: 'customer',
+      displayName: c.name,
+      subtitle: c.email || c.phone || 'Customer'
+    })),
+    ...patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).map((p: any) => ({ 
+      ...p, 
+      type: 'patient',
+      displayName: p.name || `${p.firstName || ''} ${p.lastName || ''}`.trim(),
+      subtitle: p.email || p.phone || 'Patient'
+    }))
   ];
 
   const quickSaleForm = useForm({
@@ -487,20 +497,78 @@ export default function AppLayout({ children }: AppLayoutProps) {
                             <SelectValue placeholder="Select customer or patient..." />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="max-h-60">
-                          <SelectItem value="walk-in">🚶 Walk-in Customer</SelectItem>
-                          <div className="px-2 py-1 text-xs font-medium text-slate-500 bg-slate-50">CUSTOMERS</div>
-                          {customers.map((customer: any) => (
-                            <SelectItem key={customer.id} value={customer.id}>
-                              👤 {customer.name}
-                            </SelectItem>
-                          ))}
-                          <div className="px-2 py-1 text-xs font-medium text-slate-500 bg-slate-50">PATIENTS</div>
-                          {patients.map((patient: any) => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              🏥 {patient.name || `${patient.firstName} ${patient.lastName}`}
-                            </SelectItem>
-                          ))}
+                        <SelectContent className="max-h-80 w-[320px]">
+                          <SelectItem value="walk-in" className="py-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 text-sm font-medium">W</span>
+                              </div>
+                              <div>
+                                <div className="font-medium">Walk-in Customer</div>
+                                <div className="text-xs text-slate-500">Cash customer</div>
+                              </div>
+                            </div>
+                          </SelectItem>
+                          
+                          {customers.filter((c: any) => c && c.name).length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                CUSTOMERS ({customers.filter((c: any) => c && c.name).length})
+                              </div>
+                              {customers.filter((c: any) => c && c.name).map((customer: any) => (
+                                <SelectItem key={customer.id} value={customer.id} className="py-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                      <span className="text-green-600 text-sm font-medium">
+                                        {customer.name.charAt(0).toUpperCase()}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">{customer.name}</div>
+                                      <div className="text-xs text-slate-500">
+                                        {customer.email || customer.phone || 'Customer'}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            </>
+                          )}
+                          
+                          {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                PATIENTS ({patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).length})
+                              </div>
+                              {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).map((patient: any) => {
+                                const displayName = patient.name || `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
+                                return (
+                                  <SelectItem key={patient.id} value={patient.id} className="py-3">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <span className="text-purple-600 text-sm font-medium">
+                                          {displayName.charAt(0).toUpperCase()}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">{displayName}</div>
+                                        <div className="text-xs text-slate-500">
+                                          {patient.email || patient.phone || 'Patient'}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
+                            </>
+                          )}
+
+                          {allCustomers.length === 0 && (
+                            <div className="px-3 py-4 text-center text-slate-500">
+                              <div className="text-sm">No customers or patients found</div>
+                              <div className="text-xs mt-1">Add customers in the customer management section</div>
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -579,14 +647,55 @@ export default function AppLayout({ children }: AppLayoutProps) {
                                 <SelectValue placeholder="Search and select product..." />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent className="max-h-60">
-                              <SelectItem value="custom">✏️ Custom Item</SelectItem>
-                              <div className="px-2 py-1 text-xs font-medium text-slate-500 bg-slate-50">PRODUCTS</div>
-                              {products.map((product: any) => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  📦 {product.name} - ${product.price || '0.00'}
-                                </SelectItem>
-                              ))}
+                            <SelectContent className="max-h-80 w-[400px]">
+                              <SelectItem value="custom" className="py-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <span className="text-orange-600 text-sm font-medium">✏</span>
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">Custom Item</div>
+                                    <div className="text-xs text-slate-500">Enter custom product details</div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                              
+                              {products.filter((p: any) => p && p.name).length > 0 && (
+                                <>
+                                  <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                    AVAILABLE PRODUCTS ({products.filter((p: any) => p && p.name).length})
+                                  </div>
+                                  {products.filter((p: any) => p && p.name).map((product: any) => (
+                                    <SelectItem key={product.id} value={product.id} className="py-3">
+                                      <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center space-x-3">
+                                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <span className="text-blue-600 text-sm font-medium">
+                                              {product.name.charAt(0).toUpperCase()}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <div className="font-medium">{product.name}</div>
+                                            <div className="text-xs text-slate-500">
+                                              {product.category || 'Product'}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="text-sm font-semibold text-green-600">
+                                          ${parseFloat(product.price || 0).toFixed(2)}
+                                        </div>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              )}
+
+                              {products.filter((p: any) => p && p.name).length === 0 && (
+                                <div className="px-3 py-4 text-center text-slate-500">
+                                  <div className="text-sm">No products found</div>
+                                  <div className="text-xs mt-1">Add products in inventory management</div>
+                                </div>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
