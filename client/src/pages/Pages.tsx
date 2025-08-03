@@ -68,8 +68,8 @@ export default function Pages() {
     queryKey: ["/api/stores"],
   });
 
-  // Mock pages data
-  const pages = [
+  // Mock pages data with state management
+  const [pages, setPages] = useState([
     {
       id: "1",
       title: "Home Page",
@@ -114,8 +114,17 @@ export default function Pages() {
       type: "blog",
       lastModified: "2025-01-31",
       views: 0
+    },
+    {
+      id: "6",
+      title: "Testing",
+      slug: "/testing",
+      status: "draft",
+      type: "page",
+      lastModified: "2025-08-03",
+      views: 0
     }
-  ];
+  ]);
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -260,12 +269,34 @@ export default function Pages() {
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                   <Button onClick={() => {
-                    console.log('Creating new page with form data');
-                    toast({ 
-                      title: "Page Created", 
-                      description: "New page has been created successfully"
-                    });
-                    setOpen(false);
+                    const newPageTitle = document.querySelector('input[placeholder="Enter page title"]') as HTMLInputElement;
+                    const newPageSlug = document.querySelector('input[placeholder="e.g., /about-us"]') as HTMLInputElement;
+                    
+                    if (newPageTitle?.value && newPageSlug?.value) {
+                      const newPage = {
+                        id: (pages.length + 1).toString(),
+                        title: newPageTitle.value,
+                        slug: newPageSlug.value,
+                        status: "draft",
+                        type: "page",
+                        lastModified: new Date().toISOString().split('T')[0],
+                        views: 0
+                      };
+                      
+                      setPages([...pages, newPage]);
+                      console.log('Creating new page:', newPage);
+                      toast({ 
+                        title: "Page Created", 
+                        description: `"${newPageTitle.value}" has been created successfully`
+                      });
+                      setOpen(false);
+                    } else {
+                      toast({ 
+                        title: "Error", 
+                        description: "Please enter both title and slug",
+                        variant: "destructive"
+                      });
+                    }
                   }}>Create Page</Button>
                 </div>
               </div>
@@ -445,13 +476,13 @@ export default function Pages() {
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => {
                       if (confirm(`Are you sure you want to delete "${page.title}"? This action cannot be undone.`)) {
-                        console.log(`Deleting page: ${page.title} (${page.id})`);
+                        setPages(pages.filter(p => p.id !== page.id));
+                        console.log(`Deleted page: ${page.title} (${page.id})`);
                         toast({
                           title: "Page Deleted",
-                          description: `"${page.title}" has been moved to trash`,
+                          description: `"${page.title}" has been permanently deleted`,
                           variant: "destructive",
                         });
-                        // In a real app, this would call the delete API
                       }
                     }}>
                       <Trash2 className="h-4 w-4 text-red-500" />
@@ -482,7 +513,7 @@ export default function Pages() {
           });
         }
       }}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
+        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader className="border-b pb-4">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center space-x-3">
@@ -507,9 +538,9 @@ export default function Pages() {
           </DialogHeader>
           
           {editingPage && (
-            <div className="flex h-[calc(90vh-120px)]">
+            <div className="flex flex-1 min-h-0">
               {/* Left Sidebar - Settings */}
-              <div className="w-80 border-r bg-slate-50 overflow-y-auto">
+              <div className="w-80 border-r bg-slate-50 overflow-y-auto max-h-full">
                 <div className="p-4 space-y-4">
                   {/* Basic Settings */}
                   <div className="space-y-3">
@@ -804,7 +835,7 @@ export default function Pages() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 p-4 overflow-y-auto">
+                <div className="flex-1 p-4 overflow-y-auto max-h-full">
                   <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 ${
                     previewMode === 'mobile' ? 'max-w-sm' : 
                     previewMode === 'tablet' ? 'max-w-2xl' : 'max-w-4xl'
