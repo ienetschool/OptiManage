@@ -1026,7 +1026,7 @@ export class DatabaseStorage implements IStorage {
       // Convert sales to payment records
       const salesPayments = salesRecords.map(sale => ({
         id: `pay-sale-${sale.id}`,
-        invoiceId: `SALE-${sale.saleNumber || sale.id}`,
+        invoiceId: `SALE-${sale.id.slice(-8)}`,
         customerId: sale.customerId,
         customerName: sale.customerId ? 
           customersData.find(c => c.id === sale.customerId)?.firstName + ' ' + customersData.find(c => c.id === sale.customerId)?.lastName || 'Customer' :
@@ -1036,8 +1036,8 @@ export class DatabaseStorage implements IStorage {
         status: sale.paymentStatus === 'completed' ? 'completed' : 
                 sale.paymentStatus === 'pending' ? 'pending' : 
                 'completed',
-        paymentDate: sale.createdAt,
-        transactionId: `TXN-SALE-${sale.saleNumber || sale.id}`,
+        paymentDate: sale.createdAt ? sale.createdAt.toISOString() : new Date().toISOString(),
+        transactionId: `TXN-SALE-${sale.id.slice(-8)}`,
         notes: sale.notes || 'Quick Sale Transaction',
         source: 'quick_sale'
       }));
