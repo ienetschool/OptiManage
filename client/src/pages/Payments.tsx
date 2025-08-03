@@ -56,7 +56,7 @@ export default function Payments() {
       sortable: true,
       filterable: true,
       render: (value) => (
-        <div className="font-medium text-blue-600">{value}</div>
+        <div className="font-medium text-blue-600">{value || 'N/A'}</div>
       )
     },
     {
@@ -73,7 +73,7 @@ export default function Payments() {
       title: 'Amount',
       sortable: true,
       render: (value) => (
-        <div className="text-lg font-bold">${value.toFixed(2)}</div>
+        <div className="text-lg font-bold">${(parseFloat(value) || 0).toFixed(2)}</div>
       )
     },
     {
@@ -115,7 +115,7 @@ export default function Payments() {
       title: 'Date',
       sortable: true,
       render: (value) => (
-        <div className="text-sm">{new Date(value).toLocaleDateString()}</div>
+        <div className="text-sm">{value ? new Date(value).toLocaleDateString() : 'N/A'}</div>
       )
     },
     {
@@ -209,7 +209,13 @@ export default function Payments() {
     }
   };
 
-  const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  // Add debug logging for payments data
+  console.log('Payments Debug:', {
+    paymentsLength: payments.length,
+    payments: payments.slice(0, 3) // First 3 for debugging
+  });
+
+  const totalAmount = payments.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
   const completedPayments = payments.filter(p => p.status === "completed");
   const pendingPayments = payments.filter(p => p.status === "pending");
 

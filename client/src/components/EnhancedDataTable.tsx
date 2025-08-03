@@ -173,11 +173,26 @@ export default function EnhancedDataTable({
   }, [filteredData, sortColumn, sortDirection, data]);
 
   // Pagination
-  const totalPages = Math.ceil(sortedData.length / pageSizeValue);
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSizeValue));
   const startIndex = (currentPage - 1) * pageSizeValue;
   const paginatedData = showPagination 
     ? sortedData.slice(startIndex, startIndex + pageSizeValue)
     : sortedData;
+  
+  // Debug logging for pagination issues (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('EnhancedDataTable Debug:', {
+      originalDataLength: data.length,
+      filteredDataLength: filteredData.length,
+      sortedDataLength: sortedData.length,
+      totalPages,
+      currentPage,
+      pageSizeValue,
+      startIndex,
+      paginatedDataLength: paginatedData.length,
+      showPagination
+    });
+  }
   
 
 
@@ -190,6 +205,13 @@ export default function EnhancedDataTable({
   React.useEffect(() => {
     setCurrentPage(1);
   }, [pageSizeValue]);
+
+  // Ensure current page is within valid range
+  React.useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleSort = (columnKey: string) => {
     const column = columns.find(col => col.key === columnKey);
@@ -309,7 +331,7 @@ export default function EnhancedDataTable({
       
       <CardContent>
         <div className="rounded-md border overflow-hidden">
-          <div className="max-h-[600px] overflow-y-auto scroll-smooth">
+          <div className="max-h-[600px] overflow-y-auto scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
             <Table>
               <TableHeader>
               <TableRow>
@@ -450,7 +472,7 @@ export default function EnhancedDataTable({
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages || totalPages <= 1}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -458,7 +480,7 @@ export default function EnhancedDataTable({
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages || totalPages <= 1}
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
