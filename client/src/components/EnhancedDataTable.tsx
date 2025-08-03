@@ -339,50 +339,58 @@ export default function EnhancedDataTable({
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedData.map((row, index) => (
-                  <TableRow key={row.id || index}>
-                    {columns.map((column) => (
-                      <TableCell key={column.key}>
-                        {column.render ? column.render(row[column.key], row) : row[column.key]}
-                      </TableCell>
-                    ))}
-                    {(onView || onEdit || onDelete || actions) && (
-                      <TableCell>
-                        {actions ? (
-                          actions(row)
-                        ) : (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {onView && (
-                                <DropdownMenuItem onClick={() => onView(row)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View
-                                </DropdownMenuItem>
-                              )}
-                              {onEdit && (
-                                <DropdownMenuItem onClick={() => onEdit(row)}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit
-                                </DropdownMenuItem>
-                              )}
-                              {onDelete && (
-                                <DropdownMenuItem onClick={() => onDelete(row)}>
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))
+                paginatedData.map((row, index) => {
+                  console.log(`🔧 RENDERING ROW ${index}:`, { id: row.id, firstColumn: row[columns[0]?.key] });
+                  return (
+                    <TableRow key={row.id || `row-${index}`}>
+                      {columns.map((column) => {
+                        const cellValue = row[column.key];
+                        const renderedValue = column.render ? column.render(cellValue, row) : cellValue;
+                        console.log(`🔧 CELL ${column.key}:`, cellValue, '→', renderedValue);
+                        return (
+                          <TableCell key={column.key}>
+                            {renderedValue}
+                          </TableCell>
+                        );
+                      })}
+                      {(onView || onEdit || onDelete || actions) && (
+                        <TableCell>
+                          {actions ? (
+                            actions(row)
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {onView && (
+                                  <DropdownMenuItem onClick={() => onView(row)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View
+                                  </DropdownMenuItem>
+                                )}
+                                {onEdit && (
+                                  <DropdownMenuItem onClick={() => onEdit(row)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </DropdownMenuItem>
+                                )}
+                                {onDelete && (
+                                  <DropdownMenuItem onClick={() => onDelete(row)}>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
             </Table>

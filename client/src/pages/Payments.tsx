@@ -132,6 +132,15 @@ export default function Payments() {
   // Fetch payments data with proper error handling
   const { data: payments = [], isLoading, error, refetch } = useQuery<Payment[]>({
     queryKey: ["/api/payments"],
+    queryFn: async () => {
+      const response = await fetch("/api/payments");
+      if (!response.ok) {
+        throw new Error("Failed to fetch payments");
+      }
+      const data = await response.json();
+      console.log(`💳 PAYMENTS DATA RECEIVED: ${data.length} payments`, data.slice(0, 3));
+      return data;
+    },
     retry: 2,
     staleTime: 10000, // 10 seconds
     refetchInterval: 30000, // Auto-refresh every 30 seconds
