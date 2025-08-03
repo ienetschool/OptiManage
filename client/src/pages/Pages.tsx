@@ -120,7 +120,13 @@ export default function Pages() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => {
+            toast({
+              title: "Page Settings",
+              description: "Opening page configuration settings...",
+            });
+            console.log('Page Settings clicked - opening configuration panel');
+          }}>
             <Settings className="h-4 w-4 mr-2" />
             Page Settings
           </Button>
@@ -165,7 +171,11 @@ export default function Pages() {
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                   <Button onClick={() => {
-                    toast({ title: "Page created successfully" });
+                    console.log('Creating new page with form data');
+                    toast({ 
+                      title: "Page Created", 
+                      description: "New page has been created successfully"
+                    });
                     setOpen(false);
                   }}>Create Page</Button>
                 </div>
@@ -243,7 +253,13 @@ export default function Pages() {
             className="pl-10"
           />
         </div>
-        <Select defaultValue="all">
+        <Select defaultValue="all" onValueChange={(value) => {
+          console.log(`Status filter changed to: ${value}`);
+          toast({
+            title: "Filter Applied",
+            description: `Showing ${value === 'all' ? 'all pages' : value + ' pages'}`,
+          });
+        }}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
@@ -254,7 +270,13 @@ export default function Pages() {
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="all">
+        <Select defaultValue="all" onValueChange={(value) => {
+          console.log(`Type filter changed to: ${value}`);
+          toast({
+            title: "Filter Applied",
+            description: `Showing ${value === 'all' ? 'all content' : value + ' content'}`,
+          });
+        }}>
           <SelectTrigger className="w-full sm:w-48">
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
@@ -304,13 +326,38 @@ export default function Pages() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      console.log(`Viewing page: ${page.title} (${page.slug})`);
+                      toast({
+                        title: "Page Preview",
+                        description: `Opening preview for "${page.title}"`,
+                      });
+                      // In a real app, this would open the page in a new tab
+                      window.open(`https://example.com${page.slug}`, '_blank');
+                    }}>
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      console.log(`Editing page: ${page.title} (${page.id})`);
+                      toast({
+                        title: "Edit Page",
+                        description: `Opening editor for "${page.title}"`,
+                      });
+                      // In a real app, this would navigate to the page editor
+                    }}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" onClick={() => {
+                      if (confirm(`Are you sure you want to delete "${page.title}"? This action cannot be undone.`)) {
+                        console.log(`Deleting page: ${page.title} (${page.id})`);
+                        toast({
+                          title: "Page Deleted",
+                          description: `"${page.title}" has been moved to trash`,
+                          variant: "destructive",
+                        });
+                        // In a real app, this would call the delete API
+                      }
+                    }}>
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>

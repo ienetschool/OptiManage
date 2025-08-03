@@ -168,7 +168,7 @@ export default function Contact() {
               return (
                 <Card key={index} className="border-slate-200 hover:shadow-xl transition-all duration-300 hover:scale-105">
                   <CardContent className="p-8 text-center">
-                    <div className={`w-16 h-16 ${colorClasses[method.color]} rounded-xl flex items-center justify-center mx-auto mb-6`}>
+                    <div className={`w-16 h-16 ${colorClasses[method.color as keyof typeof colorClasses]} rounded-xl flex items-center justify-center mx-auto mb-6`}>
                       <Icon className="h-8 w-8" />
                     </div>
                     <h3 className="text-xl font-semibold text-slate-900 mb-3">{method.title}</h3>
