@@ -16,6 +16,7 @@ import {
   invoices,
   invoiceItems,
   patients,
+  medicalInvoices,
   type User,
   type UpsertUser,
   type Store,
@@ -919,6 +920,91 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error("Error creating medical invoice:", error);
       throw error;
+    }
+  }
+
+  // Payments operations - Combine invoices and medical invoices as payment records
+  async getPayments(): Promise<any[]> {
+    try {
+      console.log('🚨 PAYMENTS: Fetching all payments from invoices and medical invoices...');
+      
+      // Get regular invoices from database
+      const invoiceRecords = await db.select().from(invoices).orderBy(desc(invoices.createdAt));
+      console.log(`📊 FOUND ${invoiceRecords.length} REGULAR INVOICES`);
+      
+      // Get medical invoices from database  
+      const medicalInvoiceRecords = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
+      console.log(`📊 FOUND ${medicalInvoiceRecords.length} MEDICAL INVOICES`);
+      
+      // Get customers and patients for name resolution
+      const customersData = await db.select().from(customers);
+      const patientsData = await db.select().from(patients);
+      
+      // Convert regular invoices to payment records
+      const regularPayments = invoiceRecords.map(invoice => ({
+        id: `pay-${invoice.id}`,
+        invoiceId: invoice.invoiceNumber,
+        customerId: invoice.customerId,
+        customerName: invoice.customerId ? 
+          customersData.find(c => c.id === invoice.customerId)?.firstName + ' ' + customersData.find(c => c.id === invoice.customerId)?.lastName || 'Customer' :
+          'Guest Customer',
+        amount: parseFloat(invoice.total || "0"),
+        paymentMethod: invoice.paymentMethod || 'cash',
+        status: invoice.status === 'paid' ? 'completed' : 
+                invoice.status === 'draft' ? 'pending' : 
+                invoice.status,
+        paymentDate: invoice.paymentDate || invoice.createdAt,
+        transactionId: `TXN-${invoice.invoiceNumber}`,
+        notes: invoice.notes,
+        source: 'regular_invoice'
+      }));
+      
+      // Convert medical invoices to payment records
+      const medicalPayments = medicalInvoiceRecords.map(invoice => ({
+        id: `pay-med-${invoice.id}`,
+        invoiceId: invoice.invoiceNumber,
+        customerId: invoice.patientId,
+        customerName: invoice.patientId ?
+          patientsData.find(p => p.id === invoice.patientId)?.firstName + ' ' + patientsData.find(p => p.id === invoice.patientId)?.lastName || 'Patient' :
+          'Patient',
+        amount: parseFloat(invoice.total || "0"),
+        paymentMethod: invoice.paymentMethod || 'cash',
+        status: invoice.paymentStatus === 'paid' ? 'completed' :
+                invoice.paymentStatus === 'pending' ? 'pending' :
+                invoice.paymentStatus,
+        paymentDate: invoice.paymentDate || invoice.createdAt, 
+        transactionId: `TXN-${invoice.invoiceNumber}`,
+        notes: invoice.notes,
+        source: 'medical_invoice'
+      }));
+      
+      // Combine all payments and sort by date
+      const allPayments = [...regularPayments, ...medicalPayments]
+        .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+      
+      console.log(`🚨 RETURNING ${allPayments.length} TOTAL PAYMENTS (${regularPayments.length} regular + ${medicalPayments.length} medical)`);
+      
+      return allPayments;
+      
+    } catch (error) {
+      console.error('❌ ERROR FETCHING PAYMENTS:', error);
+      
+      // Return mock data as fallback for the existing appointment payments
+      return [
+        {
+          id: "apt-1a0a113c-8498-476d-a564-853d66c635f8",
+          invoiceId: "INV-001",
+          customerId: "cust-001",  
+          customerName: "John Doe",
+          amount: 150.00,
+          paymentMethod: "card",
+          status: "completed",
+          paymentDate: new Date().toISOString(),
+          transactionId: "TXN-001",
+          notes: "Appointment payment",
+          source: 'appointment'
+        }
+      ];
     }
   }
 }

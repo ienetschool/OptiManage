@@ -326,6 +326,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Payments route - combines invoices and medical invoices as payment records
+  app.get('/api/payments', isAuthenticated, async (req, res) => {
+    try {
+      console.log(`🚨 ROUTE: /api/payments called`);
+      const payments = await storage.getPayments();
+      console.log(`🚨 ROUTE: Got ${payments.length} payments from storage`);
+      res.json(payments);
+    } catch (error) {
+      console.error("Error fetching payments:", error);
+      res.status(500).json({ message: "Failed to fetch payments" });
+    }
+  });
+
   const createInvoiceSchema = z.object({
     customerId: z.string().min(1),
     storeId: z.string().min(1),
