@@ -255,24 +255,24 @@ export default function SEO() {
   };
 
   return (
-    <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">SEO & Analytics</h1>
-            <p className="text-slate-600">Optimize your website for search engines and track performance</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={() => window.open('https://search.google.com/search-console', '_blank')}>
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Google Search Console
-            </Button>
-            <Button onClick={handleGenerateReport}>
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Generate Report
-            </Button>
-          </div>
+    <div className="container mx-auto p-6 space-y-8 max-w-7xl">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">SEO & Analytics</h1>
+          <p className="text-slate-600">Optimize your website for search engines and track performance</p>
         </div>
+        <div className="flex items-center space-x-3">
+          <Button variant="outline" onClick={() => window.open('https://search.google.com/search-console', '_blank')}>
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Google Search Console
+          </Button>
+          <Button onClick={handleGenerateReport}>
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Generate Report
+          </Button>
+        </div>
+      </div>
 
       {/* SEO Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -325,8 +325,9 @@ export default function SEO() {
         </Card>
       </div>
 
+      {/* Navigation Tabs */}
       <Tabs defaultValue="settings" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-4 mb-6">
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="analysis">Page Analysis</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -429,48 +430,48 @@ export default function SEO() {
         </TabsContent>
 
         <TabsContent value="analysis" className="space-y-6">
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="pb-4">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <CardTitle>Page SEO Analysis</CardTitle>
-                  <CardDescription>Review SEO status for all your pages</CardDescription>
+                  <CardTitle className="text-xl font-semibold text-slate-900">Page SEO Analysis</CardTitle>
+                  <CardDescription className="text-slate-600 mt-1">Review SEO status for all your pages</CardDescription>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleCopyToClipboard} className="text-slate-700 hover:text-slate-900">
                     <Copy className="h-4 w-4 mr-2" />
                     Copy
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleExportData('csv')}>
+                  <Button variant="outline" size="sm" onClick={() => handleExportData('csv')} className="text-slate-700 hover:text-slate-900">
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleExportData('json')}>
+                  <Button variant="outline" size="sm" onClick={() => handleExportData('json')} className="text-slate-700 hover:text-slate-900">
                     <FileText className="h-4 w-4 mr-2" />
                     Export JSON
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleShareLink} disabled={selectedPages.length === 0}>
+                  <Button variant="outline" size="sm" onClick={handleShareLink} disabled={selectedPages.length === 0} className="text-slate-700 hover:text-slate-900 disabled:opacity-50">
                     <Share className="h-4 w-4 mr-2" />
                     Share
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4 overflow-visible">
+            <CardContent className="space-y-6 pb-8">
               {/* Filters and Search */}
-              <div className="flex flex-col sm:flex-row gap-4 items-center">
-                <div className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center bg-slate-50 p-4 rounded-lg">
+                <div className="flex-1 w-full sm:w-auto">
                   <Input
                     placeholder="Search pages or titles..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
+                    className="w-full sm:max-w-sm bg-white border-slate-200 focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40">
-                      <Filter className="h-4 w-4 mr-2" />
+                    <SelectTrigger className="w-full sm:w-40 bg-white border-slate-200">
+                      <Filter className="h-4 w-4 mr-2 text-slate-500" />
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -481,7 +482,7 @@ export default function SEO() {
                     </SelectContent>
                   </Select>
                   <Select value={itemsPerPage.toString()} onValueChange={(v) => setItemsPerPage(Number(v))}>
-                    <SelectTrigger className="w-24">
+                    <SelectTrigger className="w-full sm:w-24 bg-white border-slate-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -494,61 +495,79 @@ export default function SEO() {
               </div>
 
               {/* Select All Checkbox */}
-              <div className="flex items-center space-x-2 pb-2 border-b">
-                <Checkbox
-                  checked={selectedPages.length === paginatedPages.length && paginatedPages.length > 0}
-                  onCheckedChange={handleSelectAll}
-                />
-                <span className="text-sm text-slate-600">
-                  Select All ({selectedPages.length} selected)
-                </span>
+              <div className="flex items-center justify-between py-3 px-1 border-b border-slate-200">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    checked={selectedPages.length === paginatedPages.length && paginatedPages.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    className="border-slate-300 data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
+                  />
+                  <span className="text-sm font-medium text-slate-700">
+                    Select All ({selectedPages.length} selected)
+                  </span>
+                </div>
+                {selectedPages.length > 0 && (
+                  <span className="text-sm text-orange-600 font-medium">
+                    {selectedPages.length} page{selectedPages.length !== 1 ? 's' : ''} selected
+                  </span>
+                )}
               </div>
 
-              {/* Pages List */}
-              <div className="space-y-3">
+              {/* Pages List Container with proper scrolling */}
+              <div className="min-h-[400px]">
+                <div className="space-y-3">
                 {paginatedPages.map((page) => {
                   const statusBadge = getStatusBadge(page.status);
                   const StatusIcon = statusBadge.icon;
                   
                   return (
-                    <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
-                      <div className="flex items-center space-x-4">
-                        <Checkbox
-                          checked={selectedPages.includes(page.id)}
-                          onCheckedChange={(checked) => handleSelectPage(page.id, checked as boolean)}
-                        />
+                    <div key={page.id} className="group flex flex-col sm:flex-row sm:items-center sm:justify-between p-6 border border-slate-200 rounded-xl hover:border-orange-300 hover:shadow-md transition-all duration-200 bg-white">
+                      <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0">
+                        <div className="flex-shrink-0 pt-1 sm:pt-0">
+                          <Checkbox
+                            checked={selectedPages.includes(page.id)}
+                            onCheckedChange={(checked) => handleSelectPage(page.id, checked as boolean)}
+                            className="border-slate-300 data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
+                          />
+                        </div>
                         <div className="flex-shrink-0">
-                          <StatusIcon className={`h-8 w-8 ${
+                          <StatusIcon className={`h-10 w-10 ${
                             page.status === 'good' ? 'text-green-500' :
                             page.status === 'warning' ? 'text-yellow-500' : 'text-red-500'
                           }`} />
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <h4 className="font-medium text-slate-900">{page.title}</h4>
-                            <Badge {...statusBadge}>
-                              {statusBadge.text}
-                            </Badge>
-                            <Badge variant="outline">Score: {page.score}/100</Badge>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-slate-900 text-lg truncate">{page.title}</h4>
+                            <div className="flex items-center gap-2">
+                              <Badge {...statusBadge} className="text-xs font-medium">
+                                {statusBadge.text}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs font-medium border-orange-200 text-orange-700 bg-orange-50">
+                                Score: {page.score}/100
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="text-sm text-slate-500">
-                            <span className="font-mono">{page.page}</span>
-                            <span className="mx-2">•</span>
-                            <span>Updated: {page.lastUpdated}</span>
+                          <div className="text-sm text-slate-600 space-y-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                              <span className="font-mono text-blue-600 truncate">{page.page}</span>
+                              <span className="hidden sm:inline text-slate-400">•</span>
+                              <span className="text-slate-500">Updated: {page.lastUpdated}</span>
+                            </div>
                             {page.issues.length > 0 && (
-                              <>
-                                <span className="mx-2">•</span>
-                                <span className="text-red-600">{page.issues.join(", ")}</span>
-                              </>
+                              <div className="text-red-600 text-xs bg-red-50 px-2 py-1 rounded-md">
+                                <span className="font-medium">Issues:</span> {page.issues.join(", ")}
+                              </div>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-end space-x-2 mt-4 sm:mt-0 sm:ml-4">
                         <Button 
                           variant="ghost" 
                           size="sm"
                           onClick={() => window.open(page.page, '_blank')}
+                          className="text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
@@ -557,6 +576,7 @@ export default function SEO() {
                           size="sm"
                           onClick={() => handleFixIssues(page.id)}
                           disabled={page.issues.length === 0}
+                          className="text-slate-700 hover:text-slate-900 border-slate-200 hover:border-orange-300 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <RefreshCw className="h-4 w-4 mr-2" />
                           Fix Issues
@@ -565,24 +585,26 @@ export default function SEO() {
                     </div>
                   );
                 })}
+                </div>
               </div>
 
               {/* Pagination */}
-              <div className="flex items-center justify-between pt-4 border-t">
-                <div className="text-sm text-slate-600">
-                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredPages.length)} of {filteredPages.length} pages
+              <div className="flex flex-col sm:flex-row items-center justify-between pt-6 mt-6 border-t border-slate-200 gap-4">
+                <div className="text-sm text-slate-600 font-medium">
+                  Showing <span className="text-slate-900 font-semibold">{((currentPage - 1) * itemsPerPage) + 1}</span> to <span className="text-slate-900 font-semibold">{Math.min(currentPage * itemsPerPage, filteredPages.length)}</span> of <span className="text-slate-900 font-semibold">{filteredPages.length}</span> pages
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                     disabled={currentPage === 1}
+                    className="text-slate-700 hover:text-slate-900 border-slate-200 hover:border-orange-300 disabled:opacity-50"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4 mr-1" />
                     Previous
                   </Button>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 mx-2">
                     {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                       const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
                       return (
@@ -591,7 +613,11 @@ export default function SEO() {
                           variant={currentPage === pageNum ? "default" : "outline"}
                           size="sm"
                           onClick={() => setCurrentPage(pageNum)}
-                          className="w-8 h-8 p-0"
+                          className={`w-10 h-10 p-0 ${
+                            currentPage === pageNum 
+                              ? "bg-orange-600 hover:bg-orange-700 border-orange-600 text-white" 
+                              : "text-slate-700 hover:text-slate-900 border-slate-200 hover:border-orange-300"
+                          }`}
                         >
                           {pageNum}
                         </Button>
@@ -603,9 +629,10 @@ export default function SEO() {
                     size="sm"
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                     disabled={currentPage === totalPages}
+                    className="text-slate-700 hover:text-slate-900 border-slate-200 hover:border-orange-300 disabled:opacity-50"
                   >
                     Next
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </div>
               </div>
