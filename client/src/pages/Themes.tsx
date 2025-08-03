@@ -34,6 +34,12 @@ export default function Themes() {
     secondary: "#64748b", 
     accent: "#06b6d4"
   });
+  const [typography, setTypography] = useState({
+    headingFont: "Inter",
+    bodyFont: "Inter", 
+    baseFontSize: 16,
+    lineHeight: 1.5
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -89,6 +95,13 @@ export default function Themes() {
     toast({
       title: "Custom Colors Applied",
       description: "Your custom color palette has been applied to the theme.",
+    });
+  };
+
+  const applyTypographySettings = () => {
+    toast({
+      title: "Typography Settings Applied",
+      description: "Your font and text styling settings have been applied to the theme.",
     });
   };
 
@@ -342,49 +355,106 @@ export default function Themes() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Heading Font</Label>
-                    <select className="w-full p-2 border rounded-md">
-                      <option>Inter</option>
-                      <option>Poppins</option>
-                      <option>Open Sans</option>
-                      <option>Roboto</option>
-                    </select>
+                    <Select value={typography.headingFont} onValueChange={(value) => setTypography(prev => ({ ...prev, headingFont: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Inter">Inter</SelectItem>
+                        <SelectItem value="Poppins">Poppins</SelectItem>
+                        <SelectItem value="Open Sans">Open Sans</SelectItem>
+                        <SelectItem value="Roboto">Roboto</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Body Font</Label>
-                    <select className="w-full p-2 border rounded-md">
-                      <option>Inter</option>
-                      <option>Open Sans</option>
-                      <option>Roboto</option>
-                      <option>Source Sans Pro</option>
-                    </select>
+                    <Select value={typography.bodyFont} onValueChange={(value) => setTypography(prev => ({ ...prev, bodyFont: value }))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Inter">Inter</SelectItem>
+                        <SelectItem value="Open Sans">Open Sans</SelectItem>
+                        <SelectItem value="Roboto">Roboto</SelectItem>
+                        <SelectItem value="Source Sans Pro">Source Sans Pro</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label>Base Font Size</Label>
-                    <Input type="number" defaultValue="16" min="12" max="20" />
+                    <Input 
+                      type="number" 
+                      value={typography.baseFontSize} 
+                      min="12" 
+                      max="20"
+                      onChange={(e) => setTypography(prev => ({ ...prev, baseFontSize: parseInt(e.target.value) || 16 }))}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Line Height</Label>
-                    <Input type="number" defaultValue="1.5" min="1" max="2" step="0.1" />
+                    <Input 
+                      type="number" 
+                      value={typography.lineHeight} 
+                      min="1" 
+                      max="2" 
+                      step="0.1"
+                      onChange={(e) => setTypography(prev => ({ ...prev, lineHeight: parseFloat(e.target.value) || 1.5 }))}
+                    />
                   </div>
                 </div>
               </div>
               
               <div className="space-y-4">
-                <h4 className="font-medium">Preview</h4>
+                <h4 className="font-medium">Live Preview</h4>
                 <div className="p-4 border rounded-lg bg-slate-50">
-                  <h1 className="text-3xl font-bold mb-2">Heading Example</h1>
-                  <h2 className="text-xl font-semibold mb-2">Subheading Example</h2>
-                  <p className="text-base mb-2">
-                    This is a sample paragraph to show how your body text will look with the selected typography settings. 
-                    You can see how the font family, size, and line height affect readability.
+                  <h1 
+                    className="text-3xl font-bold mb-2"
+                    style={{ 
+                      fontFamily: typography.headingFont,
+                      fontSize: `${typography.baseFontSize * 2}px`,
+                      lineHeight: typography.lineHeight
+                    }}
+                  >
+                    Heading Example ({typography.headingFont})
+                  </h1>
+                  <h2 
+                    className="text-xl font-semibold mb-2"
+                    style={{ 
+                      fontFamily: typography.headingFont,
+                      fontSize: `${typography.baseFontSize * 1.5}px`,
+                      lineHeight: typography.lineHeight
+                    }}
+                  >
+                    Subheading Example
+                  </h2>
+                  <p 
+                    className="text-base mb-2"
+                    style={{ 
+                      fontFamily: typography.bodyFont,
+                      fontSize: `${typography.baseFontSize}px`,
+                      lineHeight: typography.lineHeight
+                    }}
+                  >
+                    This is a sample paragraph to show how your body text will look with the selected typography settings ({typography.bodyFont}). 
+                    You can see how the font family, size ({typography.baseFontSize}px), and line height ({typography.lineHeight}) affect readability.
                   </p>
-                  <p className="text-sm text-slate-600">Small text example for captions and metadata.</p>
+                  <p 
+                    className="text-sm text-slate-600"
+                    style={{ 
+                      fontFamily: typography.bodyFont,
+                      fontSize: `${typography.baseFontSize * 0.875}px`,
+                      lineHeight: typography.lineHeight
+                    }}
+                  >
+                    Small text example for captions and metadata.
+                  </p>
                 </div>
               </div>
               
-              <Button>
+              <Button onClick={applyTypographySettings}>
                 <Settings className="h-4 w-4 mr-2" />
                 Apply Typography Settings
               </Button>
