@@ -95,12 +95,20 @@ export default function Inventory() {
     purchasePrice: string;
     createPurchaseOrder: boolean;
     purchaseNotes: string;
+    taxRate: number;
+    discountAmount: number;
+    shippingCost: number;
+    handlingCost: number;
   }>({
     resolver: zodResolver(insertProductSchema.extend({
       initialStock: insertProductSchema.shape.initialStock,
       purchasePrice: insertProductSchema.shape.costPrice,
       createPurchaseOrder: insertProductSchema.shape.isActive,
       purchaseNotes: insertProductSchema.shape.description,
+      taxRate: insertProductSchema.shape.reorderLevel,
+      discountAmount: insertProductSchema.shape.reorderLevel,
+      shippingCost: insertProductSchema.shape.reorderLevel,
+      handlingCost: insertProductSchema.shape.reorderLevel,
     })),
     defaultValues: {
       name: "",
@@ -118,6 +126,10 @@ export default function Inventory() {
       purchasePrice: "",
       createPurchaseOrder: false,
       purchaseNotes: "",
+      taxRate: 8.5,
+      discountAmount: 0,
+      shippingCost: 0,
+      handlingCost: 0,
     },
   });
 
@@ -147,8 +159,12 @@ export default function Inventory() {
       purchasePrice: string;
       createPurchaseOrder: boolean;
       purchaseNotes: string;
+      taxRate: number;
+      discountAmount: number;
+      shippingCost: number;
+      handlingCost: number;
     }) => {
-      const { initialStock, purchasePrice, createPurchaseOrder, purchaseNotes, ...productData } = data;
+      const { initialStock, purchasePrice, createPurchaseOrder, purchaseNotes, taxRate, discountAmount, shippingCost, handlingCost, ...productData } = data;
       
       // Auto-generate barcode if not provided
       if (!productData.barcode) {
@@ -170,15 +186,21 @@ export default function Inventory() {
           storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
           productId: productId,
           quantity: initialStock,
-          lastRestocked: new Date(),
+          minQuantity: productData.reorderLevel || 10,
+          maxQuantity: initialStock * 2,
+          lastRestocked: new Date().toISOString(),
         });
 
         // Auto-generate purchase invoice if requested
         if (createPurchaseOrder && productData.supplierId && purchasePrice) {
           const unitCost = parseFloat(purchasePrice);
           const subtotal = initialStock * unitCost;
-          const taxAmount = subtotal * 0.085; // 8.5% tax
-          const total = subtotal + taxAmount;
+          const discountApplied = discountAmount || 0;
+          const subtotalAfterDiscount = subtotal - discountApplied;
+          const taxAmount = subtotalAfterDiscount * ((taxRate || 8.5) / 100);
+          const shipping = shippingCost || 0;
+          const handling = handlingCost || 0;
+          const total = subtotalAfterDiscount + taxAmount + shipping + handling;
 
           const invoiceData = {
             customerId: productData.supplierId,
@@ -189,15 +211,15 @@ export default function Inventory() {
             subtotal: subtotal,
             taxAmount: taxAmount,
             total: total,
-            discountAmount: 0,
-            taxRate: 8.5,
+            discountAmount: discountApplied,
+            taxRate: taxRate || 8.5,
             paymentMethod: "credit",
-            notes: `Initial Stock Purchase - ${purchaseNotes}`,
+            notes: `Initial Stock Purchase - ${purchaseNotes} | Shipping: $${shipping} | Handling: $${handling}`,
             items: [{
               productId: productId,
               quantity: initialStock,
               unitPrice: unitCost,
-              total: subtotal,
+              total: subtotalAfterDiscount,
             }]
           };
           
@@ -338,6 +360,10 @@ export default function Inventory() {
       purchasePrice: product.costPrice || "",
       createPurchaseOrder: false,
       purchaseNotes: "",
+      taxRate: 8.5,
+      discountAmount: 0,
+      shippingCost: 0,
+      handlingCost: 0,
     });
     setOpenProduct(true);
   };
@@ -921,13 +947,143 @@ export default function Inventory() {
                               )}
                             />
 
-                            <div className="flex items-end">
-                              <div className="w-full">
-                                <Label className="text-sm font-medium">Estimated Total</Label>
-                                <div className="p-2 bg-slate-50 rounded-md text-sm font-medium">
+                            <FormField
+                              control={productForm.control}
+                              name="taxRate"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Tax Rate (%)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.1"
+                                      placeholder="8.5" 
+                                      {...field}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 8.5)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-4">
+                            <FormField
+                              control={productForm.control}
+                              name="discountAmount"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Discount Amount</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      placeholder="0.00" 
+                                      {...field}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={productForm.control}
+                              name="shippingCost"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Shipping Cost</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      placeholder="0.00" 
+                                      {...field}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={productForm.control}
+                              name="handlingCost"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Handling Cost</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      placeholder="0.00" 
+                                      {...field}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="p-4 bg-slate-50 rounded-lg space-y-2">
+                            <h4 className="font-medium text-slate-900">Purchase Order Summary</h4>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-slate-600">Subtotal:</span>
+                                <span className="ml-2 font-medium">
                                   ${((productForm.watch("initialStock") || 0) * 
                                      (parseFloat(productForm.watch("purchasePrice")) || 0)).toFixed(2)}
-                                </div>
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-600">Discount:</span>
+                                <span className="ml-2 font-medium text-green-600">
+                                  -${(productForm.watch("discountAmount") || 0).toFixed(2)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-600">Tax ({(productForm.watch("taxRate") || 8.5)}%):</span>
+                                <span className="ml-2 font-medium">
+                                  ${(((productForm.watch("initialStock") || 0) * 
+                                      (parseFloat(productForm.watch("purchasePrice")) || 0) - 
+                                      (productForm.watch("discountAmount") || 0)) * 
+                                     ((productForm.watch("taxRate") || 8.5) / 100)).toFixed(2)}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-slate-600">Shipping:</span>
+                                <span className="ml-2 font-medium">
+                                  ${(productForm.watch("shippingCost") || 0).toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="col-span-2 border-t pt-2">
+                                <span className="text-slate-900 font-semibold">Total Amount:</span>
+                                <span className="ml-2 text-lg font-bold text-blue-600">
+                                  ${(() => {
+                                    const qty = productForm.watch("initialStock") || 0;
+                                    const price = parseFloat(productForm.watch("purchasePrice")) || 0;
+                                    const discount = productForm.watch("discountAmount") || 0;
+                                    const taxRate = (productForm.watch("taxRate") || 8.5) / 100;
+                                    const shipping = productForm.watch("shippingCost") || 0;
+                                    const handling = productForm.watch("handlingCost") || 0;
+                                    
+                                    const subtotal = qty * price;
+                                    const afterDiscount = subtotal - discount;
+                                    const tax = afterDiscount * taxRate;
+                                    const total = afterDiscount + tax + shipping + handling;
+                                    
+                                    return total.toFixed(2);
+                                  })()}
+                                </span>
                               </div>
                             </div>
                           </div>
