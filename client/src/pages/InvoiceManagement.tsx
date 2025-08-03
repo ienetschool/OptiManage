@@ -50,6 +50,7 @@ import { apiRequest } from "@/lib/queryClient";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import QRCodeReact from "react-qr-code";
 import { generateA4Invoice } from "@/components/ImprovedA4Invoice";
+import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
@@ -1636,11 +1637,11 @@ export default function InvoiceManagement() {
                     <Send className="h-4 w-4 mr-2" />
                     Send to Customer
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => generateA4Invoice(invoice)}>
+                  <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
                     <Printer className="h-4 w-4 mr-2" />
                     Print A4 Invoice
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => generateA4Invoice(invoice)}>
+                  <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
                     <FileText className="h-4 w-4 mr-2" />
                     Export A4 PDF
                   </DropdownMenuItem>
