@@ -15,6 +15,7 @@ import {
   communicationLog,
   invoices,
   invoiceItems,
+  patients,
   type User,
   type UpsertUser,
   type Store,
@@ -774,10 +775,33 @@ export class DatabaseStorage implements IStorage {
       console.log(`🏁 ATTEMPTING DATABASE INSERT...`);
       console.log(`📊 Final values: Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${total}`);
       
+      // Check if customerId exists in customers table, if not check patients
+      let validCustomerId = invoice.customerId;
+      if (validCustomerId) {
+        console.log(`🔍 CHECKING CUSTOMER ID: ${validCustomerId}`);
+        const customerExists = await db.select().from(customers).where(eq(customers.id, validCustomerId)).limit(1);
+        
+        if (customerExists.length === 0) {
+          console.log(`❌ CUSTOMER NOT FOUND, CHECKING PATIENTS...`);
+          // Check if it's a patient ID
+          const patientExists = await db.select().from(patients).where(eq(patients.id, validCustomerId)).limit(1);
+          
+          if (patientExists.length > 0) {
+            console.log(`✅ FOUND AS PATIENT, SETTING CUSTOMER_ID TO NULL`);
+            validCustomerId = null; // Use null for patient-based invoices
+          } else {
+            console.log(`❌ ID NOT FOUND IN CUSTOMERS OR PATIENTS`);
+            validCustomerId = null;
+          }
+        } else {
+          console.log(`✅ CUSTOMER EXISTS`);
+        }
+      }
+
       // Insert invoice into database
       const insertData = {
         invoiceNumber: invoice.invoiceNumber || `INV-${Date.now()}`,
-        customerId: invoice.customerId || null,
+        customerId: validCustomerId,
         storeId: invoice.storeId || "default-store",
         subtotal: subtotal.toString(),
         taxRate: parseFloat(invoice.taxRate || "0").toString(),
