@@ -300,7 +300,7 @@ export default function Patients() {
       if (appointmentForm.paymentStatus === 'paid') {
         try {
           // Use the actual appointment ID from the created appointment
-          const appointmentId = appointmentData?.id;
+          const appointmentId = appointmentData?.id || appointmentData;
             
           // Proper calculation with number handling
           const feeAmount = parseFloat(appointmentForm.appointmentFee) || 0;
@@ -3305,8 +3305,8 @@ export default function Patients() {
 
                           <div className="text-right">
                             <p className="font-bold text-green-600">${parseFloat(invoice.total || 0).toFixed(2)}</p>
-                            <Badge variant={invoice.paymentStatus === 'paid' ? 'default' : 'secondary'} className="text-xs">
-                              {(invoice.paymentStatus || 'pending').toUpperCase()}
+                            <Badge variant={(invoice.paymentStatus || invoice.status) === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                              {((invoice.paymentStatus || invoice.status) || 'pending').toUpperCase()}
                             </Badge>
                           </div>
                         </div>
@@ -3336,11 +3336,11 @@ export default function Patients() {
 
                           <div>
                             <span className="text-xs text-gray-500 uppercase tracking-wide">Status</span>
-                            <p className={`text-sm font-medium ${invoice.paymentStatus === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
-                              {invoice.paymentStatus === 'paid' ? 'Payment Complete' : 'Payment Pending'}
+                            <p className={`text-sm font-medium ${(invoice.paymentStatus || invoice.status) === 'paid' ? 'text-green-600' : 'text-orange-600'}`}>
+                              {(invoice.paymentStatus || invoice.status) === 'paid' ? 'Payment Complete' : 'Payment Pending'}
                             </p>
                             <p className="text-xs text-gray-600">
-                              {invoice.paymentStatus === 'paid' ? 'No outstanding balance' : `Due: ${format(new Date(invoice.dueDate || invoice.invoiceDate), 'MMM dd, yyyy')}`}
+                              {(invoice.paymentStatus || invoice.status) === 'paid' ? 'No outstanding balance' : `Due: ${format(new Date(invoice.dueDate || invoice.invoiceDate), 'MMM dd, yyyy')}`}
                             </p>
                           </div>
                         </div>
