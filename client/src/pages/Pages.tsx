@@ -140,6 +140,10 @@ export default function Pages() {
     page.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Debug logging
+  console.log("Total pages:", pages.length, pages);
+  console.log("Filtered pages:", filteredPages.length, filteredPages);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -422,6 +426,10 @@ export default function Pages() {
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="text-sm text-slate-500 mb-4">
+                Showing {filteredPages.length} of {pages.length} pages
+              </div>
+              {console.log("Rendering pages:", filteredPages.map(p => p.title))}
               {filteredPages.map((page) => (
                 <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
                   <div className="flex items-center space-x-4">
@@ -835,8 +843,8 @@ export default function Pages() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 overflow-y-auto bg-gray-50">
-                  <div className="p-4 h-full">
+                <div className="flex-1 overflow-y-auto bg-gray-50" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+                  <div className="p-4">
                     <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 ${
                       previewMode === 'mobile' ? 'max-w-sm' : 
                       previewMode === 'tablet' ? 'max-w-2xl' : 'max-w-4xl'
