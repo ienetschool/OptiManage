@@ -80,8 +80,34 @@ export default function AuthPage() {
     window.location.href = `/api/auth/${provider}`;
   };
 
-  const handleQuickLogin = () => {
-    window.location.href = "/api/login";
+  const handleQuickLogin = async () => {
+    try {
+      setIsLoading(true);
+      // Make a direct request to login endpoint
+      const response = await fetch('/api/login', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (response.redirected || response.ok) {
+        // Force a full page reload to ensure the app recognizes the authentication
+        window.location.href = '/dashboard';
+      } else {
+        toast({
+          title: "Login Failed",
+          description: "Unable to login. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "Unable to login. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
