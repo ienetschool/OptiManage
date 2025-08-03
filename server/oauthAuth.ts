@@ -215,7 +215,7 @@ export function setupOAuthAuth(app: Express) {
     };
 
     // Set session directly for development
-    req.session.passport = { user: mockUser };
+    (req.session as any).passport = { user: mockUser };
     (req as any).user = mockUser;
     
     res.redirect("/dashboard");
@@ -243,8 +243,8 @@ export function setupOAuthAuth(app: Express) {
   app.get('/api/auth/user', async (req, res) => {
     try {
       // Check session first
-      if (req.session && req.session.passport && req.session.passport.user) {
-        const user = req.session.passport.user;
+      if (req.session && (req.session as any).passport && (req.session as any).passport.user) {
+        const user = (req.session as any).passport.user;
         return res.json({
           id: user.id,
           email: user.email,
@@ -276,8 +276,8 @@ export function setupOAuthAuth(app: Express) {
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {
   // Check session first
-  if (req.session && req.session.passport && req.session.passport.user) {
-    (req as any).user = req.session.passport.user;
+  if (req.session && (req.session as any).passport && (req.session as any).passport.user) {
+    (req as any).user = (req.session as any).passport.user;
     return next();
   }
   
@@ -296,6 +296,6 @@ export const isAuthenticated: RequestHandler = (req, res, next) => {
     provider: 'mock'
   };
   (req as any).user = mockUser;
-  req.session.passport = { user: mockUser };
+  (req.session as any).passport = { user: mockUser };
   return next();
 };
