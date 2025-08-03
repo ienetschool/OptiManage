@@ -22,7 +22,9 @@ import {
   MessageCircle,
   CheckCircle,
   XCircle,
-  Clock
+  Clock,
+  CreditCard,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -47,39 +49,41 @@ export default function BillingPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Sample data - replace with actual API call
+  // Fetch real invoice data from the system
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
     queryFn: async () => {
-      // Return sample data for now
-      return [
-        {
-          id: "1",
-          invoiceNumber: "INV-001",
-          customerId: "cust-1",
-          customerName: "John Doe",
-          totalAmount: 250.00,
-          paidAmount: 250.00,
-          status: 'paid' as const,
-          issueDate: new Date().toISOString(),
-          dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          qrCode: "sample-qr-code",
-          pdfUrl: "/invoices/INV-001.pdf"
-        },
-        {
-          id: "2",
-          invoiceNumber: "INV-002",
-          customerId: "cust-2",
-          customerName: "Jane Smith",
-          totalAmount: 150.00,
-          paidAmount: 75.00,
-          status: 'partial' as const,
-          issueDate: new Date(Date.now() - 86400000).toISOString(),
-          dueDate: new Date(Date.now() + 29 * 24 * 60 * 60 * 1000).toISOString(),
-          qrCode: "sample-qr-code-2",
-          pdfUrl: "/invoices/INV-002.pdf"
-        }
-      ];
+      const response = await fetch("/api/invoices");
+      if (!response.ok) throw new Error("Failed to fetch invoices");
+      const data = await response.json();
+      
+      // Transform invoice data to match our interface
+      return data.map((invoice: any) => ({
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        customerId: invoice.customerId,
+        customerName: invoice.customerName || 'Guest Customer',
+        totalAmount: parseFloat(invoice.total || 0),
+        paidAmount: (invoice.status === 'paid' || invoice.paymentStatus === 'paid') ? parseFloat(invoice.total || 0) : 0,
+        status: (invoice.status === 'paid' || invoice.paymentStatus === 'paid') ? 'paid' as const :
+                (invoice.status === 'partial' || invoice.paymentStatus === 'partial') ? 'partial' as const :
+                (invoice.status === 'overdue' || invoice.paymentStatus === 'overdue') ? 'overdue' as const :
+                'unpaid' as const,
+        issueDate: invoice.date || invoice.invoiceDate || invoice.createdAt,
+        dueDate: invoice.dueDate || invoice.date || invoice.invoiceDate,
+        qrCode: `qr-${invoice.invoiceNumber}`,
+        pdfUrl: `/invoices/${invoice.invoiceNumber}.pdf`
+      }));
+    }
+  });
+
+  // Fetch medical invoices as well
+  const { data: medicalInvoices = [] } = useQuery({
+    queryKey: ["/api/medical-invoices"],
+    queryFn: async () => {
+      const response = await fetch("/api/medical-invoices");
+      if (!response.ok) throw new Error("Failed to fetch medical invoices");
+      return response.json();
     }
   });
 
@@ -155,83 +159,94 @@ export default function BillingPage() {
     }
   };
 
-  const totalInvoices = invoices.length;
-  const paidInvoices = invoices.filter(i => i.status === 'paid').length;
-  const unpaidAmount = invoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + (i.totalAmount - i.paidAmount), 0);
-  const totalRevenue = invoices.reduce((sum, i) => sum + i.paidAmount, 0);
+  // Calculate comprehensive statistics including medical invoices
+  const allInvoices = [...invoices];
+  
+  // Add medical invoices to the calculation
+  const medicalInvoiceStats = medicalInvoices.map((medInv: any) => ({
+    totalAmount: parseFloat(medInv.total || 0),
+    paidAmount: (medInv.paymentStatus === 'paid') ? parseFloat(medInv.total || 0) : 0,
+    status: medInv.paymentStatus === 'paid' ? 'paid' : 'unpaid'
+  }));
+  
+  const totalInvoices = invoices.length + medicalInvoices.length;
+  const paidInvoices = invoices.filter(i => i.status === 'paid').length + medicalInvoices.filter((m: any) => m.paymentStatus === 'paid').length;
+  const unpaidAmount = 
+    invoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + (i.totalAmount - i.paidAmount), 0) +
+    medicalInvoices.filter((m: any) => m.paymentStatus !== 'paid').reduce((sum: number, m: any) => sum + parseFloat(m.total || 0), 0);
+  const totalRevenue = 
+    invoices.reduce((sum, i) => sum + i.paidAmount, 0) +
+    medicalInvoices.filter((m: any) => m.paymentStatus === 'paid').reduce((sum: number, m: any) => sum + parseFloat(m.total || 0), 0);
 
   return (
     <>
       <main className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
+          {/* Header Section */}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Billing & Invoice History</h3>
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-xs">
+                {totalInvoices} Total Invoices
+              </Badge>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  // Generate comprehensive billing report
+                  window.print(); // Simple print for now
+                  toast({ title: "Generating Report", description: "Full billing report being prepared" });
+                }}
+              >
+                <FileText className="h-3 w-3 mr-1" />
+                Full Billing Report
+              </Button>
+            </div>
+          </div>
+
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Total Invoices</p>
-                    <p className="text-2xl font-bold text-slate-900">{totalInvoices}</p>
-                    <p className="text-xs text-slate-500">All time</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <FileText className="text-blue-600 h-6 w-6" />
-                  </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-green-600 uppercase tracking-wide font-medium">Total Paid</p>
+                  <p className="text-2xl font-bold text-green-700">${totalRevenue.toFixed(2)}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <CreditCard className="h-8 w-8 text-green-600" />
+              </div>
+            </div>
 
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Paid Invoices</p>
-                    <p className="text-2xl font-bold text-slate-900">{paidInvoices}</p>
-                    <p className="text-xs text-emerald-600 flex items-center mt-1">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Completed
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="text-green-600 h-6 w-6" />
-                  </div>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">Paid Invoices</p>
+                  <p className="text-2xl font-bold text-blue-700">{paidInvoices}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <CheckCircle className="h-8 w-8 text-blue-600" />
+              </div>
+            </div>
 
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Outstanding</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      ${unpaidAmount.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-amber-600">Pending payment</p>
-                  </div>
-                  <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                    <Clock className="text-amber-600 h-6 w-6" />
-                  </div>
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-orange-600 uppercase tracking-wide font-medium">Outstanding</p>
+                  <p className="text-2xl font-bold text-orange-700">${unpaidAmount.toFixed(2)}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Clock className="h-8 w-8 text-orange-600" />
+              </div>
+            </div>
 
-            <Card className="border-slate-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Total Revenue</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                      ${totalRevenue.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-slate-500">Collected</p>
-                  </div>
-                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                    <DollarSign className="text-purple-600 h-6 w-6" />
-                  </div>
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-purple-600 uppercase tracking-wide font-medium">Avg. Per Visit</p>
+                  <p className="text-2xl font-bold text-purple-700">
+                    ${totalInvoices > 0 ? (totalRevenue / totalInvoices).toFixed(2) : '0.00'}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
+                <DollarSign className="h-8 w-8 text-purple-600" />
+              </div>
+            </div>
           </div>
 
           {/* Controls */}

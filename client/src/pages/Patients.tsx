@@ -3142,7 +3142,7 @@ export default function Patients() {
                                  inv.customerName.includes(selectedPatient.firstName) || 
                                  inv.customerName.includes(selectedPatient.lastName) ||
                                  inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
-                               ))) && inv.paymentStatus === 'paid'
+                               ))) && (inv.status === 'paid' || inv.paymentStatus === 'paid')
                             );
                             return [...patientMedicalInvoices, ...patientRegularInvoices]
                               .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
@@ -3167,7 +3167,7 @@ export default function Patients() {
                                  inv.customerName.includes(selectedPatient.firstName) || 
                                  inv.customerName.includes(selectedPatient.lastName) ||
                                  inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
-                               ))) && inv.paymentStatus === 'paid'
+                               ))) && (inv.status === 'paid' || inv.paymentStatus === 'paid')
                             );
                             return [...patientMedicalInvoices, ...patientRegularInvoices].length;
                           })()}
@@ -3190,7 +3190,7 @@ export default function Patients() {
                                  inv.customerName.includes(selectedPatient.firstName) || 
                                  inv.customerName.includes(selectedPatient.lastName) ||
                                  inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
-                               ))) && inv.paymentStatus !== 'paid'
+                               ))) && (inv.status !== 'paid' && inv.paymentStatus !== 'paid')
                             );
                             return [...patientMedicalInvoices, ...patientRegularInvoices]
                               .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
