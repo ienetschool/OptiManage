@@ -851,7 +851,9 @@ export class DatabaseStorage implements IStorage {
       };
     } catch (error) {
       console.error(`❌ ERROR CREATING INVOICE:`, error);
-      console.error(`❌ ERROR STACK:`, error.stack);
+      if (error instanceof Error) {
+        console.error(`❌ ERROR STACK:`, error.stack);
+      }
       throw error;
     }
   }

@@ -357,6 +357,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/invoices', isAuthenticated, async (req: any, res) => {
     try {
+      console.log(`🚀 ROUTE HIT: POST /api/invoices - START`);
       console.log(`📝 INVOICE CREATION REQUEST:`, JSON.stringify(req.body, null, 2));
       
       const validatedData = createInvoiceSchema.parse(req.body);
@@ -389,12 +390,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         total: total,
       };
       
+      console.log(`🔄 CALLING storage.createInvoice...`);
       const invoice = await storage.createInvoice(invoiceWithDefaults, items);
+      console.log(`✅ INVOICE CREATED SUCCESSFULLY:`, invoice.id);
+      
       res.status(201).json(invoice);
+      console.log(`🚀 ROUTE COMPLETE: POST /api/invoices - SUCCESS`);
     } catch (error) {
-      console.error("Error creating invoice:", error);
+      console.error(`❌ ROUTE ERROR: POST /api/invoices:`, error);
       if (error instanceof Error) {
         console.error("Error details:", error.message);
+        console.error("Error stack:", error.stack);
       }
       res.status(400).json({ message: "Failed to create invoice", error: error instanceof Error ? error.message : "Unknown error" });
     }
