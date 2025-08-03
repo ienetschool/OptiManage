@@ -15,6 +15,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 import { 
   Menu, 
   X, 
@@ -27,7 +31,8 @@ import {
   Search,
   ChevronDown,
   ShoppingCart,
-  Plus
+  Plus,
+  Check
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import LiveChat from "@/components/LiveChat";
@@ -45,19 +50,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Professional Quick Sale form schema with multiple items
+  // Quick Sale form schema matching invoice schema
   const quickSaleSchema = z.object({
-    customerId: z.string().min(1, "Customer selection is required"),
-    items: z.array(z.object({
-      productId: z.string().min(1, "Product selection is required"),
-      productName: z.string().min(1, "Product name is required"),
-      quantity: z.number().min(1, "Quantity must be at least 1"),
-      unitPrice: z.number().min(0, "Unit price must be positive"),
-    })).min(1, "At least one item is required"),
-    taxRate: z.number().min(0).max(100).default(10),
-    discountAmount: z.number().min(0).default(0),
-    paymentMethod: z.enum(["cash", "card", "check", "digital"]),
-    notes: z.string().optional()
+    customerId: z.string().min(1, "Customer is required"),
+    storeId: z.string().min(1, "Store is required"),
+    taxRate: z.coerce.number().min(0).max(100),
+    discountAmount: z.coerce.number().min(0),
+    notes: z.string().optional(),
+  });
+
+  const quickSaleItemSchema = z.object({
+    productId: z.string().min(1, "Product is required"),
+    quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+    unitPrice: z.coerce.number().min(0, "Price must be positive"),
+    discount: z.coerce.number().min(0).max(100),
   });
 
   // Get data for dropdowns first (typed)
@@ -96,27 +102,36 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const quickSaleForm = useForm({
     resolver: zodResolver(quickSaleSchema),
     defaultValues: {
-      customerId: "walk-in",
-      items: [{ productId: "custom", productName: "Custom Item", quantity: 1, unitPrice: 0 }],
-      taxRate: 10,
+      customerId: "",
+      storeId: "",
+      taxRate: 8.5,
       discountAmount: 0,
-      paymentMethod: "cash" as const,
       notes: ""
     }
   });
 
-  // Watch for items changes to calculate totals
-  const watchedItems = quickSaleForm.watch("items") || [];
-  const watchedTaxRate = quickSaleForm.watch("taxRate") || 0;
-  const watchedDiscount = quickSaleForm.watch("discountAmount") || 0;
+  const quickSaleItemForm = useForm({
+    resolver: zodResolver(quickSaleItemSchema),
+    defaultValues: {
+      productId: "",
+      quantity: 1,
+      unitPrice: 0,
+      discount: 0,
+    },
+  });
 
-  // Calculate totals safely
-  const subtotal = watchedItems.reduce((sum, item) => {
-    if (!item) return sum;
-    return sum + ((item.quantity || 0) * (item.unitPrice || 0));
-  }, 0);
-  const taxAmount = subtotal * (watchedTaxRate / 100);
-  const total = subtotal + taxAmount - watchedDiscount;
+  // State for invoice items and search
+  const [quickSaleItems, setQuickSaleItems] = useState<any[]>([]);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+
+  // Calculate totals
+  const subtotal = quickSaleItems.reduce((sum, item) => sum + parseFloat(item.total.toString()), 0);
+  const discountAmount = parseFloat(quickSaleForm.watch("discountAmount")?.toString() || "0");
+  const taxRate = parseFloat(quickSaleForm.watch("taxRate")?.toString() || "0");
+  const discountedSubtotal = subtotal - discountAmount;
+  const taxAmount = (discountedSubtotal * taxRate) / 100;
+  const grandTotal = discountedSubtotal + taxAmount;
 
   // Quick Sale mutation
   const quickSaleMutation = useMutation({
@@ -148,79 +163,65 @@ export default function AppLayout({ children }: AppLayoutProps) {
   });
 
   const onQuickSaleSubmit = (data: any) => {
-    // Get selected customer details
-    const selectedCustomer = allCustomers.find((c: any) => c.id === data.customerId);
-    
-    // Calculate totals
-    const subtotal = data.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
-    const tax = subtotal * (data.taxRate / 100);
-    const discount = data.discountAmount || 0;
-    const total = subtotal + tax - discount;
+    if (quickSaleItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one item to the invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const invoiceData = {
-      customerName: data.customerId === "walk-in" ? "Walk-in Customer" : (selectedCustomer?.name || "Walk-in Customer"),
-      storeId: stores[0]?.id || "default-store",
-      customerId: data.customerId === "walk-in" ? "guest" : data.customerId,
-      subtotal: subtotal.toFixed(2),
-      taxRate: data.taxRate,
-      taxAmount: tax.toFixed(2),
-      discountAmount: discount.toFixed(2),
-      total: total.toFixed(2),
-      status: "pending",
-      paymentMethod: data.paymentMethod,
+      invoiceNumber: `QS-${Date.now()}`,
+      date: new Date().toISOString(),
+      status: "paid", // Quick sale is immediately paid
+      items: quickSaleItems,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      total: parseFloat(grandTotal.toFixed(2)),
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      taxRate: data.taxRate || 8.5,
+      customerId: data.customerId,
+      storeId: data.storeId,
+      dueDate: new Date().toISOString(), // Quick sale due immediately
       notes: data.notes || "",
-      items: data.items.map((item: any) => ({
-        productName: item.productName,
-        productId: item.productId === "custom" ? "custom" : item.productId,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discount: 0,
-        total: item.quantity * item.unitPrice
-      }))
+      paymentMethod: "cash" // Default for quick sale
     };
 
     quickSaleMutation.mutate(invoiceData);
   };
 
-  // Add new item to the form
-  const addNewItem = () => {
-    const currentItems = quickSaleForm.getValues("items");
-    quickSaleForm.setValue("items", [
-      ...currentItems,
-      { productId: "custom", productName: "Custom Item", quantity: 1, unitPrice: 0 }
-    ]);
-  };
+  // Add item to quick sale
+  const addQuickSaleItem = (data: any) => {
+    const product = products.find((p: any) => p.id === data.productId);
+    if (!product) return;
 
-  // Remove item from the form
-  const removeItem = (index: number) => {
-    const currentItems = quickSaleForm.getValues("items");
-    if (currentItems.length > 1) {
-      quickSaleForm.setValue("items", currentItems.filter((_, i) => i !== index));
-    }
-  };
+    const unitPrice = parseFloat(data.unitPrice.toString());
+    const quantity = parseInt(data.quantity.toString());
+    const discount = parseFloat(data.discount.toString());
+    
+    const discountAmount = (unitPrice * discount) / 100;
+    const discountedPrice = unitPrice - discountAmount;
+    const total = discountedPrice * quantity;
 
-  // Handle product selection for an item
-  const handleProductChange = (index: number, productId: string) => {
-    let product: any = null;
-    let productName = "Custom Item";
-    let unitPrice = 0;
-
-    if (productId !== "custom") {
-      product = products.find((p: any) => p.id === productId);
-      if (product) {
-        productName = product.name;
-        unitPrice = parseFloat(product.price?.toString() || "0");
-      }
-    }
-
-    const currentItems = quickSaleForm.getValues("items");
-    currentItems[index] = {
-      ...currentItems[index],
-      productId,
-      productName,
-      unitPrice
+    const newItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      productId: data.productId,
+      productName: product.name,
+      quantity: quantity,
+      unitPrice: parseFloat(unitPrice.toFixed(2)),
+      discount: discount,
+      total: parseFloat(total.toFixed(2)),
     };
-    quickSaleForm.setValue("items", currentItems);
+
+    setQuickSaleItems([...quickSaleItems, newItem]);
+    quickSaleItemForm.reset({ quantity: 1, discount: 0, unitPrice: 0 });
+  };
+
+  // Remove item from quick sale
+  const removeQuickSaleItem = (itemId: string) => {
+    setQuickSaleItems(quickSaleItems.filter(item => item.id !== itemId));
   };
 
   return (
@@ -473,399 +474,360 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Quick Sale Dialog */}
       <Dialog open={quickSaleOpen} onOpenChange={setQuickSaleOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Quick Sale Invoice</DialogTitle>
+            <DialogTitle>Create New Invoice</DialogTitle>
             <DialogDescription>
               Create a quick invoice for immediate sale
             </DialogDescription>
           </DialogHeader>
           
           <Form {...quickSaleForm}>
-            <form onSubmit={quickSaleForm.handleSubmit(onQuickSaleSubmit)} className="space-y-4">
-              {/* Customer Selection - Enhanced with Patients */}
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={quickSaleForm.handleSubmit(onQuickSaleSubmit)} className="space-y-6">
+              {/* Invoice Header - matching /invoices layout */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={quickSaleForm.control}
                   name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer / Patient</FormLabel>
+                      <FormLabel>Customer</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select customer or patient..." />
+                            <SelectValue placeholder="Select customer" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent className="max-h-80 w-[320px]">
-                          <SelectItem value="walk-in" className="py-3">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                <span className="text-blue-600 text-sm font-medium">W</span>
-                              </div>
-                              <div>
-                                <div className="font-medium">Walk-in Customer</div>
-                                <div className="text-xs text-slate-500">Cash customer</div>
-                              </div>
-                            </div>
-                          </SelectItem>
-                          
-                          {customers.filter((c: any) => c && c.name).length > 0 && (
+                        <SelectContent>
+                          {customers.length === 0 && patients.length === 0 ? (
+                            <SelectItem value="" disabled>No customers found</SelectItem>
+                          ) : (
                             <>
-                              <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
-                                CUSTOMERS ({customers.filter((c: any) => c && c.name).length})
-                              </div>
-                              {customers.filter((c: any) => c && c.name).map((customer: any) => (
-                                <SelectItem key={customer.id} value={customer.id} className="py-3">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                      <span className="text-green-600 text-sm font-medium">
-                                        {customer.name.charAt(0).toUpperCase()}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <div className="font-medium">{customer.name}</div>
-                                      <div className="text-xs text-slate-500">
-                                        {customer.email || customer.phone || 'Customer'}
-                                      </div>
-                                    </div>
-                                  </div>
+                              {customers.map((customer: any) => (
+                                <SelectItem key={customer.id} value={customer.id}>
+                                  {customer.firstName} {customer.lastName}
+                                </SelectItem>
+                              ))}
+                              {patients.map((patient: any) => (
+                                <SelectItem key={patient.id} value={patient.id}>
+                                  {patient.firstName} {patient.lastName}
                                 </SelectItem>
                               ))}
                             </>
                           )}
-                          
-                          {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).length > 0 && (
-                            <>
-                              <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
-                                PATIENTS ({patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).length})
-                              </div>
-                              {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).map((patient: any) => {
-                                const displayName = patient.name || `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
-                                return (
-                                  <SelectItem key={patient.id} value={patient.id} className="py-3">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                        <span className="text-purple-600 text-sm font-medium">
-                                          {displayName.charAt(0).toUpperCase()}
-                                        </span>
-                                      </div>
-                                      <div>
-                                        <div className="font-medium">{displayName}</div>
-                                        <div className="text-xs text-slate-500">
-                                          {patient.email || patient.phone || 'Patient'}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </SelectItem>
-                                );
-                              })}
-                            </>
-                          )}
-
-                          {allCustomers.length === 0 && (
-                            <div className="px-3 py-4 text-center text-slate-500">
-                              <div className="text-sm">No customers or patients found</div>
-                              <div className="text-xs mt-1">Add customers in the customer management section</div>
-                            </div>
-                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={quickSaleForm.control}
-                  name="paymentMethod"
+                  name="storeId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Method</FormLabel>
+                      <FormLabel>Store</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue />
+                            <SelectValue placeholder="Select store" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="cash">💵 Cash</SelectItem>
-                          <SelectItem value="card">💳 Card</SelectItem>
-                          <SelectItem value="check">📄 Check</SelectItem>
-                          <SelectItem value="digital">📱 Digital</SelectItem>
+                          {stores.map((store: any) => (
+                            <SelectItem key={store.id} value={store.id}>
+                              {store.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                <div>
+                  <FormLabel>Due Date</FormLabel>
+                  <Input 
+                    type="date" 
+                    value={new Date().toISOString().split('T')[0]}
+                    disabled
+                    className="bg-slate-50"
+                  />
+                </div>
               </div>
 
-              {/* Items Section with Add/Remove functionality */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-medium">Invoice Items</h3>
-                  <Button type="button" onClick={addNewItem} variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Item
-                  </Button>
-                </div>
-
-                {watchedItems.map((item: any, index: number) => (
-                  <div key={index} className="p-4 border border-slate-200 rounded-lg space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-700">Item #{index + 1}</span>
-                      {watchedItems.length > 1 && (
-                        <Button 
-                          type="button" 
-                          onClick={() => removeItem(index)} 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Product Selection with Search */}
+              {/* Add Items Section - matching /invoices layout */}
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">Invoice Items</h3>
+                
+                <Form {...quickSaleItemForm}>
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                     <FormField
-                      control={quickSaleForm.control}
-                      name={`items.${index}.productId`}
+                      control={quickSaleItemForm.control}
+                      name="productId"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Product/Service</FormLabel>
-                          <Select 
-                            onValueChange={(value) => {
-                              field.onChange(value);
-                              handleProductChange(index, value);
-                            }} 
-                            value={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Search and select product..." />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="max-h-80 w-[400px]">
-                              <SelectItem value="custom" className="py-3">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                                    <span className="text-orange-600 text-sm font-medium">✏</span>
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">Custom Item</div>
-                                    <div className="text-xs text-slate-500">Enter custom product details</div>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                              
-                              {products.filter((p: any) => p && p.name).length > 0 && (
-                                <>
-                                  <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
-                                    AVAILABLE PRODUCTS ({products.filter((p: any) => p && p.name).length})
-                                  </div>
-                                  {products.filter((p: any) => p && p.name).map((product: any) => (
-                                    <SelectItem key={product.id} value={product.id} className="py-3">
-                                      <div className="flex items-center justify-between w-full">
-                                        <div className="flex items-center space-x-3">
-                                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <span className="text-blue-600 text-sm font-medium">
-                                              {product.name.charAt(0).toUpperCase()}
-                                            </span>
-                                          </div>
-                                          <div>
-                                            <div className="font-medium">{product.name}</div>
-                                            <div className="text-xs text-slate-500">
-                                              {product.category || 'Product'}
-                                            </div>
-                                          </div>
+                        <FormItem className="col-span-2">
+                          <FormLabel>Product</FormLabel>
+                          <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={productSearchOpen}
+                                  className="w-full justify-between"
+                                >
+                                  {field.value
+                                    ? products.find((product: any) => product.id === field.value)?.name || "Select product"
+                                    : "Select product"}
+                                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0">
+                              <Command>
+                                <CommandInput 
+                                  placeholder="Search products..." 
+                                  value={productSearchTerm}
+                                  onValueChange={setProductSearchTerm}
+                                />
+                                <CommandEmpty>No product found.</CommandEmpty>
+                                <CommandGroup className="max-h-48 overflow-y-auto">
+                                  {products
+                                    .filter((product: any) => 
+                                      product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                                      (product.category && product.category.toLowerCase().includes(productSearchTerm.toLowerCase()))
+                                    )
+                                    .map((product: any) => (
+                                      <CommandItem
+                                        key={product.id}
+                                        value={product.id}
+                                        onSelect={() => {
+                                          field.onChange(product.id);
+                                          quickSaleItemForm.setValue("unitPrice", Number(product.price || 0));
+                                          setProductSearchOpen(false);
+                                          setProductSearchTerm("");
+                                        }}
+                                      >
+                                        <Check
+                                          className={`mr-2 h-4 w-4 ${
+                                            field.value === product.id ? "opacity-100" : "opacity-0"
+                                          }`}
+                                        />
+                                        <div className="flex flex-col">
+                                          <span className="font-medium">{product.name}</span>
+                                          <span className="text-sm text-gray-500">
+                                            {product.category || 'Product'} - ${Number(product.price || 0).toFixed(2)}
+                                          </span>
                                         </div>
-                                        <div className="text-sm font-semibold text-green-600">
-                                          ${parseFloat(product.price || 0).toFixed(2)}
-                                        </div>
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </>
-                              )}
-
-                              {products.filter((p: any) => p && p.name).length === 0 && (
-                                <div className="px-3 py-4 text-center text-slate-500">
-                                  <div className="text-sm">No products found</div>
-                                  <div className="text-xs mt-1">Add products in inventory management</div>
-                                </div>
-                              )}
-                            </SelectContent>
-                          </Select>
+                                      </CommandItem>
+                                    ))}
+                                </CommandGroup>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
 
-                    {/* Custom Product Name (when custom is selected) */}
-                    {item.productId === "custom" && (
-                      <FormField
-                        control={quickSaleForm.control}
-                        name={`items.${index}.productName`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Custom Product Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter custom product name..." {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
+                    <FormField
+                      control={quickSaleItemForm.control}
+                      name="quantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Qty</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="1"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                    {/* Quantity and Unit Price */}
-                    <div className="grid grid-cols-3 gap-3">
-                      <FormField
-                        control={quickSaleForm.control}
-                        name={`items.${index}.quantity`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quantity</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min="1" 
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={quickSaleForm.control}
-                        name={`items.${index}.unitPrice`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Unit Price ($)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01" 
-                                min="0"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <FormField
+                      control={quickSaleItemForm.control}
+                      name="unitPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Unit Price</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                      <div className="flex flex-col">
-                        <label className="text-sm font-medium text-slate-700 mb-2">Line Total</label>
-                        <div className="h-10 px-3 py-2 border border-slate-300 rounded-md bg-slate-50 flex items-center">
-                          <span className="font-medium text-slate-900">
-                            ${((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
+                    <FormField
+                      control={quickSaleItemForm.control}
+                      name="discount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Discount %</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              max="100"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex items-end">
+                      <Button 
+                        type="button" 
+                        onClick={quickSaleItemForm.handleSubmit(addQuickSaleItem)}
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add
+                      </Button>
                     </div>
                   </div>
-                ))}
-              </div>
+                </Form>
 
-              {/* Tax and Discount */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={quickSaleForm.control}
-                  name="taxRate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tax Rate (%)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.1" 
-                          min="0" 
-                          max="100"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={quickSaleForm.control}
-                  name="discountAmount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount Amount ($)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Total Summary */}
-              <div className="bg-slate-50 p-4 rounded-lg space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>${subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Tax ({watchedTaxRate}%):</span>
-                  <span>${taxAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Discount:</span>
-                  <span>-${watchedDiscount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold border-t pt-2">
-                  <span>Total:</span>
-                  <span>${total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <FormField
-                control={quickSaleForm.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Additional notes..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {/* Items List */}
+                {quickSaleItems.length > 0 && (
+                  <div className="border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Qty</TableHead>
+                          <TableHead>Unit Price</TableHead>
+                          <TableHead>Discount</TableHead>
+                          <TableHead>Total</TableHead>
+                          <TableHead></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {quickSaleItems.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>{item.productName}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
+                            <TableCell>{item.discount}%</TableCell>
+                            <TableCell>${item.total.toFixed(2)}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeQuickSaleItem(item.id)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setQuickSaleOpen(false)}
-                >
+              </div>
+
+              {/* Invoice Totals - matching /invoices layout */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={quickSaleForm.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tax Rate %</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={quickSaleForm.control}
+                      name="discountAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Discount Amount</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              step="0.01"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={quickSaleForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Discount:</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax ({taxRate}%):</span>
+                    <span>${taxAmount.toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total:</span>
+                    <span>${grandTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setQuickSaleOpen(false)}>
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  disabled={quickSaleMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {quickSaleMutation.isPending ? "Creating..." : "Create Quick Sale Invoice"}
+                <Button type="submit" disabled={quickSaleMutation.isPending}>
+                  {quickSaleMutation.isPending ? "Creating..." : "Create Invoice"}
                 </Button>
               </div>
             </form>
