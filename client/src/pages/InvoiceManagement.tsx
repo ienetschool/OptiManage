@@ -220,6 +220,14 @@ export default function InvoiceManagement() {
     queryKey: ["/api/invoices"],
     staleTime: 10000, // 10 seconds
     refetchInterval: 30000, // Auto-refresh every 30 seconds
+    onSuccess: (data) => {
+      console.log(`🔍 FRONTEND RECEIVED ${data.length} INVOICES:`, data.map(inv => ({ 
+        id: inv.id, 
+        invoiceNumber: inv.invoiceNumber, 
+        total: inv.total,
+        source: (inv as any).source 
+      })));
+    }
   });
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({

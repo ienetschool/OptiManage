@@ -639,21 +639,26 @@ export class DatabaseStorage implements IStorage {
       const realInvoices = sales.map(sale => ({
         id: `invoice-${sale.id}`,
         invoiceNumber: `INV-${sale.id.slice(-8)}`,
-        customerId: sale.customerId || "guest",
-        customerName: sale.customerId ? "Customer" : "Guest Customer", // Will be resolved in frontend
+        customerId: sale.customerId || null,
+        customerName: sale.customerId ? "Customer" : "Quick Sale Customer",
         storeId: sale.storeId,
         storeName: "OptiStore Pro",
         date: sale.createdAt || new Date().toISOString(),
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Date format
         subtotal: parseFloat(sale.subtotal || "0"),
-        taxRate: parseFloat(sale.taxAmount || "0") > 0 ? 10 : 0,
+        taxRate: parseFloat(sale.taxAmount || "0") > 0 ? 
+          Math.round((parseFloat(sale.taxAmount || "0") / parseFloat(sale.subtotal || "1")) * 100 * 100) / 100 : 8.0,
         taxAmount: parseFloat(sale.taxAmount || "0"),
         discountAmount: 0,
         total: parseFloat(sale.total || "0"),
-        status: sale.paymentStatus === "paid" ? "paid" : "pending",
+        status: sale.paymentStatus === "completed" ? "paid" : 
+                sale.paymentStatus === "pending" ? "pending" : 
+                "paid", // Default to paid for completed sales
         paymentMethod: sale.paymentMethod || "cash",
-        notes: sale.notes || `Quick Sale - ${sale.paymentMethod}`,
-        items: [] // Items would be fetched separately in a real implementation
+        paymentDate: sale.paymentStatus === "completed" ? sale.createdAt : null,
+        notes: sale.notes || `Quick Sale Transaction - ${sale.paymentMethod}`,
+        items: [], // Items would be fetched separately in a real implementation
+        source: "quick_sale" // Mark as quick sale for identification
       }));
 
       // Get invoices from the database
