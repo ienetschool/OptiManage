@@ -140,9 +140,7 @@ export default function Pages() {
     page.slug.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Debug logging
-  console.log("Total pages:", pages.length, pages);
-  console.log("Filtered pages:", filteredPages.length, filteredPages);
+
 
   return (
     <div className="space-y-6">
@@ -429,7 +427,7 @@ export default function Pages() {
               <div className="text-sm text-slate-500 mb-4">
                 Showing {filteredPages.length} of {pages.length} pages
               </div>
-              {console.log("Rendering pages:", filteredPages.map(p => p.title))}
+
               {filteredPages.map((page) => (
                 <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
                   <div className="flex items-center space-x-4">
@@ -548,7 +546,7 @@ export default function Pages() {
           {editingPage && (
             <div className="flex flex-1 min-h-0">
               {/* Left Sidebar - Settings */}
-              <div className="w-80 border-r bg-slate-50 overflow-y-auto">
+              <div className="w-80 border-r bg-slate-50 overflow-auto" style={{ height: 'calc(90vh - 260px)' }}>
                 <div className="p-4 space-y-4">
                   {/* Basic Settings */}
                   <div className="space-y-3">
@@ -843,23 +841,23 @@ export default function Pages() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 overflow-y-auto bg-gray-50" style={{ maxHeight: 'calc(90vh - 200px)' }}>
-                  <div className="p-4">
-                    <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 ${
+                <div className="flex-1 overflow-auto" style={{ height: 'calc(90vh - 260px)' }}>
+                  <div className="p-6 h-full">
+                    <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 min-h-full ${
                       previewMode === 'mobile' ? 'max-w-sm' : 
                       previewMode === 'tablet' ? 'max-w-2xl' : 'max-w-4xl'
                     }`}>
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         <Input 
-                          className="text-2xl font-bold border-none shadow-none p-0 focus-visible:ring-0"
+                          className="text-3xl font-bold border-none shadow-none p-0 focus-visible:ring-0"
                           placeholder="Page title..."
                           defaultValue={editingPage.title}
                         />
                         <div 
-                          className="min-h-[400px] p-4 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose max-w-none"
+                          className="min-h-[600px] p-6 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose prose-lg max-w-none"
                           contentEditable
                           suppressContentEditableWarning={true}
-                          style={{ outline: 'none' }}
+                          style={{ outline: 'none', minHeight: '600px', maxHeight: 'none' }}
                           onInput={(e) => setPageContent(e.currentTarget.innerHTML || "")}
                           dangerouslySetInnerHTML={{
                             __html: pageContent || `<p class="text-slate-500">Start typing your content here... Use the toolbar above to format your text.</p>`
@@ -867,8 +865,8 @@ export default function Pages() {
                         />
                         
                         {/* Content Stats */}
-                        <div className="flex justify-between items-center mt-4 text-sm text-slate-500">
-                          <div className="flex space-x-4">
+                        <div className="flex justify-between items-center mt-6 text-sm text-slate-500 border-t pt-4">
+                          <div className="flex space-x-6">
                             <span>Words: {pageContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length}</span>
                             <span>Characters: {pageContent.replace(/<[^>]*>/g, '').length}</span>
                           </div>
