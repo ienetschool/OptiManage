@@ -349,39 +349,8 @@ export function registerMedicalRoutes(app: Express) {
     }
   });
 
-  app.post("/api/invoices", isAuthenticated, async (req, res) => {
-    try {
-      const invoiceData = req.body;
-      
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
-      
-      // Create new invoice with proper decimal handling
-      const newInvoice = {
-        id: `inv-${Date.now()}`,
-        invoiceNumber,
-        date: new Date().toISOString(),
-        status: "draft",
-        ...invoiceData,
-        // Ensure decimal values are properly handled
-        subtotal: parseFloat(invoiceData.subtotal || 0).toFixed(2),
-        taxAmount: parseFloat(invoiceData.taxAmount || 0).toFixed(2), 
-        discountAmount: parseFloat(invoiceData.discountAmount || 0).toFixed(2),
-        total: parseFloat(invoiceData.total || 0).toFixed(2),
-        // Process items with decimal handling
-        items: (invoiceData.items || []).map((item: any) => ({
-          ...item,
-          unitPrice: parseFloat(item.unitPrice || 0).toFixed(2),
-          total: parseFloat(item.total || 0).toFixed(2)
-        }))
-      };
-
-      res.json(newInvoice);
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-      res.status(500).json({ message: "Failed to create invoice" });
-    }
-  });
+  // Note: Regular invoice creation is handled in routes.ts 
+  // Removed conflicting POST /api/invoices route that was returning mock data
 
   // Patient History Routes
   app.get("/api/patients/:id/history", isAuthenticated, async (req, res) => {
