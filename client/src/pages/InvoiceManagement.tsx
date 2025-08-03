@@ -49,7 +49,7 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import QRCodeReact from "react-qr-code";
-import { generateA4Invoice } from "@/components/ImprovedA4Invoice";
+
 import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
