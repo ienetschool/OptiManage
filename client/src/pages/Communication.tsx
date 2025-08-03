@@ -1,517 +1,596 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
-  MessageCircle, 
-  Mail, 
-  Phone, 
+  MessageSquare, 
   Send, 
   Plus, 
-  Search, 
-  CheckCircle,
+  Edit, 
+  Trash2,
+  Mail,
+  MessageCircle,
+  Users,
+  User,
+  Search,
+  Filter,
+  FileText as Template,
+  Calendar,
   Clock,
-  MessageSquare,
-  Bell,
-  Archive
+  Check,
+  X,
+  Settings,
+  Copy,
+  FileText,
+  Zap,
+  Bell
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { z } from "zod";
-
-const messageSchema = z.object({
-  type: z.enum(["email", "sms"]),
-  recipients: z.array(z.string()).min(1, "At least one recipient is required"),
-  recipientType: z.enum(["individual", "patients", "staff", "customers", "suppliers", "all"]),
-  templateId: z.string().optional(),
-  subject: z.string().optional(),
-  message: z.string().min(1, "Message is required"),
-});
-
-type MessageFormData = z.infer<typeof messageSchema>;
 
 export default function Communication() {
-  const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("messages");
   const [searchTerm, setSearchTerm] = useState("");
+  const [messageFilter, setMessageFilter] = useState("all");
+  const [open, setOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
+  const [messageTemplate, setMessageTemplate] = useState("");
+  const [messageContent, setMessageContent] = useState("");
+  const [messageSubject, setMessageSubject] = useState("");
+  const [messageType, setMessageType] = useState("email");
+  const [recipientType, setRecipientType] = useState("individual");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: customers = [] } = useQuery({
-    queryKey: ["/api/customers"],
-  });
-
-  const { data: patients = [] } = useQuery({
-    queryKey: ["/api/patients"],
-  });
-
-  const { data: staff = [] } = useQuery({
-    queryKey: ["/api/staff"],
-  });
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ["/api/suppliers"],
-  });
-
-  const form = useForm<MessageFormData>({
-    resolver: zodResolver(messageSchema),
-    defaultValues: {
-      type: "email",
-      recipients: [],
-      recipientType: "individual",
-      templateId: "",
-      subject: "",
-      message: "",
-    },
-  });
-
-  const sendMessageMutation = useMutation({
-    mutationFn: async (data: MessageFormData) => {
-      // Simulate API call with actual processing
-      await new Promise(resolve => setTimeout(resolve, 800));
-      console.log('Sending message:', {
-        type: data.type,
-        recipients: data.recipients.length,
-        subject: data.subject,
-        message: data.message.substring(0, 50) + '...'
-      });
-      return { ...data, id: Date.now().toString(), status: 'sent', timestamp: new Date() };
-    },
-    onSuccess: (result) => {
-      toast({
-        title: "Message Sent Successfully",
-        description: `${result.type.toUpperCase()} sent to ${result.recipients.length} recipient(s)`,
-      });
-      setOpen(false);
-      form.reset();
-    },
-    onError: () => {
-      toast({
-        title: "Message Failed",
-        description: "Unable to send message. Please check your settings and try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Mock data for communication features
-  const communications = [
-    {
-      id: "1",
-      type: "email",
-      subject: "Appointment Reminder",
-      message: "Your eye exam appointment is scheduled for tomorrow at 2:00 PM.",
-      recipients: ["sarah.johnson@email.com"],
-      status: "sent",
-      timestamp: new Date(),
-      customerName: "Sarah Johnson"
-    },
-    {
-      id: "2",
-      type: "sms",
-      subject: "",
-      message: "Hi! Your prescription glasses are ready for pickup.",
-      recipients: ["(555) 987-6543"],
-      status: "delivered",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      customerName: "Michael Chen"
-    },
-    {
-      id: "3",
-      type: "email",
-      subject: "Thank you for your visit",
-      message: "Thank you for choosing our optical store. We hope you're happy with your new glasses!",
-      recipients: ["emma.wilson@email.com"],
-      status: "sent",
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      customerName: "Emma Wilson"
-    }
+  // Mock data for recipients
+  const recipients = [
+    { id: "1", name: "John Smith", type: "patient", email: "john.smith@email.com", phone: "+1234567890" },
+    { id: "2", name: "Sarah Johnson", type: "staff", email: "sarah.j@clinic.com", phone: "+1234567891" },
+    { id: "3", name: "Mike Wilson", type: "customer", email: "mike.w@email.com", phone: "+1234567892" },
+    { id: "4", name: "Dr. Emma Davis", type: "staff", email: "emma.davis@clinic.com", phone: "+1234567893" },
+    { id: "5", name: "Lisa Brown", type: "patient", email: "lisa.brown@email.com", phone: "+1234567894" },
   ];
 
-  const templates = [
+  // Mock data for message templates
+  const messageTemplates = [
     {
       id: "1",
       name: "Appointment Reminder",
-      type: "email",
-      subject: "Appointment Reminder - {{customerName}}",
-      content: "Dear {{customerName}}, This is a reminder that you have an appointment scheduled for {{appointmentDate}} at {{appointmentTime}}."
+      type: "appointment",
+      subject: "Upcoming Appointment Reminder",
+      content: "Dear {name}, this is a reminder for your appointment on {date} at {time}. Please arrive 15 minutes early.",
+      variables: ["name", "date", "time"]
     },
     {
       id: "2",
-      name: "Prescription Ready",
-      type: "sms",
-      subject: "",
-      content: "Hi {{customerName}}! Your prescription glasses are ready for pickup at {{storeName}}."
+      name: "Birthday Wishes",
+      type: "birthday",
+      subject: "Happy Birthday!",
+      content: "Dear {name}, wishing you a very happy birthday! As a special gift, enjoy 10% off your next visit.",
+      variables: ["name"]
     },
     {
       id: "3",
-      name: "Welcome New Customer",
-      type: "email",
-      subject: "Welcome to {{storeName}}!",
-      content: "Dear {{customerName}}, Welcome to our optical family! We're excited to help you with all your vision needs."
+      name: "Payment Reminder",
+      type: "payment",
+      subject: "Payment Due Reminder",
+      content: "Dear {name}, this is a friendly reminder that your payment of ${amount} is due on {date}.",
+      variables: ["name", "amount", "date"]
+    },
+    {
+      id: "4",
+      name: "Prescription Ready",
+      type: "prescription",
+      subject: "Your Prescription is Ready",
+      content: "Dear {name}, your prescription for {medication} is ready for pickup at our pharmacy.",
+      variables: ["name", "medication"]
+    },
+    {
+      id: "5",
+      name: "Welcome Message",
+      type: "welcome",
+      subject: "Welcome to Our Clinic",
+      content: "Dear {name}, welcome to our clinic! We're excited to provide you with excellent healthcare services.",
+      variables: ["name"]
     }
   ];
 
-  const onSubmit = (data: MessageFormData) => {
-    sendMessageMutation.mutate(data);
+  // Mock data for sent messages
+  const sentMessages = [
+    {
+      id: "1",
+      recipient: "John Smith",
+      recipientType: "patient",
+      subject: "Appointment Reminder",
+      type: "email",
+      status: "delivered",
+      sentAt: new Date(2024, 2, 15, 10, 30),
+      template: "Appointment Reminder"
+    },
+    {
+      id: "2",
+      recipient: "Multiple Recipients",
+      recipientType: "staff",
+      subject: "Monthly Meeting Notice",
+      type: "sms",
+      status: "sent",
+      sentAt: new Date(2024, 2, 14, 15, 45),
+      template: "Custom"
+    },
+    {
+      id: "3",
+      recipient: "Sarah Johnson",
+      recipientType: "staff",
+      subject: "Payroll Information",
+      type: "email",
+      status: "failed",
+      sentAt: new Date(2024, 2, 13, 9, 15),
+      template: "Custom"
+    }
+  ];
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageData: any) => {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return messageData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+      toast({
+        title: "Message Sent",
+        description: "Your message has been sent successfully",
+      });
+      setOpen(false);
+      setMessageContent("");
+      setMessageSubject("");
+      setSelectedRecipients([]);
+    },
+  });
+
+  const handleSendMessage = () => {
+    if (!messageSubject || !messageContent || selectedRecipients.length === 0) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields and select recipients",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    sendMessageMutation.mutate({
+      subject: messageSubject,
+      content: messageContent,
+      recipients: selectedRecipients,
+      type: messageType,
+      template: messageTemplate
+    });
   };
 
-  const getStatusColor = (status: string) => {
+  const applyTemplate = (template: any) => {
+    setMessageTemplate(template.name);
+    setMessageSubject(template.subject);
+    setMessageContent(template.content);
+    setTemplateOpen(false);
+    toast({
+      title: "Template Applied",
+      description: `Applied template: ${template.name}`,
+    });
+  };
+
+  const filteredMessages = sentMessages.filter(message => {
+    const matchesSearch = message.recipient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         message.subject.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = messageFilter === "all" || message.status === messageFilter;
+    return matchesSearch && matchesFilter;
+  });
+
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'sent': return 'bg-emerald-100 text-emerald-800';
-      case 'delivered': return 'bg-blue-100 text-blue-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-amber-100 text-amber-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'delivered':
+        return <Badge className="bg-green-100 text-green-800"><Check className="h-3 w-3 mr-1" />Delivered</Badge>;
+      case 'sent':
+        return <Badge className="bg-blue-100 text-blue-800"><Send className="h-3 w-3 mr-1" />Sent</Badge>;
+      case 'failed':
+        return <Badge className="bg-red-100 text-red-800"><X className="h-3 w-3 mr-1" />Failed</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
+  };
+
+  const getRecipientTypeIcon = (type: string) => {
+    switch (type) {
+      case 'patient':
+        return <User className="h-4 w-4 text-blue-600" />;
+      case 'staff':
+        return <Users className="h-4 w-4 text-green-600" />;
+      case 'customer':
+        return <MessageCircle className="h-4 w-4 text-purple-600" />;
+      default:
+        return <User className="h-4 w-4 text-gray-600" />;
     }
   };
 
   return (
-    <>
-      <main className="flex-1 overflow-y-auto p-6">
-        <Tabs defaultValue="inbox" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="inbox">Message History</TabsTrigger>
-            <TabsTrigger value="compose">Compose</TabsTrigger>
-            <TabsTrigger value="templates">Templates</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-
-          {/* Message History Tab */}
-          <TabsContent value="inbox" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Communication History</h3>
-                <p className="text-sm text-slate-600">Track all sent emails and SMS messages</p>
-              </div>
-              
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Send Message
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Send New Message</DialogTitle>
-                  </DialogHeader>
-                  
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="type"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Message Type</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="email">Email</SelectItem>
-                                  <SelectItem value="sms">SMS</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="recipients"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Recipients</FormLabel>
-                              <Select onValueChange={(value) => field.onChange([value])}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select customers" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {(customers as any[]).map((customer: any) => (
-                                    <SelectItem key={customer.id} value={customer.email || customer.phone}>
-                                      {customer.firstName} {customer.lastName}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      
-                      {form.watch("type") === "email" && (
-                        <FormField
-                          control={form.control}
-                          name="subject"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Subject</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter email subject" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      )}
-                      
-                      <FormField
-                        control={form.control}
-                        name="message"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Message</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Type your message here..."
-                                className="min-h-[100px]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <div className="flex justify-end space-x-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setOpen(false)}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={sendMessageMutation.isPending}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          {sendMessageMutation.isPending ? (
-                            <>
-                              <Clock className="mr-2 h-4 w-4 animate-spin" />
-                              Sending...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="mr-2 h-4 w-4" />
-                              Send Message
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative max-w-md">
-              <Input
-                placeholder="Search messages..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-            </div>
-
-            {/* Message List */}
-            <div className="space-y-4">
-              {communications.map((comm) => (
-                <Card key={comm.id} className="border-slate-200 hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          {comm.type === 'email' ? (
-                            <Mail className="h-5 w-5 text-blue-600" />
-                          ) : (
-                            <MessageSquare className="h-5 w-5 text-blue-600" />
-                          )}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="text-lg font-semibold text-slate-900">
-                              {comm.customerName}
-                            </h3>
-                            <Badge className={getStatusColor(comm.status)}>
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              <span className="capitalize">{comm.status}</span>
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {comm.type.toUpperCase()}
-                            </Badge>
-                          </div>
-                          
-                          {comm.subject && (
-                            <p className="font-medium text-slate-900 mb-2">{comm.subject}</p>
-                          )}
-                          
-                          <p className="text-sm text-slate-600 mb-3">
-                            {comm.message}
-                          </p>
-                          
-                          <div className="flex items-center text-xs text-slate-500 space-x-4">
-                            <span>To: {comm.recipients.join(", ")}</span>
-                            <span>•</span>
-                            <span>{format(comm.timestamp, 'MMM dd, yyyy HH:mm')}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <Button variant="ghost" size="sm">
-                        <Archive className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Templates Tab */}
-          <TabsContent value="templates" className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-slate-900">Message Templates</h3>
-                <p className="text-sm text-slate-600">Pre-built templates for common communications</p>
-              </div>
-              
-              <Button className="bg-emerald-600 hover:bg-emerald-700">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Template
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Communication Center</h1>
+          <p className="text-slate-600">Send messages to patients, staff, and customers</p>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Template className="h-4 w-4 mr-2" />
+                Message Templates
               </Button>
-            </div>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Message Templates</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {messageTemplates.map((template) => (
+                  <Card key={template.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">{template.name}</CardTitle>
+                        <Badge variant="outline">{template.type}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-xs font-medium text-slate-600">Subject</Label>
+                        <p className="text-sm font-medium">{template.subject}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs font-medium text-slate-600">Content Preview</Label>
+                        <p className="text-sm text-slate-600 line-clamp-3">{template.content}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs font-medium text-slate-600">Variables</Label>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {template.variables.map((variable) => (
+                            <Badge key={variable} variant="secondary" className="text-xs">
+                              {`{${variable}}`}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex space-x-2 pt-2">
+                        <Button size="sm" onClick={() => applyTemplate(template)}>
+                          Use Template
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Send New Message
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Send New Message</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 mt-4">
+                {/* Message Type & Recipients */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Message Type</Label>
+                    <Select value={messageType} onValueChange={setMessageType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="email">
+                          <div className="flex items-center">
+                            <Mail className="h-4 w-4 mr-2" />
+                            Email
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="sms">
+                          <div className="flex items-center">
+                            <MessageCircle className="h-4 w-4 mr-2" />
+                            SMS
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="notification">
+                          <div className="flex items-center">
+                            <Bell className="h-4 w-4 mr-2" />
+                            In-App Notification
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Recipient Type</Label>
+                    <Select value={recipientType} onValueChange={setRecipientType}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="individual">Individual</SelectItem>
+                        <SelectItem value="group">Group (All Patients)</SelectItem>
+                        <SelectItem value="staff">All Staff</SelectItem>
+                        <SelectItem value="customers">All Customers</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {templates.map((template) => (
-                <Card key={template.id} className="border-slate-200 hover:shadow-lg transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-slate-900">{template.name}</h3>
-                      <Badge variant="outline" className="text-xs">
-                        {template.type.toUpperCase()}
-                      </Badge>
+                {/* Recipients Selection */}
+                {recipientType === "individual" && (
+                  <div>
+                    <Label>Select Recipients</Label>
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 space-y-2">
+                      {recipients.map((recipient) => (
+                        <div key={recipient.id} className="flex items-center space-x-3 p-2 hover:bg-slate-50 rounded">
+                          <Checkbox
+                            checked={selectedRecipients.includes(recipient.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedRecipients([...selectedRecipients, recipient.id]);
+                              } else {
+                                setSelectedRecipients(selectedRecipients.filter(id => id !== recipient.id));
+                              }
+                            }}
+                          />
+                          <div className="flex items-center space-x-2">
+                            {getRecipientTypeIcon(recipient.type)}
+                            <div>
+                              <p className="font-medium text-sm">{recipient.name}</p>
+                              <p className="text-xs text-slate-500">
+                                {messageType === "email" ? recipient.email : recipient.phone} • {recipient.type}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    
-                    {template.subject && (
-                      <p className="font-medium text-slate-700 mb-2">
-                        Subject: {template.subject}
-                      </p>
+                  </div>
+                )}
+
+                {/* Template Selection */}
+                <div>
+                  <Label>Use Template (Optional)</Label>
+                  <Select value={messageTemplate} onValueChange={(value) => {
+                    const template = messageTemplates.find(t => t.name === value);
+                    if (template) {
+                      applyTemplate(template);
+                    }
+                  }}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {messageTemplates.map((template) => (
+                        <SelectItem key={template.id} value={template.name}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{template.name}</span>
+                            <Badge variant="outline" className="ml-2">{template.type}</Badge>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Message Content */}
+                <div>
+                  <Label>Subject</Label>
+                  <Input
+                    value={messageSubject}
+                    onChange={(e) => setMessageSubject(e.target.value)}
+                    placeholder="Enter message subject..."
+                  />
+                </div>
+
+                <div>
+                  <Label>Message Content</Label>
+                  <Textarea
+                    value={messageContent}
+                    onChange={(e) => setMessageContent(e.target.value)}
+                    placeholder="Type your message here..."
+                    className="min-h-[150px]"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Use variables like {`{name}, {date}, {time}`} for personalization
+                  </p>
+                </div>
+
+                {/* Auto-send Options */}
+                <div className="border-t pt-4">
+                  <Label className="text-base font-medium">Auto-send Options</Label>
+                  <div className="mt-3 space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="birthday-auto" />
+                      <label htmlFor="birthday-auto" className="text-sm">
+                        Auto-send birthday wishes
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="appointment-auto" />
+                      <label htmlFor="appointment-auto" className="text-sm">
+                        Auto-send appointment reminders
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="payment-auto" />
+                      <label htmlFor="payment-auto" className="text-sm">
+                        Auto-send payment reminders
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Send Actions */}
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button variant="outline" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSendMessage} disabled={sendMessageMutation.isPending}>
+                    {sendMessageMutation.isPending ? (
+                      <>
+                        <Zap className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Send Message
+                      </>
                     )}
-                    
-                    <p className="text-sm text-slate-600 mb-4 line-clamp-3">
-                      {template.content}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Messages Sent Today</p>
+                <p className="text-2xl font-bold text-blue-600">24</p>
+              </div>
+              <Send className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Delivery Rate</p>
+                <p className="text-2xl font-bold text-green-600">98%</p>
+              </div>
+              <Check className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Active Templates</p>
+                <p className="text-2xl font-bold text-purple-600">{messageTemplates.length}</p>
+              </div>
+              <Template className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-600">Auto-messages</p>
+                <p className="text-2xl font-bold text-orange-600">12</p>
+              </div>
+              <Zap className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Message History */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle>Message History</CardTitle>
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search messages..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
+              <Select value={messageFilter} onValueChange={setMessageFilter}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="delivered">Delivered</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="failed">Failed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredMessages.map((message) => (
+              <div key={message.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    {getRecipientTypeIcon(message.recipientType)}
+                    {message.type === "email" ? (
+                      <Mail className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4 text-green-600" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-slate-900">{message.subject}</h4>
+                    <p className="text-sm text-slate-600">
+                      To: {message.recipient} • Template: {message.template}
                     </p>
-                    
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        Edit
-                      </Button>
-                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
-                        Use Template
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Messages Sent</p>
-                      <p className="text-2xl font-bold text-slate-900">156</p>
-                      <p className="text-sm font-medium text-emerald-600 mt-1">
-                        +12 this week
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <Send className="text-blue-600 h-6 w-6" />
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Delivery Rate</p>
-                      <p className="text-2xl font-bold text-slate-900">94.2%</p>
-                      <p className="text-sm font-medium text-emerald-600 mt-1">
-                        +2.1% improvement
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                      <CheckCircle className="text-emerald-600 h-6 w-6" />
-                    </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="text-right">
+                    <p className="text-sm text-slate-600">
+                      {format(message.sentAt, "MMM d, yyyy")}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {format(message.sentAt, "h:mm a")}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Email Opens</p>
-                      <p className="text-2xl font-bold text-slate-900">67.8%</p>
-                      <p className="text-sm font-medium text-blue-600 mt-1">
-                        Above average
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                      <Mail className="text-amber-600 h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-slate-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-600 text-sm font-medium">Response Rate</p>
-                      <p className="text-2xl font-bold text-slate-900">23.4%</p>
-                      <p className="text-sm font-medium text-purple-600 mt-1">
-                        +5.2% vs last month
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                      <MessageCircle className="text-purple-600 h-6 w-6" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </>
+                  {getStatusBadge(message.status)}
+                  <Button size="sm" variant="ghost">
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

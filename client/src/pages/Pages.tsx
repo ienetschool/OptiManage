@@ -1191,12 +1191,14 @@ export default function Pages() {
                           defaultValue={editingPage.title}
                         />
                         <div 
-                          className="min-h-[600px] p-6 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose prose-lg max-w-none"
+                          className="min-h-[600px] max-h-[600px] overflow-y-auto p-6 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose prose-lg max-w-none"
                           contentEditable
                           suppressContentEditableWarning={true}
                           style={{ 
                             outline: 'none', 
-                            minHeight: '600px'
+                            minHeight: '600px',
+                            maxHeight: '600px',
+                            overflowY: 'auto'
                           }}
                           onInput={(e) => setPageContent(e.currentTarget.innerHTML || "")}
                           dangerouslySetInnerHTML={{

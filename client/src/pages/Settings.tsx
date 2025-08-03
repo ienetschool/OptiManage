@@ -25,7 +25,10 @@ import {
   Users,
   Key,
   Database,
-  FileText
+  FileText,
+  Download,
+  Upload,
+  RefreshCw
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -998,28 +1001,168 @@ export default function Settings() {
 
                   <Separator />
 
-                  <div className="space-y-4">
-                    <h4 className="text-lg font-medium">Backup Settings</h4>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h5 className="font-medium">Automatic Backup</h5>
-                        <p className="text-sm text-slate-600">Enable automatic data backups</p>
+                  <div className="space-y-6">
+                    <h4 className="text-lg font-medium flex items-center">
+                      <Database className="h-5 w-5 mr-2" />
+                      Backup & Recovery Management
+                    </h4>
+                    
+                    {/* Automatic Backup Settings */}
+                    <div className="border rounded-lg p-4 bg-blue-50">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <h5 className="font-medium">Automatic Backup</h5>
+                          <p className="text-sm text-slate-600">Enable scheduled automatic data backups</p>
+                        </div>
+                        <Switch defaultChecked={settings?.system.autoBackup} />
                       </div>
-                      <Switch defaultChecked={settings?.system.autoBackup} />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Backup Frequency</Label>
+                          <Select defaultValue={settings?.system.backupFrequency}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="hourly">Every Hour</SelectItem>
+                              <SelectItem value="daily">Daily at 2:00 AM</SelectItem>
+                              <SelectItem value="weekly">Weekly (Sundays)</SelectItem>
+                              <SelectItem value="monthly">Monthly (1st of each month)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Retention Period</Label>
+                          <Select defaultValue="30">
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="7">7 days</SelectItem>
+                              <SelectItem value="30">30 days</SelectItem>
+                              <SelectItem value="90">90 days</SelectItem>
+                              <SelectItem value="365">1 year</SelectItem>
+                              <SelectItem value="forever">Forever</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Backup Frequency</Label>
-                      <Select defaultValue={settings?.system.backupFrequency}>
-                        <SelectTrigger className="w-48">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hourly">Hourly</SelectItem>
-                          <SelectItem value="daily">Daily</SelectItem>
-                          <SelectItem value="weekly">Weekly</SelectItem>
-                          <SelectItem value="monthly">Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
+
+                    {/* Backup History & Management */}
+                    <div className="border rounded-lg p-4">
+                      <h5 className="font-medium mb-3">Recent Backups</h5>
+                      <div className="space-y-3">
+                        {[
+                          { date: "2024-03-15 02:00 AM", size: "245 MB", status: "Success", type: "Automatic" },
+                          { date: "2024-03-14 02:00 AM", size: "243 MB", status: "Success", type: "Automatic" },
+                          { date: "2024-03-13 03:30 PM", size: "241 MB", status: "Success", type: "Manual" },
+                          { date: "2024-03-12 02:00 AM", size: "239 MB", status: "Success", type: "Automatic" },
+                          { date: "2024-03-11 02:00 AM", size: "237 MB", status: "Failed", type: "Automatic" }
+                        ].map((backup, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className={`h-2 w-2 rounded-full ${
+                                backup.status === 'Success' ? 'bg-green-500' : 'bg-red-500'
+                              }`} />
+                              <div>
+                                <p className="font-medium text-sm">{backup.date}</p>
+                                <p className="text-xs text-slate-500">{backup.size} • {backup.type}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                backup.status === 'Success' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {backup.status}
+                              </span>
+                              {backup.status === 'Success' && (
+                                <>
+                                  <Button size="sm" variant="ghost" onClick={() => {
+                                    toast({ title: "Downloading backup", description: `Backup from ${backup.date}` });
+                                  }}>
+                                    <FileText className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => {
+                                    toast({ 
+                                      title: "Restore Initiated", 
+                                      description: "System will restore from this backup. This may take several minutes." 
+                                    });
+                                  }}>
+                                    Restore
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Backup Actions */}
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                        <div className="text-sm text-slate-600">
+                          <p>Next backup: Today at 2:00 AM</p>
+                          <p>Storage used: 1.2 GB of 5 GB limit</p>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" onClick={() => {
+                            toast({ 
+                              title: "Manual Backup Started", 
+                              description: "Creating full system backup..." 
+                            });
+                          }}>
+                            <Database className="h-4 w-4 mr-2" />
+                            Backup Now
+                          </Button>
+                          <Button variant="outline" onClick={() => {
+                            toast({ 
+                              title: "Backup Settings", 
+                              description: "Opening advanced backup configuration..." 
+                            });
+                          }}>
+                            Configure
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Import/Export Tools */}
+                    <div className="border rounded-lg p-4">
+                      <h5 className="font-medium mb-3">Data Import/Export</h5>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label className="text-sm font-medium">Export Data</Label>
+                          <p className="text-xs text-slate-600 mb-2">Download your data in various formats</p>
+                          <div className="space-y-2">
+                            <Button size="sm" variant="outline" className="w-full justify-start">
+                              <FileText className="h-4 w-4 mr-2" />
+                              Export as JSON
+                            </Button>
+                            <Button size="sm" variant="outline" className="w-full justify-start">
+                              <FileText className="h-4 w-4 mr-2" />
+                              Export as CSV
+                            </Button>
+                            <Button size="sm" variant="outline" className="w-full justify-start">
+                              <Database className="h-4 w-4 mr-2" />
+                              Export Database
+                            </Button>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium">Import Data</Label>
+                          <p className="text-xs text-slate-600 mb-2">Import data from backup files</p>
+                          <div className="space-y-2">
+                            <Button size="sm" variant="outline" className="w-full justify-start">
+                              Import from File
+                            </Button>
+                            <Button size="sm" variant="outline" className="w-full justify-start">
+                              Restore from Backup
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
