@@ -469,6 +469,11 @@ export default function InvoiceManagement() {
     createInvoiceMutation.mutate(invoiceData);
   };
 
+  // Debug: Log enriched invoices for verification
+  React.useEffect(() => {
+    console.log(`📋 ENRICHED INVOICES COUNT: ${enrichedInvoices.length}`, enrichedInvoices.slice(0, 3));
+  }, [enrichedInvoices]);
+
   // Filter invoices - Use enriched invoices with customer names
   const filteredInvoices = enrichedInvoices.filter((invoice: any) => {
     const matchesSearch = 
@@ -1581,7 +1586,7 @@ export default function InvoiceManagement() {
 
           {/* Enhanced Invoices Table with Pagination, Filtering, and Sorting */}
           <EnhancedDataTable
-            data={filteredInvoices}
+            data={enrichedInvoices}
             columns={invoiceColumns}
             title="Invoice Management"
             searchPlaceholder="Search invoices by invoice number, customer name, or store..."
