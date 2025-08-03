@@ -186,8 +186,8 @@ export default function Inventory() {
           storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
           productId: productId,
           quantity: initialStock,
-          minQuantity: productData.reorderLevel || 10,
-          maxQuantity: initialStock * 2,
+          minStock: productData.reorderLevel || 10,
+          maxStock: Math.max(initialStock * 2, 100),
           lastRestocked: new Date().toISOString(),
         });
 
@@ -1761,7 +1761,7 @@ export default function Inventory() {
           </DialogHeader>
           
           {selectedProduct && (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-3 gap-6">
               <div className="space-y-4">
                 <div>
                   <Label className="text-sm font-medium text-slate-500">SKU</Label>
@@ -1838,6 +1838,64 @@ export default function Inventory() {
                     <p className="text-sm font-mono">{selectedProduct.barcode}</p>
                   </div>
                 )}
+              </div>
+
+              {/* QR Code Section */}
+              <div className="flex flex-col items-center space-y-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-500">Product QR Code</Label>
+                </div>
+                <div className="p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm">
+                  <QRCode
+                    value={JSON.stringify({
+                      id: selectedProduct.id,
+                      name: selectedProduct.name,
+                      sku: selectedProduct.sku,
+                      price: selectedProduct.price,
+                      barcode: selectedProduct.barcode,
+                      url: `${window.location.origin}/product/${selectedProduct.id}`,
+                    })}
+                    size={160}
+                    bgColor="white"
+                    fgColor="#1f2937"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const canvas = document.querySelector('canvas');
+                      if (canvas) {
+                        const link = document.createElement('a');
+                        link.download = `qr-${selectedProduct.sku}.png`;
+                        link.href = canvas.toDataURL();
+                        link.click();
+                      }
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      const productUrl = `${window.location.origin}/product/${selectedProduct.id}`;
+                      navigator.clipboard.writeText(productUrl);
+                      toast({
+                        title: "Link Copied",
+                        description: "Product link copied to clipboard",
+                      });
+                    }}
+                  >
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Link
+                  </Button>
+                </div>
+                <p className="text-xs text-slate-500 text-center">
+                  Scan to view product details
+                </p>
               </div>
             </div>
           )}
