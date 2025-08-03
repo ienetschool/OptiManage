@@ -161,20 +161,20 @@ export default function Sidebar() {
       "flex flex-col bg-white border-r border-slate-200 transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
-      {/* Sidebar Collapse Toggle */}
-      <div className="p-2 flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className="h-8 w-8 p-0"
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </Button>
-      </div>
-
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
+      {/* Navigation with integrated collapse toggle */}
+      <ScrollArea className="flex-1 px-3 py-2">
+        {/* Collapse Toggle at top of navigation */}
+        <div className="flex justify-end mb-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCollapsed(!collapsed)}
+            className="h-8 w-8 p-0"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </Button>
+        </div>
+        
         <nav className="space-y-2">
           {navigationItems.map((item) => {
             if (item.items) {
