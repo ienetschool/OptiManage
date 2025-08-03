@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { 
@@ -62,7 +62,7 @@ export default function Sales() {
   // Combine customers and patients for the dropdown
   const allCustomers = [
     ...customers,
-    ...patients.map((patient: any) => ({
+    ...(patients as any[]).map((patient: any) => ({
       id: patient.id,
       firstName: patient.firstName,
       lastName: patient.lastName,

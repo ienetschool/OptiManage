@@ -419,7 +419,7 @@ export default function Payments() {
         title="Payment Management"
         searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
         isLoading={isLoading}
-        pageSize={10}
+        pageSize={25}
         showPagination={true}
         totalCount={payments.length}
         emptyMessage="No payments found. Payments will appear here when invoices are paid."

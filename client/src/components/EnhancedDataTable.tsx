@@ -274,9 +274,10 @@ export default function EnhancedDataTable({
       </CardHeader>
       
       <CardContent>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
+        <div className="rounded-md border overflow-hidden">
+          <div className="max-h-[600px] overflow-y-auto">
+            <Table>
+              <TableHeader>
               <TableRow>
                 {columns.map((column) => (
                   <TableHead 
@@ -358,7 +359,8 @@ export default function EnhancedDataTable({
                 ))
               )}
             </TableBody>
-          </Table>
+            </Table>
+          </div>
         </div>
         
         {/* Pagination */}
