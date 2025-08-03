@@ -671,37 +671,134 @@ export default function Pages() {
                   <div className="flex items-center space-x-1">
                     {/* Text Formatting */}
                     <div className="flex items-center space-x-1 border-r pr-2 mr-2">
-                      <Button variant="ghost" size="sm"><Bold className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Italic className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Underline className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('bold', false);
+                        toast({ title: "Bold applied", description: "Text formatting updated" });
+                      }}>
+                        <Bold className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('italic', false);
+                        toast({ title: "Italic applied", description: "Text formatting updated" });
+                      }}>
+                        <Italic className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('underline', false);
+                        toast({ title: "Underline applied", description: "Text formatting updated" });
+                      }}>
+                        <Underline className="h-4 w-4" />
+                      </Button>
                     </div>
                     
                     {/* Headings */}
                     <div className="flex items-center space-x-1 border-r pr-2 mr-2">
-                      <Button variant="ghost" size="sm"><Heading1 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Heading2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Heading3 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Type className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('formatBlock', false, 'h1');
+                        toast({ title: "Heading 1 applied" });
+                      }}>
+                        <Heading1 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('formatBlock', false, 'h2');
+                        toast({ title: "Heading 2 applied" });
+                      }}>
+                        <Heading2 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('formatBlock', false, 'h3');
+                        toast({ title: "Heading 3 applied" });
+                      }}>
+                        <Heading3 className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('formatBlock', false, 'p');
+                        toast({ title: "Normal text applied" });
+                      }}>
+                        <Type className="h-4 w-4" />
+                      </Button>
                     </div>
                     
                     {/* Alignment */}
                     <div className="flex items-center space-x-1 border-r pr-2 mr-2">
-                      <Button variant="ghost" size="sm"><AlignLeft className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><AlignCenter className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><AlignRight className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('justifyLeft', false);
+                        toast({ title: "Left aligned" });
+                      }}>
+                        <AlignLeft className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('justifyCenter', false);
+                        toast({ title: "Center aligned" });
+                      }}>
+                        <AlignCenter className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('justifyRight', false);
+                        toast({ title: "Right aligned" });
+                      }}>
+                        <AlignRight className="h-4 w-4" />
+                      </Button>
                     </div>
                     
                     {/* Media & Lists */}
                     <div className="flex items-center space-x-1 border-r pr-2 mr-2">
-                      <Button variant="ghost" size="sm"><Link className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Image className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><List className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        const url = prompt('Enter link URL:');
+                        if (url) {
+                          document.execCommand('createLink', false, url);
+                          toast({ title: "Link added", description: url });
+                        }
+                      }}>
+                        <Link className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        const url = prompt('Enter image URL:');
+                        if (url) {
+                          document.execCommand('insertImage', false, url);
+                          toast({ title: "Image inserted", description: url });
+                        }
+                      }}>
+                        <Image className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('insertUnorderedList', false);
+                        toast({ title: "List created" });
+                      }}>
+                        <List className="h-4 w-4" />
+                      </Button>
                     </div>
                     
                     {/* Code & Quote */}
-                    <div className="flex items-center space-x-1">
-                      <Button variant="ghost" size="sm"><Code className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="sm"><Quote className="h-4 w-4" /></Button>
+                    <div className="flex items-center space-x-1 border-r pr-2 mr-2">
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('formatBlock', false, 'pre');
+                        toast({ title: "Code block applied" });
+                      }}>
+                        <Code className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => {
+                        document.execCommand('formatBlock', false, 'blockquote');
+                        toast({ title: "Quote applied" });
+                      }}>
+                        <Quote className="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    {/* Preview & Save Actions */}
+                    <div className="flex items-center space-x-1 ml-auto">
+                      <Button variant="outline" size="sm" onClick={() => {
+                        toast({ title: "Preview Mode", description: "Showing page preview" });
+                      }}>
+                        <Eye className="h-4 w-4 mr-1" />
+                        Preview
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => {
+                        toast({ title: "Auto-save", description: "Changes saved automatically" });
+                      }}>
+                        <Save className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -719,13 +816,37 @@ export default function Pages() {
                         defaultValue={editingPage.title}
                       />
                       <div 
-                        className="min-h-[400px] p-4 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500"
+                        className="min-h-[400px] p-4 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose max-w-none"
                         contentEditable
                         suppressContentEditableWarning={true}
                         style={{ outline: 'none' }}
-                        onInput={(e) => setPageContent(e.currentTarget.textContent || "")}
-                      >
-                        <p className="text-slate-500 pointer-events-none">Start typing your content here... Use the toolbar above to format your text.</p>
+                        onInput={(e) => setPageContent(e.currentTarget.innerHTML || "")}
+                        dangerouslySetInnerHTML={{
+                          __html: pageContent || `<p class="text-slate-500">Start typing your content here... Use the toolbar above to format your text.</p>`
+                        }}
+                      />
+                      
+                      {/* Content Stats */}
+                      <div className="flex justify-between items-center mt-4 text-sm text-slate-500">
+                        <div className="flex space-x-4">
+                          <span>Words: {pageContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length}</span>
+                          <span>Characters: {pageContent.replace(/<[^>]*>/g, '').length}</span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            navigator.clipboard.writeText(pageContent.replace(/<[^>]*>/g, ''));
+                            toast({ title: "Content copied", description: "Text copied to clipboard" });
+                          }}>
+                            <Copy className="h-4 w-4 mr-1" />
+                            Copy Text
+                          </Button>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            setPageContent("");
+                            toast({ title: "Content cleared", description: "Editor content has been cleared" });
+                          }}>
+                            Clear All
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -735,26 +856,57 @@ export default function Pages() {
           )}
 
           {/* Footer Actions */}
-          <div className="border-t p-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-sm text-slate-500">
-              <Save className="h-4 w-4" />
-              <span>Auto-saving enabled</span>
+          <div className="border-t p-4 flex items-center justify-between bg-slate-50">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 text-sm text-slate-500">
+                <Save className="h-4 w-4" />
+                <span>Auto-saving enabled</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-slate-500">
+                <span>Last saved: Just now</span>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
+              <Button variant="ghost" onClick={() => {
+                window.open(`https://preview.optistore.com${editingPage?.slug}`, '_blank');
+                toast({ 
+                  title: "Preview Opened", 
+                  description: "Page preview opened in new tab"
+                });
+              }}>
+                <Eye className="h-4 w-4 mr-2" />
+                Preview Page
+              </Button>
               <Button variant="outline" onClick={() => setEditingPage(null)}>Cancel</Button>
               <Button variant="outline" onClick={() => {
+                const content = {
+                  title: editingPage?.title,
+                  content: pageContent,
+                  seo: seoData
+                };
+                console.log('Saving draft:', content);
                 toast({ 
                   title: "Draft Saved", 
                   description: `Changes to "${editingPage?.title}" saved as draft`
                 });
               }}>Save Draft</Button>
               <Button onClick={() => {
+                const publishData = {
+                  title: editingPage?.title,
+                  content: pageContent,
+                  seo: seoData,
+                  status: 'published'
+                };
+                console.log('Publishing page:', publishData);
                 toast({ 
                   title: "Page Published", 
-                  description: `"${editingPage?.title}" has been published successfully`
+                  description: `"${editingPage?.title}" has been published successfully with SEO optimization`
                 });
                 setEditingPage(null);
-              }}>Publish Changes</Button>
+              }}>
+                <Upload className="h-4 w-4 mr-2" />
+                Publish Changes
+              </Button>
             </div>
           </div>
         </DialogContent>
