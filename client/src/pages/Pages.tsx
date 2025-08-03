@@ -143,7 +143,7 @@ export default function Pages() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -411,23 +411,24 @@ export default function Pages() {
       </div>
 
       {/* Pages List */}
-      <Card>
+      <Card className="w-full">
         <CardHeader>
           <CardTitle>All Pages</CardTitle>
           <CardDescription>Manage your website's pages and content</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-6 space-y-4 max-h-none overflow-visible">
           {filteredPages.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
               <p className="text-slate-500">No pages found</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <>
               <div className="text-sm text-slate-500 mb-4">
                 Showing {filteredPages.length} of {pages.length} pages
               </div>
-              {console.log("DEBUG: Rendering", filteredPages.length, "pages:", filteredPages.map(p => p.title))}
+
+              <div className="space-y-4 w-full">
               {filteredPages.map((page) => (
                 <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
                   <div className="flex items-center space-x-4">
@@ -496,7 +497,8 @@ export default function Pages() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
