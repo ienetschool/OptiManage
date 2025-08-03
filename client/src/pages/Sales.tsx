@@ -36,6 +36,7 @@ import { format } from "date-fns";
 
 export default function Sales() {
   const [open, setOpen] = useState(false);
+  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPeriod, setSelectedPeriod] = useState("today");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("all");
@@ -169,6 +170,7 @@ export default function Sales() {
         description: "Sale completed successfully.",
       });
       setOpen(false);
+      setQuickSaleOpen(false);
       form.reset();
     },
     onError: () => {
@@ -492,7 +494,7 @@ export default function Sales() {
               </Dialog>
 
               <Button 
-                onClick={() => setOpen(true)}
+                onClick={() => setQuickSaleOpen(true)}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Receipt className="mr-2 h-4 w-4" />
@@ -500,6 +502,110 @@ export default function Sales() {
               </Button>
             </div>
           </div>
+
+          {/* Quick Sale Dialog - Simplified */}
+          <Dialog open={quickSaleOpen} onOpenChange={setQuickSaleOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Quick Sale</DialogTitle>
+                <DialogDescription>
+                  Process a quick cash sale without detailed product information
+                </DialogDescription>
+              </DialogHeader>
+              
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="total"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Total Amount ($)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            placeholder="Enter total amount..."
+                            {...field}
+                            onChange={(e) => {
+                              const total = parseFloat(e.target.value) || 0;
+                              const tax = total * 0.08; // 8% tax
+                              const subtotal = total - tax;
+                              
+                              field.onChange(e.target.value);
+                              form.setValue("subtotal", subtotal.toFixed(2));
+                              form.setValue("taxAmount", tax.toFixed(2));
+                            }}
+                            className="text-lg font-semibold"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Payment Method</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="cash">💵 Cash</SelectItem>
+                            <SelectItem value="card">💳 Card</SelectItem>
+                            <SelectItem value="check">📄 Check</SelectItem>
+                            <SelectItem value="digital">📱 Digital</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Quick sale notes..." 
+                            {...field} 
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setQuickSaleOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={createSaleMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {createSaleMutation.isPending ? "Processing..." : "Complete Quick Sale"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
 
           {/* Enhanced Sales Table with Pagination, Filtering, and Sorting */}
           <EnhancedDataTable
