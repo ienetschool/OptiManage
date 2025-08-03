@@ -20,31 +20,17 @@ import {
   X, 
   Bell, 
   MessageSquare, 
-  Settings as SettingsIcon, 
+  Settings, 
   User, 
   LogOut, 
   Globe,
   Search,
   ChevronDown,
   ShoppingCart,
-  Plus,
-  Check,
-  Calendar
+  Plus
 } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Link, useLocation } from "wouter";
 import LiveChat from "@/components/LiveChat";
-
-// Page Components
-import Dashboard from '@/pages/Dashboard';
-import Sales from '@/pages/Sales';
-import Appointments from '@/pages/Appointments';
-import InvoiceManagement from '@/pages/InvoiceManagement';
-import Payments from '@/pages/Payments';
-import PatientManagement from '@/pages/PatientManagement';
-import Reports from '@/pages/Reports';
-import Settings from '@/pages/Settings';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -52,12 +38,8 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [quickSaleDialogOpen, setQuickSaleDialogOpen] = useState(false);
+  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [customerSearchOpen, setCustomerSearchOpen] = useState(false);
-  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
-  const [productSearchOpen, setProductSearchOpen] = useState(false);
-  const [productSearchTerm, setProductSearchTerm] = useState("");
   const { user } = useAuth();
   const [location, navigate] = useLocation();
   const { toast } = useToast();
@@ -66,7 +48,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Professional Quick Sale form schema with multiple items
   const quickSaleSchema = z.object({
     customerId: z.string().min(1, "Customer selection is required"),
-    storeId: z.string().min(1, "Store selection is required"),
     items: z.array(z.object({
       productId: z.string().min(1, "Product selection is required"),
       productName: z.string().min(1, "Product name is required"),
@@ -116,7 +97,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
     resolver: zodResolver(quickSaleSchema),
     defaultValues: {
       customerId: "walk-in",
-      storeId: stores?.[0]?.id || "",
       items: [{ productId: "custom", productName: "Custom Item", quantity: 1, unitPrice: 0 }],
       taxRate: 10,
       discountAmount: 0,
@@ -155,7 +135,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         title: "Success",
         description: "Quick sale invoice created successfully!",
       });
-      setQuickSaleDialogOpen(false);
+      setQuickSaleOpen(false);
       quickSaleForm.reset();
     },
     onError: () => {
@@ -299,7 +279,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Button 
             variant="default" 
             size="sm"
-            onClick={() => setQuickSaleDialogOpen(true)}
+            onClick={() => setQuickSaleOpen(true)}
             className="bg-green-600 hover:bg-green-700 hidden sm:flex"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
@@ -454,7 +434,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link href="/settings">
-                  <SettingsIcon className="h-4 w-4 mr-2" />
+                  <Settings className="h-4 w-4 mr-2" />
                   System Settings
                 </Link>
               </DropdownMenuItem>
@@ -492,179 +472,110 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* Quick Sale Dialog */}
-      <Dialog open={quickSaleDialogOpen} onOpenChange={setQuickSaleDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <Dialog open={quickSaleOpen} onOpenChange={setQuickSaleOpen}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Create New Invoice</DialogTitle>
+            <DialogTitle>Quick Sale Invoice</DialogTitle>
             <DialogDescription>
-              Quick sale invoice creation with professional search functionality
+              Create a quick invoice for immediate sale
             </DialogDescription>
           </DialogHeader>
           
           <Form {...quickSaleForm}>
-            <form onSubmit={quickSaleForm.handleSubmit(onQuickSaleSubmit)} className="space-y-6">
-              {/* Header Section - Customer, Store, Payment */}
-              <div className="grid grid-cols-3 gap-4">
-                {/* Customer Search Combobox */}
+            <form onSubmit={quickSaleForm.handleSubmit(onQuickSaleSubmit)} className="space-y-4">
+              {/* Customer Selection - Enhanced with Patients */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={quickSaleForm.control}
                   name="customerId"
                   render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                      <FormLabel>Customer</FormLabel>
-                      <Popover open={customerSearchOpen} onOpenChange={setCustomerSearchOpen}>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              aria-expanded={customerSearchOpen}
-                              className="w-full justify-between"
-                            >
-                              {field.value && field.value !== "walk-in"
-                                ? (() => {
-                                    const selectedCustomer = allCustomers.find(c => c.id === field.value);
-                                    return selectedCustomer?.displayName || "Select customer";
-                                  })()
-                                : field.value === "walk-in" 
-                                  ? "Walk-in Customer"
-                                  : "Select customer"}
-                              <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[280px] p-0">
-                          <Command>
-                            <CommandInput 
-                              placeholder="Search customers and patients..." 
-                              value={customerSearchTerm}
-                              onValueChange={setCustomerSearchTerm}
-                            />
-                            <CommandEmpty>No customer found.</CommandEmpty>
-                            <CommandGroup className="max-h-64 overflow-y-auto">
-                              <CommandItem
-                                value="walk-in"
-                                onSelect={() => {
-                                  field.onChange("walk-in");
-                                  setCustomerSearchOpen(false);
-                                  setCustomerSearchTerm("");
-                                }}
-                              >
-                                <Check
-                                  className={`mr-2 h-4 w-4 ${
-                                    field.value === "walk-in" ? "opacity-100" : "opacity-0"
-                                  }`}
-                                />
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span className="text-blue-600 text-xs font-medium">W</span>
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">Walk-in Customer</div>
-                                    <div className="text-xs text-slate-500">Cash customer</div>
-                                  </div>
-                                </div>
-                              </CommandItem>
+                    <FormItem>
+                      <FormLabel>Customer / Patient</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select customer or patient..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="max-h-80 w-[320px]">
+                          <SelectItem value="walk-in" className="py-3">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-blue-600 text-sm font-medium">W</span>
+                              </div>
+                              <div>
+                                <div className="font-medium">Walk-in Customer</div>
+                                <div className="text-xs text-slate-500">Cash customer</div>
+                              </div>
+                            </div>
+                          </SelectItem>
                           
-                              
-                              {customers.filter((c: any) => c && c.name && 
-                                c.name.toLowerCase().includes(customerSearchTerm.toLowerCase())).map((customer: any) => (
-                                <CommandItem
-                                  key={customer.id}
-                                  value={customer.id}
-                                  onSelect={() => {
-                                    field.onChange(customer.id);
-                                    setCustomerSearchOpen(false);
-                                    setCustomerSearchTerm("");
-                                  }}
-                                >
-                                  <Check
-                                    className={`mr-2 h-4 w-4 ${
-                                      field.value === customer.id ? "opacity-100" : "opacity-0"
-                                    }`}
-                                  />
-                                  <div className="flex items-center space-x-2">
-                                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
-                                      <span className="text-green-600 text-xs font-medium">
+                          {customers.filter((c: any) => c && c.name).length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                CUSTOMERS ({customers.filter((c: any) => c && c.name).length})
+                              </div>
+                              {customers.filter((c: any) => c && c.name).map((customer: any) => (
+                                <SelectItem key={customer.id} value={customer.id} className="py-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                      <span className="text-green-600 text-sm font-medium">
                                         {customer.name.charAt(0).toUpperCase()}
                                       </span>
                                     </div>
                                     <div>
                                       <div className="font-medium">{customer.name}</div>
-                                      <div className="text-xs text-slate-500">Customer</div>
+                                      <div className="text-xs text-slate-500">
+                                        {customer.email || customer.phone || 'Customer'}
+                                      </div>
                                     </div>
                                   </div>
-                                </CommandItem>
+                                </SelectItem>
                               ))}
-
-                              {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName)) && 
-                                (p.name || `${p.firstName} ${p.lastName}`).toLowerCase().includes(customerSearchTerm.toLowerCase())).map((patient: any) => {
+                            </>
+                          )}
+                          
+                          {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).length > 0 && (
+                            <>
+                              <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                PATIENTS ({patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).length})
+                              </div>
+                              {patients.filter((p: any) => p && (p.name || (p.firstName && p.lastName))).map((patient: any) => {
                                 const displayName = patient.name || `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
                                 return (
-                                  <CommandItem
-                                    key={patient.id}
-                                    value={patient.id}
-                                    onSelect={() => {
-                                      field.onChange(patient.id);
-                                      setCustomerSearchOpen(false);
-                                      setCustomerSearchTerm("");
-                                    }}
-                                  >
-                                    <Check
-                                      className={`mr-2 h-4 w-4 ${
-                                        field.value === patient.id ? "opacity-100" : "opacity-0"
-                                      }`}
-                                    />
-                                    <div className="flex items-center space-x-2">
-                                      <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
-                                        <span className="text-purple-600 text-xs font-medium">
+                                  <SelectItem key={patient.id} value={patient.id} className="py-3">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <span className="text-purple-600 text-sm font-medium">
                                           {displayName.charAt(0).toUpperCase()}
                                         </span>
                                       </div>
                                       <div>
                                         <div className="font-medium">{displayName}</div>
-                                        <div className="text-xs text-slate-500">Patient</div>
+                                        <div className="text-xs text-slate-500">
+                                          {patient.email || patient.phone || 'Patient'}
+                                        </div>
                                       </div>
                                     </div>
-                                  </CommandItem>
+                                  </SelectItem>
                                 );
                               })}
-                            </CommandGroup>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                            </>
+                          )}
 
-                {/* Store Selection */}
-                <FormField
-                  control={quickSaleForm.control}
-                  name="storeId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Store</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || stores[0]?.id}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select store" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {stores.map((store: any) => (
-                            <SelectItem key={store.id} value={store.id}>
-                              {store.name}
-                            </SelectItem>
-                          ))}
+                          {allCustomers.length === 0 && (
+                            <div className="px-3 py-4 text-center text-slate-500">
+                              <div className="text-sm">No customers or patients found</div>
+                              <div className="text-xs mt-1">Add customers in the customer management section</div>
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                {/* Payment Method */}
+                
                 <FormField
                   control={quickSaleForm.control}
                   name="paymentMethod"
@@ -678,10 +589,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="cash">Cash</SelectItem>
-                          <SelectItem value="card">Card</SelectItem>
-                          <SelectItem value="check">Check</SelectItem>
-                          <SelectItem value="digital">Digital</SelectItem>
+                          <SelectItem value="cash">💵 Cash</SelectItem>
+                          <SelectItem value="card">💳 Card</SelectItem>
+                          <SelectItem value="check">📄 Check</SelectItem>
+                          <SelectItem value="digital">📱 Digital</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -690,148 +601,133 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 />
               </div>
 
-              {/* Invoice Items Section */}
+              {/* Items Section with Add/Remove functionality */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Invoice Items</h3>
-                  <Button type="button" onClick={addNewItem} size="sm">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add
+                  <h3 className="text-lg font-medium">Invoice Items</h3>
+                  <Button type="button" onClick={addNewItem} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
                   </Button>
                 </div>
 
-                {/* Items Header */}
-                <div className="grid grid-cols-12 gap-3 text-sm font-medium text-slate-600 px-3 py-2 bg-slate-50 rounded">
-                  <div className="col-span-5">Product</div>
-                  <div className="col-span-2">Qty</div>
-                  <div className="col-span-2">Unit Price</div>
-                  <div className="col-span-2">Discount %</div>
-                  <div className="col-span-1 text-center">Action</div>
-                </div>
-
-                {/* Dynamic Items */}
                 {watchedItems.map((item: any, index: number) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 items-end p-3 border border-slate-200 rounded-lg">
-                    {/* Product Search */}
-                    <div className="col-span-5">
+                  <div key={index} className="p-4 border border-slate-200 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">Item #{index + 1}</span>
+                      {watchedItems.length > 1 && (
+                        <Button 
+                          type="button" 
+                          onClick={() => removeItem(index)} 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Product Selection with Search */}
+                    <FormField
+                      control={quickSaleForm.control}
+                      name={`items.${index}.productId`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Product/Service</FormLabel>
+                          <Select 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              handleProductChange(index, value);
+                            }} 
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Search and select product..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="max-h-80 w-[400px]">
+                              <SelectItem value="custom" className="py-3">
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <span className="text-orange-600 text-sm font-medium">✏</span>
+                                  </div>
+                                  <div>
+                                    <div className="font-medium">Custom Item</div>
+                                    <div className="text-xs text-slate-500">Enter custom product details</div>
+                                  </div>
+                                </div>
+                              </SelectItem>
+                              
+                              {products.filter((p: any) => p && p.name).length > 0 && (
+                                <>
+                                  <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                    AVAILABLE PRODUCTS ({products.filter((p: any) => p && p.name).length})
+                                  </div>
+                                  {products.filter((p: any) => p && p.name).map((product: any) => (
+                                    <SelectItem key={product.id} value={product.id} className="py-3">
+                                      <div className="flex items-center justify-between w-full">
+                                        <div className="flex items-center space-x-3">
+                                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <span className="text-blue-600 text-sm font-medium">
+                                              {product.name.charAt(0).toUpperCase()}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <div className="font-medium">{product.name}</div>
+                                            <div className="text-xs text-slate-500">
+                                              {product.category || 'Product'}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="text-sm font-semibold text-green-600">
+                                          ${parseFloat(product.price || 0).toFixed(2)}
+                                        </div>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </>
+                              )}
+
+                              {products.filter((p: any) => p && p.name).length === 0 && (
+                                <div className="px-3 py-4 text-center text-slate-500">
+                                  <div className="text-sm">No products found</div>
+                                  <div className="text-xs mt-1">Add products in inventory management</div>
+                                </div>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Custom Product Name (when custom is selected) */}
+                    {item.productId === "custom" && (
                       <FormField
                         control={quickSaleForm.control}
-                        name={`items.${index}.productId`}
+                        name={`items.${index}.productName`}
                         render={({ field }) => (
                           <FormItem>
-                            <Popover open={productSearchOpen && index === 0} onOpenChange={(open) => setProductSearchOpen(open && index === 0)}>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className="w-full justify-between"
-                                  >
-                                    {field.value && field.value !== "custom"
-                                      ? products.find(product => product.id === field.value)?.name || "Select product"
-                                      : field.value === "custom" 
-                                        ? "Custom Item"
-                                        : "Select product"}
-                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-[400px] p-0">
-                                <Command>
-                                  <CommandInput 
-                                    placeholder="Search products..." 
-                                    value={productSearchTerm}
-                                    onValueChange={setProductSearchTerm}
-                                  />
-                                  <CommandEmpty>No product found.</CommandEmpty>
-                                  <CommandGroup className="max-h-48 overflow-y-auto">
-                                    <CommandItem
-                                      value="custom"
-                                      onSelect={() => {
-                                        field.onChange("custom");
-                                        handleProductChange(index, "custom");
-                                        setProductSearchOpen(false);
-                                        setProductSearchTerm("");
-                                      }}
-                                    >
-                                      <Check
-                                        className={`mr-2 h-4 w-4 ${
-                                          field.value === "custom" ? "opacity-100" : "opacity-0"
-                                        }`}
-                                      />
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">Custom Item</span>
-                                        <span className="text-xs text-slate-500">Enter custom details</span>
-                                      </div>
-                                    </CommandItem>
-                                    
-                                    {products
-                                      .filter(product => 
-                                        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-                                        (product.category || "").toLowerCase().includes(productSearchTerm.toLowerCase())
-                                      )
-                                      .map((product) => (
-                                        <CommandItem
-                                          key={product.id}
-                                          value={product.id}
-                                          onSelect={() => {
-                                            field.onChange(product.id);
-                                            handleProductChange(index, product.id);
-                                            setProductSearchOpen(false);
-                                            setProductSearchTerm("");
-                                          }}
-                                        >
-                                          <Check
-                                            className={`mr-2 h-4 w-4 ${
-                                              field.value === product.id ? "opacity-100" : "opacity-0"
-                                            }`}
-                                          />
-                                          <div className="flex flex-col flex-1">
-                                            <div className="flex items-center justify-between">
-                                              <span className="font-medium">{product.name}</span>
-                                              <span className="text-sm font-semibold text-green-600">
-                                                ${parseFloat(product.price || 0).toFixed(2)}
-                                              </span>
-                                            </div>
-                                            <span className="text-xs text-slate-500">{product.category || 'Product'}</span>
-                                          </div>
-                                        </CommandItem>
-                                      ))}
-                                  </CommandGroup>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
+                            <FormLabel>Custom Product Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter custom product name..." {...field} />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
-                      {/* Custom Product Name */}
-                      {item.productId === "custom" && (
-                        <div className="mt-2">
-                          <FormField
-                            control={quickSaleForm.control}
-                            name={`items.${index}.productName`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input placeholder="Custom product name..." {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      )}
-                    </div>
+                    )}
 
-                    {/* Quantity */}
-                    <div className="col-span-2">
+                    {/* Quantity and Unit Price */}
+                    <div className="grid grid-cols-3 gap-3">
                       <FormField
                         control={quickSaleForm.control}
                         name={`items.${index}.quantity`}
                         render={({ field }) => (
                           <FormItem>
+                            <FormLabel>Quantity</FormLabel>
                             <FormControl>
                               <Input 
                                 type="number" 
@@ -844,15 +740,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
                           </FormItem>
                         )}
                       />
-                    </div>
-
-                    {/* Unit Price */}
-                    <div className="col-span-2">
+                      
                       <FormField
                         control={quickSaleForm.control}
                         name={`items.${index}.unitPrice`}
                         render={({ field }) => (
                           <FormItem>
+                            <FormLabel>Unit Price ($)</FormLabel>
                             <FormControl>
                               <Input 
                                 type="number" 
@@ -866,67 +760,57 @@ export default function AppLayout({ children }: AppLayoutProps) {
                           </FormItem>
                         )}
                       />
-                    </div>
 
-                    {/* Discount Percentage */}
-                    <div className="col-span-2">
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        defaultValue="0"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    {/* Remove Button */}
-                    <div className="col-span-1 text-center">
-                      {watchedItems.length > 1 && (
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          className="text-red-600 hover:text-red-700 p-2"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-slate-700 mb-2">Line Total</label>
+                        <div className="h-10 px-3 py-2 border border-slate-300 rounded-md bg-slate-50 flex items-center">
+                          <span className="font-medium text-slate-900">
+                            ${((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
+              </div>
 
-                {/* Totals Summary */}
-                <div className="mt-6 p-4 bg-slate-50 rounded-lg space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span>Subtotal:</span>
-                    <span>${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Tax ({watchedTaxRate}%):</span>
-                    <span>${taxAmount.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Discount:</span>
-                    <span>-${watchedDiscount.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Total:</span>
-                      <span className="text-blue-600">${total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Notes */}
+              {/* Tax and Discount */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={quickSaleForm.control}
-                  name="notes"
+                  name="taxRate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Notes (Optional)</FormLabel>
+                      <FormLabel>Tax Rate (%)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Additional notes..." {...field} />
+                        <Input 
+                          type="number" 
+                          step="0.1" 
+                          min="0" 
+                          max="100"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={quickSaleForm.control}
+                  name="discountAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount Amount ($)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -934,96 +818,60 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 />
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex justify-end space-x-3 pt-4 border-t">
-                <Button 
-                  type="button" 
+              {/* Total Summary */}
+              <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax ({watchedTaxRate}%):</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Discount:</span>
+                  <span>-${watchedDiscount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span>${total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              <FormField
+                control={quickSaleForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Additional notes..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
                   variant="outline"
-                  onClick={() => setQuickSaleDialogOpen(false)}
+                  onClick={() => setQuickSaleOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
                   disabled={quickSaleMutation.isPending}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-green-600 hover:bg-green-700"
                 >
-                  {quickSaleMutation.isPending ? "Processing..." : "Complete Sale"}
+                  {quickSaleMutation.isPending ? "Creating..." : "Create Quick Sale Invoice"}
                 </Button>
               </div>
             </form>
           </Form>
         </DialogContent>
       </Dialog>
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 overflow-auto">
-        {location === "/" && (
-          <Dashboard />
-        )}
-        {location === "/sales" && (
-          <Sales />
-        )}
-        {location === "/appointments" && (
-          <Appointments />
-        )}
-        {location === "/invoices" && (
-          <InvoiceManagement />
-        )}
-        {location === "/payments" && (
-          <Payments />
-        )}
-        {location === "/patients" && (
-          <PatientManagement />
-        )}
-        {location === "/reports" && (
-          <Reports />
-        )}
-        {location === "/settings" && (
-          <Settings />
-        )}
-        {/* Placeholder pages for missing components */}
-        {location === "/stores" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Store Management</h1>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Store management coming soon...</p>
-            </div>
-          </div>
-        )}
-        {location === "/inventory" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Inventory management coming soon...</p>
-            </div>
-          </div>
-        )}
-        {location === "/customers" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Customer Management</h1>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Customer management coming soon...</p>
-            </div>
-          </div>
-        )}
-        {location === "/medical-appointments" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">Medical Appointments</h1>
-            </div>
-            <div className="bg-white rounded-lg shadow p-6">
-              <p className="text-gray-600">Medical appointments coming soon...</p>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

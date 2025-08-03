@@ -46,13 +46,14 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
     <html>
       <head>
         <title>Invoice ${invoice.invoiceNumber} - OptiStore Pro</title>
-        <meta charset="UTF-8">
         <style>
           @page { 
             size: A4; 
-            margin: 15mm 12mm; 
+            margin: 12mm; 
             @top-center {
-              content: "";
+              content: "OptiStore Pro - Invoice ${invoice.invoiceNumber}";
+              font-size: 9pt;
+              color: #666;
             }
             @bottom-center {
               content: "Page " counter(page) " | Generated on ${format(new Date(), 'MMMM dd, yyyy')}";
@@ -64,68 +65,65 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           * { margin: 0; padding: 0; box-sizing: border-box; }
           
           body { 
-            font-family: 'Segoe UI', 'Arial', sans-serif; 
-            font-size: 9pt; 
-            line-height: 1.3; 
-            color: #1a202c; 
+            font-family: 'Arial', 'Helvetica', sans-serif; 
+            font-size: 10pt; 
+            line-height: 1.4; 
+            color: #2c3e50; 
             background: white;
-            padding: 0;
           }
           
           .invoice-container { 
-            width: 100%; 
-            max-width: 190mm;
+            max-width: 210mm; 
             margin: 0 auto; 
             background: white; 
-            min-height: 260mm;
+            min-height: 297mm;
+            padding: 0;
           }
           
-          /* Modern Header Section */
+          /* Header Section */
           .invoice-header { 
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); 
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%); 
             color: white; 
-            padding: 18px 24px; 
-            border-radius: 12px; 
-            margin-bottom: 20px;
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+            align-items: center;
+            min-height: 80px;
           }
           
-          .company-section {
+          .company-info {
             flex: 1;
           }
           
           .company-name { 
-            font-size: 24pt; 
-            font-weight: 800; 
-            margin-bottom: 4px; 
-            letter-spacing: -0.5px;
+            font-size: 22pt; 
+            font-weight: 900; 
+            margin-bottom: 5px; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
           }
           
           .company-tagline { 
-            font-size: 9pt; 
+            font-size: 10pt; 
             opacity: 0.9; 
             margin-bottom: 8px;
-            font-weight: 500;
+            font-style: italic;
           }
           
           .company-address { 
             font-size: 8pt; 
             opacity: 0.85; 
-            line-height: 1.4;
-            font-weight: 400;
+            line-height: 1.3;
           }
           
           .invoice-meta { 
             text-align: right; 
-            background: rgba(255,255,255,0.12); 
-            padding: 16px 20px; 
-            border-radius: 10px; 
+            background: rgba(255,255,255,0.15); 
+            padding: 15px 20px; 
+            border-radius: 8px; 
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.15);
-            min-width: 140px;
+            border: 1px solid rgba(255,255,255,0.2);
           }
           
           .invoice-title { 
@@ -163,27 +161,27 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
             border: 2px solid rgba(255,255,255,0.3);
           }
           
-          /* Compact Invoice Details Section */
+          /* Invoice Details Section */
           .invoice-details { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
-            gap: 16px; 
-            margin-bottom: 20px;
+            gap: 25px; 
+            margin-bottom: 25px;
           }
           
           .detail-card { 
             background: #f8fafc; 
             border: 1px solid #e2e8f0; 
-            border-radius: 6px; 
-            padding: 14px 16px; 
-            border-left: 3px solid #4f46e5;
+            border-radius: 8px; 
+            padding: 18px; 
+            border-left: 4px solid #1e40af;
           }
           
           .detail-card h3 { 
-            color: #4f46e5; 
-            font-size: 10pt; 
+            color: #1e40af; 
+            font-size: 11pt; 
             font-weight: 700; 
-            margin-bottom: 8px; 
+            margin-bottom: 12px; 
             text-transform: uppercase; 
             letter-spacing: 0.5px;
           }
@@ -191,22 +189,20 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           .detail-row { 
             display: flex; 
             justify-content: space-between; 
-            margin-bottom: 4px;
-            padding: 2px 0;
-            align-items: center;
+            margin-bottom: 6px;
+            padding: 3px 0;
           }
           
           .detail-label { 
             font-weight: 600; 
             color: #4a5568; 
-            font-size: 8pt;
+            min-width: 80px;
           }
           
           .detail-value { 
-            color: #1a202c; 
+            color: #2d3748; 
             text-align: right;
-            font-weight: 500;
-            font-size: 9pt;
+            flex: 1;
           }
           
           /* Status Badge */
@@ -225,18 +221,18 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           .status-draft { background: #f1f5f9; color: #475569; }
           .status-overdue { background: #fecaca; color: #991b1b; }
           
-          /* Compact Items Section */
+          /* Items Section */
           .items-section { 
-            margin: 18px 0;
+            margin: 25px 0;
             page-break-inside: avoid;
           }
           
           .section-header { 
-            background: #4f46e5; 
+            background: #1e40af; 
             color: white; 
-            padding: 10px 16px; 
+            padding: 12px 18px; 
             border-radius: 6px 6px 0 0; 
-            font-size: 10pt; 
+            font-size: 11pt; 
             font-weight: 700; 
             text-transform: uppercase; 
             letter-spacing: 0.5px;
@@ -248,30 +244,32 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
             background: white; 
             border: 1px solid #e2e8f0;
             border-top: none;
-            font-size: 8pt;
           }
           
           .items-table th { 
             background: #f1f5f9; 
-            padding: 8px 10px; 
+            padding: 10px 12px; 
             text-align: left; 
             font-weight: 600; 
             color: #374151; 
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 8pt;
+            border-bottom: 2px solid #e5e7eb;
+            font-size: 9pt;
             text-transform: uppercase;
             letter-spacing: 0.3px;
           }
           
           .items-table td { 
-            padding: 8px 10px; 
+            padding: 12px; 
             border-bottom: 1px solid #f3f4f6; 
             color: #374151;
-            font-size: 8pt;
           }
           
           .items-table tr:nth-child(even) { 
             background: #f9fafb; 
+          }
+          
+          .items-table tr:hover { 
+            background: #f3f4f6; 
           }
           
           .text-right { text-align: right; }
@@ -279,70 +277,50 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           .font-medium { font-weight: 600; }
           .font-bold { font-weight: 700; }
           
-          /* Compact Layout: Payment Info and Totals Side by Side */
-          .payment-totals-section { 
-            margin-top: 20px; 
-            display: grid;
-            grid-template-columns: 1fr 280px;
-            gap: 20px;
-            align-items: start;
-          }
-          
-          .payment-info-card { 
-            background: #f8fafc; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 6px; 
-            padding: 16px; 
-            border-left: 3px solid #4f46e5;
-          }
-          
-          .payment-info-card h3 { 
-            color: #4f46e5; 
-            font-size: 10pt; 
-            font-weight: 700; 
-            margin-bottom: 10px; 
-            text-transform: uppercase; 
+          /* Totals Section */
+          .totals-section { 
+            margin-top: 30px; 
+            display: flex; 
+            justify-content: flex-end;
           }
           
           .totals-card { 
             background: #f8fafc; 
             border: 1px solid #e2e8f0; 
-            border-radius: 6px; 
-            padding: 16px; 
-            border-left: 3px solid #4f46e5;
+            border-radius: 8px; 
+            padding: 20px; 
+            min-width: 300px;
+            border-left: 4px solid #1e40af;
+          }
+          
+          .totals-card h3 { 
+            color: #1e40af; 
+            font-size: 11pt; 
+            font-weight: 700; 
+            margin-bottom: 15px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
           }
           
           .total-row { 
             display: flex; 
             justify-content: space-between; 
-            margin-bottom: 6px; 
-            padding: 3px 0;
-            font-size: 9pt;
+            margin-bottom: 8px; 
+            padding: 5px 0;
           }
           
           .total-row.final { 
-            border-top: 2px solid #4f46e5; 
-            margin-top: 10px; 
-            padding-top: 10px; 
+            border-top: 2px solid #1e40af; 
+            margin-top: 12px; 
+            padding-top: 12px; 
             font-weight: 700; 
-            font-size: 11pt; 
-            color: #4f46e5;
-            background: rgba(79, 70, 229, 0.05);
-            border-radius: 4px;
-            padding: 8px;
-            margin: 8px -8px 0 -8px;
+            font-size: 12pt; 
+            color: #1e40af;
           }
           
           .total-label { 
             font-weight: 600; 
             color: #4a5568;
-            font-size: 8pt;
-          }
-          
-          .total-value { 
-            font-weight: 600;
-            color: #1a202c;
-            font-size: 9pt;
           }
           
           .total-value { 
