@@ -51,6 +51,7 @@ import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import QRCodeReact from "react-qr-code";
 
 import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
+import ModernA4InvoiceTemplate from "@/components/ModernA4InvoiceTemplate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
@@ -126,6 +127,7 @@ export default function InvoiceManagement() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [useModernTemplate, setUseModernTemplate] = useState(true);
   const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [productSearchTerm, setProductSearchTerm] = useState("");
   const { toast } = useToast();
@@ -1692,17 +1694,17 @@ export default function InvoiceManagement() {
                   <div className="flex justify-end space-x-2">
                     <Button 
                       variant="outline"
-                      onClick={() => generateProfessionalInvoice(selectedInvoice)}
+                      onClick={() => setShowInvoicePreview(true)}
                     >
                       <Printer className="h-4 w-4 mr-2" />
-                      Print Professional Invoice
+                      Modern Invoice Preview
                     </Button>
                     <Button 
                       variant="outline"
-                      onClick={() => generateProfessionalInvoice(selectedInvoice)}
+                      onClick={() => setShowInvoicePreview(true)}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Export PDF
+                      Export Modern PDF
                     </Button>
                     <Button 
                       variant="outline"
@@ -1731,6 +1733,14 @@ export default function InvoiceManagement() {
                 </div>
               </DialogContent>
             </Dialog>
+          )}
+
+          {/* Modern A4 Invoice Template Preview */}
+          {showInvoicePreview && selectedInvoice && (
+            <ModernA4InvoiceTemplate
+              invoice={selectedInvoice}
+              onClose={() => setShowInvoicePreview(false)}
+            />
           )}
         </div>
       </main>

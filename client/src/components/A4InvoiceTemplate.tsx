@@ -57,22 +57,24 @@ export default function A4InvoiceTemplate({
       color: '#000',
       backgroundColor: '#fff'
     }}>
-      {/* Invoice Header */}
+      {/* Modern Orange Header */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-start',
-        marginBottom: '30px',
-        borderBottom: '2px solid #2563eb',
-        paddingBottom: '20px'
+        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+        margin: '-20mm -20mm 30px -20mm',
+        padding: '30px 40px',
+        color: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
       }}>
-        {/* Company Info */}
+        {/* Invoice Title */}
         <div style={{ flex: '1' }}>
           <h1 style={{ 
-            fontSize: '24pt', 
+            fontSize: '48pt', 
             fontWeight: 'bold', 
-            color: '#2563eb',
-            margin: '0 0 10px 0'
+            color: 'white',
+            margin: '0',
+            letterSpacing: '2px'
           }}>
             {storeName}
           </h1>
