@@ -1,0 +1,994 @@
+import React, { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Plus, 
+  Search, 
+  Filter,
+  Download,
+  Eye,
+  Edit,
+  Trash2,
+  MoreVertical,
+  FileText,
+  DollarSign,
+  Calendar,
+  User,
+  Package,
+  QrCode,
+  Send,
+  Printer,
+  Share,
+  CreditCard,
+  Receipt,
+  Calculator,
+  Percent,
+  X,
+  Check,
+  AlertCircle,
+  ChevronDown
+} from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { format } from "date-fns";
+import { apiRequest } from "@/lib/queryClient";
+import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
+import QRCodeReact from "react-qr-code";
+
+import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+
+
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  storeId: string;
+  storeName: string;
+  date: string;
+  dueDate: string;
+  subtotal: number;
+  taxRate: number;
+  taxAmount: number;
+  discountAmount: number;
+  total: number;
+  status: "draft" | "sent" | "paid" | "overdue" | "cancelled";
+  paymentMethod?: string;
+  notes?: string;
+  items: InvoiceItem[];
+}
+
+interface InvoiceItem {
+  id: string;
+  productId: string;
+  productName: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  total: number;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+}
+
+interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
+const invoiceSchema = z.object({
+  customerId: z.string().min(1, "Customer is required"),
+  storeId: z.string().min(1, "Store is required"),
+  dueDate: z.string().min(1, "Due date is required"),
+  taxRate: z.coerce.number().min(0).max(100),
+  discountAmount: z.coerce.number().min(0),
+  paymentMethod: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+const invoiceItemSchema = z.object({
+  productId: z.string().min(1, "Product is required"),
+  productName: z.string().optional(),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  unitPrice: z.coerce.number().min(0, "Price must be positive"),
+  discount: z.coerce.number().min(0).max(100),
+});
+
+export default function InvoiceManagement() {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
+  const [showInvoicePreview, setShowInvoicePreview] = useState(false);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Helper function for invoice status badge variants
+  const getInvoiceStatusVariant = (status: string) => {
+    const variants = {
+      draft: "secondary" as const,
+      sent: "default" as const,
+      paid: "default" as const,
+      overdue: "destructive" as const,
+      cancelled: "outline" as const
+    };
+    return variants[status as keyof typeof variants] || "secondary";
+  };
+
+  // Define columns for EnhancedDataTable
+  const invoiceColumns: Column[] = [
+    {
+      key: 'invoiceNumber',
+      title: 'Invoice #',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-blue-600">{value}</div>
+      )
+    },
+    {
+      key: 'customerName',
+      title: 'Customer',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="font-medium text-gray-900">{value}</div>
+      )
+    },
+    {
+      key: 'date',
+      title: 'Invoice Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">{new Date(value).toLocaleDateString()}</div>
+      )
+    },
+    {
+      key: 'dueDate',
+      title: 'Due Date',
+      sortable: true,
+      render: (value) => (
+        <div className="text-sm">{new Date(value).toLocaleDateString()}</div>
+      )
+    },
+    {
+      key: 'total',
+      title: 'Total Amount',
+      sortable: true,
+      render: (value) => (
+        <div className="text-lg font-bold">${value.toFixed(2)}</div>
+      )
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      sortable: true,
+      filterable: true,
+      filterType: 'select',
+      filterOptions: [
+        { value: 'draft', label: 'Draft' },
+        { value: 'sent', label: 'Sent' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'overdue', label: 'Overdue' },
+        { value: 'cancelled', label: 'Cancelled' }
+      ],
+      render: (value) => (
+        <Badge variant={getInvoiceStatusVariant(value)}>
+          {value.toUpperCase()}
+        </Badge>
+      )
+    },
+    {
+      key: 'paymentMethod',
+      title: 'Payment Method',
+      sortable: true,
+      filterable: true,
+      render: (value) => (
+        <div className="text-sm text-gray-600 capitalize">{value || 'Not specified'}</div>
+      )
+    }
+  ];
+
+  // Queries - Enhanced to show both manual and sales invoices
+  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
+    queryKey: ["/api/invoices"],
+    staleTime: 10000, // 10 seconds
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+  });
+  
+  // Debug logging - Enhanced
+  React.useEffect(() => {
+    console.log(`🔥 FRONTEND DEBUG - Invoices length: ${Array.isArray(invoices) ? invoices.length : 0}`);
+    console.log(`🔥 FRONTEND DEBUG - Invoices data:`, invoices);
+    
+    if (Array.isArray(invoices) && invoices.length > 0) {
+      console.log(`🔍 FRONTEND RECEIVED ${invoices.length} INVOICES:`, invoices.map((inv: any) => ({ 
+        id: inv.id, 
+        invoiceNumber: inv.invoiceNumber, 
+        total: inv.total,
+        source: inv.source,
+        customerName: inv.customerName
+      })));
+      
+      // Check for quick sale invoices specifically
+      const quickSaleInvoices = invoices.filter((inv: any) => inv.id && inv.id.startsWith('invoice-'));
+      console.log(`🎯 QUICK SALE INVOICES FOUND: ${quickSaleInvoices.length}`, quickSaleInvoices);
+    } else {
+      console.log(`❌ NO INVOICES RECEIVED OR INVOICES IS NOT AN ARRAY`);
+    }
+  }, [invoices]);
+
+  const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
+    queryKey: ["/api/customers"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const { data: patients = [] } = useQuery<any[]>({
+    queryKey: ["/api/patients"],
+  });
+
+  // Combine customers and patients for the dropdown
+  const allCustomers = [
+    ...customers,
+    ...patients.map((patient: any) => ({
+      id: patient.id,
+      firstName: patient.firstName,
+      lastName: patient.lastName,
+      email: patient.email,
+      phone: patient.phone
+    }))
+  ];
+
+  // Enhance invoice data with customer names
+  const enrichedInvoices = React.useMemo(() => {
+    if (!Array.isArray(invoices)) return [];
+    return invoices.map((invoice: any) => {
+      const customer = customers.find(c => c.id === invoice.customerId);
+      return {
+        ...invoice,
+        customerName: customer ? `${customer.firstName} ${customer.lastName}` : 
+                    invoice.customerName || 'Guest Customer'
+      };
+    });
+  }, [invoices, customers]);
+
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
+    queryKey: ["/api/stores"],
+  });
+
+  // Forms
+  const invoiceForm = useForm<z.infer<typeof invoiceSchema>>({
+    resolver: zodResolver(invoiceSchema),
+    defaultValues: {
+      taxRate: 8.5,
+      discountAmount: 0,
+    },
+  });
+
+  const itemForm = useForm<z.infer<typeof invoiceItemSchema>>({
+    resolver: zodResolver(invoiceItemSchema),
+    defaultValues: {
+      productName: "",
+      quantity: 1,
+      discount: 0,
+    },
+  });
+
+  // Mutations
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: any) => {
+      console.log("Creating invoice with data:", data);
+      const response = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Invoice creation failed:", errorData);
+        throw new Error(`Failed to create invoice: ${response.status}`);
+      }
+      return response.json();
+    },
+    onSuccess: (invoiceData) => {
+      // Force refresh of invoice data
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.refetchQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+      
+      toast({
+        title: "Success",
+        description: `Invoice ${invoiceData.invoiceNumber} created successfully and is now visible in the list.`,
+      });
+      setInvoiceDialogOpen(false);
+      invoiceForm.reset({
+        taxRate: 8.5,
+        discountAmount: 0,
+      });
+      setInvoiceItems([]);
+    },
+    onError: (error: any) => {
+      console.error("Invoice creation error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create invoice.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await fetch(`/api/invoices/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to update invoice");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+      toast({
+        title: "Success",
+        description: "Invoice updated successfully.",
+      });
+    },
+  });
+
+  // Add item to invoice with proper decimal handling
+  const addItem = (data: z.infer<typeof invoiceItemSchema>) => {
+    let productName = "";
+    
+    if (data.productId === "custom") {
+      if (!data.productName || !data.productName.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a custom product name.",
+          variant: "destructive",
+        });
+        return;
+      }
+      productName = data.productName.trim();
+    } else {
+      const product = products.find(p => p.id === data.productId);
+      if (!product) {
+        toast({
+          title: "Error",
+          description: "Selected product not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+      productName = product.name;
+    }
+
+    const unitPrice = parseFloat(data.unitPrice.toString());
+    const quantity = parseInt(data.quantity.toString());
+    const discount = parseFloat(data.discount.toString());
+    
+    const discountAmount = (unitPrice * discount) / 100;
+    const discountedPrice = unitPrice - discountAmount;
+    const total = discountedPrice * quantity;
+
+    const newItem: InvoiceItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      productId: data.productId,
+      productName: productName,
+      quantity: quantity,
+      unitPrice: parseFloat(unitPrice.toFixed(2)),
+      discount: discount,
+      total: parseFloat(total.toFixed(2)),
+    };
+
+    setInvoiceItems([...invoiceItems, newItem]);
+    itemForm.reset({ 
+      productId: "",
+      productName: "",
+      quantity: 1, 
+      discount: 0, 
+      unitPrice: 0 
+    });
+  };
+
+  // Remove item from invoice
+  const removeItem = (itemId: string) => {
+    setInvoiceItems(invoiceItems.filter(item => item.id !== itemId));
+  };
+
+  // Calculate totals with proper decimal handling - CONSISTENT WITH BACKEND
+  const subtotal = invoiceItems.reduce((sum, item) => sum + parseFloat(item.total.toString()), 0);
+  const discountAmount = parseFloat(invoiceForm.watch("discountAmount")?.toString() || "0");
+  const taxRate = parseFloat(invoiceForm.watch("taxRate")?.toString() || "0");
+  
+  // Backend calculation method: tax on full subtotal, then subtract discount
+  const taxAmount = (subtotal * taxRate) / 100;
+  const grandTotal = subtotal + taxAmount - discountAmount;
+  
+
+
+  // Submit invoice
+  const onSubmit = (data: z.infer<typeof invoiceSchema>) => {
+    if (invoiceItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one item to the invoice.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ensure required fields are present
+    const invoiceData = {
+      invoiceNumber: `INV-${Date.now()}`,
+      date: new Date().toISOString(),
+      status: "draft",
+      items: invoiceItems,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      taxAmount: parseFloat(taxAmount.toFixed(2)),
+      total: parseFloat(grandTotal.toFixed(2)),
+      discountAmount: parseFloat(discountAmount.toFixed(2)),
+      taxRate: data.taxRate || 8.5,
+      customerId: data.customerId || "f8e50809-954c-4ff6-b1c2-a014218b1b36",
+      storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
+      dueDate: data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      notes: data.notes || "",
+    };
+
+    createInvoiceMutation.mutate(invoiceData);
+  };
+
+  // Debug: Log enriched invoices for verification - SPECIFIC SEARCH
+  React.useEffect(() => {
+    console.log(`📋 ENRICHED INVOICES COUNT: ${enrichedInvoices.length}`, enrichedInvoices.slice(0, 3));
+    
+    // Look specifically for the $3129.81 transaction
+    const inv070929 = enrichedInvoices.find(inv => inv.invoiceNumber === 'INV-070929');
+    if (inv070929) {
+      console.log(`✅ FOUND INV-070929 ($3129.81 transaction):`, inv070929);
+    } else {
+      console.log(`❌ INV-070929 NOT FOUND in enriched invoices`);
+    }
+    
+    // Log all invoice numbers for verification
+    console.log(`📄 ALL INVOICE NUMBERS:`, enrichedInvoices.map(inv => inv.invoiceNumber));
+  }, [enrichedInvoices]);
+
+  // Filter invoices - Use enriched invoices with customer names
+  const filteredInvoices = enrichedInvoices.filter((invoice: any) => {
+    const matchesSearch = 
+      invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || invoice.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "paid": return "bg-green-100 text-green-800";
+      case "sent": return "bg-blue-100 text-blue-800";
+      case "overdue": return "bg-red-100 text-red-800";
+      case "draft": return "bg-gray-100 text-gray-800";
+      case "cancelled": return "bg-slate-100 text-slate-800";
+      default: return "bg-slate-100 text-slate-800";
+    }
+  };
+
+  const generateInvoiceQR = (invoice: Invoice) => {
+    const qrData = {
+      type: "invoice",
+      invoiceNumber: invoice.invoiceNumber,
+      amount: invoice.total,
+      dueDate: invoice.dueDate,
+      url: `${window.location.origin}/invoices/${invoice.id}`
+    };
+    return JSON.stringify(qrData);
+  };
+
+  // NEW PROFESSIONAL A4 INVOICE GENERATION - COMPLETELY REDESIGNED
+  const generateProfessionalInvoice = (invoice: Invoice) => {
+
+
+  // Professional invoice generation with modern design
+  const generateProfessionalInvoice = (invoice: Invoice) => {
+    const customer = customers.find(c => c.id === invoice.customerId);
+    const store = stores.find(s => s.id === invoice.storeId);
+    
+    const printWindow = window.open('', '_blank', 'width=900,height=1200');
+    if (!printWindow) return;
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Professional Invoice - ${invoice.invoiceNumber}</title>
+        <style>
+          @page { size: A4; margin: 10mm; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { 
+            font-family: 'Inter', 'Segoe UI', sans-serif; 
+            font-size: 11pt; 
+            color: #1a202c; 
+            background: white; 
+            line-height: 1.5;
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+          }
+          
+          .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+          }
+          
+          .company h1 {
+            font-size: 28pt;
+            font-weight: 800;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+          }
+          
+          .company-tagline {
+            font-size: 12pt;
+            opacity: 0.9;
+            margin-bottom: 12px;
+          }
+          
+          .company-address {
+            font-size: 10pt;
+            opacity: 0.8;
+          }
+          
+          .invoice-info {
+            text-align: right;
+          }
+          
+          .invoice-title {
+            font-size: 24pt;
+            font-weight: 900;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+          }
+          
+          .invoice-number {
+            background: rgba(255,255,255,0.15);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14pt;
+            font-weight: 700;
+            display: inline-block;
+          }
+          
+          .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+          }
+          
+          .detail-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+          }
+          
+          .detail-card h3 {
+            color: #1e40af;
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #f1f5f9;
+          }
+          
+          .detail-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+          }
+          
+          .detail-label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 9pt;
+          }
+          
+          .detail-value {
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 9pt;
+          }
+          
+          .items-section {
+            margin: 30px 0;
+          }
+          
+          .section-title {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px 8px 0 0;
+            font-size: 12pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          
+          .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            overflow: hidden;
+          }
+          
+          .items-table th {
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            color: #1e40af;
+            padding: 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 9pt;
+            text-transform: uppercase;
+            border-bottom: 2px solid #cbd5e1;
+          }
+          
+          .items-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 9pt;
+          }
+          
+          .items-table tr:nth-child(even) {
+            background: #fafbfc;
+          }
+          
+          .item-name {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 2px;
+          }
+          
+          .item-description {
+            font-size: 8pt;
+            color: #64748b;
+            font-style: italic;
+          }
+          
+          .text-right {
+            text-align: right;
+          }
+          
+          .text-center {
+            text-align: center;
+          }
+          
+          .totals-section {
+            display: flex;
+            gap: 25px;
+            margin-top: 30px;
+          }
+          
+          .payment-info {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+          }
+          
+          .payment-info h4 {
+            color: #1e40af;
+            font-size: 11pt;
+            font-weight: 700;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+          }
+          
+          .totals-card {
+            width: 350px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          }
+          
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f5f9;
+          }
+          
+          .total-row:last-child {
+            border-bottom: none;
+          }
+          
+          .total-label {
+            font-weight: 600;
+            color: #475569;
+            font-size: 10pt;
+          }
+          
+          .total-value {
+            font-weight: 700;
+            color: #1e293b;
+            font-family: monospace;
+            font-size: 10pt;
+          }
+          
+          .grand-total {
+            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 8px;
+          }
+          
+          .grand-total .total-label {
+            color: white;
+            font-size: 11pt;
+            text-transform: uppercase;
+          }
+          
+          .grand-total .total-value {
+            color: white;
+            font-size: 16pt;
+            font-weight: 900;
+          }
+          
+          .notes {
+            margin-top: 30px;
+            padding: 16px;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            border-left: 4px solid #d97706;
+          }
+          
+          .notes-title {
+            font-weight: 700;
+            color: #92400e;
+            margin-bottom: 6px;
+            font-size: 10pt;
+          }
+          
+          .notes-content {
+            color: #78350f;
+            font-size: 9pt;
+          }
+          
+          @media print {
+            body { font-size: 10pt; }
+            .header { padding: 20px; }
+            .detail-card { padding: 16px; }
+            .totals-card { padding: 16px; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="header-content">
+            <div class="company">
+              <h1>OptiStore Pro</h1>
+              <div class="company-tagline">Professional Medical & Optical Center</div>
+              <div class="company-address">
+                123 Healthcare Blvd, Medical District<br>
+                New York, NY 10001 | (555) 123-4567<br>
+                info@optistorepro.com | www.optistorepro.com
+              </div>
+            </div>
+            <div class="invoice-info">
+              <div class="invoice-title">Invoice</div>
+              <div class="invoice-number">${invoice.invoiceNumber}</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="details-grid">
+          <div class="detail-card">
+            <h3>Bill To</h3>
+            <div class="detail-row">
+              <span class="detail-label">Customer:</span>
+              <span class="detail-value">${customer?.name || invoice.customerName || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Customer ID:</span>
+              <span class="detail-value">${invoice.customerId ? invoice.customerId.substring(0, 8) + '...' : 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Phone:</span>
+              <span class="detail-value">${customer?.phone || 'N/A'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">${customer?.email || 'N/A'}</span>
+            </div>
+          </div>
+          
+          <div class="detail-card">
+            <h3>Invoice Details</h3>
+            <div class="detail-row">
+              <span class="detail-label">Issue Date:</span>
+              <span class="detail-value">${new Date(invoice.date).toLocaleDateString()}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Due Date:</span>
+              <span class="detail-value">${new Date(invoice.dueDate).toLocaleDateString()}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Store:</span>
+              <span class="detail-value">${store?.name || 'Store1'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Status:</span>
+              <span class="detail-value" style="padding: 3px 8px; background: ${invoice.status === 'paid' ? '#dcfce7' : '#fef3c7'}; color: ${invoice.status === 'paid' ? '#15803d' : '#a16207'}; border-radius: 12px; font-weight: 700; text-transform: uppercase; font-size: 8pt;">${invoice.status}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="items-section">
+          <div class="section-title">Services & Products</div>
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th style="width: 45%">Description</th>
+                <th style="width: 10%" class="text-center">Qty</th>
+                <th style="width: 15%" class="text-right">Unit Price</th>
+                <th style="width: 10%" class="text-right">Discount</th>
+                <th style="width: 20%" class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoice.items && invoice.items.length > 0 ? invoice.items.map(item => `
+                <tr>
+                  <td>
+                    <div class="item-name">${item.productName}</div>
+                    ${item.description ? `<div class="item-description">${item.description}</div>` : ''}
+                  </td>
+                  <td class="text-center">${item.quantity}</td>
+                  <td class="text-right">$${item.unitPrice.toFixed(2)}</td>
+                  <td class="text-right">${item.discount}%</td>
+                  <td class="text-right">$${item.total.toFixed(2)}</td>
+                </tr>
+              `).join('') : `
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">
+                    No items available for this invoice
+                  </td>
+                </tr>
+              `}
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="totals-section">
+          <div class="payment-info">
+            <h4>Payment Information</h4>
+            <div class="detail-row">
+              <span class="detail-label">Payment Method:</span>
+              <span class="detail-value" style="text-transform: capitalize;">${invoice.paymentMethod || 'cash'}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Tax Rate:</span>
+              <span class="detail-value">${invoice.taxRate}%</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Currency:</span>
+              <span class="detail-value">USD ($)</span>
+            </div>
+          </div>
+          
+          <div class="totals-card">
+            <div class="total-row">
+              <span class="total-label">Subtotal:</span>
+              <span class="total-value">$${invoice.subtotal.toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+              <span class="total-label">Discount:</span>
+              <span class="total-value">-$${(invoice.discountAmount || 0).toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+              <span class="total-label">Tax (${invoice.taxRate}%):</span>
+              <span class="total-value">$${invoice.taxAmount.toFixed(2)}</span>
+            </div>
+            
+            <div class="grand-total">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="total-label">Total Amount</span>
+                <span class="total-value">$${invoice.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        ${invoice.notes ? `
+          <div class="notes">
+            <div class="notes-title">Additional Notes:</div>
+            <div class="notes-content">${invoice.notes}</div>
+          </div>
+        ` : ''}
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  };
