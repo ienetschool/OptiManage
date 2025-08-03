@@ -469,9 +469,20 @@ export default function InvoiceManagement() {
     createInvoiceMutation.mutate(invoiceData);
   };
 
-  // Debug: Log enriched invoices for verification
+  // Debug: Log enriched invoices for verification - SPECIFIC SEARCH
   React.useEffect(() => {
     console.log(`📋 ENRICHED INVOICES COUNT: ${enrichedInvoices.length}`, enrichedInvoices.slice(0, 3));
+    
+    // Look specifically for the $3129.81 transaction
+    const inv070929 = enrichedInvoices.find(inv => inv.invoiceNumber === 'INV-070929');
+    if (inv070929) {
+      console.log(`✅ FOUND INV-070929 ($3129.81 transaction):`, inv070929);
+    } else {
+      console.log(`❌ INV-070929 NOT FOUND in enriched invoices`);
+    }
+    
+    // Log all invoice numbers for verification
+    console.log(`📄 ALL INVOICE NUMBERS:`, enrichedInvoices.map(inv => inv.invoiceNumber));
   }, [enrichedInvoices]);
 
   // Filter invoices - Use enriched invoices with customer names

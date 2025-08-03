@@ -180,6 +180,10 @@ export default function EnhancedDataTable({
   const paginatedData = showPagination 
     ? sortedData.slice(startIndex, startIndex + pageSizeValue)
     : sortedData;
+  
+  // Debug pagination
+  console.log(`📄 PAGINATION DEBUG - Total: ${sortedData.length}, Page: ${currentPage}, PerPage: ${pageSizeValue}, Showing: ${paginatedData.length}`);
+  console.log(`📄 CURRENT PAGE DATA:`, paginatedData.slice(0, 3).map(item => ({ id: item.id, invoiceNumber: item.invoiceNumber })));
 
   // Reset to first page when data changes
   React.useEffect(() => {
