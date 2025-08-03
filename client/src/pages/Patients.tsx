@@ -3266,9 +3266,15 @@ export default function Patients() {
                         ))
                       );
                       
-                      // Combine and sort by date
+                      // Combine and sort by date (with null checking)
                       const allPatientInvoices = [...patientMedicalInvoices, ...patientRegularInvoices]
-                        .sort((a, b) => new Date(b.invoiceDate || b.createdAt).getTime() - new Date(a.invoiceDate || a.createdAt).getTime());
+                        .sort((a, b) => {
+                          const dateA = new Date(a.invoiceDate || a.createdAt || 0);
+                          const dateB = new Date(b.invoiceDate || b.createdAt || 0);
+                          if (isNaN(dateA.getTime())) return 1;
+                          if (isNaN(dateB.getTime())) return -1;
+                          return dateB.getTime() - dateA.getTime();
+                        });
                       
                       return allPatientInvoices;
                     })().map((invoice: any, index: number) => (
@@ -3281,7 +3287,17 @@ export default function Patients() {
                             <div>
                               <p className="font-medium text-gray-900">{invoice.invoiceNumber}</p>
                               <p className="text-sm text-gray-600">
-                                {format(new Date(invoice.invoiceDate || invoice.createdAt), 'MMM dd, yyyy')}
+                                {(() => {
+                                  const dateValue = invoice.invoiceDate || invoice.createdAt;
+                                  if (!dateValue) return 'No date available';
+                                  try {
+                                    const date = new Date(dateValue);
+                                    if (isNaN(date.getTime())) return 'Invalid date';
+                                    return format(date, 'MMM dd, yyyy');
+                                  } catch (error) {
+                                    return 'Invalid date';
+                                  }
+                                })()}
                                 {invoice.notes && ` • ${invoice.notes.slice(0, 30)}...`}
                               </p>
                             </div>
@@ -3306,7 +3322,15 @@ export default function Patients() {
                             <span className="text-xs text-gray-500 uppercase tracking-wide">Payment Info</span>
                             <p className="text-sm font-medium text-gray-900">${parseFloat(invoice.total || 0).toFixed(2)} ({invoice.paymentMethod || 'N/A'})</p>
                             <p className="text-xs text-gray-600">
-                              {invoice.paymentDate ? `Paid: ${format(new Date(invoice.paymentDate), 'MMM dd, yyyy')}` : 'Payment pending'}
+                              {invoice.paymentDate ? (() => {
+                                try {
+                                  const date = new Date(invoice.paymentDate);
+                                  if (isNaN(date.getTime())) return 'Invalid payment date';
+                                  return `Paid: ${format(date, 'MMM dd, yyyy')}`;
+                                } catch (error) {
+                                  return 'Invalid payment date';
+                                }
+                              })() : 'Payment pending'}
                             </p>
                           </div>
 
