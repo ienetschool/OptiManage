@@ -45,6 +45,12 @@ import { useToast } from "@/hooks/use-toast";
 export default function Pages() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStore, setSelectedStore] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedPages, setSelectedPages] = useState<string[]>([]);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<any>(null);
@@ -123,6 +129,60 @@ export default function Pages() {
       type: "page",
       lastModified: "2025-08-03",
       views: 0
+    },
+    {
+      id: "7",
+      title: "Privacy Policy",
+      slug: "/privacy",
+      status: "published",
+      type: "page",
+      lastModified: "2025-07-15",
+      views: 892
+    },
+    {
+      id: "8",
+      title: "Terms of Service",
+      slug: "/terms",
+      status: "published",
+      type: "page",
+      lastModified: "2025-07-10",
+      views: 567
+    },
+    {
+      id: "9",
+      title: "FAQ",
+      slug: "/faq",
+      status: "published",
+      type: "page",
+      lastModified: "2025-08-01",
+      views: 1234
+    },
+    {
+      id: "10",
+      title: "News Article 1",
+      slug: "/news/article-1",
+      status: "published",
+      type: "blog",
+      lastModified: "2025-08-02",
+      views: 445
+    },
+    {
+      id: "11",
+      title: "News Article 2",
+      slug: "/news/article-2",
+      status: "draft",
+      type: "blog",
+      lastModified: "2025-08-03",
+      views: 12
+    },
+    {
+      id: "12",
+      title: "Product Launch",
+      slug: "/news/product-launch",
+      status: "archived",
+      type: "blog",
+      lastModified: "2025-06-15",
+      views: 2156
     }
   ]);
 
@@ -135,10 +195,72 @@ export default function Pages() {
     return variants[status as keyof typeof variants] || variants.draft;
   };
 
-  const filteredPages = pages.filter(page =>
-    page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    page.slug.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Enhanced filtering with status, type, and search
+  const filteredPages = pages.filter(page => {
+    const matchesSearch = page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         page.slug.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || page.status === statusFilter;
+    const matchesType = typeFilter === "all" || page.type === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPages.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPages = filteredPages.slice(startIndex, endIndex);
+
+  // Bulk operations
+  const handleSelectAll = () => {
+    if (selectedPages.length === paginatedPages.length) {
+      setSelectedPages([]);
+    } else {
+      setSelectedPages(paginatedPages.map(p => p.id));
+    }
+  };
+
+  const handleSelectPage = (pageId: string) => {
+    setSelectedPages(prev => 
+      prev.includes(pageId) 
+        ? prev.filter(id => id !== pageId)
+        : [...prev, pageId]
+    );
+  };
+
+  const handleBulkAction = (action: string) => {
+    const selectedCount = selectedPages.length;
+    switch (action) {
+      case 'publish':
+        setPages(prev => prev.map(p => 
+          selectedPages.includes(p.id) ? {...p, status: 'published'} : p
+        ));
+        toast({
+          title: "Pages Published",
+          description: `${selectedCount} pages have been published`,
+        });
+        break;
+      case 'draft':
+        setPages(prev => prev.map(p => 
+          selectedPages.includes(p.id) ? {...p, status: 'draft'} : p
+        ));
+        toast({
+          title: "Pages Moved to Draft",
+          description: `${selectedCount} pages moved to draft status`,
+        });
+        break;
+      case 'delete':
+        if (confirm(`Are you sure you want to delete ${selectedCount} selected pages? This action cannot be undone.`)) {
+          setPages(prev => prev.filter(p => !selectedPages.includes(p.id)));
+          toast({
+            title: "Pages Deleted",
+            description: `${selectedCount} pages have been deleted`,
+            variant: "destructive",
+          });
+        }
+        break;
+    }
+    setSelectedPages([]);
+  };
 
 
 
@@ -375,8 +497,9 @@ export default function Pages() {
             className="pl-10"
           />
         </div>
-        <Select defaultValue="all" onValueChange={(value) => {
-          console.log(`Status filter changed to: ${value}`);
+        <Select value={statusFilter} onValueChange={(value) => {
+          setStatusFilter(value);
+          setCurrentPage(1); // Reset to first page when filtering
           toast({
             title: "Filter Applied",
             description: `Showing ${value === 'all' ? 'all pages' : value + ' pages'}`,
@@ -392,8 +515,9 @@ export default function Pages() {
             <SelectItem value="archived">Archived</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="all" onValueChange={(value) => {
-          console.log(`Type filter changed to: ${value}`);
+        <Select value={typeFilter} onValueChange={(value) => {
+          setTypeFilter(value);
+          setCurrentPage(1); // Reset to first page when filtering
           toast({
             title: "Filter Applied",
             description: `Showing ${value === 'all' ? 'all content' : value + ' content'}`,
@@ -408,6 +532,28 @@ export default function Pages() {
             <SelectItem value="blog">Blog Posts</SelectItem>
           </SelectContent>
         </Select>
+        
+        {/* Bulk Actions */}
+        {selectedPages.length > 0 && (
+          <div className="flex items-center space-x-2 bg-blue-50 p-2 rounded-lg border">
+            <span className="text-sm text-blue-700 font-medium">
+              {selectedPages.length} selected
+            </span>
+            <Button size="sm" variant="outline" onClick={() => handleBulkAction('publish')}>
+              Publish
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleBulkAction('draft')}>
+              Draft
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleBulkAction('delete')}>
+              Delete
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setShareDialogOpen(true)}>
+              <Share2 className="h-4 w-4 mr-1" />
+              Share
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Pages List */}
@@ -424,14 +570,51 @@ export default function Pages() {
             </div>
           ) : (
             <>
-              <div className="text-sm text-slate-500 mb-4">
-                Showing {filteredPages.length} of {pages.length} pages
+              {/* Results Summary and Bulk Actions */}
+              <div className="flex justify-between items-center mb-4">
+                <div className="text-sm text-slate-500">
+                  Showing {startIndex + 1}-{Math.min(endIndex, filteredPages.length)} of {filteredPages.length} pages
+                  {filteredPages.length !== pages.length && ` (filtered from ${pages.length} total)`}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedPages.length === paginatedPages.length && paginatedPages.length > 0}
+                      onChange={handleSelectAll}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm">Select All</span>
+                  </label>
+                  <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                    setItemsPerPage(parseInt(value));
+                    setCurrentPage(1);
+                  }}>
+                    <SelectTrigger className="w-20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="space-y-4" style={{ height: 'auto', minHeight: '600px' }}>
-                {filteredPages.map((page) => (
+              <div className="space-y-4" style={{ height: 'auto', minHeight: '400px' }}>
+                {paginatedPages.map((page) => (
                 <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow w-full" style={{ display: 'flex', minHeight: '80px' }}>
                   <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={selectedPages.includes(page.id)}
+                        onChange={() => handleSelectPage(page.id)}
+                        className="rounded border-gray-300"
+                      />
+                    </div>
                     <div className="flex-shrink-0">
                       <FileText className="h-8 w-8 text-slate-400" />
                     </div>
@@ -498,10 +681,162 @@ export default function Pages() {
                 </div>
               ))}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-between items-center mt-6 pt-4 border-t">
+                  <div className="text-sm text-slate-500">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    
+                    {/* Page Numbers */}
+                    <div className="flex space-x-1">
+                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                        let pageNum;
+                        if (totalPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          pageNum = totalPages - 4 + i;
+                        } else {
+                          pageNum = currentPage - 2 + i;
+                        }
+                        
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNum)}
+                            className="w-8 h-8 p-0"
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </CardContent>
       </Card>
+
+      {/* Data Sharing Dialog */}
+      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Share Pages</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 rounded-lg">
+              <h4 className="font-medium mb-2">Selected Pages ({selectedPages.length})</h4>
+              <div className="space-y-1 text-sm text-slate-600">
+                {pages.filter(p => selectedPages.includes(p.id)).map(page => (
+                  <div key={page.id} className="flex justify-between">
+                    <span>{page.title}</span>
+                    <Badge variant="outline" className="text-xs">
+                      {page.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button variant="outline" onClick={() => {
+                const selectedPagesData = pages.filter(p => selectedPages.includes(p.id));
+                const exportData = JSON.stringify(selectedPagesData, null, 2);
+                const blob = new Blob([exportData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pages-export-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast({
+                  title: "Pages Exported",
+                  description: "Selected pages have been exported as JSON",
+                });
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Export JSON
+              </Button>
+              
+              <Button variant="outline" onClick={() => {
+                const selectedPagesData = pages.filter(p => selectedPages.includes(p.id));
+                const csvContent = [
+                  'Title,Slug,Status,Type,Views,Last Modified',
+                  ...selectedPagesData.map(p => 
+                    `"${p.title}","${p.slug}","${p.status}","${p.type}",${p.views},"${p.lastModified}"`
+                  )
+                ].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `pages-export-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast({
+                  title: "Pages Exported",
+                  description: "Selected pages have been exported as CSV",
+                });
+              }}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+              
+              <Button variant="outline" onClick={() => {
+                const selectedPagesText = pages
+                  .filter(p => selectedPages.includes(p.id))
+                  .map(p => `${p.title} (${p.slug}) - ${p.status}`)
+                  .join('\n');
+                navigator.clipboard.writeText(selectedPagesText);
+                toast({
+                  title: "Copied to Clipboard",
+                  description: "Page list copied to clipboard",
+                });
+              }}>
+                <Copy className="h-4 w-4 mr-2" />
+                Copy List
+              </Button>
+              
+              <Button onClick={() => {
+                const shareUrl = `${window.location.origin}/pages?ids=${selectedPages.join(',')}`;
+                navigator.clipboard.writeText(shareUrl);
+                toast({
+                  title: "Share Link Created",
+                  description: "Share URL copied to clipboard",
+                });
+              }}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share Link
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Advanced Page Editor Dialog */}
       <Dialog open={!!editingPage} onOpenChange={(open) => {
