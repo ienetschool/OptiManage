@@ -27,6 +27,13 @@ export default function Themes() {
   const [selectedTheme, setSelectedTheme] = useState("modern");
   const [previewDevice, setPreviewDevice] = useState("desktop");
   const [selectedStore, setSelectedStore] = useState("primary");
+  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
+  const [activeThemes, setActiveThemes] = useState<{[key: string]: boolean}>({ modern: true });
+  const [customColors, setCustomColors] = useState({
+    primary: "#3b82f6",
+    secondary: "#64748b", 
+    accent: "#06b6d4"
+  });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -36,17 +43,54 @@ export default function Themes() {
 
   const applyThemeMutation = useMutation({
     mutationFn: async ({ themeId, storeId }: { themeId: string; storeId: string }) => {
-      // Mock API call
+      // Mock API call - simulate theme application
       await new Promise(resolve => setTimeout(resolve, 1000));
       return { themeId, storeId };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Update active themes state
+      setActiveThemes(prev => ({
+        ...Object.keys(prev).reduce((acc, key) => ({ ...acc, [key]: false }), {}),
+        [data.themeId]: true
+      }));
       toast({
-        title: "Theme Applied",
-        description: "Theme has been successfully applied to the selected store.",
+        title: "Theme Applied Successfully",
+        description: `Theme has been applied to the selected store.`,
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/stores"] });
     },
   });
+
+  const activateTheme = (themeId: string) => {
+    applyThemeMutation.mutate({ themeId, storeId: selectedStore });
+  };
+
+  const viewThemePreview = (themeId: string) => {
+    setPreviewTheme(themeId);
+    toast({
+      title: "Theme Preview",
+      description: `Previewing ${themes.find(t => t.id === themeId)?.name} theme.`,
+    });
+  };
+
+  const applyColorScheme = (scheme: any) => {
+    setCustomColors({
+      primary: scheme.primary,
+      secondary: scheme.secondary,
+      accent: scheme.accent
+    });
+    toast({
+      title: "Color Scheme Applied",
+      description: `${scheme.name} color scheme has been applied.`,
+    });
+  };
+
+  const applyCustomColors = () => {
+    toast({
+      title: "Custom Colors Applied",
+      description: "Your custom color palette has been applied to the theme.",
+    });
+  };
 
   // Mock themes data
   const themes = [
@@ -56,16 +100,16 @@ export default function Themes() {
       description: "Clean, professional design for medical practices",
       preview: "/api/placeholder/400/300",
       category: "Medical",
-      isActive: true,
+      isActive: activeThemes.modern || false,
       price: "Free"
     },
     {
       id: "classic",
-      name: "Classic Healthcare",
+      name: "Classic Healthcare", 
       description: "Traditional healthcare design with professional styling",
       preview: "/api/placeholder/400/300",
       category: "Medical",
-      isActive: false,
+      isActive: activeThemes.classic || false,
       price: "Free"
     },
     {
@@ -74,7 +118,7 @@ export default function Themes() {
       description: "Premium design for optical and vision care practices",
       preview: "/api/placeholder/400/300",
       category: "Optical",
-      isActive: false,
+      isActive: activeThemes.premium || false,
       price: "$29"
     },
     {
@@ -83,7 +127,7 @@ export default function Themes() {
       description: "Minimalist design focusing on content and usability",
       preview: "/api/placeholder/400/300",
       category: "General",
-      isActive: false,
+      isActive: activeThemes.minimal || false,
       price: "Free"
     }
   ];
@@ -171,12 +215,12 @@ export default function Themes() {
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-lg">{theme.price}</span>
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => viewThemePreview(theme.id)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                         {!theme.isActive && (
-                          <Button size="sm" onClick={() => setSelectedTheme(theme.id)}>
-                            Activate
+                          <Button size="sm" onClick={() => activateTheme(theme.id)} disabled={applyThemeMutation.isPending}>
+                            {applyThemeMutation.isPending ? "Activating..." : "Activate"}
                           </Button>
                         )}
                       </div>
@@ -203,7 +247,7 @@ export default function Themes() {
                   <div key={index} className="p-4 border rounded-lg hover:shadow-sm transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium">{scheme.name}</h4>
-                      <Button variant="outline" size="sm">Apply</Button>
+                      <Button variant="outline" size="sm" onClick={() => applyColorScheme(scheme)}>Apply</Button>
                     </div>
                     <div className="flex space-x-2">
                       <div 
@@ -232,26 +276,53 @@ export default function Themes() {
                   <div className="space-y-2">
                     <Label>Primary Color</Label>
                     <div className="flex space-x-2">
-                      <Input type="color" className="w-16 h-10 p-1" defaultValue="#3b82f6" />
-                      <Input defaultValue="#3b82f6" className="flex-1" />
+                      <Input 
+                        type="color" 
+                        className="w-16 h-10 p-1" 
+                        value={customColors.primary}
+                        onChange={(e) => setCustomColors(prev => ({ ...prev, primary: e.target.value }))}
+                      />
+                      <Input 
+                        value={customColors.primary} 
+                        className="flex-1"
+                        onChange={(e) => setCustomColors(prev => ({ ...prev, primary: e.target.value }))}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Secondary Color</Label>
                     <div className="flex space-x-2">
-                      <Input type="color" className="w-16 h-10 p-1" defaultValue="#64748b" />
-                      <Input defaultValue="#64748b" className="flex-1" />
+                      <Input 
+                        type="color" 
+                        className="w-16 h-10 p-1" 
+                        value={customColors.secondary}
+                        onChange={(e) => setCustomColors(prev => ({ ...prev, secondary: e.target.value }))}
+                      />
+                      <Input 
+                        value={customColors.secondary} 
+                        className="flex-1"
+                        onChange={(e) => setCustomColors(prev => ({ ...prev, secondary: e.target.value }))}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Accent Color</Label>
                     <div className="flex space-x-2">
-                      <Input type="color" className="w-16 h-10 p-1" defaultValue="#06b6d4" />
-                      <Input defaultValue="#06b6d4" className="flex-1" />
+                      <Input 
+                        type="color" 
+                        className="w-16 h-10 p-1" 
+                        value={customColors.accent}
+                        onChange={(e) => setCustomColors(prev => ({ ...prev, accent: e.target.value }))}
+                      />
+                      <Input 
+                        value={customColors.accent} 
+                        className="flex-1"
+                        onChange={(e) => setCustomColors(prev => ({ ...prev, accent: e.target.value }))}
+                      />
                     </div>
                   </div>
                 </div>
-                <Button>
+                <Button onClick={applyCustomColors}>
                   <Brush className="h-4 w-4 mr-2" />
                   Apply Custom Colors
                 </Button>
