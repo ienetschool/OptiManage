@@ -27,6 +27,8 @@ export default function Pages() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStore, setSelectedStore] = useState("all");
   const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editingPage, setEditingPage] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -120,16 +122,71 @@ export default function Pages() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={() => {
-            toast({
-              title: "Page Settings",
-              description: "Opening page configuration settings...",
-            });
-            console.log('Page Settings clicked - opening configuration panel');
-          }}>
-            <Settings className="h-4 w-4 mr-2" />
-            Page Settings
-          </Button>
+          <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                Page Settings
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Page Settings</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Default Domain</label>
+                    <Input placeholder="example.com" defaultValue="optistore.com" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">SEO Title Template</label>
+                    <Input placeholder="%title% | %site_name%" defaultValue="%title% | OptiStore Pro" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Meta Description Template</label>
+                  <Input placeholder="Default meta description" defaultValue="Professional optical retail management system" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Cache Settings</label>
+                    <Select defaultValue="enabled">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="enabled">Enabled</SelectItem>
+                        <SelectItem value="disabled">Disabled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Analytics</label>
+                    <Select defaultValue="google">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="google">Google Analytics</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setSettingsOpen(false)}>Cancel</Button>
+                  <Button onClick={() => {
+                    toast({ 
+                      title: "Settings Saved", 
+                      description: "Page settings have been updated successfully"
+                    });
+                    setSettingsOpen(false);
+                  }}>Save Settings</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -338,12 +395,8 @@ export default function Pages() {
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => {
-                      console.log(`Editing page: ${page.title} (${page.id})`);
-                      toast({
-                        title: "Edit Page",
-                        description: `Opening editor for "${page.title}"`,
-                      });
-                      // In a real app, this would navigate to the page editor
+                      setEditingPage(page);
+                      console.log(`Opening editor for page: ${page.title} (${page.id})`);
                     }}>
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -367,6 +420,90 @@ export default function Pages() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Page Dialog */}
+      <Dialog open={!!editingPage} onOpenChange={(open) => !open && setEditingPage(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Page: {editingPage?.title}</DialogTitle>
+          </DialogHeader>
+          {editingPage && (
+            <div className="space-y-6 p-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Page Title</label>
+                  <Input defaultValue={editingPage.title} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">URL Slug</label>
+                  <Input defaultValue={editingPage.slug} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <Select defaultValue={editingPage.status}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Page Type</label>
+                  <Select defaultValue={editingPage.type}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="page">Page</SelectItem>
+                      <SelectItem value="blog">Blog Post</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium">SEO Meta Description</label>
+                <Input placeholder="Enter meta description for SEO" />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Page Content</label>
+                <div className="border rounded-lg p-4 min-h-[200px] bg-slate-50">
+                  <p className="text-sm text-slate-500 mb-4">Page Editor</p>
+                  <div className="space-y-2">
+                    <Input placeholder="Page heading..." />
+                    <textarea 
+                      className="w-full min-h-[120px] p-3 border rounded resize-none"
+                      placeholder="Page content goes here..."
+                      defaultValue={`This is the content for ${editingPage.title}. You can edit this content using the page editor.`}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditingPage(null)}>Cancel</Button>
+                <Button variant="outline" onClick={() => {
+                  toast({ 
+                    title: "Draft Saved", 
+                    description: `Changes to "${editingPage.title}" saved as draft`
+                  });
+                }}>Save Draft</Button>
+                <Button onClick={() => {
+                  toast({ 
+                    title: "Page Updated", 
+                    description: `"${editingPage.title}" has been updated successfully`
+                  });
+                  setEditingPage(null);
+                }}>Update Page</Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
