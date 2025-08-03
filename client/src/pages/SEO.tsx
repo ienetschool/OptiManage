@@ -255,8 +255,7 @@ export default function SEO() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -457,7 +456,7 @@ export default function SEO() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 overflow-visible">
               {/* Filters and Search */}
               <div className="flex flex-col sm:flex-row gap-4 items-center">
                 <div className="flex-1">
@@ -506,7 +505,7 @@ export default function SEO() {
               </div>
 
               {/* Pages List */}
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="space-y-3">
                 {paginatedPages.map((page) => {
                   const statusBadge = getStatusBadge(page.status);
                   const StatusIcon = statusBadge.icon;
@@ -735,7 +734,6 @@ export default function SEO() {
           </Card>
         </TabsContent>
       </Tabs>
-      </div>
     </div>
   );
 }
