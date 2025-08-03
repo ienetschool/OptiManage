@@ -513,8 +513,8 @@ export default function Pages() {
           });
         }
       }}>
-        <DialogContent className="max-w-7xl h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader className="border-b pb-4">
+        <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+          <DialogHeader className="border-b pb-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center space-x-3">
                 <Edit className="h-5 w-5" />
@@ -540,7 +540,7 @@ export default function Pages() {
           {editingPage && (
             <div className="flex flex-1 min-h-0">
               {/* Left Sidebar - Settings */}
-              <div className="w-80 border-r bg-slate-50 overflow-y-auto max-h-full">
+              <div className="w-80 border-r bg-slate-50 overflow-y-auto">
                 <div className="p-4 space-y-4">
                   {/* Basic Settings */}
                   <div className="space-y-3">
@@ -835,48 +835,50 @@ export default function Pages() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 p-4 overflow-y-auto max-h-full">
-                  <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 ${
-                    previewMode === 'mobile' ? 'max-w-sm' : 
-                    previewMode === 'tablet' ? 'max-w-2xl' : 'max-w-4xl'
-                  }`}>
-                    <div className="space-y-4">
-                      <Input 
-                        className="text-2xl font-bold border-none shadow-none p-0 focus-visible:ring-0"
-                        placeholder="Page title..."
-                        defaultValue={editingPage.title}
-                      />
-                      <div 
-                        className="min-h-[400px] p-4 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose max-w-none"
-                        contentEditable
-                        suppressContentEditableWarning={true}
-                        style={{ outline: 'none' }}
-                        onInput={(e) => setPageContent(e.currentTarget.innerHTML || "")}
-                        dangerouslySetInnerHTML={{
-                          __html: pageContent || `<p class="text-slate-500">Start typing your content here... Use the toolbar above to format your text.</p>`
-                        }}
-                      />
-                      
-                      {/* Content Stats */}
-                      <div className="flex justify-between items-center mt-4 text-sm text-slate-500">
-                        <div className="flex space-x-4">
-                          <span>Words: {pageContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length}</span>
-                          <span>Characters: {pageContent.replace(/<[^>]*>/g, '').length}</span>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button variant="ghost" size="sm" onClick={() => {
-                            navigator.clipboard.writeText(pageContent.replace(/<[^>]*>/g, ''));
-                            toast({ title: "Content copied", description: "Text copied to clipboard" });
-                          }}>
-                            <Copy className="h-4 w-4 mr-1" />
-                            Copy Text
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => {
-                            setPageContent("");
-                            toast({ title: "Content cleared", description: "Editor content has been cleared" });
-                          }}>
-                            Clear All
-                          </Button>
+                <div className="flex-1 overflow-y-auto bg-gray-50">
+                  <div className="p-4 h-full">
+                    <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 ${
+                      previewMode === 'mobile' ? 'max-w-sm' : 
+                      previewMode === 'tablet' ? 'max-w-2xl' : 'max-w-4xl'
+                    }`}>
+                      <div className="space-y-4">
+                        <Input 
+                          className="text-2xl font-bold border-none shadow-none p-0 focus-visible:ring-0"
+                          placeholder="Page title..."
+                          defaultValue={editingPage.title}
+                        />
+                        <div 
+                          className="min-h-[400px] p-4 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose max-w-none"
+                          contentEditable
+                          suppressContentEditableWarning={true}
+                          style={{ outline: 'none' }}
+                          onInput={(e) => setPageContent(e.currentTarget.innerHTML || "")}
+                          dangerouslySetInnerHTML={{
+                            __html: pageContent || `<p class="text-slate-500">Start typing your content here... Use the toolbar above to format your text.</p>`
+                          }}
+                        />
+                        
+                        {/* Content Stats */}
+                        <div className="flex justify-between items-center mt-4 text-sm text-slate-500">
+                          <div className="flex space-x-4">
+                            <span>Words: {pageContent.replace(/<[^>]*>/g, '').split(/\s+/).filter(word => word.length > 0).length}</span>
+                            <span>Characters: {pageContent.replace(/<[^>]*>/g, '').length}</span>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button variant="ghost" size="sm" onClick={() => {
+                              navigator.clipboard.writeText(pageContent.replace(/<[^>]*>/g, ''));
+                              toast({ title: "Content copied", description: "Text copied to clipboard" });
+                            }}>
+                              <Copy className="h-4 w-4 mr-1" />
+                              Copy Text
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => {
+                              setPageContent("");
+                              toast({ title: "Content cleared", description: "Editor content has been cleared" });
+                            }}>
+                              Clear All
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -887,7 +889,7 @@ export default function Pages() {
           )}
 
           {/* Footer Actions */}
-          <div className="border-t p-4 flex items-center justify-between bg-slate-50">
+          <div className="border-t p-4 flex items-center justify-between bg-slate-50 flex-shrink-0">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2 text-sm text-slate-500">
                 <Save className="h-4 w-4" />
