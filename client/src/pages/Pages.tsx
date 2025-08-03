@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { 
   FileText, 
   Search, 
@@ -12,11 +14,25 @@ import {
   Trash2,
   Eye,
   Globe,
-  Settings
+  Settings,
+  Building,
+  Share2,
+  Copy,
+  Download,
+  Upload
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Pages() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStore, setSelectedStore] = useState("all");
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: stores = [] } = useQuery({
+    queryKey: ["/api/stores"],
+  });
 
   // Mock pages data
   const pages = [
@@ -90,14 +106,72 @@ export default function Pages() {
           <p className="text-slate-600">Manage your website pages and content</p>
         </div>
         <div className="flex items-center space-x-3">
+          <Select value={selectedStore} onValueChange={setSelectedStore}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stores</SelectItem>
+              <SelectItem value="primary">Primary Website</SelectItem>
+              {Array.isArray(stores) && stores.map((store: any) => (
+                <SelectItem key={store.id} value={store.id}>
+                  {store.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline">
             <Settings className="h-4 w-4 mr-2" />
             Page Settings
           </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Page
-          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                New Page
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New Page</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 p-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Page Title</label>
+                    <Input placeholder="Enter page title" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">URL Slug</label>
+                    <Input placeholder="/page-url" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Target Store</label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select store" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="primary">Primary Website</SelectItem>
+                      {Array.isArray(stores) && stores.map((store: any) => (
+                        <SelectItem key={store.id} value={store.id}>
+                          {store.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button onClick={() => {
+                    toast({ title: "Page created successfully" });
+                    setOpen(false);
+                  }}>Create Page</Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Palette, 
   Download, 
@@ -15,12 +17,36 @@ import {
   Monitor,
   Smartphone,
   Tablet,
-  CheckCircle
+  CheckCircle,
+  Building,
+  Save
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Themes() {
   const [selectedTheme, setSelectedTheme] = useState("modern");
   const [previewDevice, setPreviewDevice] = useState("desktop");
+  const [selectedStore, setSelectedStore] = useState("primary");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: stores = [] } = useQuery({
+    queryKey: ["/api/stores"],
+  });
+
+  const applyThemeMutation = useMutation({
+    mutationFn: async ({ themeId, storeId }: { themeId: string; storeId: string }) => {
+      // Mock API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { themeId, storeId };
+    },
+    onSuccess: () => {
+      toast({
+        title: "Theme Applied",
+        description: "Theme has been successfully applied to the selected store.",
+      });
+    },
+  });
 
   // Mock themes data
   const themes = [
@@ -78,6 +104,19 @@ export default function Themes() {
           <p className="text-slate-600">Customize your website's appearance and branding</p>
         </div>
         <div className="flex items-center space-x-3">
+          <Select value={selectedStore} onValueChange={setSelectedStore}>
+            <SelectTrigger className="w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="primary">Primary Website</SelectItem>
+              {Array.isArray(stores) && stores.map((store: any) => (
+                <SelectItem key={store.id} value={store.id}>
+                  {store.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button variant="outline">
             <Upload className="h-4 w-4 mr-2" />
             Upload Theme
@@ -85,6 +124,10 @@ export default function Themes() {
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             Export Theme
+          </Button>
+          <Button onClick={() => applyThemeMutation.mutate({ themeId: selectedTheme, storeId: selectedStore })}>
+            <Save className="h-4 w-4 mr-2" />
+            Apply Theme
           </Button>
         </div>
       </div>

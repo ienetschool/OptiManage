@@ -20,10 +20,10 @@ import Billing from "@/pages/Billing";
 import Staff from "@/pages/Staff";
 import Attendance from "@/pages/Attendance";
 import Payroll from "@/pages/Payroll";
+import Communication from "@/pages/Communication";
 import Notifications from "@/pages/Notifications";
 import Reports from "@/pages/Reports";
 import CustomReports from "@/pages/CustomReports";
-import Communication from "@/pages/Communication";
 import Settings from "@/pages/Settings";
 import Support from "@/pages/Support";
 import BookAppointment from "@/pages/BookAppointment";
@@ -228,6 +228,24 @@ function Router() {
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Staff />
+          </div>
+        </AppLayout>
+      </Route>
+
+      <Route path="/attendance">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Attendance />
+          </div>
+        </AppLayout>
+      </Route>
+
+      <Route path="/payroll">
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Payroll />
           </div>
         </AppLayout>
       </Route>

@@ -595,6 +595,10 @@ export const patients = pgTable("patients", {
   followUpDate: date("follow_up_date"),
   medicalAlerts: text("medical_alerts"),
   
+  // Portal Access Credentials
+  username: varchar("username", { length: 50 }),
+  password: varchar("password", { length: 255 }), // Will be hashed
+  
   isActive: boolean("is_active").default(true),
   loyaltyTier: varchar("loyalty_tier", { length: 20 }).default("bronze"),
   loyaltyPoints: integer("loyalty_points").default(0),

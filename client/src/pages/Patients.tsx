@@ -52,7 +52,7 @@ import {
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { 
   insertPatientSchema, 
   type Patient, 
@@ -208,6 +208,8 @@ export default function Patients() {
       loyaltyTier: "bronze",
       loyaltyPoints: 0,
       bloodGroup: "",
+      username: "",
+      password: "",
       isActive: true,
     },
   });
@@ -1818,6 +1820,49 @@ export default function Patients() {
                                 </FormItem>
                               )}
                             />
+                          </div>
+
+                          {/* Portal Access Section */}
+                          <div className="border rounded-lg p-4 bg-blue-50 mt-4">
+                            <h4 className="font-medium text-blue-800 mb-3 flex items-center">
+                              <User className="h-4 w-4 mr-2" />
+                              Portal Access Credentials
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter username for patient portal" value={field.value || ""} />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      Used for patient portal login
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" {...field} placeholder="Enter portal password" value={field.value || ""} />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      Minimum 8 characters for portal access
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
                           </div>
                         </TabsContent>
 

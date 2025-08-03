@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Search, 
   TrendingUp, 
@@ -16,13 +18,23 @@ import {
   CheckCircle,
   AlertCircle,
   ExternalLink,
-  Copy
+  Copy,
+  Building,
+  Save
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function SEO() {
   const [siteTitle, setSiteTitle] = useState("OptiStore Pro - Professional Eye Care Management");
   const [siteDescription, setSiteDescription] = useState("Complete optical store management system with patient records, appointments, inventory tracking, and more.");
   const [keywords, setKeywords] = useState("optical store, eye care, vision care, glasses, contact lenses");
+  const [selectedStore, setSelectedStore] = useState("primary");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: stores = [] } = useQuery({
+    queryKey: ["/api/stores"],
+  });
 
   // Mock SEO data
   const seoMetrics = {
