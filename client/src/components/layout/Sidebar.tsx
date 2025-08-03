@@ -161,18 +161,16 @@ export default function Sidebar() {
       "flex flex-col bg-white border-r border-slate-200 transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-slate-200">
-        <div className="flex items-center justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8 p-0"
-          >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </Button>
-        </div>
+      {/* Sidebar Collapse Toggle */}
+      <div className="p-2 flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCollapsed(!collapsed)}
+          className="h-8 w-8 p-0"
+        >
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
       </div>
 
       {/* Navigation */}
