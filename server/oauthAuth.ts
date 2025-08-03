@@ -14,13 +14,15 @@ export function setupOAuthAuth(app: Express) {
   // Session middleware
   app.use(session({
     secret: process.env.SESSION_SECRET || 'dev-oauth-secret-key',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Force session save on every request
+    saveUninitialized: true, // Create session even if nothing stored
+    name: 'connect.sid', // Explicit session name
     cookie: {
-      httpOnly: false, // Allow client-side access for debugging
-      secure: false, // Set to true in production with HTTPS
+      httpOnly: false, // Allow client-side access
+      secure: false, // Must be false for HTTP localhost
       maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-      sameSite: 'lax', // Important for cross-site cookie handling
+      sameSite: 'lax', // Important for browser compatibility
+      path: '/', // Ensure cookie is sent for all paths
     },
   }));
 
