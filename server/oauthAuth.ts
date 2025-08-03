@@ -17,9 +17,10 @@ export function setupOAuthAuth(app: Express) {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      httpOnly: true,
+      httpOnly: false, // Allow client-side access for debugging
       secure: false, // Set to true in production with HTTPS
       maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      sameSite: 'lax', // Important for cross-site cookie handling
     },
   }));
 
@@ -218,6 +219,9 @@ export function setupOAuthAuth(app: Express) {
     (req.session as any).passport = { user: mockUser };
     (req as any).user = mockUser;
     
+    console.log('✅ LOGIN: Session set for user:', mockUser.email);
+    console.log('✅ LOGIN: Session ID:', req.sessionID);
+    
     res.redirect("/dashboard");
   });
 
@@ -242,9 +246,14 @@ export function setupOAuthAuth(app: Express) {
   // Get current user
   app.get('/api/auth/user', async (req, res) => {
     try {
+      console.log('🔍 AUTH CHECK: Session ID:', req.sessionID);
+      console.log('🔍 AUTH CHECK: Session data:', req.session ? 'exists' : 'none');
+      console.log('🔍 AUTH CHECK: Passport data:', (req.session as any)?.passport ? 'exists' : 'none');
+      
       // Check session first
       if (req.session && (req.session as any).passport && (req.session as any).passport.user) {
         const user = (req.session as any).passport.user;
+        console.log('✅ AUTH SUCCESS: Found user in session:', user.email);
         return res.json({
           id: user.id,
           email: user.email,
@@ -257,9 +266,11 @@ export function setupOAuthAuth(app: Express) {
       
       const user = req.user as any;
       if (!user) {
+        console.log('❌ AUTH FAILED: No user found in session or req.user');
         return res.status(401).json({ message: 'Not authenticated' });
       }
       
+      console.log('✅ AUTH SUCCESS: Found user in req.user:', user.email);
       res.json({
         id: user.id,
         email: user.email,
@@ -269,6 +280,7 @@ export function setupOAuthAuth(app: Express) {
         provider: user.provider
       });
     } catch (error) {
+      console.log('❌ AUTH ERROR:', error);
       res.status(401).json({ message: 'Not authenticated' });
     }
   });
