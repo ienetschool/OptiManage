@@ -1019,9 +1019,23 @@ export class DatabaseStorage implements IStorage {
         id: `pay-${invoice.id}`,
         invoiceId: invoice.invoiceNumber,
         customerId: invoice.customerId,
-        customerName: invoice.customerId ? 
-          customersData.find(c => c.id === invoice.customerId)?.firstName + ' ' + customersData.find(c => c.id === invoice.customerId)?.lastName || 'Customer' :
-          'Guest Customer',
+        customerName: (() => {
+          if (!invoice.customerId) return 'Guest Customer';
+          
+          // Try customers first
+          const customer = customersData.find(c => c.id === invoice.customerId);
+          if (customer) {
+            return `${customer.firstName} ${customer.lastName}`.trim();
+          }
+          
+          // Try patients
+          const patient = patientsData.find(p => p.id === invoice.customerId);
+          if (patient) {
+            return `${patient.firstName} ${patient.lastName}`.trim();
+          }
+          
+          return 'Unknown Customer';
+        })(),
         amount: parseFloat(invoice.total || "0"),
         paymentMethod: invoice.paymentMethod || 'cash',
         status: invoice.status === 'paid' ? 'completed' : 
