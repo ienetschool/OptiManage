@@ -45,12 +45,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Professional Quick Sale form schema
+  // Professional Quick Sale form schema with multiple items
   const quickSaleSchema = z.object({
     customerId: z.string().min(1, "Customer selection is required"),
-    productId: z.string().min(1, "Product selection is required"),
-    quantity: z.number().min(1, "Quantity must be at least 1"),
-    unitPrice: z.number().min(0, "Unit price must be positive"),
+    items: z.array(z.object({
+      productId: z.string().min(1, "Product selection is required"),
+      productName: z.string().min(1, "Product name is required"),
+      quantity: z.number().min(1, "Quantity must be at least 1"),
+      unitPrice: z.number().min(0, "Unit price must be positive"),
+    })).min(1, "At least one item is required"),
     taxRate: z.number().min(0).max(100).default(10),
     discountAmount: z.number().min(0).default(0),
     paymentMethod: z.enum(["cash", "card", "check", "digital"]),
@@ -66,17 +69,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
     queryKey: ["/api/customers"]
   });
   
+  const { data: patients = [] } = useQuery<any[]>({
+    queryKey: ["/api/patients"]
+  });
+  
   const { data: products = [] } = useQuery<any[]>({
     queryKey: ["/api/products"]
   });
+
+  // Combine customers and patients for dropdown
+  const allCustomers = [
+    ...customers.map((c: any) => ({ ...c, type: 'customer' })),
+    ...patients.map((p: any) => ({ ...p, type: 'patient', name: p.name || `${p.firstName} ${p.lastName}` }))
+  ];
 
   const quickSaleForm = useForm({
     resolver: zodResolver(quickSaleSchema),
     defaultValues: {
       customerId: "walk-in",
-      productId: "custom",
-      quantity: 1,
-      unitPrice: 0,
+      items: [{ productId: "custom", productName: "Custom Item", quantity: 1, unitPrice: 0 }],
       taxRate: 10,
       discountAmount: 0,
       paymentMethod: "cash" as const,
@@ -84,9 +95,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   });
 
-  // Watch for product selection to auto-fill unit price
-  const selectedProductId = quickSaleForm.watch("productId");
-  const selectedProduct = products.find((p: any) => p.id === selectedProductId);
+  // Watch for items changes to calculate totals
+  const watchedItems = quickSaleForm.watch("items") || [];
+  const watchedTaxRate = quickSaleForm.watch("taxRate") || 0;
+  const watchedDiscount = quickSaleForm.watch("discountAmount") || 0;
+
+  // Calculate totals safely
+  const subtotal = watchedItems.reduce((sum, item) => {
+    if (!item) return sum;
+    return sum + ((item.quantity || 0) * (item.unitPrice || 0));
+  }, 0);
+  const taxAmount = subtotal * (watchedTaxRate / 100);
+  const total = subtotal + taxAmount - watchedDiscount;
 
   // Quick Sale mutation
   const quickSaleMutation = useMutation({
@@ -118,12 +138,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   });
 
   const onQuickSaleSubmit = (data: any) => {
-    // Get selected customer and product details
-    const selectedCustomer = customers.find((c: any) => c.id === data.customerId);
-    const selectedProduct = products.find((p: any) => p.id === data.productId);
+    // Get selected customer details
+    const selectedCustomer = allCustomers.find((c: any) => c.id === data.customerId);
     
     // Calculate totals
-    const subtotal = data.quantity * data.unitPrice;
+    const subtotal = data.items.reduce((sum: number, item: any) => sum + (item.quantity * item.unitPrice), 0);
     const tax = subtotal * (data.taxRate / 100);
     const discount = data.discountAmount || 0;
     const total = subtotal + tax - discount;
@@ -140,25 +159,58 @@ export default function AppLayout({ children }: AppLayoutProps) {
       status: "pending",
       paymentMethod: data.paymentMethod,
       notes: data.notes || "",
-      items: [{
-        productName: data.productId === "custom" ? "Custom Item" : (selectedProduct?.name || "Custom Item"),
-        productId: data.productId === "custom" ? "custom" : data.productId,
-        quantity: data.quantity,
-        unitPrice: data.unitPrice,
+      items: data.items.map((item: any) => ({
+        productName: item.productName,
+        productId: item.productId === "custom" ? "custom" : item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
         discount: 0,
-        total: subtotal
-      }]
+        total: item.quantity * item.unitPrice
+      }))
     };
 
     quickSaleMutation.mutate(invoiceData);
   };
 
-  // Auto-fill unit price when product is selected
-  const handleProductChange = (productId: string) => {
-    const product = products.find((p: any) => p.id === productId);
-    if (product && product.price) {
-      quickSaleForm.setValue("unitPrice", parseFloat(product.price.toString()));
+  // Add new item to the form
+  const addNewItem = () => {
+    const currentItems = quickSaleForm.getValues("items");
+    quickSaleForm.setValue("items", [
+      ...currentItems,
+      { productId: "custom", productName: "Custom Item", quantity: 1, unitPrice: 0 }
+    ]);
+  };
+
+  // Remove item from the form
+  const removeItem = (index: number) => {
+    const currentItems = quickSaleForm.getValues("items");
+    if (currentItems.length > 1) {
+      quickSaleForm.setValue("items", currentItems.filter((_, i) => i !== index));
     }
+  };
+
+  // Handle product selection for an item
+  const handleProductChange = (index: number, productId: string) => {
+    let product: any = null;
+    let productName = "Custom Item";
+    let unitPrice = 0;
+
+    if (productId !== "custom") {
+      product = products.find((p: any) => p.id === productId);
+      if (product) {
+        productName = product.name;
+        unitPrice = parseFloat(product.price?.toString() || "0");
+      }
+    }
+
+    const currentItems = quickSaleForm.getValues("items");
+    currentItems[index] = {
+      ...currentItems[index],
+      productId,
+      productName,
+      unitPrice
+    };
+    quickSaleForm.setValue("items", currentItems);
   };
 
   return (
@@ -421,24 +473,32 @@ export default function AppLayout({ children }: AppLayoutProps) {
           
           <Form {...quickSaleForm}>
             <form onSubmit={quickSaleForm.handleSubmit(onQuickSaleSubmit)} className="space-y-4">
+              {/* Customer Selection - Enhanced with Patients */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={quickSaleForm.control}
                   name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer</FormLabel>
+                      <FormLabel>Customer / Patient</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select customer..." />
+                            <SelectValue placeholder="Select customer or patient..." />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="max-h-60">
                           <SelectItem value="walk-in">🚶 Walk-in Customer</SelectItem>
+                          <div className="px-2 py-1 text-xs font-medium text-slate-500 bg-slate-50">CUSTOMERS</div>
                           {customers.map((customer: any) => (
                             <SelectItem key={customer.id} value={customer.id}>
                               👤 {customer.name}
+                            </SelectItem>
+                          ))}
+                          <div className="px-2 py-1 text-xs font-medium text-slate-500 bg-slate-50">PATIENTS</div>
+                          {patients.map((patient: any) => (
+                            <SelectItem key={patient.id} value={patient.id}>
+                              🏥 {patient.name || `${patient.firstName} ${patient.lastName}`}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -473,78 +533,140 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 />
               </div>
 
-              <FormField
-                control={quickSaleForm.control}
-                name="productId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product/Service</FormLabel>
-                    <Select 
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                        handleProductChange(value);
-                      }} 
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select product or service..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="custom">✏️ Custom Item</SelectItem>
-                        {products.map((product: any) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            📦 {product.name} - ${product.price || '0.00'}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {/* Items Section with Add/Remove functionality */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Invoice Items</h3>
+                  <Button type="button" onClick={addNewItem} variant="outline" size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Item
+                  </Button>
+                </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={quickSaleForm.control}
-                  name="quantity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Quantity</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min="1" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={quickSaleForm.control}
-                  name="unitPrice"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Unit Price ($)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          min="0"
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
+                {watchedItems.map((item: any, index: number) => (
+                  <div key={index} className="p-4 border border-slate-200 rounded-lg space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-700">Item #{index + 1}</span>
+                      {watchedItems.length > 1 && (
+                        <Button 
+                          type="button" 
+                          onClick={() => removeItem(index)} 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Product Selection with Search */}
+                    <FormField
+                      control={quickSaleForm.control}
+                      name={`items.${index}.productId`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Product/Service</FormLabel>
+                          <Select 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              handleProductChange(index, value);
+                            }} 
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Search and select product..." />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="max-h-60">
+                              <SelectItem value="custom">✏️ Custom Item</SelectItem>
+                              <div className="px-2 py-1 text-xs font-medium text-slate-500 bg-slate-50">PRODUCTS</div>
+                              {products.map((product: any) => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  📦 {product.name} - ${product.price || '0.00'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Custom Product Name (when custom is selected) */}
+                    {item.productId === "custom" && (
+                      <FormField
+                        control={quickSaleForm.control}
+                        name={`items.${index}.productName`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Custom Product Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Enter custom product name..." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* Quantity and Unit Price */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <FormField
+                        control={quickSaleForm.control}
+                        name={`items.${index}.quantity`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Quantity</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="1" 
+                                {...field}
+                                onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={quickSaleForm.control}
+                        name={`items.${index}.unitPrice`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Unit Price ($)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                step="0.01" 
+                                min="0"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex flex-col">
+                        <label className="text-sm font-medium text-slate-700 mb-2">Line Total</label>
+                        <div className="h-10 px-3 py-2 border border-slate-300 rounded-md bg-slate-50 flex items-center">
+                          <span className="font-medium text-slate-900">
+                            ${((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tax and Discount */}
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={quickSaleForm.control}
                   name="taxRate"
@@ -565,9 +687,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+                
                 <FormField
                   control={quickSaleForm.control}
                   name="discountAmount"
@@ -587,20 +707,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     </FormItem>
                   )}
                 />
-                
-                <div className="flex flex-col">
-                  <label className="text-sm font-medium text-slate-700 mb-2">Total Amount</label>
-                  <div className="h-10 px-3 py-2 border border-slate-300 rounded-md bg-slate-50 flex items-center">
-                    <span className="text-lg font-bold text-slate-900">
-                      ${(() => {
-                        const values = quickSaleForm.watch();
-                        const subtotal = (values.quantity || 0) * (values.unitPrice || 0);
-                        const tax = subtotal * ((values.taxRate || 0) / 100);
-                        const discount = values.discountAmount || 0;
-                        return (subtotal + tax - discount).toFixed(2);
-                      })()}
-                    </span>
-                  </div>
+              </div>
+
+              {/* Total Summary */}
+              <div className="bg-slate-50 p-4 rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal:</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tax ({watchedTaxRate}%):</span>
+                  <span>${taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Discount:</span>
+                  <span>-${watchedDiscount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold border-t pt-2">
+                  <span>Total:</span>
+                  <span>${total.toFixed(2)}</span>
                 </div>
               </div>
 
