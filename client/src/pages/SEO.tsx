@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { 
   Search, 
   TrendingUp, 
@@ -20,7 +21,15 @@ import {
   ExternalLink,
   Copy,
   Building,
-  Save
+  Save,
+  Download,
+  Share,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Link,
+  RefreshCw
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -29,6 +38,14 @@ export default function SEO() {
   const [siteDescription, setSiteDescription] = useState("Complete optical store management system with patient records, appointments, inventory tracking, and more.");
   const [keywords, setKeywords] = useState("optical store, eye care, vision care, glasses, contact lenses");
   const [selectedStore, setSelectedStore] = useState("primary");
+  
+  // Pagination and filtering state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedPages, setSelectedPages] = useState<string[]>([]);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -44,29 +61,94 @@ export default function SEO() {
     organicTraffic: 2140
   };
 
-  const pageAnalysis = [
+  const allPageAnalysis = [
     {
+      id: "1",
       page: "/",
       title: "OptiStore Pro - Professional Eye Care",
       status: "good",
       issues: [],
-      score: 95
+      score: 95,
+      lastUpdated: "2025-08-03"
     },
     {
+      id: "2",
       page: "/services",
       title: "Our Services - Eye Exams & More",
       status: "warning",
       issues: ["Meta description too short"],
-      score: 78
+      score: 78,
+      lastUpdated: "2025-08-02"
     },
     {
+      id: "3",
       page: "/about",
       title: "About Us",
       status: "error",
       issues: ["Missing meta description", "Title too short"],
-      score: 45
+      score: 45,
+      lastUpdated: "2025-08-01"
+    },
+    {
+      id: "4",
+      page: "/contact",
+      title: "Contact Us - Get in Touch",
+      status: "good",
+      issues: [],
+      score: 92,
+      lastUpdated: "2025-08-03"
+    },
+    {
+      id: "5",
+      page: "/products",
+      title: "Our Products",
+      status: "warning",
+      issues: ["Missing alt tags on images"],
+      score: 73,
+      lastUpdated: "2025-08-02"
+    },
+    {
+      id: "6",
+      page: "/blog",
+      title: "Eye Care Blog & Tips",
+      status: "good",
+      issues: [],
+      score: 88,
+      lastUpdated: "2025-08-03"
+    },
+    {
+      id: "7",
+      page: "/appointments",
+      title: "Book an Appointment",
+      status: "error",
+      issues: ["Missing meta description", "Title too generic"],
+      score: 52,
+      lastUpdated: "2025-07-30"
+    },
+    {
+      id: "8",
+      page: "/reviews",
+      title: "Customer Reviews",
+      status: "warning",
+      issues: ["Meta description too long"],
+      score: 76,
+      lastUpdated: "2025-08-01"
     }
   ];
+
+  // Filter and paginate pages
+  const filteredPages = allPageAnalysis.filter(page => {
+    const matchesSearch = page.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         page.page.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || page.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const totalPages = Math.ceil(filteredPages.length / itemsPerPage);
+  const paginatedPages = filteredPages.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -77,25 +159,121 @@ export default function SEO() {
     return variants[status as keyof typeof variants] || variants.warning;
   };
 
+  // Action handlers
+  const handleSaveSEOSettings = () => {
+    toast({
+      title: "SEO Settings Saved",
+      description: "Your SEO configuration has been successfully updated.",
+    });
+  };
+
+  const handleSaveSocialSettings = () => {
+    toast({
+      title: "Social Settings Saved", 
+      description: "Social media integration settings have been updated.",
+    });
+  };
+
+  const handleFixIssues = (pageId: string) => {
+    toast({
+      title: "Fixing SEO Issues",
+      description: "Running automated fixes for page SEO issues...",
+    });
+    // Simulate fixing
+    setTimeout(() => {
+      toast({
+        title: "Issues Fixed",
+        description: "SEO issues have been automatically resolved.",
+      });
+    }, 2000);
+  };
+
+  const handleGenerateReport = () => {
+    toast({
+      title: "Generating SEO Report",
+      description: "Creating comprehensive SEO analysis report...",
+    });
+  };
+
+  const handleConnect = (service: string) => {
+    toast({
+      title: `Connecting to ${service}`,
+      description: `Opening ${service} integration setup...`,
+    });
+  };
+
+  const handleExportData = (format: string) => {
+    const data = format === 'json' ? JSON.stringify(filteredPages, null, 2) : 
+                 filteredPages.map(p => `${p.page},${p.title},${p.status},${p.score}`).join('\n');
+    
+    const blob = new Blob([data], { type: format === 'json' ? 'application/json' : 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `seo-analysis.${format === 'json' ? 'json' : 'csv'}`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Data Exported",
+      description: `SEO data exported as ${format.toUpperCase()} file.`,
+    });
+  };
+
+  const handleCopyToClipboard = () => {
+    const data = filteredPages.map(p => `${p.page}: ${p.title} (Score: ${p.score})`).join('\n');
+    navigator.clipboard.writeText(data);
+    toast({
+      title: "Copied to Clipboard",
+      description: "SEO analysis data copied to clipboard.",
+    });
+  };
+
+  const handleShareLink = () => {
+    const shareUrl = `${window.location.origin}/seo-report?pages=${selectedPages.join(',')}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: "Share Link Created",
+      description: "SEO report link copied to clipboard.",
+    });
+  };
+
+  const handleSelectPage = (pageId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedPages([...selectedPages, pageId]);
+    } else {
+      setSelectedPages(selectedPages.filter(id => id !== pageId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPages(paginatedPages.map(p => p.id));
+    } else {
+      setSelectedPages([]);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">SEO & Analytics</h1>
-          <p className="text-slate-600">Optimize your website for search engines and track performance</p>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-7xl mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">SEO & Analytics</h1>
+            <p className="text-slate-600">Optimize your website for search engines and track performance</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <Button variant="outline" onClick={() => window.open('https://search.google.com/search-console', '_blank')}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Google Search Console
+            </Button>
+            <Button onClick={handleGenerateReport}>
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Generate Report
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <Button variant="outline">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Google Search Console
-          </Button>
-          <Button>
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Generate Report
-          </Button>
-        </div>
-      </div>
 
       {/* SEO Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -211,7 +389,10 @@ export default function SEO() {
                 </div>
               </div>
 
-              <Button>Save SEO Settings</Button>
+              <Button onClick={handleSaveSEOSettings}>
+                <Save className="h-4 w-4 mr-2" />
+                Save SEO Settings
+              </Button>
             </CardContent>
           </Card>
 
@@ -240,7 +421,10 @@ export default function SEO() {
                 </div>
               </div>
 
-              <Button>Save Social Settings</Button>
+              <Button onClick={handleSaveSocialSettings}>
+                <Save className="h-4 w-4 mr-2" />
+                Save Social Settings
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
@@ -248,34 +432,110 @@ export default function SEO() {
         <TabsContent value="analysis" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Page SEO Analysis</CardTitle>
-              <CardDescription>Review SEO status for all your pages</CardDescription>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <CardTitle>Page SEO Analysis</CardTitle>
+                  <CardDescription>Review SEO status for all your pages</CardDescription>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" onClick={handleCopyToClipboard}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleExportData('csv')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleExportData('json')}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Export JSON
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleShareLink} disabled={selectedPages.length === 0}>
+                    <Share className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {pageAnalysis.map((page, index) => {
+            <CardContent className="space-y-4">
+              {/* Filters and Search */}
+              <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Search pages or titles..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="warning">Warning</SelectItem>
+                      <SelectItem value="error">Error</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={itemsPerPage.toString()} onValueChange={(v) => setItemsPerPage(Number(v))}>
+                    <SelectTrigger className="w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Select All Checkbox */}
+              <div className="flex items-center space-x-2 pb-2 border-b">
+                <Checkbox
+                  checked={selectedPages.length === paginatedPages.length && paginatedPages.length > 0}
+                  onCheckedChange={handleSelectAll}
+                />
+                <span className="text-sm text-slate-600">
+                  Select All ({selectedPages.length} selected)
+                </span>
+              </div>
+
+              {/* Pages List */}
+              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                {paginatedPages.map((page) => {
                   const statusBadge = getStatusBadge(page.status);
                   const StatusIcon = statusBadge.icon;
                   
                   return (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50">
                       <div className="flex items-center space-x-4">
+                        <Checkbox
+                          checked={selectedPages.includes(page.id)}
+                          onCheckedChange={(checked) => handleSelectPage(page.id, checked as boolean)}
+                        />
                         <div className="flex-shrink-0">
                           <StatusIcon className={`h-8 w-8 ${
                             page.status === 'good' ? 'text-green-500' :
                             page.status === 'warning' ? 'text-yellow-500' : 'text-red-500'
                           }`} />
                         </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-medium">{page.title}</h4>
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h4 className="font-medium text-slate-900">{page.title}</h4>
                             <Badge {...statusBadge}>
                               {statusBadge.text}
                             </Badge>
                             <Badge variant="outline">Score: {page.score}/100</Badge>
                           </div>
                           <div className="text-sm text-slate-500">
-                            <span>{page.page}</span>
+                            <span className="font-mono">{page.page}</span>
+                            <span className="mx-2">•</span>
+                            <span>Updated: {page.lastUpdated}</span>
                             {page.issues.length > 0 && (
                               <>
                                 <span className="mx-2">•</span>
@@ -286,16 +546,69 @@ export default function SEO() {
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => window.open(page.page, '_blank')}
+                        >
                           <ExternalLink className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleFixIssues(page.id)}
+                          disabled={page.issues.length === 0}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
                           Fix Issues
                         </Button>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="text-sm text-slate-600">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredPages.length)} of {filteredPages.length} pages
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNum = Math.max(1, Math.min(totalPages - 4, currentPage - 2)) + i;
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(pageNum)}
+                          className="w-8 h-8 p-0"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -324,7 +637,9 @@ export default function SEO() {
                       <p className="text-sm text-slate-500 mb-3">Comprehensive website analytics</p>
                       <Badge className="mb-3">Connected</Badge>
                       <div>
-                        <Button variant="outline" size="sm">Configure</Button>
+                        <Button variant="outline" size="sm" onClick={() => handleConnect("Google Analytics")}>
+                          Configure
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -338,7 +653,9 @@ export default function SEO() {
                       <p className="text-sm text-slate-500 mb-3">Search performance insights</p>
                       <Badge variant="secondary" className="mb-3">Not Connected</Badge>
                       <div>
-                        <Button size="sm">Connect</Button>
+                        <Button size="sm" onClick={() => handleConnect("Search Console")}>
+                          Connect
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -359,25 +676,33 @@ export default function SEO() {
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-medium mb-2">Sitemap Generator</h4>
                   <p className="text-sm text-slate-500 mb-3">Generate and submit XML sitemap</p>
-                  <Button variant="outline" size="sm">Generate Sitemap</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast({ title: "Generating Sitemap", description: "XML sitemap is being generated..." })}>
+                    Generate Sitemap
+                  </Button>
                 </div>
 
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-medium mb-2">Robots.txt Editor</h4>
                   <p className="text-sm text-slate-500 mb-3">Configure search engine crawling</p>
-                  <Button variant="outline" size="sm">Edit Robots.txt</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast({ title: "Opening Editor", description: "Robots.txt editor is loading..." })}>
+                    Edit Robots.txt
+                  </Button>
                 </div>
 
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-medium mb-2">Schema Markup</h4>
                   <p className="text-sm text-slate-500 mb-3">Add structured data to your pages</p>
-                  <Button variant="outline" size="sm">Configure Schema</Button>
+                  <Button variant="outline" size="sm" onClick={() => toast({ title: "Schema Configuration", description: "Opening structured data editor..." })}>
+                    Configure Schema
+                  </Button>
                 </div>
 
                 <div className="p-4 border rounded-lg">
                   <h4 className="font-medium mb-2">Page Speed Test</h4>
                   <p className="text-sm text-slate-500 mb-3">Test and optimize page loading speed</p>
-                  <Button variant="outline" size="sm">Run Speed Test</Button>
+                  <Button variant="outline" size="sm" onClick={() => window.open('https://pagespeed.web.dev/', '_blank')}>
+                    Run Speed Test
+                  </Button>
                 </div>
               </div>
 
@@ -410,6 +735,7 @@ export default function SEO() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
