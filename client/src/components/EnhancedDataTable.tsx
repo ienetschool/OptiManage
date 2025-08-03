@@ -112,6 +112,8 @@ export default function EnhancedDataTable({
 
   // Sort data
   const sortedData = useMemo(() => {
+    console.log(`🔧 SORTING DEBUG - Column: ${sortColumn}, Direction: ${sortDirection}, Data length: ${filteredData.length}`);
+    
     if (!sortColumn) {
       // Default sort by creation date (newest first) if available
       const hasCreatedAt = data.length > 0 && 'createdAt' in data[0];
@@ -128,29 +130,49 @@ export default function EnhancedDataTable({
       return filteredData;
     }
 
-    return [...filteredData].sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
+    const sorted = [...filteredData].sort((a, b) => {
+      let aValue = a[sortColumn];
+      let bValue = b[sortColumn];
       
-      // Handle different data types
+      // Handle date strings (convert to Date objects for proper comparison)
+      if (sortColumn === 'date' || sortColumn === 'createdAt' || sortColumn === 'invoiceDate') {
+        aValue = aValue ? new Date(aValue) : new Date(0);
+        bValue = bValue ? new Date(bValue) : new Date(0);
+        
+        return sortDirection === 'asc' 
+          ? aValue.getTime() - bValue.getTime()
+          : bValue.getTime() - aValue.getTime();
+      }
+      
+      // Handle Date objects
       if (aValue instanceof Date && bValue instanceof Date) {
         return sortDirection === 'asc' 
           ? aValue.getTime() - bValue.getTime()
           : bValue.getTime() - aValue.getTime();
       }
       
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      // Handle numbers (including string numbers)
+      const aNum = parseFloat(aValue);
+      const bNum = parseFloat(bValue);
+      if (!isNaN(aNum) && !isNaN(bNum)) {
+        return sortDirection === 'asc' ? aNum - bNum : bNum - aNum;
       }
       
-      // String comparison
-      const aStr = aValue?.toString() || '';
-      const bStr = bValue?.toString() || '';
+      // String comparison (case-insensitive)
+      const aStr = (aValue?.toString() || '').toLowerCase();
+      const bStr = (bValue?.toString() || '').toLowerCase();
       return sortDirection === 'asc' 
         ? aStr.localeCompare(bStr)
         : bStr.localeCompare(aStr);
     });
-  }, [filteredData, sortColumn, sortDirection]);
+    
+    console.log(`🔧 SORTED RESULT - First 3 items:`, sorted.slice(0, 3).map(item => ({ 
+      id: item.id, 
+      [sortColumn]: item[sortColumn] 
+    })));
+    
+    return sorted;
+  }, [filteredData, sortColumn, sortDirection, data]);
 
   // Pagination
   const totalPages = Math.ceil(sortedData.length / pageSizeValue);
@@ -364,7 +386,7 @@ export default function EnhancedDataTable({
         </div>
         
         {/* Pagination */}
-        {showPagination && totalPages > 1 && (
+        {showPagination && (
           <div className="flex items-center justify-between mt-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
