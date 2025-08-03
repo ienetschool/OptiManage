@@ -217,21 +217,23 @@ export default function InvoiceManagement() {
   ];
 
   // Queries - Enhanced to show both manual and sales invoices
-  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery<Invoice[]>({
+  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery({
     queryKey: ["/api/invoices"],
     staleTime: 10000, // 10 seconds
     refetchInterval: 30000, // Auto-refresh every 30 seconds
-    onSettled: (data: any) => {
-      if (data) {
-        console.log(`🔍 FRONTEND RECEIVED ${data.length} INVOICES:`, data.map((inv: any) => ({ 
-          id: inv.id, 
-          invoiceNumber: inv.invoiceNumber, 
-          total: inv.total,
-          source: inv.source 
-        })));
-      }
-    }
   });
+  
+  // Debug logging
+  React.useEffect(() => {
+    if (invoices.length > 0) {
+      console.log(`🔍 FRONTEND RECEIVED ${invoices.length} INVOICES:`, invoices.map((inv: any) => ({ 
+        id: inv.id, 
+        invoiceNumber: inv.invoiceNumber, 
+        total: inv.total,
+        source: inv.source 
+      })));
+    }
+  }, [invoices]);
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ["/api/customers"],
@@ -256,6 +258,7 @@ export default function InvoiceManagement() {
 
   // Enhance invoice data with customer names
   const enrichedInvoices = React.useMemo(() => {
+    if (!Array.isArray(invoices)) return [];
     return invoices.map((invoice: any) => {
       const customer = customers.find(c => c.id === invoice.customerId);
       return {
@@ -1522,7 +1525,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <FileText className="h-8 w-8 text-blue-500" />
                   <div>
-                    <p className="text-2xl font-bold">{invoices.length}</p>
+                    <p className="text-2xl font-bold">{Array.isArray(invoices) ? invoices.length : 0}</p>
                     <p className="text-xs text-slate-500">Total Invoices</p>
                   </div>
                 </div>
@@ -1534,7 +1537,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <DollarSign className="h-8 w-8 text-green-500" />
                   <div>
-                    <p className="text-2xl font-bold">${invoices.filter((i: any) => i.status === 'paid').reduce((sum: number, i: any) => sum + i.total, 0).toLocaleString()}</p>
+                    <p className="text-2xl font-bold">${Array.isArray(invoices) ? invoices.filter((i: any) => i.status === 'paid').reduce((sum: number, i: any) => sum + i.total, 0).toLocaleString() : '0'}</p>
                     <p className="text-xs text-slate-500">Paid Amount</p>
                   </div>
                 </div>
@@ -1546,7 +1549,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-8 w-8 text-orange-500" />
                   <div>
-                    <p className="text-2xl font-bold">{invoices.filter((i: any) => i.status === 'overdue').length}</p>
+                    <p className="text-2xl font-bold">{Array.isArray(invoices) ? invoices.filter((i: any) => i.status === 'overdue').length : 0}</p>
                     <p className="text-xs text-slate-500">Overdue</p>
                   </div>
                 </div>
@@ -1558,7 +1561,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <Receipt className="h-8 w-8 text-purple-500" />
                   <div>
-                    <p className="text-2xl font-bold">${invoices.filter((i: any) => i.status === 'sent').reduce((sum: number, i: any) => sum + i.total, 0).toLocaleString()}</p>
+                    <p className="text-2xl font-bold">${Array.isArray(invoices) ? invoices.filter((i: any) => i.status === 'sent').reduce((sum: number, i: any) => sum + i.total, 0).toLocaleString() : '0'}</p>
                     <p className="text-xs text-slate-500">Pending</p>
                   </div>
                 </div>
