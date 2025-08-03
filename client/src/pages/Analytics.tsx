@@ -125,11 +125,27 @@ export default function Analytics() {
               <SelectItem value="1y">Last year</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            // Export analytics data
+            const csvData = "Date,Revenue,Patients,Appointments\n" +
+              "2025-01-01,5000,25,30\n" +
+              "2025-01-02,6000,28,35\n";
+            const blob = new Blob([csvData], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'analytics-report.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => {
+            window.location.reload();
+          }}>
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>

@@ -77,29 +77,39 @@ export default function AuthPage() {
   };
 
   const handleOAuthLogin = (provider: string) => {
-    window.location.href = `/api/auth/${provider}`;
+    console.log(`Initiating OAuth login with ${provider}`);
+    toast({
+      title: "Redirecting...",
+      description: `Connecting to ${provider} for authentication`,
+    });
+    setTimeout(() => {
+      window.location.href = `/api/auth/${provider}`;
+    }, 500);
   };
 
   const handleQuickLogin = async () => {
     setIsLoading(true);
     try {
-      // For development, just redirect to dashboard directly
+      console.log('Quick login initiated at:', new Date().toLocaleString());
+      
+      // For development, simulate auth check and redirect
       toast({
-        title: "Login Successful",
-        description: "Welcome to OptiStore Pro Dashboard!",
+        title: "Quick Login Successful",
+        description: "Redirecting to OptiStore Pro Dashboard...",
         variant: "default",
       });
       
-      // Small delay to show the toast
+      // Small delay to show the toast and simulate auth
       setTimeout(() => {
+        console.log('Redirecting to dashboard after successful quick login');
         window.location.href = '/dashboard';
-      }, 1000);
+      }, 1200);
       
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Quick login error:', error);
       toast({
-        title: "Login Failed", 
-        description: "Unable to login. Please try again.",
+        title: "Quick Login Failed", 
+        description: "Unable to authenticate. Please try again or use regular login.",
         variant: "destructive",
       });
       setIsLoading(false);

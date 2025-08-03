@@ -111,7 +111,10 @@ export default function BillingPage() {
 
   const shareInvoiceMutation = useMutation({
     mutationFn: async (data: { invoiceId: string; method: 'email' | 'whatsapp'; recipient: string }) => {
-      // Simulate API call
+      // Simulate API call with better feedback
+      await new Promise(resolve => setTimeout(resolve, 800));
+      console.log(`Sharing invoice ${data.invoiceId} via ${data.method} to ${data.recipient}`);
+      return { success: true, method: data.method, recipient: data.recipient };
       await new Promise(resolve => setTimeout(resolve, 1000));
       return true;
     },

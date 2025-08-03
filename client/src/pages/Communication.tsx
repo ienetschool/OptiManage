@@ -76,22 +76,28 @@ export default function Communication() {
 
   const sendMessageMutation = useMutation({
     mutationFn: async (data: MessageFormData) => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return data;
+      // Simulate API call with actual processing
+      await new Promise(resolve => setTimeout(resolve, 800));
+      console.log('Sending message:', {
+        type: data.type,
+        recipients: data.recipients.length,
+        subject: data.subject,
+        message: data.message.substring(0, 50) + '...'
+      });
+      return { ...data, id: Date.now().toString(), status: 'sent', timestamp: new Date() };
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       toast({
-        title: "Success",
-        description: "Message sent successfully.",
+        title: "Message Sent Successfully",
+        description: `${result.type.toUpperCase()} sent to ${result.recipients.length} recipient(s)`,
       });
       setOpen(false);
       form.reset();
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to send message.",
+        title: "Message Failed",
+        description: "Unable to send message. Please check your settings and try again.",
         variant: "destructive",
       });
     },

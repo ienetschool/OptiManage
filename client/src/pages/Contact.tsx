@@ -109,8 +109,12 @@ export default function Contact() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Contact form submitted:', new FormData(e.target as HTMLFormElement));
     setFormSubmitted(true);
-    // Handle form submission here
+    // Show success message or redirect
+    setTimeout(() => {
+      alert('Thank you for your message! We will get back to you within 24 hours.');
+    }, 500);
   };
 
   return (

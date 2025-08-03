@@ -41,8 +41,9 @@ export default function Attendance() {
 
   const clockInMutation = useMutation({
     mutationFn: async ({ staffId, type }: { staffId: string; type: 'in' | 'out' }) => {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Mock API call with better feedback
+      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log(`Clock ${type} for staff ${staffId} at ${new Date().toLocaleString()}`);
       return { staffId, type, timestamp: new Date() };
     },
     onSuccess: (data) => {
@@ -50,6 +51,13 @@ export default function Attendance() {
       toast({
         title: `Clock ${data.type === 'in' ? 'In' : 'Out'} Successful`,
         description: `Staff member has clocked ${data.type} at ${format(data.timestamp, 'HH:mm')}`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Clock Action Failed",
+        description: "Unable to record attendance. Please try again.",
+        variant: "destructive",
       });
     },
   });

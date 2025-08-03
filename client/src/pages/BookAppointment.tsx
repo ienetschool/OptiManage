@@ -43,8 +43,31 @@ export default function BookAppointment() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would normally submit to your backend
-    alert("Appointment request submitted! We'll contact you shortly to confirm your appointment.");
+    
+    // Validate required fields
+    if (!selectedService || !selectedDate || !selectedTime || !formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+    
+    console.log('Appointment booking submitted:', {
+      service: selectedService,
+      date: selectedDate,
+      time: selectedTime,
+      patient: formData
+    });
+    
+    // Show success message
+    alert(`Appointment request submitted successfully!\n\nService: ${selectedServiceDetails?.name}\nDate: ${selectedDate}\nTime: ${selectedTime}\n\nWe'll contact you at ${formData.phone} within 2 hours to confirm your appointment.`);
+    
+    // Reset form
+    setSelectedDate("");
+    setSelectedTime("");
+    setSelectedService("");
+    setFormData({
+      firstName: "", lastName: "", email: "", phone: "", dateOfBirth: "",
+      insurance: "", reason: "", previousPatient: ""
+    });
   };
 
   const selectedServiceDetails = services.find(s => s.id === selectedService);
