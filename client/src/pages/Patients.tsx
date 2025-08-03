@@ -431,11 +431,22 @@ export default function Patients() {
   };
 
   const onSubmit = (data: InsertPatient) => {
+    console.log('Form submission data:', data);
+    console.log('Username before generation:', data.username);
+    console.log('Name data:', data.firstName, data.lastName, data.email);
+    
     // Auto-generate username if not provided
     if (!data.username && data.firstName && data.lastName && data.email) {
       data.username = generateUsername(data.firstName, data.lastName, data.email);
       console.log('Auto-generated username:', data.username);
+    } else if (!data.username) {
+      // If no username and missing required fields, generate a default one
+      const timestamp = Date.now().toString().slice(-6);
+      data.username = `patient_${timestamp}`;
+      console.log('Generated default username:', data.username);
     }
+    
+    console.log('Final data being submitted:', data);
     createPatientMutation.mutate(data);
   };
 
@@ -1915,21 +1926,26 @@ export default function Patients() {
                                             const firstName = form.getValues('firstName');
                                             const lastName = form.getValues('lastName');
                                             const email = form.getValues('email');
+                                            console.log('Manual generation - Form values:', { firstName, lastName, email });
+                                            
                                             if (firstName && lastName && email) {
                                               const username = generateUsername(firstName, lastName, email);
                                               form.setValue('username', username);
                                               console.log('Manual username generation:', username);
+                                              // Trigger form re-render to show the new value
+                                              form.trigger('username');
                                             } else {
                                               alert('Please fill in First Name, Last Name, and Email first');
                                             }
                                           }}
+                                          title="Generate username from name and email"
                                         >
                                           <RefreshCw className="h-4 w-4" />
                                         </Button>
                                       </div>
                                     </FormControl>
                                     <FormDescription className="text-xs">
-                                      Username will auto-generate when you click Register Patient, or click refresh icon to generate now
+                                      <strong>Auto-generates on registration.</strong> Fill First Name, Last Name, and Email, then click the refresh icon to preview, or leave blank for auto-generation.
                                     </FormDescription>
                                     <FormMessage />
                                   </FormItem>
