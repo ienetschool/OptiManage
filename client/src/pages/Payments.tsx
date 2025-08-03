@@ -138,7 +138,7 @@ export default function Payments() {
         throw new Error("Failed to fetch payments");
       }
       const data = await response.json();
-      console.log(`💳 PAYMENTS DATA RECEIVED: ${data.length} payments`, data.slice(0, 3));
+
       return data;
     },
     retry: 2,

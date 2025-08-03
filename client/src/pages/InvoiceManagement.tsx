@@ -430,13 +430,16 @@ export default function InvoiceManagement() {
     setInvoiceItems(invoiceItems.filter(item => item.id !== itemId));
   };
 
-  // Calculate totals with proper decimal handling
+  // Calculate totals with proper decimal handling - CONSISTENT WITH BACKEND
   const subtotal = invoiceItems.reduce((sum, item) => sum + parseFloat(item.total.toString()), 0);
   const discountAmount = parseFloat(invoiceForm.watch("discountAmount")?.toString() || "0");
   const taxRate = parseFloat(invoiceForm.watch("taxRate")?.toString() || "0");
-  const discountedSubtotal = subtotal - discountAmount;
-  const taxAmount = (discountedSubtotal * taxRate) / 100;
-  const grandTotal = discountedSubtotal + taxAmount;
+  
+  // Backend calculation method: tax on full subtotal, then subtract discount
+  const taxAmount = (subtotal * taxRate) / 100;
+  const grandTotal = subtotal + taxAmount - discountAmount;
+  
+
 
   // Submit invoice
   const onSubmit = (data: z.infer<typeof invoiceSchema>) => {

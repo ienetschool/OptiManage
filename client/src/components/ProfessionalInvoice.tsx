@@ -37,9 +37,10 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
 
   const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   const discountAmount = invoice.discountAmount || 0;
-  const taxableAmount = subtotal - discountAmount;
-  const taxAmount = (taxableAmount * (invoice.taxRate || 0)) / 100;
-  const totalAmount = taxableAmount + taxAmount;
+  
+  // Use consistent calculation method: tax on full subtotal, then subtract discount
+  const taxAmount = (subtotal * (invoice.taxRate || 0)) / 100;
+  const totalAmount = subtotal + taxAmount - discountAmount;
 
   printWindow.document.write(`
     <!DOCTYPE html>

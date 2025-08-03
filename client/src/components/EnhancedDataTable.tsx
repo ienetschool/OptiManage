@@ -112,7 +112,7 @@ export default function EnhancedDataTable({
 
   // Sort data
   const sortedData = useMemo(() => {
-    console.log(`🔧 SORTING DEBUG - Column: ${sortColumn}, Direction: ${sortDirection}, Data length: ${filteredData.length}`);
+
     
     if (!sortColumn) {
       // Default sort by creation date (newest first) if available
@@ -166,10 +166,7 @@ export default function EnhancedDataTable({
         : bStr.localeCompare(aStr);
     });
     
-    console.log(`🔧 SORTED RESULT - First 3 items:`, sorted.slice(0, 3).map(item => ({ 
-      id: item.id, 
-      [sortColumn]: item[sortColumn] 
-    })));
+
     
     return sorted;
   }, [filteredData, sortColumn, sortDirection, data]);
@@ -181,9 +178,7 @@ export default function EnhancedDataTable({
     ? sortedData.slice(startIndex, startIndex + pageSizeValue)
     : sortedData;
   
-  // Debug pagination
-  console.log(`📄 PAGINATION DEBUG - Total: ${sortedData.length}, Page: ${currentPage}, PerPage: ${pageSizeValue}, Showing: ${paginatedData.length}`);
-  console.log(`📄 CURRENT PAGE DATA:`, paginatedData.slice(0, 3).map(item => ({ id: item.id, invoiceNumber: item.invoiceNumber })));
+
 
   // Reset to first page when data changes
   React.useEffect(() => {
@@ -339,58 +334,54 @@ export default function EnhancedDataTable({
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedData.map((row, index) => {
-                  console.log(`🔧 RENDERING ROW ${index}:`, { id: row.id, firstColumn: row[columns[0]?.key] });
-                  return (
-                    <TableRow key={row.id || `row-${index}`}>
-                      {columns.map((column) => {
-                        const cellValue = row[column.key];
-                        const renderedValue = column.render ? column.render(cellValue, row) : cellValue;
-                        console.log(`🔧 CELL ${column.key}:`, cellValue, '→', renderedValue);
-                        return (
-                          <TableCell key={column.key}>
-                            {renderedValue}
-                          </TableCell>
-                        );
-                      })}
-                      {(onView || onEdit || onDelete || actions) && (
-                        <TableCell>
-                          {actions ? (
-                            actions(row)
-                          ) : (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                {onView && (
-                                  <DropdownMenuItem onClick={() => onView(row)}>
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View
-                                  </DropdownMenuItem>
-                                )}
-                                {onEdit && (
-                                  <DropdownMenuItem onClick={() => onEdit(row)}>
-                                    <Edit className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </DropdownMenuItem>
-                                )}
-                                {onDelete && (
-                                  <DropdownMenuItem onClick={() => onDelete(row)}>
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                paginatedData.map((row, index) => (
+                  <TableRow key={row.id || `row-${index}`}>
+                    {columns.map((column) => {
+                      const cellValue = row[column.key];
+                      const renderedValue = column.render ? column.render(cellValue, row) : cellValue;
+                      return (
+                        <TableCell key={column.key}>
+                          {renderedValue}
                         </TableCell>
-                      )}
-                    </TableRow>
-                  );
-                })
+                      );
+                    })}
+                    {(onView || onEdit || onDelete || actions) && (
+                      <TableCell>
+                        {actions ? (
+                          actions(row)
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {onView && (
+                                <DropdownMenuItem onClick={() => onView(row)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View
+                                </DropdownMenuItem>
+                              )}
+                              {onEdit && (
+                                <DropdownMenuItem onClick={() => onEdit(row)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </DropdownMenuItem>
+                              )}
+                              {onDelete && (
+                                <DropdownMenuItem onClick={() => onDelete(row)}>
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))
               )}
             </TableBody>
             </Table>
