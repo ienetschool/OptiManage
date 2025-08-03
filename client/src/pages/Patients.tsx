@@ -214,6 +214,33 @@ export default function Patients() {
     },
   });
 
+  // Edit form for updating patient information
+  const editForm = useForm<InsertPatient>({
+    resolver: zodResolver(insertPatientSchema),
+    defaultValues: {
+      patientCode: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      gender: "male",
+      phone: "",
+      email: "",
+      address: "",
+      emergencyContact: "",
+      emergencyPhone: "",
+      allergies: "",
+      medicalHistory: "",
+      insuranceProvider: "",
+      insuranceNumber: "",
+      loyaltyTier: "bronze",
+      loyaltyPoints: 0,
+      bloodGroup: "",
+      username: "",
+      password: "",
+      isActive: true,
+    },
+  });
+
   // Appointment form state
   const [appointmentForm, setAppointmentForm] = useState({
     patientId: "",
@@ -285,6 +312,29 @@ export default function Patients() {
       toast({
         title: "Error",
         description: "Failed to register patient.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update patient mutation
+  const updatePatientMutation = useMutation({
+    mutationFn: async (data: { id: string; updates: Partial<InsertPatient> }) => {
+      await apiRequest("PUT", `/api/patients/${data.id}`, data.updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      setEditPatientOpen(false);
+      editForm.reset();
+      toast({
+        title: "Success",
+        description: "Patient information updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update patient information.",
         variant: "destructive",
       });
     },
@@ -372,8 +422,26 @@ export default function Patients() {
     },
   });
 
+  // Auto-generate username based on name and email
+  const generateUsername = (firstName: string, lastName: string, email: string) => {
+    const name = `${firstName}${lastName}`.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const emailPrefix = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const timestamp = Date.now().toString().slice(-4);
+    return `${name}_${emailPrefix}_${timestamp}`;
+  };
+
   const onSubmit = (data: InsertPatient) => {
+    // Auto-generate username if not provided
+    if (!data.username && data.firstName && data.lastName && data.email) {
+      data.username = generateUsername(data.firstName, data.lastName, data.email);
+    }
     createPatientMutation.mutate(data);
+  };
+
+  const onEditSubmit = (data: InsertPatient) => {
+    if (selectedPatient) {
+      updatePatientMutation.mutate({ id: selectedPatient.id, updates: data });
+    }
   };
 
   const onAppointmentSubmit = (e: React.FormEvent) => {
@@ -1836,10 +1904,28 @@ export default function Patients() {
                                   <FormItem>
                                     <FormLabel>Username</FormLabel>
                                     <FormControl>
-                                      <Input {...field} placeholder="Enter username for patient portal" value={field.value || ""} />
+                                      <div className="flex gap-2">
+                                        <Input {...field} placeholder="Auto-generated username" value={field.value || ""} />
+                                        <Button 
+                                          type="button" 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => {
+                                            const firstName = form.getValues('firstName');
+                                            const lastName = form.getValues('lastName');
+                                            const email = form.getValues('email');
+                                            if (firstName && lastName && email) {
+                                              const username = generateUsername(firstName, lastName, email);
+                                              form.setValue('username', username);
+                                            }
+                                          }}
+                                        >
+                                          <RefreshCw className="h-4 w-4" />
+                                        </Button>
+                                      </div>
                                     </FormControl>
                                     <FormDescription className="text-xs">
-                                      Used for patient portal login
+                                      Auto-generated on registration or click refresh to regenerate
                                     </FormDescription>
                                     <FormMessage />
                                   </FormItem>
@@ -2019,6 +2105,29 @@ export default function Patients() {
             }}
             onEdit={(patient) => {
               setSelectedPatient(patient);
+              // Populate edit form with patient data
+              editForm.reset({
+                patientCode: patient.patientCode || "",
+                firstName: patient.firstName || "",
+                lastName: patient.lastName || "",
+                dateOfBirth: patient.dateOfBirth || "",
+                gender: patient.gender || "male",
+                phone: patient.phone || "",
+                email: patient.email || "",
+                address: patient.address || "",
+                emergencyContact: patient.emergencyContact || "",
+                emergencyPhone: patient.emergencyPhone || "",
+                allergies: patient.allergies || "",
+                medicalHistory: patient.medicalHistory || "",
+                insuranceProvider: patient.insuranceProvider || "",
+                insuranceNumber: patient.insuranceNumber || "",
+                loyaltyTier: patient.loyaltyTier || "bronze",
+                loyaltyPoints: patient.loyaltyPoints || 0,
+                bloodGroup: patient.bloodGroup || "",
+                username: patient.username || "",
+                password: "", // Don't pre-fill password for security
+                isActive: patient.isActive ?? true,
+              });
               setEditPatientOpen(true);
             }}
             pageSize={10}
@@ -3610,22 +3719,329 @@ export default function Patients() {
             </DialogDescription>
           </DialogHeader>
           
-          {selectedPatient && (
-            <div className="space-y-6">
-              <p className="text-center text-gray-600">
-                Edit Patient functionality will be implemented with a comprehensive form similar to the registration form.
-                For now, you can view and manage patient details through the "View Details" option.
-              </p>
-              <div className="flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setEditPatientOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => setEditPatientOpen(false)}>
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          )}
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(onEditSubmit)} className="space-y-6">
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
+                  <TabsTrigger value="contact">Contact</TabsTrigger>
+                  <TabsTrigger value="medical">Medical</TabsTrigger>
+                  <TabsTrigger value="insurance">Insurance</TabsTrigger>
+                  <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
+                </TabsList>
+
+                {/* Basic Information Tab */}
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name *</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter first name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name *</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter last name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date of Birth *</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} type="date" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Gender *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Contact Information Tab */}
+                <TabsContent value="contact" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number *</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} type="tel" placeholder="Enter phone number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address *</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} type="email" placeholder="Enter email address" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel>Address</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} value={field.value || ""} placeholder="Enter full address" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="emergencyContact"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Emergency Contact Name</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter emergency contact name" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="emergencyPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Emergency Contact Phone</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter emergency contact phone" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Portal Access Section */}
+                  <div className="border rounded-lg p-4 bg-blue-50 mt-4">
+                    <h4 className="font-medium text-blue-800 mb-3 flex items-center">
+                      <User className="h-4 w-4 mr-2" />
+                      Portal Access Credentials
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={editForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Enter username for patient portal" value={field.value || ""} />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              Used for patient portal login
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={editForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password (Leave blank to keep current)</FormLabel>
+                            <FormControl>
+                              <Input type="password" {...field} placeholder="Enter new password" value={field.value || ""} />
+                            </FormControl>
+                            <FormDescription className="text-xs">
+                              Minimum 8 characters for portal access
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Medical Information Tab */}
+                <TabsContent value="medical" className="space-y-4">
+                  <FormField
+                    control={editForm.control}
+                    name="allergies"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Known Allergies</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} value={field.value || ""} placeholder="List any known allergies..." />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={editForm.control}
+                    name="medicalHistory"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Medical History</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} value={field.value || ""} placeholder="Enter relevant medical history..." />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+
+                {/* Insurance Information Tab */}
+                <TabsContent value="insurance" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="insuranceProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Insurance Provider</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter insurance provider" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="insuranceNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Policy Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter policy number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                {/* Loyalty Information Tab */}
+                <TabsContent value="loyalty" className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={editForm.control}
+                      name="loyaltyTier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Loyalty Tier</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || "bronze"}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select loyalty tier" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="bronze">Bronze</SelectItem>
+                              <SelectItem value="silver">Silver</SelectItem>
+                              <SelectItem value="gold">Gold</SelectItem>
+                              <SelectItem value="platinum">Platinum</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="loyaltyPoints"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Loyalty Points</FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="number" 
+                              placeholder="0" 
+                              value={field.value || ""}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </TabsContent>
+
+                <div className="flex justify-end space-x-2 pt-4 border-t">
+                  <Button type="button" variant="outline" onClick={() => setEditPatientOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updatePatientMutation.isPending}>
+                    {updatePatientMutation.isPending ? "Updating..." : "Update Patient"}
+                  </Button>
+                </div>
+              </Tabs>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
