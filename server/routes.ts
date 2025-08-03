@@ -440,7 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       totalPrice: z.union([z.string(), z.number()]).transform(val => 
         typeof val === 'string' ? val : val.toString()
       ),
-    })),
+    })).optional().default([]),
     subtotal: z.union([z.string(), z.number()]).transform(val => 
       typeof val === 'string' ? val : val.toString()
     ),
@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Creating sale with request body:", JSON.stringify(req.body, null, 2));
       const validatedData = createSaleSchema.parse(req.body);
-      const { items, ...saleData } = validatedData;
+      const { items = [], ...saleData } = validatedData;
       
       // Add staff ID from authenticated user  
       const saleWithStaff = {

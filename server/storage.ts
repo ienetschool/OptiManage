@@ -314,7 +314,7 @@ export class DatabaseStorage implements IStorage {
     return sale;
   }
 
-  async createSale(sale: InsertSale, items: Omit<SaleItem, 'id' | 'saleId'>[]): Promise<Sale> {
+  async createSale(sale: InsertSale, items: Omit<SaleItem, 'id' | 'saleId'>[] = []): Promise<Sale> {
     return await db.transaction(async (tx) => {
       const saleData = {
         ...sale,
@@ -322,12 +322,15 @@ export class DatabaseStorage implements IStorage {
       };
       const [newSale] = await tx.insert(sales).values([saleData]).returning();
       
-      const saleItemsToInsert = items.map(item => ({
-        ...item,
-        saleId: newSale.id,
-      }));
-      
-      await tx.insert(saleItems).values(saleItemsToInsert);
+      // Only insert items if there are any
+      if (items.length > 0) {
+        const saleItemsToInsert = items.map(item => ({
+          ...item,
+          saleId: newSale.id,
+        }));
+        
+        await tx.insert(saleItems).values(saleItemsToInsert);
+      }
       
       // Update inventory (optional - only if storeId is provided)
       if (sale.storeId) {
