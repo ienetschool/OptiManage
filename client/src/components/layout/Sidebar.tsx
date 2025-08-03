@@ -54,10 +54,10 @@ const navigationItems = [
     ],
   },
   {
-    title: "Sales & Billing",
+    title: "Billing & Invoices",
     icon: DollarSign,
     items: [
-      { title: "Invoices & Sales", href: "/invoices", icon: Receipt },
+      { title: "Invoice Management", href: "/invoices", icon: Receipt },
       { title: "Payment History", href: "/payments", icon: CreditCard },
 
     ],
@@ -123,7 +123,7 @@ const navigationItems = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
-  const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Sales & Billing"]);
+  const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices"]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>

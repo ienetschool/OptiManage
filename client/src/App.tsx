@@ -9,7 +9,7 @@ import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import Stores from "@/pages/Stores";
 import Inventory from "@/pages/Inventory";
-import Sales from "@/pages/Sales";
+
 import Appointments from "@/pages/Appointments";
 import Customers from "@/pages/Customers";
 import Patients from "@/pages/Patients";
@@ -161,14 +161,7 @@ function Router() {
         </AppLayout>
       </Route>
       
-      <Route path="/sales">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Sales />
-          </div>
-        </AppLayout>
-      </Route>
+
       
       <Route path="/appointments">
         <AppLayout>
