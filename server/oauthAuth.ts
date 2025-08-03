@@ -214,12 +214,11 @@ export function setupOAuthAuth(app: Express) {
       provider: 'mock'
     };
 
-    req.login(mockUser, (err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Login error' });
-      }
-      res.redirect("/dashboard");
-    });
+    // Set session directly for development
+    req.session.passport = { user: mockUser };
+    (req as any).user = mockUser;
+    
+    res.redirect("/dashboard");
   });
 
   // Logout
@@ -243,9 +242,17 @@ export function setupOAuthAuth(app: Express) {
   // Get current user
   app.get('/api/auth/user', async (req, res) => {
     try {
-      // Check if user is logged out (session destroyed)
-      if (!req.session || req.session.destroy) {
-        return res.status(401).json({ message: 'Not authenticated' });
+      // Check session first
+      if (req.session && req.session.passport && req.session.passport.user) {
+        const user = req.session.passport.user;
+        return res.json({
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          profileImageUrl: user.profileImageUrl,
+          provider: user.provider
+        });
       }
       
       const user = req.user as any;
@@ -268,18 +275,19 @@ export function setupOAuthAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = (req, res, next) => {
+  // Check session first
+  if (req.session && req.session.passport && req.session.passport.user) {
+    (req as any).user = req.session.passport.user;
+    return next();
+  }
+  
   // Check if user is actually authenticated
   if (req.isAuthenticated && req.isAuthenticated()) {
     return next();
   }
   
-  // For development, check if session exists first
-  if (req.session && req.session.passport && req.session.passport.user) {
-    return next();
-  }
-  
   // Create mock user for development only if no session
-  (req as any).user = {
+  const mockUser = {
     id: "45761289",
     email: "admin@optistorepro.com",
     firstName: "Admin",
@@ -287,5 +295,7 @@ export const isAuthenticated: RequestHandler = (req, res, next) => {
     profileImageUrl: "/api/placeholder/40/40",
     provider: 'mock'
   };
+  (req as any).user = mockUser;
+  req.session.passport = { user: mockUser };
   return next();
 };
