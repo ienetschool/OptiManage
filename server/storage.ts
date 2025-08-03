@@ -835,7 +835,7 @@ export class DatabaseStorage implements IStorage {
       if (items && items.length > 0) {
         const invoiceItemsData = items.map(item => ({
           invoiceId: newInvoice.id,
-          productId: item.productId || null,
+          productId: (item.productId === "custom" || !item.productId) ? null : item.productId,
           productName: item.productName || "Unknown Product",
           description: item.description || null,
           quantity: parseInt(item.quantity) || 1,
