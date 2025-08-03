@@ -11,8 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   Plus, Package, AlertTriangle, Search, Edit, Trash2, TrendingDown, TrendingUp, 
-  Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3 
+  Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3,
+  QrCode, Download, Share, Printer, FileText
 } from "lucide-react";
+import QRCode from 'react-qr-code';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -43,6 +45,7 @@ export default function Inventory() {
   const [stockFilter, setStockFilter] = useState("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProductForStock, setSelectedProductForStock] = useState<Product | null>(null);
+  const [selectedProductForQR, setSelectedProductForQR] = useState<Product | null>(null);
   const [barcodeInput, setBarcodeInput] = useState("");
   const [stockQuantity, setStockQuantity] = useState(0);
   const { toast } = useToast();
@@ -99,6 +102,21 @@ export default function Inventory() {
       reorderLevel: 10,
       isActive: true,
       initialStock: 0,
+      barcode: "",
+    },
+  });
+
+  // Enhanced purchase order form with tax and shipping
+  const purchaseOrderForm = useForm({
+    defaultValues: {
+      productId: "",
+      supplierId: "",
+      quantity: 1,
+      unitCost: 0,
+      taxRate: 8.5,
+      shippingCost: 0,
+      handlingCost: 0,
+      notes: "",
     },
   });
 
@@ -121,13 +139,80 @@ export default function Inventory() {
     },
   });
 
+  // Purchase order mutation with auto-invoice generation
+  const createPurchaseOrderMutation = useMutation({
+    mutationFn: async (data: any) => {
+      // Calculate totals
+      const subtotal = data.quantity * data.unitCost;
+      const taxAmount = subtotal * (data.taxRate / 100);
+      const total = subtotal + taxAmount + data.shippingCost + data.handlingCost;
+      
+      // Create purchase invoice first
+      const invoiceData = {
+        customerId: data.supplierId, // Use supplier as "customer" for purchase
+        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+        invoiceNumber: `PO-${Date.now().toString().slice(-6)}`,
+        date: new Date().toISOString(),
+        status: "pending",
+        subtotal: subtotal,
+        taxAmount: taxAmount,
+        total: total,
+        discountAmount: 0,
+        taxRate: data.taxRate,
+        paymentMethod: "credit",
+        notes: `Purchase Order - ${data.notes}`,
+        items: [{
+          productId: data.productId,
+          quantity: data.quantity,
+          unitPrice: data.unitCost,
+          total: subtotal,
+        }]
+      };
+      
+      // Create the purchase invoice
+      const invoice = await apiRequest("POST", "/api/invoices", invoiceData);
+      
+      // Update inventory
+      await apiRequest("POST", "/api/store-inventory", {
+        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+        productId: data.productId,
+        quantity: data.quantity,
+      });
+      
+      return invoice;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      toast({
+        title: "Success",
+        description: "Purchase order created with automated invoice generation.",
+      });
+      setOpenPurchaseOrder(false);
+      purchaseOrderForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create purchase order.",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutations
   const createProductMutation = useMutation({
     mutationFn: async (data: InsertProduct) => {
       const { initialStock, ...productData } = data;
+      
+      // Auto-generate barcode if not provided
+      if (!productData.barcode) {
+        productData.barcode = `${Date.now()}${Math.random().toString(36).substr(2, 5)}`.toUpperCase();
+      }
+      
       const response = await apiRequest("POST", "/api/products", productData);
       
-      // If initial stock is provided, create inventory record
+      // If initial stock is provided, create inventory record and purchase invoice
       if (initialStock && initialStock > 0) {
         await apiRequest("POST", "/api/store-inventory", {
           storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
@@ -135,6 +220,32 @@ export default function Inventory() {
           quantity: initialStock,
           lastRestocked: new Date(),
         });
+
+        // Auto-generate purchase invoice for initial stock
+        if (productData.supplierId && productData.costPrice) {
+          const purchaseInvoiceData = {
+            customerId: productData.supplierId,
+            storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+            invoiceNumber: `IP-${Date.now().toString().slice(-6)}`,
+            date: new Date().toISOString(),
+            status: "pending",
+            subtotal: parseFloat(productData.costPrice) * initialStock,
+            taxAmount: (parseFloat(productData.costPrice) * initialStock) * 0.085,
+            total: (parseFloat(productData.costPrice) * initialStock) * 1.085,
+            discountAmount: 0,
+            taxRate: 8.5,
+            paymentMethod: "credit",
+            notes: `Initial stock purchase for ${productData.name}`,
+            items: [{
+              productId: (response as any).id,
+              quantity: initialStock,
+              unitPrice: parseFloat(productData.costPrice),
+              total: parseFloat(productData.costPrice) * initialStock,
+            }]
+          };
+          
+          await apiRequest("POST", "/api/invoices", purchaseInvoiceData);
+        }
       }
       
       return response;
@@ -336,6 +447,56 @@ export default function Inventory() {
           <Badge variant={row.isActive ? "default" : "secondary"} className="block w-fit">
             {row.isActive ? "Active" : "Inactive"}
           </Badge>
+        </div>
+      )
+    },
+    {
+      key: 'actions',
+      title: 'Actions',
+      sortable: false,
+      filterable: false,
+      render: (value, row) => (
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSelectedProductForQR(row)}
+            title="Generate QR Code"
+          >
+            <QrCode className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleEditProduct(row)}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Product
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                setSelectedProductForStock(row);
+                setOpenStockUpdate(true);
+              }}>
+                <Package className="h-4 w-4 mr-2" />
+                Update Stock
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => {
+                purchaseOrderForm.setValue("productId", row.id);
+                setOpenPurchaseOrder(true);
+              }}>
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Create Purchase Order
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-red-600">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Product
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )
     }
@@ -1300,6 +1461,290 @@ export default function Inventory() {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* QR Code Dialog */}
+      <Dialog open={!!selectedProductForQR} onOpenChange={(open) => !open && setSelectedProductForQR(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Product QR Code</DialogTitle>
+          </DialogHeader>
+          
+          {selectedProductForQR && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h3 className="font-medium text-slate-900 mb-2">{selectedProductForQR.name}</h3>
+                <p className="text-sm text-slate-600 mb-4">SKU: {selectedProductForQR.sku}</p>
+                
+                <div className="flex justify-center p-4 bg-white border rounded-lg">
+                  <QRCode
+                    value={JSON.stringify({
+                      id: selectedProductForQR.id,
+                      name: selectedProductForQR.name,
+                      sku: selectedProductForQR.sku,
+                      price: selectedProductForQR.price,
+                      barcode: selectedProductForQR.barcode
+                    })}
+                    size={200}
+                    level="M"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-center space-x-2">
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Purchase Order Dialog */}
+      <Dialog open={openPurchaseOrder} onOpenChange={setOpenPurchaseOrder}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create Purchase Order</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...purchaseOrderForm}>
+            <form onSubmit={purchaseOrderForm.handleSubmit((data) => createPurchaseOrderMutation.mutate(data))} className="space-y-6">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="productId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Product *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select product" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {products.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} - SKU: {product.sku}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="supplierId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Supplier *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select supplier" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {suppliers.map((supplier) => (
+                            <SelectItem key={supplier.id} value={supplier.id}>
+                              {supplier.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="1"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="unitCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit Cost *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="taxRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tax Rate (%)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          placeholder="8.5"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 8.5)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="shippingCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Shipping Cost</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={purchaseOrderForm.control}
+                  name="handlingCost"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Handling Cost</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.00"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={purchaseOrderForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Additional notes or special instructions..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Order Summary */}
+              <div className="border rounded-lg p-4 bg-slate-50">
+                <h4 className="font-medium text-slate-900 mb-3">Order Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${((purchaseOrderForm.watch("quantity") || 0) * (purchaseOrderForm.watch("unitCost") || 0)).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Tax ({purchaseOrderForm.watch("taxRate") || 8.5}%):</span>
+                    <span>${(((purchaseOrderForm.watch("quantity") || 0) * (purchaseOrderForm.watch("unitCost") || 0)) * ((purchaseOrderForm.watch("taxRate") || 8.5) / 100)).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Shipping:</span>
+                    <span>${(purchaseOrderForm.watch("shippingCost") || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Handling:</span>
+                    <span>${(purchaseOrderForm.watch("handlingCost") || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between font-medium">
+                    <span>Total:</span>
+                    <span>${(
+                      ((purchaseOrderForm.watch("quantity") || 0) * (purchaseOrderForm.watch("unitCost") || 0)) * 
+                      (1 + ((purchaseOrderForm.watch("taxRate") || 8.5) / 100)) +
+                      (purchaseOrderForm.watch("shippingCost") || 0) +
+                      (purchaseOrderForm.watch("handlingCost") || 0)
+                    ).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpenPurchaseOrder(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createPurchaseOrderMutation.isPending}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {createPurchaseOrderMutation.isPending ? "Creating..." : "Create Purchase Order"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

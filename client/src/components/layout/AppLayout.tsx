@@ -445,30 +445,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Website Management */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Globe className="h-5 w-5 mr-1" />
-                <span className="hidden sm:inline">Website</span>
-                <ChevronDown className="h-3 w-3 ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href="/pages">Manage Pages</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/themes">Themes & Design</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/domains">Domain Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/seo">SEO & Analytics</Link>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* Website Link */}
+          <Button variant="ghost" size="sm" onClick={() => window.open('/', '_blank')} title="Visit Store Website">
+            <Globe className="h-5 w-5" />
+          </Button>
 
           {/* User Profile */}
           <DropdownMenu>
@@ -480,10 +460,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     {(user as any)?.firstName?.[0]}{(user as any)?.lastName?.[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium">{(user as any)?.firstName} {(user as any)?.lastName}</p>
-                  <p className="text-xs text-slate-500">{(user as any)?.email}</p>
-                </div>
                 <ChevronDown className="h-3 w-3" />
               </Button>
             </DropdownMenuTrigger>

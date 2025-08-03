@@ -34,7 +34,11 @@ import {
   BookOpen,
   Hospital,
   Pill,
-  TrendingUp
+  TrendingUp,
+  Globe,
+  Palette,
+  Link as LinkIcon,
+  Search as SearchIcon
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -74,6 +78,16 @@ const navigationItems = [
     items: [
       { title: "All Stores", href: "/stores", icon: Store },
       { title: "Store Settings", href: "/store-settings", icon: Settings },
+    ],
+  },
+  {
+    title: "Website Management",
+    icon: Globe,
+    items: [
+      { title: "Pages", href: "/pages", icon: FileText },
+      { title: "Themes", href: "/themes", icon: Palette },
+      { title: "Domains", href: "/domains", icon: LinkIcon },
+      { title: "SEO", href: "/seo", icon: SearchIcon },
     ],
   },
   {

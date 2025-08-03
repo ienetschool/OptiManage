@@ -163,14 +163,7 @@ function Router() {
       
 
       
-      <Route path="/appointments">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Appointments />
-          </div>
-        </AppLayout>
-      </Route>
+
       
       <Route path="/customers">
         <AppLayout>

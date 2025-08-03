@@ -156,7 +156,7 @@ export default function Dashboard() {
       title: "Schedule Appointment",
       description: "Book new patient visit",
       icon: CalendarPlus,
-      action: () => navigate("/appointments"),
+      action: () => navigate("/patients#appointments"),
       color: "bg-blue-500 hover:bg-blue-600"
     },
     {
@@ -170,14 +170,14 @@ export default function Dashboard() {
       title: "Process Sale",
       description: "Quick sale transaction",
       icon: Receipt,
-      action: () => navigate('/sales'),
+      action: () => navigate('/invoices'),
       color: "bg-purple-500 hover:bg-purple-600"
     },
     {
       title: "Medical Record",
       description: "Update patient record",
       icon: Stethoscope,
-      action: () => navigate("/medical-records"),
+      action: () => navigate("/patients"),
       color: "bg-orange-500 hover:bg-orange-600"
     }
   ];
