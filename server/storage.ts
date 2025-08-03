@@ -677,14 +677,26 @@ export class DatabaseStorage implements IStorage {
       // Convert database invoices to the expected format
       const databaseInvoices = dbInvoices.map(invoice => {
         let customerName = "Guest Customer";
+        let actualCustomerId = invoice.customerId;
         
-        if (invoice.customerId) {
+        // Check if patient ID is stored in notes field (new format: PATIENT_ID:xxx|notes)
+        if (invoice.notes && invoice.notes.startsWith('PATIENT_ID:')) {
+          const patientIdMatch = invoice.notes.match(/^PATIENT_ID:([^|]+)/);
+          if (patientIdMatch) {
+            const patientId = patientIdMatch[1];
+            const patient = patientsData.find(p => p.id === patientId);
+            if (patient) {
+              customerName = `${patient.firstName} ${patient.lastName}`.trim();
+              actualCustomerId = patientId; // Use patient ID for consistency
+            }
+          }
+        } else if (invoice.customerId) {
           // Try to find in customers first
           const customer = customersData.find(c => c.id === invoice.customerId);
           if (customer) {
             customerName = `${customer.firstName} ${customer.lastName}`.trim();
           } else {
-            // Try to find in patients
+            // Try to find in patients (legacy invoices that might have patient IDs)
             const patient = patientsData.find(p => p.id === invoice.customerId);
             if (patient) {
               customerName = `${patient.firstName} ${patient.lastName}`.trim();
@@ -697,7 +709,7 @@ export class DatabaseStorage implements IStorage {
         return {
           id: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
-          customerId: invoice.customerId,
+          customerId: actualCustomerId,
           customerName: customerName,
         storeId: invoice.storeId,
         storeName: "OptiStore Pro",
@@ -812,8 +824,10 @@ export class DatabaseStorage implements IStorage {
       console.log(`🏁 ATTEMPTING DATABASE INSERT...`);
       console.log(`📊 Final values: Subtotal: ${subtotal}, Tax: ${taxAmount}, Total: ${total}`);
       
-      // Check if customerId exists in customers table, if not check patients
+      // For invoices, we need to store patient info separately since patient IDs can't be stored in customerId due to foreign key constraints
       let validCustomerId = invoice.customerId;
+      let patientId = null;
+      
       if (validCustomerId) {
         console.log(`🔍 CHECKING CUSTOMER ID: ${validCustomerId}`);
         const customerExists = await db.select().from(customers).where(eq(customers.id, validCustomerId)).limit(1);
@@ -824,8 +838,10 @@ export class DatabaseStorage implements IStorage {
           const patientExists = await db.select().from(patients).where(eq(patients.id, validCustomerId)).limit(1);
           
           if (patientExists.length > 0) {
-            console.log(`✅ FOUND AS PATIENT, SETTING CUSTOMER_ID TO NULL`);
-            validCustomerId = null; // Use null for patient-based invoices
+            console.log(`✅ FOUND AS PATIENT, STORING PATIENT ID IN NOTES`);
+            // Store patient ID in notes field so we can resolve customer name later
+            patientId = validCustomerId;
+            validCustomerId = null; // Can't store patient ID in customerId due to foreign key constraint
           } else {
             console.log(`❌ ID NOT FOUND IN CUSTOMERS OR PATIENTS`);
             validCustomerId = null;
@@ -845,9 +861,9 @@ export class DatabaseStorage implements IStorage {
         taxAmount: taxAmount.toString(),
         discountAmount: parseFloat(invoice.discountAmount || "0").toString(),
         total: total.toString(),
-        status: invoice.status || 'draft',
+        status: invoice.paymentMethod === 'cash' ? 'paid' : (invoice.status || 'draft'),
         paymentMethod: invoice.paymentMethod || null,
-        notes: invoice.notes || null,
+        notes: patientId ? `PATIENT_ID:${patientId}|${invoice.notes || ''}` : (invoice.notes || null),
       };
       
       console.log(`📤 INSERT DATA:`, JSON.stringify(insertData, null, 2));
@@ -1087,7 +1103,7 @@ export class DatabaseStorage implements IStorage {
       
       // Combine all payments and sort by date
       const allPayments = [...regularPayments, ...medicalPayments, ...salesPayments]
-        .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
+        .sort((a, b) => new Date(b.paymentDate || new Date()).getTime() - new Date(a.paymentDate || new Date()).getTime());
       
       console.log(`🚨 RETURNING ${allPayments.length} TOTAL PAYMENTS (${regularPayments.length} regular + ${medicalPayments.length} medical + ${salesPayments.length} sales)`);
       
