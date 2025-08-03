@@ -32,6 +32,8 @@ import { z } from "zod";
 const messageSchema = z.object({
   type: z.enum(["email", "sms"]),
   recipients: z.array(z.string()).min(1, "At least one recipient is required"),
+  recipientType: z.enum(["individual", "patients", "staff", "customers", "suppliers", "all"]),
+  templateId: z.string().optional(),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
 });
@@ -48,11 +50,25 @@ export default function Communication() {
     queryKey: ["/api/customers"],
   });
 
+  const { data: patients = [] } = useQuery({
+    queryKey: ["/api/patients"],
+  });
+
+  const { data: staff = [] } = useQuery({
+    queryKey: ["/api/staff"],
+  });
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ["/api/suppliers"],
+  });
+
   const form = useForm<MessageFormData>({
     resolver: zodResolver(messageSchema),
     defaultValues: {
       type: "email",
       recipients: [],
+      recipientType: "individual",
+      templateId: "",
       subject: "",
       message: "",
     },

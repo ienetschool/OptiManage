@@ -1072,29 +1072,78 @@ export default function StaffPage() {
                       </TabsContent>
 
                       <TabsContent value="access" className="space-y-4">
-                        <FormField
-                          control={form.control}
-                          name="role"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Role</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="admin">Administrator</SelectItem>
-                                  <SelectItem value="manager">Manager</SelectItem>
-                                  <SelectItem value="staff">Staff</SelectItem>
-                                  <SelectItem value="doctor">Doctor</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="role"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Role</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="admin">Administrator</SelectItem>
+                                    <SelectItem value="manager">Manager</SelectItem>
+                                    <SelectItem value="staff">Staff</SelectItem>
+                                    <SelectItem value="doctor">Doctor</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        {/* Login Credentials */}
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold text-slate-900">Login Credentials</h3>
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="customFields.username"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Username (Auto-generated)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      {...field} 
+                                      placeholder="Auto-generated on save"
+                                      disabled
+                                      className="bg-gray-50"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            
+                            <FormField
+                              control={form.control}
+                              name="customFields.password"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Password</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="password" 
+                                      {...field} 
+                                      placeholder="Enter secure password"
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          
+                          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
+                            <strong>Note:</strong> Username will be auto-generated based on first name, last name, and employee ID upon saving.
+                          </div>
+                        </div>
                       </TabsContent>
 
                       <TabsContent value="payroll" className="space-y-6">
@@ -1311,6 +1360,77 @@ export default function StaffPage() {
                                   disabled 
                                   className="bg-green-200 font-bold text-green-800" 
                                 />
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+
+                        {/* Working Hours */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Working Hours & Payroll Settings</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label>Minimum Working Hours (per day)</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="8" 
+                                  min="1"
+                                  max="24"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Hours per day</p>
+                              </div>
+                              <div>
+                                <Label>Daily Working Hours (standard)</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="8" 
+                                  min="1"
+                                  max="24"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Standard hours</p>
+                              </div>
+                              <div>
+                                <Label>Store Opening Hours</Label>
+                                <Input 
+                                  type="text" 
+                                  placeholder="9:00 AM - 6:00 PM" 
+                                  disabled
+                                  className="bg-gray-50"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">From store settings</p>
+                              </div>
+                            </div>
+                            
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <Label>Overtime Rate</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="1.5" 
+                                  step="0.1"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Multiplier for overtime</p>
+                              </div>
+                              <div>
+                                <Label>Double Time Rate</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="2.0" 
+                                  step="0.1"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Multiplier for double time</p>
+                              </div>
+                              <div>
+                                <Label>Undertime Deduction</Label>
+                                <Input 
+                                  type="number" 
+                                  placeholder="0.5" 
+                                  step="0.1"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Multiplier for undertime</p>
                               </div>
                             </div>
                           </CardContent>

@@ -58,7 +58,30 @@ export default function Stores() {
       isActive: true,
       timezone: "America/New_York",
       openingHours: "",
-      customFields: {},
+      customFields: {
+        currencySymbol: "$",
+        streetName: "",
+        county: "",
+        latitude: "",
+        longitude: "",
+        detailedOpeningHours: {
+          monday: { open: "09:00", close: "18:00", closed: false },
+          tuesday: { open: "09:00", close: "18:00", closed: false },
+          wednesday: { open: "09:00", close: "18:00", closed: false },
+          thursday: { open: "09:00", close: "18:00", closed: false },
+          friday: { open: "09:00", close: "18:00", closed: false },
+          saturday: { open: "09:00", close: "17:00", closed: false },
+          sunday: { open: "10:00", close: "16:00", closed: false }
+        },
+        socialMedia: {
+          facebook: "",
+          instagram: "",
+          twitter: "",
+          linkedin: "",
+          youtube: "",
+          website: ""
+        }
+      },
     },
   });
 
@@ -315,6 +338,82 @@ export default function Stores() {
                           )}
                         />
                       </div>
+                      
+                      {/* Advanced Address Details */}
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="customFields.streetName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Street Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Main Street" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.county"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>County</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Manhattan County" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.currencySymbol"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Currency Symbol</FormLabel>
+                              <FormControl>
+                                <Input placeholder="$" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      {/* Geo-location */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="customFields.latitude"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Latitude</FormLabel>
+                              <FormControl>
+                                <Input placeholder="40.7128" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.longitude"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Longitude</FormLabel>
+                              <FormControl>
+                                <Input placeholder="-74.0060" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                     
                     {/* Contact Information */}
@@ -386,11 +485,148 @@ export default function Stores() {
                           name="openingHours"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Opening Hours</FormLabel>
+                              <FormLabel>General Opening Hours</FormLabel>
                               <FormControl>
                                 <Input placeholder="Mon-Fri: 9AM-6PM, Sat: 9AM-4PM" {...field} />
                               </FormControl>
                               <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Detailed Opening Hours */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-900">Detailed Opening Hours</h3>
+                      <div className="grid grid-cols-1 gap-3">
+                        {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
+                          <div key={day} className="grid grid-cols-4 gap-2 items-center">
+                            <div className="text-sm font-medium capitalize text-slate-700">{day}</div>
+                            <FormField
+                              control={form.control}
+                              name={`customFields.detailedOpeningHours.${day}.open`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`customFields.detailedOpeningHours.${day}.close`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <Input type="time" {...field} />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name={`customFields.detailedOpeningHours.${day}.closed`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl>
+                                    <div className="flex items-center space-x-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={field.value}
+                                        onChange={field.onChange}
+                                        className="rounded border-gray-300"
+                                      />
+                                      <span className="text-sm">Closed</span>
+                                    </div>
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Social Media */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-slate-900">Social Media Accounts</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="customFields.socialMedia.facebook"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Facebook</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://facebook.com/yourstore" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.socialMedia.instagram"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Instagram</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://instagram.com/yourstore" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.socialMedia.twitter"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Twitter</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://twitter.com/yourstore" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.socialMedia.linkedin"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>LinkedIn</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://linkedin.com/company/yourstore" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.socialMedia.youtube"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>YouTube</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://youtube.com/channel/yourstore" {...field} />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="customFields.socialMedia.website"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Website</FormLabel>
+                              <FormControl>
+                                <Input placeholder="https://yourstore.com" {...field} />
+                              </FormControl>
                             </FormItem>
                           )}
                         />

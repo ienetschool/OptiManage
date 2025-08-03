@@ -253,7 +253,7 @@ export default function Customers() {
                             <FormItem>
                               <FormLabel>Email</FormLabel>
                               <FormControl>
-                                <Input placeholder="john@example.com" type="email" {...field} />
+                                <Input placeholder="john@example.com" type="email" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -267,7 +267,7 @@ export default function Customers() {
                             <FormItem>
                               <FormLabel>Phone</FormLabel>
                               <FormControl>
-                                <Input placeholder="(555) 123-4567" {...field} />
+                                <Input placeholder="(555) 123-4567" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -282,7 +282,7 @@ export default function Customers() {
                           <FormItem>
                             <FormLabel>Date of Birth</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <Input type="date" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -296,7 +296,7 @@ export default function Customers() {
                           <FormItem>
                             <FormLabel>Address</FormLabel>
                             <FormControl>
-                              <Input placeholder="123 Main Street" {...field} />
+                              <Input placeholder="123 Main Street" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -311,7 +311,7 @@ export default function Customers() {
                             <FormItem>
                               <FormLabel>City</FormLabel>
                               <FormControl>
-                                <Input placeholder="New York" {...field} />
+                                <Input placeholder="New York" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -325,7 +325,7 @@ export default function Customers() {
                             <FormItem>
                               <FormLabel>State</FormLabel>
                               <FormControl>
-                                <Input placeholder="NY" {...field} />
+                                <Input placeholder="NY" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -339,7 +339,7 @@ export default function Customers() {
                             <FormItem>
                               <FormLabel>ZIP Code</FormLabel>
                               <FormControl>
-                                <Input placeholder="10001" {...field} />
+                                <Input placeholder="10001" {...field} value={field.value || ""} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -354,7 +354,7 @@ export default function Customers() {
                           <FormItem>
                             <FormLabel>Notes</FormLabel>
                             <FormControl>
-                              <Input placeholder="Additional notes about the customer" {...field} />
+                              <Input placeholder="Additional notes about the customer" {...field} value={field.value || ""} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -481,7 +481,7 @@ export default function Customers() {
                           </span>
                         </div>
                         <span className="text-xs text-slate-500">
-                          Joined {format(new Date(customer.createdAt), 'MMM yyyy')}
+                          Joined {customer.createdAt ? format(new Date(customer.createdAt), 'MMM yyyy') : 'Recently'}
                         </span>
                       </div>
                     </CardContent>
