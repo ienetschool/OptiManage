@@ -216,8 +216,10 @@ export default function InvoiceManagement() {
   ];
 
   // Queries - Enhanced to show both manual and sales invoices
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery<Invoice[]>({
+  const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useQuery<Invoice[]>({
     queryKey: ["/api/invoices"],
+    staleTime: 10000, // 10 seconds
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   const { data: customers = [], isLoading: customersLoading } = useQuery<Customer[]>({
@@ -1559,7 +1561,8 @@ export default function InvoiceManagement() {
             columns={invoiceColumns}
             title="Invoice Management"
             searchPlaceholder="Search invoices by invoice number, customer name, or store..."
-            isLoading={false}
+            isLoading={invoicesLoading}
+            onRefresh={refetchInvoices}
             onView={(invoice) => setSelectedInvoice(invoice)}
             onEdit={(invoice) => {
               // TODO: Implement edit functionality

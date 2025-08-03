@@ -133,7 +133,8 @@ export default function Payments() {
   const { data: payments = [], isLoading, error, refetch } = useQuery<Payment[]>({
     queryKey: ["/api/payments"],
     retry: 2,
-    staleTime: 30000, // 30 seconds
+    staleTime: 10000, // 10 seconds
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   // Payment processing mutation
@@ -419,14 +420,14 @@ export default function Payments() {
         title="Payment Management"
         searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
         isLoading={isLoading}
+        onRefresh={() => {
+          refetch();
+          queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+        }}
         pageSize={25}
         showPagination={true}
         totalCount={payments.length}
         emptyMessage="No payments found. Payments will appear here when invoices are paid."
-        onRefresh={() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
-          queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-        }}
         actions={(payment) => (
           <div className="flex items-center gap-2">
             {payment.status === "pending" && (
