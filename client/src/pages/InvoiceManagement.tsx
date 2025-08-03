@@ -223,15 +223,25 @@ export default function InvoiceManagement() {
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
   
-  // Debug logging
+  // Debug logging - Enhanced
   React.useEffect(() => {
-    if (invoices.length > 0) {
+    console.log(`🔥 FRONTEND DEBUG - Invoices length: ${invoices?.length || 0}`);
+    console.log(`🔥 FRONTEND DEBUG - Invoices data:`, invoices);
+    
+    if (invoices && invoices.length > 0) {
       console.log(`🔍 FRONTEND RECEIVED ${invoices.length} INVOICES:`, invoices.map((inv: any) => ({ 
         id: inv.id, 
         invoiceNumber: inv.invoiceNumber, 
         total: inv.total,
-        source: inv.source 
+        source: inv.source,
+        customerName: inv.customerName
       })));
+      
+      // Check for quick sale invoices specifically
+      const quickSaleInvoices = invoices.filter((inv: any) => inv.id && inv.id.startsWith('invoice-'));
+      console.log(`🎯 QUICK SALE INVOICES FOUND: ${quickSaleInvoices.length}`, quickSaleInvoices);
+    } else {
+      console.log(`❌ NO INVOICES RECEIVED OR INVOICES IS NOT AN ARRAY`);
     }
   }, [invoices]);
 
