@@ -11,6 +11,7 @@ import {
   Filter, 
   SortAsc, 
   SortDesc, 
+  ArrowUpDown,
   RefreshCw, 
   ChevronLeft, 
   ChevronRight,
@@ -185,16 +186,26 @@ export default function EnhancedDataTable({
     setCurrentPage(1);
   }, [searchTerm, filters, sortColumn, sortDirection]);
 
+  // Reset to first page when page size changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [pageSizeValue]);
+
   const handleSort = (columnKey: string) => {
     const column = columns.find(col => col.key === columnKey);
     if (!column?.sortable) return;
 
     if (sortColumn === columnKey) {
+      // Toggle between asc and desc for the same column
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
+      // Set new column and default to ascending order
       setSortColumn(columnKey);
       setSortDirection('asc');
     }
+    
+    // Reset to first page when sorting changes
+    setCurrentPage(1);
   };
 
   const handleFilterChange = (columnKey: string, value: string) => {
@@ -210,8 +221,10 @@ export default function EnhancedDataTable({
   };
 
   const getSortIcon = (columnKey: string) => {
-    if (sortColumn !== columnKey) return null;
-    return sortDirection === 'asc' ? <SortAsc className="h-4 w-4" /> : <SortDesc className="h-4 w-4" />;
+    if (sortColumn !== columnKey) return <ArrowUpDown className="h-4 w-4 text-muted-foreground/50" />;
+    return sortDirection === 'asc' 
+      ? <SortAsc className="h-4 w-4 text-primary" /> 
+      : <SortDesc className="h-4 w-4 text-primary" />;
   };
 
   return (
@@ -296,7 +309,7 @@ export default function EnhancedDataTable({
       
       <CardContent>
         <div className="rounded-md border overflow-hidden">
-          <div className="max-h-[600px] overflow-y-auto">
+          <div className="max-h-[600px] overflow-y-auto scroll-smooth">
             <Table>
               <TableHeader>
               <TableRow>
@@ -396,7 +409,8 @@ export default function EnhancedDataTable({
                 Showing {startIndex + 1} to {Math.min(startIndex + pageSizeValue, sortedData.length)} of {sortedData.length} entries
               </span>
               <Select value={pageSizeValue.toString()} onValueChange={(value) => {
-                setPageSizeValue(Number(value));
+                const newPageSize = Number(value);
+                setPageSizeValue(newPageSize);
                 setCurrentPage(1);
               }}>
                 <SelectTrigger className="w-[70px]">
