@@ -131,6 +131,10 @@ export interface IStorage {
 
   // Medical Invoice operations
   createMedicalInvoice(invoice: any): Promise<any>;
+
+  // Payments operations - Combine invoices and medical invoices as payment records
+  getPayments(): Promise<any[]>;
+  updatePaymentStatus(paymentId: string, status: string): Promise<any>;
 }
 
 // Global in-memory storage for created invoices (persists across requests)
@@ -886,8 +890,42 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async updateInvoice(id: string, invoice: any): Promise<any> {
-    return invoice;
+  async updateInvoice(id: string, updateData: any): Promise<any> {
+    try {
+      console.log(`🔄 UPDATING INVOICE ${id} with data:`, updateData);
+      
+      // Build the update data with proper types
+      const updateFields: any = {};
+      
+      if (updateData.status) updateFields.status = updateData.status;
+      if (updateData.paymentMethod) updateFields.paymentMethod = updateData.paymentMethod;
+      if (updateData.paymentDate) updateFields.paymentDate = new Date(updateData.paymentDate);
+      if (updateData.notes) updateFields.notes = updateData.notes;
+      
+      // Always update the updatedAt timestamp
+      updateFields.updatedAt = new Date();
+      
+      console.log(`🔄 Final update fields:`, updateFields);
+      
+      // Update the invoice in the database
+      const [updatedInvoice] = await db
+        .update(invoices)
+        .set(updateFields)
+        .where(eq(invoices.id, id))
+        .returning();
+      
+      if (updatedInvoice) {
+        console.log(`✅ Invoice ${id} updated successfully`);
+        return updatedInvoice;
+      } else {
+        console.log(`⚠️ No invoice found with id ${id}`);
+        return null;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error updating invoice ${id}:`, error);
+      throw error;
+    }
   }
 
   async deleteInvoice(id: string): Promise<void> {
@@ -1008,6 +1046,47 @@ export class DatabaseStorage implements IStorage {
           source: 'appointment'
         }
       ];
+    }
+  }
+
+  // Update payment status method
+  async updatePaymentStatus(paymentId: string, status: string): Promise<any> {
+    try {
+      console.log(`🔄 UPDATING PAYMENT STATUS: ${paymentId} to ${status}`);
+      
+      // Extract payment type and source ID from payment ID
+      const parts = paymentId.split('-');
+      const type = parts[0]; // 'apt', 'inv', etc.
+      const sourceId = parts.slice(1).join('-'); // actual ID
+      
+      if (type === 'inv') {
+        // For invoice payments, update the invoice status
+        console.log(`🔄 Updating invoice ${sourceId} status to ${status === 'paid' ? 'paid' : 'pending'}`);
+        await this.updateInvoice(sourceId, {
+          status: status === 'paid' ? 'paid' : 'pending',
+          paymentDate: status === 'paid' ? new Date() : null
+        });
+        
+        console.log(`✅ Payment status updated successfully for invoice ${sourceId}`);
+        return { success: true, paymentId, status };
+      } else if (type === 'apt') {
+        // For appointment payments, update the appointment payment status
+        console.log(`🔄 Updating appointment ${sourceId} payment status to ${status}`);
+        await this.updateAppointment(sourceId, {
+          paymentStatus: status,
+          paymentDate: status === 'paid' ? new Date() : null
+        });
+        
+        console.log(`✅ Payment status updated successfully for appointment ${sourceId}`);
+        return { success: true, paymentId, status };
+      } else {
+        console.log(`⚠️ Unknown payment type: ${type}`);
+        return { success: false, message: 'Unknown payment type' };
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error updating payment status:`, error);
+      throw error;
     }
   }
 }

@@ -287,11 +287,17 @@ export function registerPaymentRoutes(app: Express) {
           return res.status(404).json({ message: "Invoice not found" });
         }
 
+        // Update invoice status to paid
         await storage.updateInvoice(sourceId, {
           status: 'paid',
           paymentMethod: paymentMethod,
           paymentDate: new Date()
         });
+
+        // Update the payment record status in the database
+        await storage.updatePaymentStatus(id, 'paid');
+
+        console.log(`✅ PAYMENT PROCESSED - Invoice: ${invoice.invoiceNumber}, Payment ID: ${id} status updated to 'paid'`);
 
         res.json({
           success: true,
