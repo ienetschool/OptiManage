@@ -19,7 +19,9 @@ import {
   CalendarDays,
   Timer,
   Users,
-  TrendingUp
+  TrendingUp,
+  Edit,
+  Save
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday } from "date-fns";
@@ -133,12 +135,39 @@ export default function Attendance() {
     clockInMutation.mutate({ staffId, type: action });
   };
 
-  const handleQRScan = () => {
-    // Mock QR code scanning
+  // Manual attendance toggle
+  const handleManualAttendance = (staffId: string, status: 'present' | 'absent') => {
     toast({
-      title: "QR Scanner",
-      description: "QR code scanner would open here to scan staff ID cards",
+      title: "Manual Attendance Updated",
+      description: `Staff member marked as ${status}`,
     });
+  };
+
+  // QR Code scanner handler
+  const handleQRScan = (qrData: string) => {
+    try {
+      const staffData = JSON.parse(qrData);
+      if (staffData.staffCode) {
+        // Find staff member by QR code data
+        const staff = todayAttendance.find(s => s.staffCode === staffData.staffCode);
+        if (staff) {
+          const action = staff.clockIn && !staff.clockOut ? 'out' : 'in';
+          handleClockAction(staff.staffId, action);
+        } else {
+          toast({
+            title: "Staff Not Found",
+            description: "Could not find staff member with this QR code",
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Invalid QR Code",
+        description: "This QR code is not valid for attendance",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -150,7 +179,11 @@ export default function Attendance() {
           <p className="text-slate-600">Track staff attendance, working hours, and generate reports</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={handleQRScan}>
+          <Button variant="outline" onClick={() => {
+            // Mock QR scan with sample data for demonstration
+            const sampleQRData = JSON.stringify({ staffCode: "STF001" });
+            handleQRScan(sampleQRData);
+          }}>
             <QrCode className="h-4 w-4 mr-2" />
             QR Scanner
           </Button>
@@ -332,42 +365,111 @@ export default function Attendance() {
         <TabsContent value="manual" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Manual Attendance Entry</CardTitle>
+              <CardTitle className="flex items-center">
+                <Edit className="h-5 w-5 mr-2" />
+                Manual Attendance Entry & Override
+              </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Staff Member</label>
-                  <select className="w-full p-2 border rounded-md">
-                    <option>Select staff member</option>
-                    {todayAttendance.map(staff => (
-                      <option key={staff.staffId} value={staff.staffId}>
-                        {staff.staffName} ({staff.staffCode})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Date</label>
-                  <Input type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+            <CardContent className="space-y-6">
+              {/* Quick Status Toggle */}
+              <div className="bg-slate-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-3">Quick Status Toggle - Today's Staff</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {todayAttendance.map((staff) => (
+                    <div key={staff.staffId} className="flex items-center justify-between p-3 bg-white border rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {staff.staffName.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-sm">{staff.staffName}</p>
+                          <p className="text-xs text-slate-500">{staff.staffCode}</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          size="sm"
+                          variant={staff.status === 'present' ? "default" : "outline"}
+                          className={staff.status === 'present' ? "bg-green-600 hover:bg-green-700" : "hover:bg-green-50"}
+                          onClick={() => handleManualAttendance(staff.staffId, 'present')}
+                        >
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Present
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={staff.status === 'absent' ? "destructive" : "outline"}
+                          className={staff.status === 'absent' ? "" : "hover:bg-red-50"}
+                          onClick={() => handleManualAttendance(staff.staffId, 'absent')}
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Absent
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Clock In Time</label>
-                  <Input type="time" placeholder="09:00" />
+
+              {/* Manual Time Entry */}
+              <div className="border-t pt-6">
+                <h4 className="font-medium mb-4">Manual Time Entry</h4>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <Label>Staff Member</Label>
+                    <select className="w-full p-2 border rounded-md">
+                      <option>Select staff member</option>
+                      {todayAttendance.map(staff => (
+                        <option key={staff.staffId} value={staff.staffId}>
+                          {staff.staffName} ({staff.staffCode})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label>Date</Label>
+                    <Input type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Clock Out Time</label>
-                  <Input type="time" placeholder="17:00" />
+                
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <Label>Clock In Time</Label>
+                    <Input type="time" placeholder="09:00" />
+                  </div>
+                  <div>
+                    <Label>Clock Out Time</Label>
+                    <Input type="time" placeholder="17:00" />
+                  </div>
+                  <div>
+                    <Label>Break Duration (minutes)</Label>
+                    <Input type="number" placeholder="60" min="0" />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex justify-end">
-                <Button onClick={() => toast({ title: "Manual attendance recorded" })}>
-                  Save Attendance
-                </Button>
+
+                <div className="mb-4">
+                  <Label>Reason for Manual Entry</Label>
+                  <textarea 
+                    className="w-full p-2 border rounded-md mt-1" 
+                    rows={2}
+                    placeholder="Enter reason for manual time entry..."
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline">
+                    Cancel
+                  </Button>
+                  <Button onClick={() => toast({ 
+                    title: "Manual attendance recorded", 
+                    description: "Time entry has been saved successfully" 
+                  })}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Manual Entry
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -959,6 +959,19 @@ export const staff = pgTable("staff", {
   role: varchar("role", { length: 50 }).default("staff").notNull(), // admin, manager, staff, doctor
   permissions: jsonb("permissions").default([]), // Array of permission strings
   
+  // Login credentials
+  username: varchar("username", { length: 50 }).unique(),
+  password: varchar("password", { length: 255 }), // Will be hashed
+  
+  // Working hours and payroll
+  minimumWorkingHours: decimal("minimum_working_hours", { precision: 4, scale: 2 }).default('8.00'), // minimum hours per day
+  dailyWorkingHours: decimal("daily_working_hours", { precision: 4, scale: 2 }).default('8.00'), // expected daily hours
+  
+  // Additional profile fields
+  bloodGroup: varchar("blood_group", { length: 5 }), // A+, B+, O+, AB+, etc.
+  staffPhoto: varchar("staff_photo", { length: 500 }), // URL to staff photo
+  documents: jsonb("documents").default([]), // Array of document objects {name, url, type, uploadDate}
+  
   // Emergency contact
   emergencyContactName: varchar("emergency_contact_name", { length: 255 }),
   emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),

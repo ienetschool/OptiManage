@@ -41,12 +41,38 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
 
+// Helper function to auto-generate username
+const generateUsername = (firstName: string, lastName: string, existingUsernames: string[] = []) => {
+  const baseUsername = `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/[^a-z0-9.]/g, '');
+  let username = baseUsername;
+  let counter = 1;
+  
+  while (existingUsernames.includes(username)) {
+    username = `${baseUsername}${counter}`;
+    counter++;
+  }
+  
+  return username;
+};
+
+// Helper function to generate random password
+const generatePassword = (length: number = 8) => {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let password = "";
+  for (let i = 0; i < length; i++) {
+    password += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return password;
+};
+
 export default function StaffPage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [activeTab, setActiveTab] = useState("basic");
+  const [generatedCredentials, setGeneratedCredentials] = useState<{username: string, password: string} | null>(null);
   const [basicSalary, setBasicSalary] = useState(0);
   const [houseAllowance, setHouseAllowance] = useState(0);
   const [transportAllowance, setTransportAllowance] = useState(0);
@@ -359,7 +385,21 @@ export default function StaffPage() {
     });
   };
 
-  // Mock staff data for development
+  // Auto-generate credentials
+  const handleGenerateCredentials = (firstName: string, lastName: string) => {
+    const existingUsernames = mockStaffData.map(staff => staff.username).filter(Boolean);
+    const username = generateUsername(firstName, lastName, existingUsernames);
+    const password = generatePassword(12);
+    
+    setGeneratedCredentials({ username, password });
+    
+    toast({
+      title: "Credentials Generated",
+      description: `Username: ${username} | Password: ${password}`,
+    });
+  };
+
+  // Mock staff data for development with enhanced fields
   const mockStaffData = [
     {
       id: "STF-001",
@@ -375,6 +415,16 @@ export default function StaffPage() {
       status: "active",
       role: "doctor",
       permissions: ["view_patients", "edit_medical_records", "prescribe"],
+      username: "dr.sarah.smith",
+      password: "hashed_password_here",
+      minimumWorkingHours: 8.00,
+      dailyWorkingHours: 9.00,
+      bloodGroup: "O+",
+      staffPhoto: "/api/placeholder/150/150",
+      documents: [
+        { name: "Medical License", url: "/documents/license.pdf", type: "license", uploadDate: "2023-01-10" },
+        { name: "CV", url: "/documents/cv.pdf", type: "resume", uploadDate: "2023-01-10" }
+      ],
       customFields: {
         licenseNumber: "MD-12345",
         specialization: "Retinal Surgery",
@@ -1072,78 +1122,166 @@ export default function StaffPage() {
                       </TabsContent>
 
                       <TabsContent value="access" className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="role"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Role</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="admin">Administrator</SelectItem>
-                                    <SelectItem value="manager">Manager</SelectItem>
-                                    <SelectItem value="staff">Staff</SelectItem>
-                                    <SelectItem value="doctor">Doctor</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
+                        {/* Login Credentials Section */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Shield className="h-5 w-5" />
+                              Login Credentials
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <Label>Username (Auto-generated)</Label>
+                                <div className="flex gap-2">
+                                  <Input 
+                                    value={generatedCredentials?.username || ""} 
+                                    placeholder="Username will be auto-generated"
+                                    readOnly
+                                    className="bg-gray-50"
+                                  />
+                                  <Button 
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const firstName = form.getValues("firstName");
+                                      const lastName = form.getValues("lastName");
+                                      if (firstName && lastName) {
+                                        handleGenerateCredentials(firstName, lastName);
+                                      } else {
+                                        toast({
+                                          title: "Missing Information",
+                                          description: "Please enter first and last name first",
+                                          variant: "destructive"
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    Generate
+                                  </Button>
+                                </div>
+                              </div>
+                              <div>
+                                <Label>Password (Auto-generated)</Label>
+                                <div className="flex gap-2">
+                                  <Input 
+                                    type="password"
+                                    value={generatedCredentials?.password || ""} 
+                                    placeholder="Password will be auto-generated"
+                                    readOnly
+                                    className="bg-gray-50"
+                                  />
+                                  <Button 
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                      if (generatedCredentials?.password) {
+                                        navigator.clipboard.writeText(generatedCredentials.password);
+                                        toast({
+                                          title: "Password Copied",
+                                          description: "Password copied to clipboard"
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    Copy
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {generatedCredentials && (
+                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <p className="text-sm text-blue-800">
+                                  <strong>Generated Credentials:</strong><br/>
+                                  Username: <code className="bg-blue-100 px-1 rounded">{generatedCredentials.username}</code><br/>
+                                  Password: <code className="bg-blue-100 px-1 rounded">{generatedCredentials.password}</code>
+                                </p>
+                                <p className="text-xs text-blue-600 mt-1">
+                                  Please save these credentials securely. The password should be changed after first login.
+                                </p>
+                              </div>
                             )}
-                          />
-                        </div>
-                        
-                        {/* Login Credentials */}
-                        <div className="space-y-4">
-                          <h3 className="text-lg font-semibold text-slate-900">Login Credentials</h3>
-                          <div className="grid grid-cols-2 gap-4">
+                          </CardContent>
+                        </Card>
+
+                        {/* Access Permissions Section */}
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <Shield className="h-5 w-5" />
+                              Access Permissions
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
                             <FormField
                               control={form.control}
-                              name="customFields.username"
+                              name="role"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Username (Auto-generated)</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      {...field} 
-                                      placeholder="Auto-generated on save"
-                                      disabled
-                                      className="bg-gray-50"
-                                    />
-                                  </FormControl>
+                                  <FormLabel>Role</FormLabel>
+                                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select role" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="admin">Admin</SelectItem>
+                                      <SelectItem value="manager">Manager</SelectItem>
+                                      <SelectItem value="doctor">Doctor</SelectItem>
+                                      <SelectItem value="nurse">Nurse</SelectItem>
+                                      <SelectItem value="technician">Technician</SelectItem>
+                                      <SelectItem value="receptionist">Receptionist</SelectItem>
+                                      <SelectItem value="staff">Staff</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}
                             />
                             
-                            <FormField
-                              control={form.control}
-                              name="customFields.password"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Password</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="password" 
-                                      {...field} 
-                                      placeholder="Enter secure password"
+                            <div>
+                              <Label className="text-base font-medium">Module Permissions</Label>
+                              <div className="grid grid-cols-2 gap-4 mt-3">
+                                {[
+                                  { key: "view_patients", label: "View Patients" },
+                                  { key: "edit_patients", label: "Edit Patients" },
+                                  { key: "view_appointments", label: "View Appointments" },
+                                  { key: "edit_appointments", label: "Edit Appointments" },
+                                  { key: "view_inventory", label: "View Inventory" },
+                                  { key: "edit_inventory", label: "Edit Inventory" },
+                                  { key: "view_sales", label: "View Sales" },
+                                  { key: "edit_sales", label: "Edit Sales" },
+                                  { key: "view_reports", label: "View Reports" },
+                                  { key: "edit_reports", label: "Edit Reports" },
+                                  { key: "manage_staff", label: "Manage Staff" },
+                                  { key: "system_settings", label: "System Settings" }
+                                ].map((permission) => (
+                                  <div key={permission.key} className="flex items-center space-x-2">
+                                    <input
+                                      type="checkbox"
+                                      id={permission.key}
+                                      className="rounded border-gray-300"
+                                      onChange={(e) => {
+                                        const currentPermissions = form.getValues("permissions") || [];
+                                        if (e.target.checked) {
+                                          form.setValue("permissions", [...currentPermissions, permission.key]);
+                                        } else {
+                                          form.setValue("permissions", currentPermissions.filter(p => p !== permission.key));
+                                        }
+                                      }}
                                     />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-                            <strong>Note:</strong> Username will be auto-generated based on first name, last name, and employee ID upon saving.
-                          </div>
-                        </div>
+                                    <Label htmlFor={permission.key} className="text-sm font-normal cursor-pointer">
+                                      {permission.label}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
                       </TabsContent>
 
                       <TabsContent value="payroll" className="space-y-6">
