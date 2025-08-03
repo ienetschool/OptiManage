@@ -81,31 +81,16 @@ export default function AuthPage() {
   };
 
   const handleQuickLogin = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // Make a direct request to login endpoint
-      const response = await fetch('/api/login', {
-        method: 'GET',
-        credentials: 'include'
-      });
-      
-      if (response.redirected || response.ok) {
-        // Force a full page reload to ensure the app recognizes the authentication
-        window.location.href = '/dashboard';
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Unable to login. Please try again.",
-          variant: "destructive",
-        });
-      }
+      // Use a simple window redirect to ensure proper session handling
+      window.location.href = "/api/login";
     } catch (error) {
       toast({
         title: "Login Failed",
         description: "Unable to login. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
