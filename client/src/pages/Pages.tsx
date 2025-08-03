@@ -416,7 +416,7 @@ export default function Pages() {
           <CardTitle>All Pages</CardTitle>
           <CardDescription>Manage your website's pages and content</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-none overflow-visible">
           {filteredPages.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -427,8 +427,8 @@ export default function Pages() {
               <div className="text-sm text-slate-500 mb-4">
                 Showing {filteredPages.length} of {pages.length} pages
               </div>
-
-              {filteredPages.map((page) => (
+              <div className="space-y-4 min-h-[600px]">
+                {filteredPages.map((page) => (
                 <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
@@ -495,7 +495,8 @@ export default function Pages() {
                     </Button>
                   </div>
                 </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
@@ -544,9 +545,9 @@ export default function Pages() {
           </DialogHeader>
           
           {editingPage && (
-            <div className="flex flex-1 min-h-0">
+            <div className="flex flex-1" style={{ height: 'calc(95vh - 120px)' }}>
               {/* Left Sidebar - Settings */}
-              <div className="w-80 border-r bg-slate-50 overflow-auto" style={{ height: 'calc(90vh - 260px)' }}>
+              <div className="w-80 border-r bg-slate-50 overflow-y-auto">
                 <div className="p-4 space-y-4">
                   {/* Basic Settings */}
                   <div className="space-y-3">
@@ -841,7 +842,7 @@ export default function Pages() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 overflow-auto" style={{ height: 'calc(90vh - 260px)' }}>
+                <div className="flex-1 overflow-y-auto bg-gray-50">
                   <div className="p-6 h-full">
                     <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 min-h-full ${
                       previewMode === 'mobile' ? 'max-w-sm' : 
