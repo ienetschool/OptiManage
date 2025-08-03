@@ -301,6 +301,7 @@ export default function InvoiceManagement() {
       queryClient.refetchQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
       
       toast({
         title: "Success",
@@ -335,6 +336,7 @@ export default function InvoiceManagement() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
       toast({
         title: "Success",
         description: "Invoice updated successfully.",
