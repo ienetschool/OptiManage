@@ -1,10 +1,21 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { z } from "zod";
+import { insertInvoiceSchema, type Product } from "@shared/schema";
 import { 
   Menu, 
   X, 
@@ -16,7 +27,8 @@ import {
   Globe,
   Search,
   ChevronDown,
-  ShoppingCart
+  ShoppingCart,
+  Plus
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import LiveChat from "@/components/LiveChat";
@@ -27,10 +39,103 @@ interface AppLayoutProps {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-
+  const [quickSaleOpen, setQuickSaleOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const [location, navigate] = useLocation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Simplified form schema for Quick Sale
+  const quickSaleSchema = z.object({
+    customerName: z.string().min(1, "Customer name is required"),
+    productName: z.string().min(1, "Product name is required"),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    unitPrice: z.number().min(0, "Unit price must be positive"),
+    taxRate: z.number().min(0).max(100).default(10),
+    discountAmount: z.number().min(0).default(0),
+    paymentMethod: z.enum(["cash", "card", "check", "digital"]),
+    notes: z.string().optional()
+  });
+
+  const quickSaleForm = useForm({
+    resolver: zodResolver(quickSaleSchema),
+    defaultValues: {
+      customerName: "Walk-in Customer",
+      productName: "",
+      quantity: 1,
+      unitPrice: 0,
+      taxRate: 10,
+      discountAmount: 0,
+      paymentMethod: "cash" as const,
+      notes: ""
+    }
+  });
+
+  // Get stores for store selection
+  const { data: stores = [] } = useQuery({
+    queryKey: ["/api/stores"]
+  });
+
+  // Quick Sale mutation
+  const quickSaleMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const invoiceData = {
+        ...data,
+        storeId: stores[0]?.id || "default",
+        customerId: "guest"
+      };
+      return await apiRequest("POST", "/api/invoices", invoiceData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      toast({
+        title: "Success",
+        description: "Quick sale invoice created successfully!",
+      });
+      setQuickSaleOpen(false);
+      quickSaleForm.reset();
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create quick sale invoice.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const onQuickSaleSubmit = (data: any) => {
+    // Calculate totals
+    const subtotal = data.quantity * data.unitPrice;
+    const tax = subtotal * (data.taxRate / 100);
+    const discount = data.discountAmount || 0;
+    const total = subtotal + tax - discount;
+
+    const invoiceData = {
+      customerName: data.customerName,
+      storeId: stores[0]?.id || "default-store",
+      customerId: "guest",
+      subtotal: subtotal.toFixed(2),
+      taxRate: data.taxRate,
+      taxAmount: tax.toFixed(2),
+      discountAmount: discount.toFixed(2),
+      total: total.toFixed(2),
+      status: "pending",
+      paymentMethod: data.paymentMethod,
+      notes: data.notes || "",
+      items: [{
+        productName: data.productName,
+        quantity: data.quantity,
+        unitPrice: data.unitPrice,
+        discount: 0,
+        total: subtotal
+      }]
+    };
+
+    quickSaleMutation.mutate(invoiceData);
+  };
 
   return (
     <div className="h-screen bg-slate-50 flex flex-col">
@@ -88,7 +193,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Button 
             variant="default" 
             size="sm"
-            onClick={() => navigate('/invoices')}
+            onClick={() => setQuickSaleOpen(true)}
             className="bg-green-600 hover:bg-green-700 hidden sm:flex"
           >
             <ShoppingCart className="h-4 w-4 mr-2" />
@@ -279,6 +384,206 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <div className="block sm:hidden">
         <LiveChat />
       </div>
+
+      {/* Quick Sale Dialog */}
+      <Dialog open={quickSaleOpen} onOpenChange={setQuickSaleOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Quick Sale Invoice</DialogTitle>
+            <DialogDescription>
+              Create a quick invoice for immediate sale
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...quickSaleForm}>
+            <form onSubmit={quickSaleForm.handleSubmit(onQuickSaleSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={quickSaleForm.control}
+                  name="customerName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Customer Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter customer name..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={quickSaleForm.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Payment Method</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="cash">💵 Cash</SelectItem>
+                          <SelectItem value="card">💳 Card</SelectItem>
+                          <SelectItem value="check">📄 Check</SelectItem>
+                          <SelectItem value="digital">📱 Digital</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={quickSaleForm.control}
+                name="productName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Product/Service Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter product or service name..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={quickSaleForm.control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantity</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min="1" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={quickSaleForm.control}
+                  name="unitPrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unit Price ($)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={quickSaleForm.control}
+                  name="taxRate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tax Rate (%)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.1" 
+                          min="0" 
+                          max="100"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={quickSaleForm.control}
+                  name="discountAmount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discount Amount ($)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex flex-col">
+                  <label className="text-sm font-medium text-slate-700 mb-2">Total Amount</label>
+                  <div className="h-10 px-3 py-2 border border-slate-300 rounded-md bg-slate-50 flex items-center">
+                    <span className="text-lg font-bold text-slate-900">
+                      ${(() => {
+                        const values = quickSaleForm.watch();
+                        const subtotal = (values.quantity || 0) * (values.unitPrice || 0);
+                        const tax = subtotal * ((values.taxRate || 0) / 100);
+                        const discount = values.discountAmount || 0;
+                        return (subtotal + tax - discount).toFixed(2);
+                      })()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <FormField
+                control={quickSaleForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notes (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Additional notes..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setQuickSaleOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={quickSaleMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {quickSaleMutation.isPending ? "Creating..." : "Create Quick Sale Invoice"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
