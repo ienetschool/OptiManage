@@ -180,8 +180,8 @@ export default function EnhancedDataTable({
     : sortedData;
   
   // Debug logging for pagination issues (only in development)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('EnhancedDataTable Debug:', {
+  if (process.env.NODE_ENV === 'development' && title === 'Payment Management') {
+    console.log('🔍 PAYMENTS PAGINATION DEBUG:', {
       originalDataLength: data.length,
       filteredDataLength: filteredData.length,
       sortedDataLength: sortedData.length,
@@ -190,7 +190,8 @@ export default function EnhancedDataTable({
       pageSizeValue,
       startIndex,
       paginatedDataLength: paginatedData.length,
-      showPagination
+      showPagination,
+      willShowPagination: showPagination && sortedData.length > 0
     });
   }
   
@@ -423,9 +424,9 @@ export default function EnhancedDataTable({
           </div>
         </div>
         
-        {/* Pagination */}
-        {showPagination && (
-          <div className="flex items-center justify-between mt-4">
+        {/* Pagination - Always show if showPagination is true and we have data */}
+        {showPagination && sortedData.length > 0 && (
+          <div className="flex items-center justify-between mt-4 px-4 py-3 border-t bg-slate-50/50">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 Showing {startIndex + 1} to {Math.min(startIndex + pageSizeValue, sortedData.length)} of {sortedData.length} entries
@@ -472,7 +473,7 @@ export default function EnhancedDataTable({
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage >= totalPages || totalPages <= 1}
+                disabled={currentPage >= totalPages}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -480,7 +481,7 @@ export default function EnhancedDataTable({
                 variant="outline"
                 size="sm"
                 onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage >= totalPages || totalPages <= 1}
+                disabled={currentPage >= totalPages}
               >
                 <ChevronsRight className="h-4 w-4" />
               </Button>
