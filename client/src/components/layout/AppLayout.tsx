@@ -38,15 +38,11 @@ import LiveChat from "@/components/LiveChat";
 
 // Page Components
 import Dashboard from '@/pages/Dashboard';
-import { StoreManagement } from '@/pages/StoreManagement';
-import { InventoryManagement } from '@/pages/InventoryManagement';
 import Sales from '@/pages/Sales';
-import { CustomerManagement } from '@/pages/CustomerManagement';
 import Appointments from '@/pages/Appointments';
 import InvoiceManagement from '@/pages/InvoiceManagement';
 import Payments from '@/pages/Payments';
 import PatientManagement from '@/pages/PatientManagement';
-import { MedicalAppointments } from '@/pages/MedicalAppointments';
 import Reports from '@/pages/Reports';
 import Settings from '@/pages/Settings';
 
@@ -965,17 +961,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {location === "/" && (
           <Dashboard />
         )}
-        {location === "/stores" && (
-          <StoreManagement />
-        )}
-        {location === "/inventory" && (
-          <InventoryManagement />
-        )}
         {location === "/sales" && (
           <Sales />
-        )}
-        {location === "/customers" && (
-          <CustomerManagement />
         )}
         {location === "/appointments" && (
           <Appointments />
@@ -989,14 +976,52 @@ export default function AppLayout({ children }: AppLayoutProps) {
         {location === "/patients" && (
           <PatientManagement />
         )}
-        {location === "/medical-appointments" && (
-          <MedicalAppointments />
-        )}
         {location === "/reports" && (
           <Reports />
         )}
         {location === "/settings" && (
           <Settings />
+        )}
+        {/* Placeholder pages for missing components */}
+        {location === "/stores" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Store Management</h1>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600">Store management coming soon...</p>
+            </div>
+          </div>
+        )}
+        {location === "/inventory" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600">Inventory management coming soon...</p>
+            </div>
+          </div>
+        )}
+        {location === "/customers" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Customer Management</h1>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600">Customer management coming soon...</p>
+            </div>
+          </div>
+        )}
+        {location === "/medical-appointments" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Medical Appointments</h1>
+            </div>
+            <div className="bg-white rounded-lg shadow p-6">
+              <p className="text-gray-600">Medical appointments coming soon...</p>
+            </div>
+          </div>
         )}
       </div>
     </div>
