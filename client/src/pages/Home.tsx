@@ -179,11 +179,19 @@ export default function Home() {
               </p>
               
               <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50" asChild>
-                  <Link href={heroSlides[currentSlide].ctaLink}>
-                    {heroSlides[currentSlide].cta}
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
+                <Button 
+                  size="lg" 
+                  className="bg-white text-blue-600 hover:bg-blue-50"
+                  onClick={() => {
+                    if (heroSlides[currentSlide].ctaLink === "/api/login") {
+                      window.location.href = "/api/login";
+                    } else {
+                      window.location.href = heroSlides[currentSlide].ctaLink;
+                    }
+                  }}
+                >
+                  {heroSlides[currentSlide].cta}
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
                   <Link href="/book-appointment">
@@ -321,11 +329,13 @@ export default function Home() {
               Start your free trial today and see the difference.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50" asChild>
-                <Link href="/api/login">
-                  Start Free Trial
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
+              <Button 
+                size="lg" 
+                className="bg-white text-blue-600 hover:bg-blue-50"
+                onClick={() => window.location.href = "/api/login"}
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600" asChild>
                 <Link href="/contact">

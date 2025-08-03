@@ -175,11 +175,13 @@ export default function Header() {
 
             {/* Action Buttons */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/api/login">
-                  <User className="h-4 w-4 mr-2" />
-                  Patient Portal
-                </Link>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.location.href = "/api/login"}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Patient Portal
               </Button>
               <Button size="sm" asChild>
                 <Link href="/book-appointment">
