@@ -259,6 +259,11 @@ export default function Patients() {
     queryKey: ["/api/medical-invoices"],
   });
 
+  // Fetch regular invoices too - for comprehensive patient billing history
+  const { data: regularInvoices = [], refetch: refetchRegularInvoices } = useQuery({
+    queryKey: ["/api/invoices"],
+  });
+
   // Create patient mutation
   const createPatientMutation = useMutation({
     mutationFn: async (data: InsertPatient) => {
@@ -1919,12 +1924,14 @@ export default function Patients() {
               queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
               queryClient.invalidateQueries({ queryKey: ["/api/prescriptions"] });
               queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
             }}
             onView={(patient) => {
               setSelectedPatient(patient);
               refetchAppointments();
               refetchPrescriptions();
               refetchMedicalInvoices();
+              refetchRegularInvoices();
               setViewPatientOpen(true);
             }}
             onEdit={(patient) => {
@@ -3050,14 +3057,31 @@ export default function Patients() {
                   <h3 className="font-semibold text-gray-800 border-b border-gray-200 pb-1">Billing & Invoice History</h3>
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
-                      {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length} Invoices
+                      {(() => {
+                        const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                        const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                          inv.customerId === selectedPatient.id || 
+                          (inv.customerName && (
+                            inv.customerName.includes(selectedPatient.firstName) || 
+                            inv.customerName.includes(selectedPatient.lastName) ||
+                            inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                          )) ||
+                          (inv.notes && (
+                            inv.notes.includes(selectedPatient.firstName) ||
+                            inv.notes.includes(selectedPatient.lastName) ||
+                            inv.notes.includes(selectedPatient.patientCode)
+                          ))
+                        );
+                        return [...patientMedicalInvoices, ...patientRegularInvoices].length;
+                      })()} Total Invoices
                     </Badge>
                     <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => {
                         refetchMedicalInvoices();
-                        toast({ title: "Refreshed", description: "Billing data updated" });
+                        refetchRegularInvoices();
+                        toast({ title: "Refreshed", description: "All billing data updated" });
                       }}
                     >
                       <RefreshCw className="h-3 w-3" />
@@ -3072,10 +3096,20 @@ export default function Patients() {
                       <div>
                         <p className="text-xs text-green-600 uppercase tracking-wide font-medium">Total Paid</p>
                         <p className="text-2xl font-bold text-green-700">
-                          ${(medicalInvoices as any[])
-                            .filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus === 'paid')
-                            .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
-                            .toFixed(2)}
+                          ${(() => {
+                            const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus === 'paid');
+                            const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                              (inv.customerId === selectedPatient.id || 
+                               (inv.customerName && (
+                                 inv.customerName.includes(selectedPatient.firstName) || 
+                                 inv.customerName.includes(selectedPatient.lastName) ||
+                                 inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                               ))) && inv.paymentStatus === 'paid'
+                            );
+                            return [...patientMedicalInvoices, ...patientRegularInvoices]
+                              .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
+                              .toFixed(2);
+                          })()}
                         </p>
                       </div>
                       <CreditCard className="h-8 w-8 text-green-600" />
@@ -3087,7 +3121,18 @@ export default function Patients() {
                       <div>
                         <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">Paid Invoices</p>
                         <p className="text-2xl font-bold text-blue-700">
-                          {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus === 'paid').length}
+                          {(() => {
+                            const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus === 'paid');
+                            const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                              (inv.customerId === selectedPatient.id || 
+                               (inv.customerName && (
+                                 inv.customerName.includes(selectedPatient.firstName) || 
+                                 inv.customerName.includes(selectedPatient.lastName) ||
+                                 inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                               ))) && inv.paymentStatus === 'paid'
+                            );
+                            return [...patientMedicalInvoices, ...patientRegularInvoices].length;
+                          })()}
                         </p>
                       </div>
                       <Receipt className="h-8 w-8 text-blue-600" />
@@ -3099,10 +3144,20 @@ export default function Patients() {
                       <div>
                         <p className="text-xs text-orange-600 uppercase tracking-wide font-medium">Outstanding</p>
                         <p className="text-2xl font-bold text-orange-700">
-                          ${(medicalInvoices as any[])
-                            .filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus !== 'paid')
-                            .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
-                            .toFixed(2)}
+                          ${(() => {
+                            const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentStatus !== 'paid');
+                            const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                              (inv.customerId === selectedPatient.id || 
+                               (inv.customerName && (
+                                 inv.customerName.includes(selectedPatient.firstName) || 
+                                 inv.customerName.includes(selectedPatient.lastName) ||
+                                 inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                               ))) && inv.paymentStatus !== 'paid'
+                            );
+                            return [...patientMedicalInvoices, ...patientRegularInvoices]
+                              .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0)
+                              .toFixed(2);
+                          })()}
                         </p>
                       </div>
                       <AlertTriangle className="h-8 w-8 text-orange-600" />
@@ -3114,13 +3169,21 @@ export default function Patients() {
                       <div>
                         <p className="text-xs text-purple-600 uppercase tracking-wide font-medium">Avg. Per Visit</p>
                         <p className="text-2xl font-bold text-purple-700">
-                          ${(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length > 0 
-                            ? ((medicalInvoices as any[])
-                                .filter(inv => inv.patientId === selectedPatient.id)
-                                .reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0) / 
-                               (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length)
-                                .toFixed(2)
-                            : "0.00"}
+                          ${(() => {
+                            const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                            const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                              inv.customerId === selectedPatient.id || 
+                              (inv.customerName && (
+                                inv.customerName.includes(selectedPatient.firstName) || 
+                                inv.customerName.includes(selectedPatient.lastName) ||
+                                inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                              ))
+                            );
+                            const allInvoices = [...patientMedicalInvoices, ...patientRegularInvoices];
+                            return allInvoices.length > 0 
+                              ? (allInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0) / allInvoices.length).toFixed(2)
+                              : "0.00";
+                          })()}
                         </p>
                       </div>
                       <TrendingUp className="h-8 w-8 text-purple-600" />
@@ -3128,8 +3191,33 @@ export default function Patients() {
                   </div>
                 </div>
 
-                {/* Detailed Invoice List */}
-                {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id).length > 0 ? (
+                {/* Detailed Invoice List - Combined Medical and Regular Invoices */}
+                {(() => {
+                  // Get patient's medical invoices
+                  const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                  
+                  // Get patient's regular invoices (quick sales, etc.) 
+                  // Regular invoices link to patients via customerId, customerName, or notes containing patient info
+                  const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                    inv.customerId === selectedPatient.id || 
+                    (inv.customerName && (
+                      inv.customerName.includes(selectedPatient.firstName) || 
+                      inv.customerName.includes(selectedPatient.lastName) ||
+                      inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                    )) ||
+                    // Also check invoice notes for patient references
+                    (inv.notes && (
+                      inv.notes.includes(selectedPatient.firstName) ||
+                      inv.notes.includes(selectedPatient.lastName) ||
+                      inv.notes.includes(selectedPatient.patientCode)
+                    ))
+                  );
+                  
+                  // Combine both invoice types
+                  const allPatientInvoices = [...patientMedicalInvoices, ...patientRegularInvoices];
+                  
+                  return allPatientInvoices.length > 0;
+                })() ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900">Invoice Details</h4>
@@ -3137,8 +3225,23 @@ export default function Patients() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          // Generate comprehensive billing report
-                          generateComprehensiveBillingReport(selectedPatient, (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id));
+                          // Generate comprehensive billing report with all invoices
+                          const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                          const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                            inv.customerId === selectedPatient.id || 
+                            (inv.customerName && (
+                              inv.customerName.includes(selectedPatient.firstName) || 
+                              inv.customerName.includes(selectedPatient.lastName) ||
+                              inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                            )) ||
+                            (inv.notes && (
+                              inv.notes.includes(selectedPatient.firstName) ||
+                              inv.notes.includes(selectedPatient.lastName) ||
+                              inv.notes.includes(selectedPatient.patientCode)
+                            ))
+                          );
+                          const allPatientInvoices = [...patientMedicalInvoices, ...patientRegularInvoices];
+                          generateComprehensiveBillingReport(selectedPatient, allPatientInvoices);
                         }}
                       >
                         <FileDown className="h-3 w-3 mr-1" />
@@ -3146,9 +3249,29 @@ export default function Patients() {
                       </Button>
                     </div>
 
-                    {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id)
-                      .sort((a, b) => new Date(b.invoiceDate || b.createdAt).getTime() - new Date(a.invoiceDate || a.createdAt).getTime())
-                      .map((invoice: any, index: number) => (
+                    {(() => {
+                      // Get all patient invoices (medical + regular)
+                      const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id);
+                      const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                        inv.customerId === selectedPatient.id || 
+                        (inv.customerName && (
+                          inv.customerName.includes(selectedPatient.firstName) || 
+                          inv.customerName.includes(selectedPatient.lastName) ||
+                          inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                        )) ||
+                        (inv.notes && (
+                          inv.notes.includes(selectedPatient.firstName) ||
+                          inv.notes.includes(selectedPatient.lastName) ||
+                          inv.notes.includes(selectedPatient.patientCode)
+                        ))
+                      );
+                      
+                      // Combine and sort by date
+                      const allPatientInvoices = [...patientMedicalInvoices, ...patientRegularInvoices]
+                        .sort((a, b) => new Date(b.invoiceDate || b.createdAt).getTime() - new Date(a.invoiceDate || a.createdAt).getTime());
+                      
+                      return allPatientInvoices;
+                    })().map((invoice: any, index: number) => (
                       <div key={invoice.id} className="bg-white border border-gray-300 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
@@ -3265,10 +3388,22 @@ export default function Patients() {
                     <div>
                       <p className="text-gray-600">Last Payment Date:</p>
                       <p className="font-medium">
-                        {(medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentDate).length > 0 
-                          ? format(new Date((medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentDate).sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())[0]?.paymentDate || ''), 'MMM dd, yyyy')
-                          : 'No payments recorded'
-                        }
+                        {(() => {
+                          const patientMedicalInvoices = (medicalInvoices as any[]).filter(inv => inv.patientId === selectedPatient.id && inv.paymentDate);
+                          const patientRegularInvoices = (regularInvoices as any[]).filter(inv => 
+                            (inv.customerId === selectedPatient.id || 
+                             (inv.customerName && (
+                               inv.customerName.includes(selectedPatient.firstName) || 
+                               inv.customerName.includes(selectedPatient.lastName) ||
+                               inv.customerName === `${selectedPatient.firstName} ${selectedPatient.lastName}`
+                             ))) && inv.paymentDate
+                          );
+                          const allPayments = [...patientMedicalInvoices, ...patientRegularInvoices];
+                          
+                          return allPayments.length > 0 
+                            ? format(new Date(allPayments.sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())[0]?.paymentDate || ''), 'MMM dd, yyyy')
+                            : 'No payments recorded';
+                        })()}
                       </p>
                     </div>
                     <div>
