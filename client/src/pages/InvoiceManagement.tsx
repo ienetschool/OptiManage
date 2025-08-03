@@ -106,6 +106,7 @@ const invoiceSchema = z.object({
   dueDate: z.string().min(1, "Due date is required"),
   taxRate: z.coerce.number().min(0).max(100),
   discountAmount: z.coerce.number().min(0),
+  paymentMethod: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -220,13 +221,15 @@ export default function InvoiceManagement() {
     queryKey: ["/api/invoices"],
     staleTime: 10000, // 10 seconds
     refetchInterval: 30000, // Auto-refresh every 30 seconds
-    onSuccess: (data) => {
-      console.log(`🔍 FRONTEND RECEIVED ${data.length} INVOICES:`, data.map(inv => ({ 
-        id: inv.id, 
-        invoiceNumber: inv.invoiceNumber, 
-        total: inv.total,
-        source: (inv as any).source 
-      })));
+    onSettled: (data: any) => {
+      if (data) {
+        console.log(`🔍 FRONTEND RECEIVED ${data.length} INVOICES:`, data.map((inv: any) => ({ 
+          id: inv.id, 
+          invoiceNumber: inv.invoiceNumber, 
+          total: inv.total,
+          source: inv.source 
+        })));
+      }
     }
   });
 
@@ -235,7 +238,7 @@ export default function InvoiceManagement() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const { data: patients = [] } = useQuery({
+  const { data: patients = [] } = useQuery<any[]>({
     queryKey: ["/api/patients"],
   });
 
@@ -253,7 +256,7 @@ export default function InvoiceManagement() {
 
   // Enhance invoice data with customer names
   const enrichedInvoices = React.useMemo(() => {
-    return invoices.map(invoice => {
+    return invoices.map((invoice: any) => {
       const customer = customers.find(c => c.id === invoice.customerId);
       return {
         ...invoice,
@@ -454,7 +457,7 @@ export default function InvoiceManagement() {
   };
 
   // Filter invoices - Use enriched invoices with customer names
-  const filteredInvoices = enrichedInvoices.filter(invoice => {
+  const filteredInvoices = enrichedInvoices.filter((invoice: any) => {
     const matchesSearch = 
       invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -1531,7 +1534,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <DollarSign className="h-8 w-8 text-green-500" />
                   <div>
-                    <p className="text-2xl font-bold">${invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.total, 0).toLocaleString()}</p>
+                    <p className="text-2xl font-bold">${invoices.filter((i: any) => i.status === 'paid').reduce((sum: number, i: any) => sum + i.total, 0).toLocaleString()}</p>
                     <p className="text-xs text-slate-500">Paid Amount</p>
                   </div>
                 </div>
@@ -1543,7 +1546,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <AlertCircle className="h-8 w-8 text-orange-500" />
                   <div>
-                    <p className="text-2xl font-bold">{invoices.filter(i => i.status === 'overdue').length}</p>
+                    <p className="text-2xl font-bold">{invoices.filter((i: any) => i.status === 'overdue').length}</p>
                     <p className="text-xs text-slate-500">Overdue</p>
                   </div>
                 </div>
@@ -1555,7 +1558,7 @@ export default function InvoiceManagement() {
                 <div className="flex items-center space-x-2">
                   <Receipt className="h-8 w-8 text-purple-500" />
                   <div>
-                    <p className="text-2xl font-bold">${invoices.filter(i => i.status === 'sent').reduce((sum, i) => sum + i.total, 0).toLocaleString()}</p>
+                    <p className="text-2xl font-bold">${invoices.filter((i: any) => i.status === 'sent').reduce((sum: number, i: any) => sum + i.total, 0).toLocaleString()}</p>
                     <p className="text-xs text-slate-500">Pending</p>
                   </div>
                 </div>
