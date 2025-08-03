@@ -69,6 +69,31 @@ export default function Themes() {
 
   const activateTheme = (themeId: string) => {
     applyThemeMutation.mutate({ themeId, storeId: selectedStore });
+    
+    // Apply theme-specific styles
+    const root = document.documentElement;
+    switch (themeId) {
+      case 'modern':
+        root.style.setProperty('--primary', 'hsl(198, 93%, 60%)');
+        root.style.setProperty('--brand-500', 'hsl(198, 93%, 60%)');
+        root.style.setProperty('--brand-600', 'hsl(200, 98%, 39%)');
+        break;
+      case 'classic':
+        root.style.setProperty('--primary', 'hsl(220, 70%, 50%)');
+        root.style.setProperty('--brand-500', 'hsl(220, 70%, 50%)');
+        root.style.setProperty('--brand-600', 'hsl(220, 70%, 40%)');
+        break;
+      case 'premium':
+        root.style.setProperty('--primary', 'hsl(280, 80%, 60%)');
+        root.style.setProperty('--brand-500', 'hsl(280, 80%, 60%)');
+        root.style.setProperty('--brand-600', 'hsl(280, 80%, 50%)');
+        break;
+      case 'minimal':
+        root.style.setProperty('--primary', 'hsl(0, 0%, 20%)');
+        root.style.setProperty('--brand-500', 'hsl(0, 0%, 20%)');
+        root.style.setProperty('--brand-600', 'hsl(0, 0%, 10%)');
+        break;
+    }
   };
 
   const viewThemePreview = (themeId: string) => {
@@ -85,23 +110,115 @@ export default function Themes() {
       secondary: scheme.secondary,
       accent: scheme.accent
     });
+    
+    // Apply colors to CSS variables
+    const root = document.documentElement;
+    const hexToHsl = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      
+      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+    };
+    
+    root.style.setProperty('--primary', `hsl(${hexToHsl(scheme.primary)})`);
+    root.style.setProperty('--brand-500', `hsl(${hexToHsl(scheme.primary)})`);
+    root.style.setProperty('--brand-600', `hsl(${hexToHsl(scheme.primary)})`);
+    root.style.setProperty('--sidebar-primary', `hsl(${hexToHsl(scheme.primary)})`);
+    root.style.setProperty('--ring', `hsl(${hexToHsl(scheme.primary)})`);
+    
     toast({
       title: "Color Scheme Applied",
-      description: `${scheme.name} color scheme has been applied.`,
+      description: `${scheme.name} color scheme has been applied to the interface.`,
     });
   };
 
   const applyCustomColors = () => {
+    // Apply custom colors to CSS variables
+    const root = document.documentElement;
+    const hexToHsl = (hex: string) => {
+      const r = parseInt(hex.slice(1, 3), 16) / 255;
+      const g = parseInt(hex.slice(3, 5), 16) / 255;
+      const b = parseInt(hex.slice(5, 7), 16) / 255;
+      
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      let h = 0, s = 0, l = (max + min) / 2;
+      
+      if (max !== min) {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      
+      return `${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+    };
+    
+    root.style.setProperty('--primary', `hsl(${hexToHsl(customColors.primary)})`);
+    root.style.setProperty('--secondary', `hsl(${hexToHsl(customColors.secondary)})`);
+    root.style.setProperty('--accent', `hsl(${hexToHsl(customColors.accent)})`);
+    root.style.setProperty('--brand-500', `hsl(${hexToHsl(customColors.primary)})`);
+    root.style.setProperty('--brand-600', `hsl(${hexToHsl(customColors.primary)})`);
+    root.style.setProperty('--sidebar-primary', `hsl(${hexToHsl(customColors.primary)})`);
+    root.style.setProperty('--ring', `hsl(${hexToHsl(customColors.primary)})`);
+    
     toast({
       title: "Custom Colors Applied",
-      description: "Your custom color palette has been applied to the theme.",
+      description: "Your custom color palette has been applied to the interface.",
     });
   };
 
   const applyTypographySettings = () => {
+    // Apply typography to document
+    const root = document.documentElement;
+    
+    // Apply font families
+    const headingFontFamily = `"${typography.headingFont}", system-ui, -apple-system, sans-serif`;
+    const bodyFontFamily = `"${typography.bodyFont}", system-ui, -apple-system, sans-serif`;
+    
+    root.style.setProperty('--font-heading', headingFontFamily);
+    root.style.setProperty('--font-body', bodyFontFamily);
+    
+    // Apply base font size and line height
+    root.style.setProperty('--font-size-base', `${typography.baseFontSize}px`);
+    root.style.setProperty('--line-height-base', typography.lineHeight.toString());
+    
+    // Apply to body and headings
+    document.body.style.fontFamily = bodyFontFamily;
+    document.body.style.fontSize = `${typography.baseFontSize}px`;
+    document.body.style.lineHeight = typography.lineHeight.toString();
+    
+    // Apply to all headings
+    const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    headings.forEach(heading => {
+      (heading as HTMLElement).style.fontFamily = headingFontFamily;
+    });
+    
     toast({
       title: "Typography Settings Applied",
-      description: "Your font and text styling settings have been applied to the theme.",
+      description: "Your font and text styling settings have been applied to the interface.",
     });
   };
 
