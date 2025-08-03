@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -56,6 +56,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
     storeId: z.string().min(1, "Store is required"),
     taxRate: z.coerce.number().min(0).max(100),
     discountAmount: z.coerce.number().min(0),
+    paymentMethod: z.string().optional(),
     notes: z.string().optional(),
   });
 
@@ -106,9 +107,20 @@ export default function AppLayout({ children }: AppLayoutProps) {
       storeId: "",
       taxRate: 8.5,
       discountAmount: 0,
-      notes: ""
+      notes: "",
+      paymentMethod: "cash"
     }
   });
+
+  // Auto-select first available customer and store when dialog opens
+  useEffect(() => {
+    if (quickSaleOpen && stores.length > 0 && !quickSaleForm.getValues("storeId")) {
+      quickSaleForm.setValue("storeId", stores[0].id);
+    }
+    if (quickSaleOpen && allCustomers.length > 0 && !quickSaleForm.getValues("customerId")) {
+      quickSaleForm.setValue("customerId", allCustomers[0].id);
+    }
+  }, [quickSaleOpen, stores, allCustomers]);
 
   const quickSaleItemForm = useForm({
     resolver: zodResolver(quickSaleItemSchema),
@@ -136,22 +148,26 @@ export default function AppLayout({ children }: AppLayoutProps) {
   // Quick Sale mutation
   const quickSaleMutation = useMutation({
     mutationFn: async (data: any) => {
-      const invoiceData = {
-        ...data,
-        storeId: stores[0]?.id || "default",
-        customerId: "guest"
-      };
-      return await apiRequest("POST", "/api/invoices", invoiceData);
+      return await apiRequest("POST", "/api/invoices", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
       queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
       toast({
         title: "Success",
         description: "Quick sale invoice created successfully!",
       });
       setQuickSaleOpen(false);
-      quickSaleForm.reset();
+      setQuickSaleItems([]);
+      quickSaleForm.reset({
+        customerId: "",
+        storeId: "",
+        taxRate: 8.5,
+        discountAmount: 0,
+        notes: "",
+        paymentMethod: "cash"
+      });
     },
     onError: () => {
       toast({
@@ -172,8 +188,23 @@ export default function AppLayout({ children }: AppLayoutProps) {
       return;
     }
 
+    // Ensure we have a valid customer ID - use the first available customer if none selected
+    let customerId = data.customerId;
+    if (!customerId && customers.length > 0) {
+      customerId = customers[0].id;
+    } else if (!customerId && patients.length > 0) {
+      customerId = patients[0].id;
+    } else if (!customerId) {
+      toast({
+        title: "Error",
+        description: "Please select a customer or add customers to the system.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const invoiceData = {
-      invoiceNumber: `QS-${Date.now()}`,
+      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
       date: new Date().toISOString(),
       status: "paid", // Quick sale is immediately paid
       items: quickSaleItems,
@@ -182,8 +213,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       total: parseFloat(grandTotal.toFixed(2)),
       discountAmount: parseFloat(discountAmount.toFixed(2)),
       taxRate: data.taxRate || 8.5,
-      customerId: data.customerId,
-      storeId: data.storeId,
+      customerId: customerId,
+      storeId: data.storeId || stores[0]?.id,
       dueDate: new Date().toISOString(), // Quick sale due immediately
       notes: data.notes || "",
       paymentMethod: "cash" // Default for quick sale
