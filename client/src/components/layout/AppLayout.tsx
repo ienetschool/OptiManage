@@ -449,7 +449,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={() => window.open('/', '_blank')} 
+            onClick={() => window.open('/home', '_blank')} 
             title="Visit Frontend Website"
             className="hidden sm:flex items-center space-x-2"
           >
@@ -459,7 +459,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={() => window.open('/', '_blank')} 
+            onClick={() => window.open('/home', '_blank')} 
             title="Visit Frontend Website"
             className="sm:hidden"
           >

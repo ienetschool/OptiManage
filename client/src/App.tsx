@@ -128,6 +128,11 @@ function Router() {
       <Route path="/book-appointment">
         <PublicLayout><BookAppointment /></PublicLayout>
       </Route>
+      
+      {/* Public website homepage */}
+      <Route path="/home">
+        <PublicLayout><Home /></PublicLayout>
+      </Route>
 
       {/* Dashboard routes */}
       <Route path="/dashboard">
