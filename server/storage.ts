@@ -977,6 +977,10 @@ export class DatabaseStorage implements IStorage {
       const medicalInvoiceRecords = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
       console.log(`📊 FOUND ${medicalInvoiceRecords.length} MEDICAL INVOICES`);
       
+      // Get sales records from database
+      const salesRecords = await db.select().from(sales).orderBy(desc(sales.createdAt));
+      console.log(`📊 FOUND ${salesRecords.length} SALES RECORDS`);
+      
       // Get customers and patients for name resolution
       const customersData = await db.select().from(customers);
       const patientsData = await db.select().from(patients);
@@ -1019,11 +1023,30 @@ export class DatabaseStorage implements IStorage {
         source: 'medical_invoice'
       }));
       
+      // Convert sales to payment records
+      const salesPayments = salesRecords.map(sale => ({
+        id: `pay-sale-${sale.id}`,
+        invoiceId: `SALE-${sale.saleNumber || sale.id}`,
+        customerId: sale.customerId,
+        customerName: sale.customerId ? 
+          customersData.find(c => c.id === sale.customerId)?.firstName + ' ' + customersData.find(c => c.id === sale.customerId)?.lastName || 'Customer' :
+          'Quick Sale Customer',
+        amount: parseFloat(sale.total || "0"),
+        paymentMethod: sale.paymentMethod || 'cash',
+        status: sale.paymentStatus === 'completed' ? 'completed' : 
+                sale.paymentStatus === 'pending' ? 'pending' : 
+                'completed',
+        paymentDate: sale.createdAt,
+        transactionId: `TXN-SALE-${sale.saleNumber || sale.id}`,
+        notes: sale.notes || 'Quick Sale Transaction',
+        source: 'quick_sale'
+      }));
+      
       // Combine all payments and sort by date
-      const allPayments = [...regularPayments, ...medicalPayments]
+      const allPayments = [...regularPayments, ...medicalPayments, ...salesPayments]
         .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime());
       
-      console.log(`🚨 RETURNING ${allPayments.length} TOTAL PAYMENTS (${regularPayments.length} regular + ${medicalPayments.length} medical)`);
+      console.log(`🚨 RETURNING ${allPayments.length} TOTAL PAYMENTS (${regularPayments.length} regular + ${medicalPayments.length} medical + ${salesPayments.length} sales)`);
       
       return allPayments;
       

@@ -165,9 +165,11 @@ export default function Sales() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       toast({
         title: "Success",
-        description: "Sale completed successfully.",
+        description: "Sale completed successfully and is now visible in Payments and Invoices.",
       });
       setOpen(false);
       setQuickSaleOpen(false);
