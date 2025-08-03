@@ -111,6 +111,7 @@ const invoiceSchema = z.object({
 
 const invoiceItemSchema = z.object({
   productId: z.string().min(1, "Product is required"),
+  productName: z.string().optional(),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
   unitPrice: z.coerce.number().min(0, "Price must be positive"),
   discount: z.coerce.number().min(0).max(100),
@@ -272,6 +273,7 @@ export default function InvoiceManagement() {
   const itemForm = useForm<z.infer<typeof invoiceItemSchema>>({
     resolver: zodResolver(invoiceItemSchema),
     defaultValues: {
+      productName: "",
       quantity: 1,
       discount: 0,
     },
@@ -342,8 +344,30 @@ export default function InvoiceManagement() {
 
   // Add item to invoice with proper decimal handling
   const addItem = (data: z.infer<typeof invoiceItemSchema>) => {
-    const product = products.find(p => p.id === data.productId);
-    if (!product) return;
+    let productName = "";
+    
+    if (data.productId === "custom") {
+      if (!data.productName || !data.productName.trim()) {
+        toast({
+          title: "Error",
+          description: "Please enter a custom product name.",
+          variant: "destructive",
+        });
+        return;
+      }
+      productName = data.productName.trim();
+    } else {
+      const product = products.find(p => p.id === data.productId);
+      if (!product) {
+        toast({
+          title: "Error",
+          description: "Selected product not found.",
+          variant: "destructive",
+        });
+        return;
+      }
+      productName = product.name;
+    }
 
     const unitPrice = parseFloat(data.unitPrice.toString());
     const quantity = parseInt(data.quantity.toString());
@@ -356,7 +380,7 @@ export default function InvoiceManagement() {
     const newItem: InvoiceItem = {
       id: Math.random().toString(36).substr(2, 9),
       productId: data.productId,
-      productName: product.name,
+      productName: productName,
       quantity: quantity,
       unitPrice: parseFloat(unitPrice.toFixed(2)),
       discount: discount,
@@ -364,7 +388,13 @@ export default function InvoiceManagement() {
     };
 
     setInvoiceItems([...invoiceItems, newItem]);
-    itemForm.reset({ quantity: 1, discount: 0, unitPrice: 0 });
+    itemForm.reset({ 
+      productId: "",
+      productName: "",
+      quantity: 1, 
+      discount: 0, 
+      unitPrice: 0 
+    });
   };
 
   // Remove item from invoice
@@ -1031,16 +1061,45 @@ export default function InvoiceManagement() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
+                                <SelectItem value="walk-in" className="py-3">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                      <span className="text-blue-600 text-sm font-medium">W</span>
+                                    </div>
+                                    <div>
+                                      <div className="font-medium">Walk-in Customer</div>
+                                      <div className="text-xs text-slate-500">Cash customer</div>
+                                    </div>
+                                  </div>
+                                </SelectItem>
+                                
                                 {customersLoading ? (
                                   <SelectItem value="" disabled>Loading customers...</SelectItem>
                                 ) : allCustomers.length === 0 ? (
                                   <SelectItem value="" disabled>No customers found</SelectItem>
                                 ) : (
-                                  allCustomers.map((customer) => (
-                                    <SelectItem key={customer.id} value={customer.id}>
-                                      {customer.firstName} {customer.lastName}
-                                    </SelectItem>
-                                  ))
+                                  <>
+                                    <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                      CUSTOMERS ({allCustomers.length})
+                                    </div>
+                                    {allCustomers.map((customer) => (
+                                      <SelectItem key={customer.id} value={customer.id} className="py-3">
+                                        <div className="flex items-center space-x-3">
+                                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                            <span className="text-green-600 text-sm font-medium">
+                                              {customer.firstName?.charAt(0).toUpperCase() || 'C'}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <div className="font-medium">{customer.firstName} {customer.lastName}</div>
+                                            <div className="text-xs text-slate-500">
+                                              {customer.email || customer.phone || 'Customer'}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </SelectItem>
+                                    ))}
+                                  </>
                                 )}
                               </SelectContent>
                             </Select>
@@ -1110,7 +1169,9 @@ export default function InvoiceManagement() {
                                         aria-expanded={productSearchOpen}
                                         className="w-full justify-between"
                                       >
-                                        {field.value
+                                        {field.value === "custom" 
+                                          ? "Custom Item"
+                                          : field.value
                                           ? products.find(product => product.id === field.value)?.name || "Select product"
                                           : "Select product"}
                                         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1126,6 +1187,37 @@ export default function InvoiceManagement() {
                                       />
                                       <CommandEmpty>No product found.</CommandEmpty>
                                       <CommandGroup className="max-h-48 overflow-y-auto">
+                                        <CommandItem
+                                          value="custom"
+                                          onSelect={() => {
+                                            field.onChange("custom");
+                                            itemForm.setValue("unitPrice", 0);
+                                            setProductSearchOpen(false);
+                                            setProductSearchTerm("");
+                                          }}
+                                        >
+                                          <Check
+                                            className={`mr-2 h-4 w-4 ${
+                                              field.value === "custom" ? "opacity-100" : "opacity-0"
+                                            }`}
+                                          />
+                                          <div className="flex items-center space-x-3">
+                                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                                              <span className="text-orange-600 text-sm font-medium">✏</span>
+                                            </div>
+                                            <div>
+                                              <div className="font-medium">Custom Item</div>
+                                              <div className="text-xs text-slate-500">Enter custom product details</div>
+                                            </div>
+                                          </div>
+                                        </CommandItem>
+                                        
+                                        {products.length > 0 && (
+                                          <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
+                                            AVAILABLE PRODUCTS ({products.length})
+                                          </div>
+                                        )}
+                                        
                                         {products
                                           .filter(product => 
                                             product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
@@ -1163,6 +1255,23 @@ export default function InvoiceManagement() {
                               </FormItem>
                             )}
                           />
+
+                          {/* Custom Product Name Field */}
+                          {itemForm.watch("productId") === "custom" && (
+                            <FormField
+                              control={itemForm.control}
+                              name="productName"
+                              render={({ field }) => (
+                                <FormItem className="col-span-2">
+                                  <FormLabel>Custom Product Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Enter product name..." {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
 
                           <FormField
                             control={itemForm.control}
@@ -1316,6 +1425,30 @@ export default function InvoiceManagement() {
                             )}
                           />
                         </div>
+
+                        <FormField
+                          control={invoiceForm.control}
+                          name="paymentMethod"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Payment Method</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select payment method" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="cash">💵 Cash</SelectItem>
+                                  <SelectItem value="card">💳 Card</SelectItem>
+                                  <SelectItem value="check">📄 Check</SelectItem>
+                                  <SelectItem value="digital">📱 Digital</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
                         <FormField
                           control={invoiceForm.control}
