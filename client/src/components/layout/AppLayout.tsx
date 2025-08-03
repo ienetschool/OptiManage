@@ -15,7 +15,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
-import { insertInvoiceSchema, type Product } from "@shared/schema";
 import { 
   Menu, 
   X, 
@@ -46,10 +45,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Simplified form schema for Quick Sale
+  // Professional Quick Sale form schema
   const quickSaleSchema = z.object({
-    customerName: z.string().min(1, "Customer name is required"),
-    productName: z.string().min(1, "Product name is required"),
+    customerId: z.string().min(1, "Customer selection is required"),
+    productId: z.string().min(1, "Product selection is required"),
     quantity: z.number().min(1, "Quantity must be at least 1"),
     unitPrice: z.number().min(0, "Unit price must be positive"),
     taxRate: z.number().min(0).max(100).default(10),
@@ -58,11 +57,24 @@ export default function AppLayout({ children }: AppLayoutProps) {
     notes: z.string().optional()
   });
 
+  // Get data for dropdowns first (typed)
+  const { data: stores = [] } = useQuery<any[]>({
+    queryKey: ["/api/stores"]
+  });
+  
+  const { data: customers = [] } = useQuery<any[]>({
+    queryKey: ["/api/customers"]
+  });
+  
+  const { data: products = [] } = useQuery<any[]>({
+    queryKey: ["/api/products"]
+  });
+
   const quickSaleForm = useForm({
     resolver: zodResolver(quickSaleSchema),
     defaultValues: {
-      customerName: "Walk-in Customer",
-      productName: "",
+      customerId: "walk-in",
+      productId: "custom",
       quantity: 1,
       unitPrice: 0,
       taxRate: 10,
@@ -72,10 +84,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   });
 
-  // Get stores for store selection
-  const { data: stores = [] } = useQuery({
-    queryKey: ["/api/stores"]
-  });
+  // Watch for product selection to auto-fill unit price
+  const selectedProductId = quickSaleForm.watch("productId");
+  const selectedProduct = products.find((p: any) => p.id === selectedProductId);
 
   // Quick Sale mutation
   const quickSaleMutation = useMutation({
@@ -107,6 +118,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   });
 
   const onQuickSaleSubmit = (data: any) => {
+    // Get selected customer and product details
+    const selectedCustomer = customers.find((c: any) => c.id === data.customerId);
+    const selectedProduct = products.find((p: any) => p.id === data.productId);
+    
     // Calculate totals
     const subtotal = data.quantity * data.unitPrice;
     const tax = subtotal * (data.taxRate / 100);
@@ -114,9 +129,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const total = subtotal + tax - discount;
 
     const invoiceData = {
-      customerName: data.customerName,
+      customerName: data.customerId === "walk-in" ? "Walk-in Customer" : (selectedCustomer?.name || "Walk-in Customer"),
       storeId: stores[0]?.id || "default-store",
-      customerId: "guest",
+      customerId: data.customerId === "walk-in" ? "guest" : data.customerId,
       subtotal: subtotal.toFixed(2),
       taxRate: data.taxRate,
       taxAmount: tax.toFixed(2),
@@ -126,7 +141,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
       paymentMethod: data.paymentMethod,
       notes: data.notes || "",
       items: [{
-        productName: data.productName,
+        productName: data.productId === "custom" ? "Custom Item" : (selectedProduct?.name || "Custom Item"),
+        productId: data.productId === "custom" ? "custom" : data.productId,
         quantity: data.quantity,
         unitPrice: data.unitPrice,
         discount: 0,
@@ -135,6 +151,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
     };
 
     quickSaleMutation.mutate(invoiceData);
+  };
+
+  // Auto-fill unit price when product is selected
+  const handleProductChange = (productId: string) => {
+    const product = products.find((p: any) => p.id === productId);
+    if (product && product.price) {
+      quickSaleForm.setValue("unitPrice", parseFloat(product.price.toString()));
+    }
   };
 
   return (
@@ -400,13 +424,25 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={quickSaleForm.control}
-                  name="customerName"
+                  name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter customer name..." {...field} />
-                      </FormControl>
+                      <FormLabel>Customer</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select customer..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="walk-in">🚶 Walk-in Customer</SelectItem>
+                          {customers.map((customer: any) => (
+                            <SelectItem key={customer.id} value={customer.id}>
+                              👤 {customer.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -439,13 +475,31 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
               <FormField
                 control={quickSaleForm.control}
-                name="productName"
+                name="productId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Product/Service Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter product or service name..." {...field} />
-                    </FormControl>
+                    <FormLabel>Product/Service</FormLabel>
+                    <Select 
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleProductChange(value);
+                      }} 
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select product or service..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="custom">✏️ Custom Item</SelectItem>
+                        {products.map((product: any) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            📦 {product.name} - ${product.price || '0.00'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
