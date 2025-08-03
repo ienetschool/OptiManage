@@ -88,7 +88,7 @@ A comprehensive optical store management system built with React, Node.js, and P
 
 ## 📊 Database Schema
 
-**Latest Backup**: `database_backup_final_20250803_072942.sql` (83.2 KB, 2,084 lines)
+**Latest Backup**: `db_backup0308250333.sql` - Complete production database
 
 The system includes comprehensive data models for:
 
