@@ -143,7 +143,7 @@ export default function Pages() {
 
 
   return (
-    <div className="space-y-6 w-full min-h-screen">
+    <div className="space-y-6 p-6 overflow-auto" style={{ minHeight: '100vh', height: 'auto' }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -416,7 +416,7 @@ export default function Pages() {
           <CardTitle>All Pages</CardTitle>
           <CardDescription>Manage your website's pages and content</CardDescription>
         </CardHeader>
-        <CardContent className="p-6 space-y-4 max-h-none overflow-visible">
+        <CardContent style={{ maxHeight: 'none', height: 'auto', overflow: 'visible' }}>
           {filteredPages.length === 0 ? (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-slate-300 mx-auto mb-4" />
@@ -428,9 +428,9 @@ export default function Pages() {
                 Showing {filteredPages.length} of {pages.length} pages
               </div>
 
-              <div className="space-y-4 w-full">
-              {filteredPages.map((page) => (
-                <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow">
+              <div className="space-y-4" style={{ height: 'auto', minHeight: '600px' }}>
+                {filteredPages.map((page) => (
+                <div key={page.id} className="flex items-center justify-between p-4 border rounded-lg hover:shadow-sm transition-shadow w-full" style={{ display: 'flex', minHeight: '80px' }}>
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
                       <FileText className="h-8 w-8 text-slate-400" />
@@ -521,7 +521,7 @@ export default function Pages() {
           });
         }
       }}>
-        <DialogContent className="max-w-7xl h-[90vh] flex flex-col">
+        <DialogContent className="max-w-7xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
           <DialogHeader className="border-b pb-4 flex-shrink-0">
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center space-x-3">
@@ -546,9 +546,9 @@ export default function Pages() {
           </DialogHeader>
           
           {editingPage && (
-            <div className="flex flex-1" style={{ height: 'calc(95vh - 120px)' }}>
+            <div className="flex flex-1 min-h-0">
               {/* Left Sidebar - Settings */}
-              <div className="w-80 border-r bg-slate-50 overflow-y-auto">
+              <div className="w-80 border-r bg-slate-50 overflow-y-auto flex-shrink-0">
                 <div className="p-4 space-y-4">
                   {/* Basic Settings */}
                   <div className="space-y-3">
@@ -843,12 +843,12 @@ export default function Pages() {
                 </div>
 
                 {/* Content Editor */}
-                <div className="flex-1 bg-gray-50" style={{ height: '100%', overflow: 'auto' }}>
-                  <div className="p-6" style={{ minHeight: '100%' }}>
+                <div className="flex-1 bg-gray-50 overflow-hidden flex flex-col">
+                  <div className="flex-1 overflow-y-auto p-6">
                     <div className={`mx-auto bg-white shadow-sm border rounded-lg p-8 ${
                       previewMode === 'mobile' ? 'max-w-sm' : 
                       previewMode === 'tablet' ? 'max-w-2xl' : 'max-w-4xl'
-                    }`} style={{ minHeight: '800px' }}>
+                    }`}>
                       <div className="space-y-6">
                         <Input 
                           className="text-3xl font-bold border-none shadow-none p-0 focus-visible:ring-0"
@@ -856,19 +856,16 @@ export default function Pages() {
                           defaultValue={editingPage.title}
                         />
                         <div 
-                          className="min-h-[800px] p-6 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose prose-lg max-w-none overflow-auto"
+                          className="min-h-[600px] p-6 border rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 prose prose-lg max-w-none"
                           contentEditable
                           suppressContentEditableWarning={true}
                           style={{ 
                             outline: 'none', 
-                            minHeight: '800px',
-                            maxHeight: 'none',
-                            overflowY: 'auto',
-                            resize: 'vertical'
+                            minHeight: '600px'
                           }}
                           onInput={(e) => setPageContent(e.currentTarget.innerHTML || "")}
                           dangerouslySetInnerHTML={{
-                            __html: pageContent || `<p class="text-slate-500">Start typing your content here... Use the toolbar above to format your text. Add more content to test scrolling functionality. This is a longer paragraph to demonstrate that the editor can handle extended content and should allow scrolling when the content exceeds the visible area.</p>`
+                            __html: pageContent || `<p class="text-slate-500">Start typing your content here... Use the toolbar above to format your text. Add more content to test scrolling functionality. This is a longer paragraph to demonstrate that the editor can handle extended content and should allow scrolling when the content exceeds the visible area. Keep typing to see the scrolling in action. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>`
                           }}
                         />
                         
