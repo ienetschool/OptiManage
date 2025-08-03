@@ -395,7 +395,10 @@ export default function EnhancedDataTable({
               <span className="text-sm text-muted-foreground">
                 Showing {startIndex + 1} to {Math.min(startIndex + pageSizeValue, sortedData.length)} of {sortedData.length} entries
               </span>
-              <Select value={pageSizeValue.toString()} onValueChange={(value) => setPageSizeValue(Number(value))}>
+              <Select value={pageSizeValue.toString()} onValueChange={(value) => {
+                setPageSizeValue(Number(value));
+                setCurrentPage(1);
+              }}>
                 <SelectTrigger className="w-[70px]">
                   <SelectValue />
                 </SelectTrigger>

@@ -670,12 +670,35 @@ export class DatabaseStorage implements IStorage {
       const dbInvoiceItems = await db.select().from(invoiceItems);
       console.log(`📦 FOUND ${dbInvoiceItems.length} INVOICE ITEMS IN DATABASE`);
       
+      // Get customers and patients for name resolution
+      const customersData = await db.select().from(customers);
+      const patientsData = await db.select().from(patients);
+
       // Convert database invoices to the expected format
-      const databaseInvoices = dbInvoices.map(invoice => ({
-        id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        customerId: invoice.customerId,
-        customerName: invoice.customerId ? "Customer" : "Guest Customer",
+      const databaseInvoices = dbInvoices.map(invoice => {
+        let customerName = "Guest Customer";
+        
+        if (invoice.customerId) {
+          // Try to find in customers first
+          const customer = customersData.find(c => c.id === invoice.customerId);
+          if (customer) {
+            customerName = `${customer.firstName} ${customer.lastName}`.trim();
+          } else {
+            // Try to find in patients
+            const patient = patientsData.find(p => p.id === invoice.customerId);
+            if (patient) {
+              customerName = `${patient.firstName} ${patient.lastName}`.trim();
+            } else {
+              customerName = "Unknown Customer";
+            }
+          }
+        }
+
+        return {
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          customerId: invoice.customerId,
+          customerName: customerName,
         storeId: invoice.storeId,
         storeName: "OptiStore Pro",
         date: invoice.date?.toISOString() || new Date().toISOString(),
@@ -699,7 +722,8 @@ export class DatabaseStorage implements IStorage {
           discount: parseFloat(item.discount?.toString() || "0"),
           total: parseFloat(item.total.toString())
         }))
-      }));
+        };
+      });
 
       // For now, include sample data for testing
       const manualInvoices = [

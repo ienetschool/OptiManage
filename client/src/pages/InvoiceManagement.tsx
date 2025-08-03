@@ -225,10 +225,10 @@ export default function InvoiceManagement() {
   
   // Debug logging - Enhanced
   React.useEffect(() => {
-    console.log(`🔥 FRONTEND DEBUG - Invoices length: ${invoices?.length || 0}`);
+    console.log(`🔥 FRONTEND DEBUG - Invoices length: ${Array.isArray(invoices) ? invoices.length : 0}`);
     console.log(`🔥 FRONTEND DEBUG - Invoices data:`, invoices);
     
-    if (invoices && invoices.length > 0) {
+    if (Array.isArray(invoices) && invoices.length > 0) {
       console.log(`🔍 FRONTEND RECEIVED ${invoices.length} INVOICES:`, invoices.map((inv: any) => ({ 
         id: inv.id, 
         invoiceNumber: inv.invoiceNumber, 
