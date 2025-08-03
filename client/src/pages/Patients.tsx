@@ -63,6 +63,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
 import { generateMultiPagePatientPDF } from "@/components/PatientProfilePDF";
+import { generateA4Invoice } from "@/components/ImprovedA4Invoice";
 
 export default function Patients() {
   const [open, setOpen] = useState(false);
@@ -1428,8 +1429,45 @@ export default function Patients() {
   };
 
   // Helper function for generating detailed invoices
-  const generateDetailedInvoice = (appointment: any, patient: Patient) => {
-    return generateInvoice(appointment, patient);
+  const generateDetailedInvoice = (invoiceOrAppointment: any, patient: Patient) => {
+    // If it's an invoice object with invoiceNumber, use it directly
+    if (invoiceOrAppointment.invoiceNumber) {
+      return generateA4Invoice(invoiceOrAppointment);
+    }
+    
+    // If it's an appointment, create a temporary invoice object for printing
+    const tempInvoice = {
+      id: invoiceOrAppointment.id || 'temp-invoice',
+      invoiceNumber: invoiceOrAppointment.invoiceNumber || 'TEMP-001',
+      customerId: patient.id,
+      customerName: `${patient.firstName} ${patient.lastName}`,
+      storeId: 'default-store',
+      storeName: 'OptiStore Pro',
+      date: invoiceOrAppointment.appointmentDate || new Date().toISOString(),
+      dueDate: invoiceOrAppointment.appointmentDate || new Date().toISOString(),
+      subtotal: parseFloat(invoiceOrAppointment.appointmentFee || invoiceOrAppointment.total || '0'),
+      taxRate: 8.5,
+      taxAmount: parseFloat(invoiceOrAppointment.appointmentFee || invoiceOrAppointment.total || '0') * 0.085,
+      discountAmount: 0,
+      total: parseFloat(invoiceOrAppointment.appointmentFee || invoiceOrAppointment.total || '0') * 1.085,
+      status: invoiceOrAppointment.paymentStatus || invoiceOrAppointment.status || 'pending',
+      paymentMethod: invoiceOrAppointment.paymentMethod || undefined,
+      notes: invoiceOrAppointment.notes || undefined,
+      items: [
+        {
+          id: 'item-1',
+          productId: 'service-1',
+          productName: invoiceOrAppointment.serviceType || 'Medical Service',
+          description: invoiceOrAppointment.notes || undefined,
+          quantity: 1,
+          unitPrice: parseFloat(invoiceOrAppointment.appointmentFee || invoiceOrAppointment.total || '0'),
+          discount: 0,
+          total: parseFloat(invoiceOrAppointment.appointmentFee || invoiceOrAppointment.total || '0')
+        }
+      ]
+    };
+    
+    return generateA4Invoice(tempInvoice);
   };
 
   // Filter and sort patients

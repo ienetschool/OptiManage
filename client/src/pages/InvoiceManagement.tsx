@@ -49,7 +49,7 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import QRCodeReact from "react-qr-code";
-import { generateProfessionalA4Invoice } from "@/components/ProfessionalInvoice";
+import { generateA4Invoice } from "@/components/ImprovedA4Invoice";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
@@ -1636,11 +1636,11 @@ export default function InvoiceManagement() {
                     <Send className="h-4 w-4 mr-2" />
                     Send to Customer
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
+                  <DropdownMenuItem onClick={() => generateA4Invoice(invoice)}>
                     <Printer className="h-4 w-4 mr-2" />
                     Print A4 Invoice
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => generateProfessionalA4Invoice(invoice)}>
+                  <DropdownMenuItem onClick={() => generateA4Invoice(invoice)}>
                     <FileText className="h-4 w-4 mr-2" />
                     Export A4 PDF
                   </DropdownMenuItem>
