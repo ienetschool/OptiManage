@@ -434,6 +434,7 @@ export default function Patients() {
     // Auto-generate username if not provided
     if (!data.username && data.firstName && data.lastName && data.email) {
       data.username = generateUsername(data.firstName, data.lastName, data.email);
+      console.log('Auto-generated username:', data.username);
     }
     createPatientMutation.mutate(data);
   };
@@ -1917,6 +1918,9 @@ export default function Patients() {
                                             if (firstName && lastName && email) {
                                               const username = generateUsername(firstName, lastName, email);
                                               form.setValue('username', username);
+                                              console.log('Manual username generation:', username);
+                                            } else {
+                                              alert('Please fill in First Name, Last Name, and Email first');
                                             }
                                           }}
                                         >
@@ -1925,7 +1929,7 @@ export default function Patients() {
                                       </div>
                                     </FormControl>
                                     <FormDescription className="text-xs">
-                                      Auto-generated on registration or click refresh to regenerate
+                                      Username will auto-generate when you click Register Patient, or click refresh icon to generate now
                                     </FormDescription>
                                     <FormMessage />
                                   </FormItem>
