@@ -558,43 +558,169 @@ export default function Inventory() {
 
         {/* Product Details Dialog */}
         <Dialog open={openProductDetails} onOpenChange={setOpenProductDetails}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Product Details</DialogTitle>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Product Details
+              </DialogTitle>
             </DialogHeader>
             {selectedProduct && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-lg">{selectedProduct.name}</h3>
-                  <p className="text-sm text-slate-500">SKU: {selectedProduct.sku}</p>
-                  {selectedProduct.barcode && (
-                    <p className="text-sm text-slate-500">Barcode: {selectedProduct.barcode}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-6">
+                {/* Header with Product Name and Status */}
+                <div className="flex justify-between items-start">
                   <div>
-                    <label className="text-sm font-medium">Price</label>
-                    <p className="text-lg font-semibold text-green-600">${selectedProduct.price}</p>
+                    <h3 className="text-2xl font-bold text-slate-900">{selectedProduct.name}</h3>
+                    <div className="flex items-center gap-4 mt-2">
+                      <p className="text-sm text-slate-500">SKU: <span className="font-mono">{selectedProduct.sku}</span></p>
+                      {selectedProduct.barcode && (
+                        <p className="text-sm text-slate-500">Barcode: <span className="font-mono">{selectedProduct.barcode}</span></p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium">Current Stock</label>
-                    <p className="text-lg font-semibold">{selectedProduct.currentStock || 0} units</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Category</label>
-                    <p>{selectedProduct.categoryName}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Supplier</label>
-                    <p>{selectedProduct.supplierName}</p>
+                  <div className="flex flex-col items-end gap-2">
+                    {getStockStatusBadge(selectedProduct.stockStatus, selectedProduct.currentStock || 0)}
+                    <Badge variant={selectedProduct.isActive ? "default" : "secondary"}>
+                      {selectedProduct.isActive ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
                 </div>
-                {selectedProduct.description && (
-                  <div>
-                    <label className="text-sm font-medium">Description</label>
-                    <p className="text-sm text-slate-600">{selectedProduct.description}</p>
+
+                {/* Product Type and Category */}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
+                    <span className="text-lg">{getProductTypeIcon(selectedProduct.productType || "frames")}</span>
+                    <span className="text-sm font-medium text-blue-700 capitalize">
+                      {PRODUCT_TYPES.find(t => t.value === selectedProduct.productType)?.label || selectedProduct.productType}
+                    </span>
                   </div>
-                )}
+                  <div className="flex items-center space-x-2 px-3 py-1 bg-slate-50 rounded-full">
+                    <span className="text-sm text-slate-600">{selectedProduct.categoryName || 'Uncategorized'}</span>
+                  </div>
+                </div>
+
+                {/* Key Metrics Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-green-600">${selectedProduct.price}</div>
+                      <div className="text-sm text-slate-500">Selling Price</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-blue-600">{selectedProduct.currentStock || 0}</div>
+                      <div className="text-sm text-slate-500">Current Stock</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-orange-600">${selectedProduct.costPrice || 0}</div>
+                      <div className="text-sm text-slate-500">Cost Price</div>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl font-bold text-purple-600">{selectedProduct.reorderLevel || 0}</div>
+                      <div className="text-sm text-slate-500">Reorder Level</div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Detailed Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Product Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Product Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {selectedProduct.description && (
+                        <div>
+                          <label className="text-sm font-medium text-slate-700">Description</label>
+                          <p className="text-sm text-slate-600 mt-1">{selectedProduct.description}</p>
+                        </div>
+                      )}
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Supplier</label>
+                        <p className="text-sm text-slate-600 mt-1">{selectedProduct.supplierName || 'No Supplier Assigned'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Created</label>
+                        <p className="text-sm text-slate-600 mt-1">
+                          {selectedProduct.createdAt ? format(new Date(selectedProduct.createdAt), 'PPP') : 'N/A'}
+                        </p>
+                      </div>
+                      {selectedProduct.updatedAt && (
+                        <div>
+                          <label className="text-sm font-medium text-slate-700">Last Updated</label>
+                          <p className="text-sm text-slate-600 mt-1">
+                            {format(new Date(selectedProduct.updatedAt), 'PPp')}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Stock Information */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Inventory Status</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Stock Status</label>
+                        <div className="mt-1">
+                          {getStockStatusBadge(selectedProduct.stockStatus, selectedProduct.currentStock || 0)}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Profit Margin</label>
+                        <p className="text-sm font-semibold text-green-600 mt-1">
+                          ${(parseFloat(selectedProduct.price || "0") - parseFloat(selectedProduct.costPrice || "0")).toFixed(2)}
+                          {selectedProduct.costPrice && selectedProduct.price && (
+                            <span className="text-xs text-slate-500 ml-1">
+                              ({(((parseFloat(selectedProduct.price) - parseFloat(selectedProduct.costPrice)) / parseFloat(selectedProduct.price)) * 100).toFixed(1)}%)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-slate-700">Total Inventory Value</label>
+                        <p className="text-sm font-semibold text-blue-600 mt-1">
+                          ${((selectedProduct.currentStock || 0) * parseFloat(selectedProduct.costPrice || "0")).toFixed(2)}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setEditingProduct(selectedProduct);
+                      setOpenProductDetails(false);
+                      setOpenProduct(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Product
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedProductForReorder(selectedProduct);
+                      setOpenProductDetails(false);
+                      setOpenReorderModal(true);
+                    }}
+                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                  >
+                    <Package className="h-4 w-4 mr-2" />
+                    Reorder Stock
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
