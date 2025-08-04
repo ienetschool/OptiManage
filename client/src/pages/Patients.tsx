@@ -1902,6 +1902,148 @@ export default function Patients() {
                             />
                           </div>
 
+                          {/* Government Identity Section */}
+                          <div className="border rounded-lg p-4 bg-yellow-50 mt-4">
+                            <h4 className="font-medium text-yellow-800 mb-3 flex items-center">
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Government Identity & Documentation
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="nationalIdNumber"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>National ID Number</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="Enter National ID number" />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      Official government-issued National ID
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="nisNumber"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>NIS Number</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="Enter NIS number" />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      National Insurance Scheme number
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Government Coupon Section */}
+                          <div className="border rounded-lg p-4 bg-green-50 mt-4">
+                            <h4 className="font-medium text-green-800 mb-3 flex items-center">
+                              <Receipt className="h-4 w-4 mr-2" />
+                              Government Insurance & Coupon Benefits
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="governmentCouponCode"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Government Coupon Code</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} value={field.value || ""} placeholder="Enter coupon code" />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      Government-provided insurance/health coupon
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="couponAmount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Coupon Amount</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        {...field} 
+                                        type="number" 
+                                        step="0.01"
+                                        value={field.value || ""} 
+                                        placeholder="0.00" 
+                                      />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      Amount to be deducted from next bill
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="couponServiceType"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Applicable Service</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select service type" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="eye-exam">Eye Examination</SelectItem>
+                                        <SelectItem value="contact-lens">Contact Lens Fitting</SelectItem>
+                                        <SelectItem value="glasses-fitting">Glasses Fitting</SelectItem>
+                                        <SelectItem value="consultation">Consultation</SelectItem>
+                                        <SelectItem value="follow-up">Follow-up Visit</SelectItem>
+                                        <SelectItem value="all-services">All Services</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormDescription className="text-xs">
+                                      Which service this coupon can be redeemed for
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="couponExpiryDate"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Coupon Expiry Date</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        {...field} 
+                                        type="date"
+                                        value={field.value || ""} 
+                                      />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      When this coupon expires
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+
                           {/* Portal Access Section */}
                           <div className="border rounded-lg p-4 bg-blue-50 mt-4">
                             <h4 className="font-medium text-blue-800 mb-3 flex items-center">
