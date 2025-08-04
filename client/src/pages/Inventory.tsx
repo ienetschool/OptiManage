@@ -173,15 +173,20 @@ export default function Inventory() {
     }) => {
       const { initialStock, purchasePrice, createPurchaseOrder, purchaseNotes, taxRate, discountAmount, shippingCost, handlingCost, ...productData } = data;
       
-      // Auto-generate barcode if not provided
-      if (!productData.barcode) {
-        productData.barcode = `BC${Date.now().toString().slice(-8)}`;
+      // Auto-generate barcode if not provided or empty
+      if (!productData.barcode || productData.barcode.trim() === '') {
+        const timestamp = Date.now().toString().slice(-8);
+        const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+        productData.barcode = `BC${timestamp}${random}`;
       }
       
-      // Auto-generate SKU if not provided
-      if (!productData.sku) {
+      // Auto-generate SKU if not provided or empty
+      if (!productData.sku || productData.sku.trim() === '') {
         const typePrefix = productData.productType?.substring(0, 2).toUpperCase() || 'PR';
-        productData.sku = `${typePrefix}-${Date.now().toString().slice(-6)}`;
+        // Generate a more unique SKU using timestamp + random number
+        const timestamp = Date.now().toString().slice(-6);
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        productData.sku = `${typePrefix}-${timestamp}${random}`;
       }
       
       const response = await apiRequest("POST", "/api/products", productData);

@@ -900,28 +900,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/store-inventory', async (req, res) => {
+  app.post('/api/store-inventory', isAuthenticated, async (req, res) => {
     try {
+      console.log("Store inventory request body:", req.body);
       const { storeId, productId, quantity, minStock, maxStock, lastRestocked } = req.body;
-      if (!storeId || !productId || quantity === undefined) {
-        return res.status(400).json({ message: "Missing required fields: storeId, productId, quantity" });
+      
+      if (!storeId || !productId || (quantity === undefined || quantity === null)) {
+        console.error("Missing required fields:", { storeId, productId, quantity });
+        return res.status(400).json({ 
+          message: "Missing required fields: storeId, productId, quantity",
+          received: { storeId, productId, quantity, minStock, maxStock }
+        });
+      }
+      
+      const parsedQuantity = parseInt(quantity);
+      if (isNaN(parsedQuantity) || parsedQuantity < 0) {
+        return res.status(400).json({ message: "Invalid quantity value" });
       }
       
       // Create initial inventory record
-      const inventoryData = {
-        storeId,
-        productId,
-        quantity: parseInt(quantity),
-        minStock: minStock || 10,
-        maxStock: maxStock || 100,
-        lastRestocked: lastRestocked || new Date().toISOString()
-      };
-      
-      const inventory = await storage.updateInventory(storeId, productId, parseInt(quantity));
+      const inventory = await storage.updateInventory(storeId, productId, parsedQuantity);
       res.status(201).json(inventory);
     } catch (error) {
       console.error("Error creating inventory:", error);
-      res.status(500).json({ message: "Failed to create inventory" });
+      res.status(500).json({ message: "Failed to create inventory", error: error.message });
     }
   });
 
