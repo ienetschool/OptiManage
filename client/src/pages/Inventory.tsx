@@ -1796,12 +1796,27 @@ export default function Inventory() {
           
           {selectedProduct && (
             <>
-            <div className="grid grid-cols-4 gap-6 py-4">
+            <div className="grid grid-cols-3 gap-6 py-4">
               {/* Left Column - Product Basic Info */}
-              <div className="col-span-2 space-y-6">
+              <div className="space-y-6">
                 <Card className="border-slate-200">
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-3 flex flex-row items-center justify-between">
                     <h3 className="font-semibold text-lg text-slate-900">Basic Information</h3>
+                    <div className="flex items-center gap-2">
+                      <QRCode
+                        value={JSON.stringify({
+                          id: selectedProduct.id,
+                          name: selectedProduct.name,
+                          sku: selectedProduct.sku,
+                          price: selectedProduct.price,
+                          barcode: selectedProduct.barcode,
+                          url: `${window.location.origin}/product/${selectedProduct.id}`,
+                        })}
+                        size={40}
+                        bgColor="white"
+                        fgColor="#1f2937"
+                      />
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
@@ -1813,7 +1828,7 @@ export default function Inventory() {
                         <Label className="text-sm font-medium text-slate-600">Product Type</Label>
                         <p className="text-sm flex items-center gap-2">
                           {getProductTypeIcon(selectedProduct.productType || "frames")}
-                          {PRODUCT_TYPES.find(t => t.value === selectedProduct.productType)?.label}
+                          {PRODUCT_TYPES.find(t => t.value === selectedProduct.productType)?.label || selectedProduct.productType}
                         </p>
                       </div>
                     </div>
@@ -1827,6 +1842,9 @@ export default function Inventory() {
                         <div>
                           <Label className="text-sm font-medium text-slate-600">Cost Price</Label>
                           <p className="text-lg font-semibold text-slate-700">${selectedProduct.costPrice}</p>
+                          <p className="text-xs text-slate-500">
+                            Margin: {((parseFloat(selectedProduct.price) - parseFloat(selectedProduct.costPrice)) / parseFloat(selectedProduct.price) * 100).toFixed(1)}%
+                          </p>
                         </div>
                       )}
                     </div>
@@ -1834,13 +1852,20 @@ export default function Inventory() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label className="text-sm font-medium text-slate-600">Category</Label>
-                        <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.categoryName}</p>
+                        <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.categoryName || "Uncategorized"}</p>
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-slate-600">Supplier</Label>
-                        <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.supplierName}</p>
+                        <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.supplierName || "No supplier"}</p>
                       </div>
                     </div>
+
+                    {selectedProduct.barcode && (
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Barcode</Label>
+                        <p className="text-sm font-mono bg-slate-100 px-2 py-1 rounded w-fit">{selectedProduct.barcode}</p>
+                      </div>
+                    )}
 
                     {selectedProduct.description && (
                       <div>
@@ -1849,77 +1874,10 @@ export default function Inventory() {
                       </div>
                     )}
 
-                    {selectedProduct.barcode && (
-                      <div>
-                        <Label className="text-sm font-medium text-slate-600">Barcode</Label>
-                        <p className="text-sm font-mono bg-slate-100 px-2 py-1 rounded w-fit">{selectedProduct.barcode}</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Middle Column - Stock Info */}
-              <div className="space-y-6">
-                <Card className="border-orange-200">
-                  <CardHeader className="pb-3">
-                    <h3 className="font-semibold text-lg text-slate-900">Stock Information</h3>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-medium text-slate-600">Current Stock</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold text-blue-600">
-                          {enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0}
-                        </span>
-                        <span className="text-sm text-slate-500">units</span>
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-slate-600">Reorder Level</Label>
-                      <p className="text-sm">{selectedProduct.reorderLevel} units</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-slate-600">Status</Label>
-                      <div className="flex flex-col gap-2">
-                        {getStockStatusBadge(
-                          enrichedProducts.find(p => p.id === selectedProduct.id)?.stockStatus || 'in_stock',
-                          enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0
-                        )}
-                        <Badge variant={selectedProduct.isActive ? "default" : "secondary"}>
-                          {selectedProduct.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column - QR Code */}
-              <div className="space-y-6">
-                <Card className="border-purple-200">
-                  <CardHeader className="pb-3">
-                    <h3 className="font-semibold text-lg text-slate-900">QR Code</h3>
-                  </CardHeader>
-                  <CardContent className="flex flex-col items-center space-y-3">
-                    <QRCode
-                      value={JSON.stringify({
-                        id: selectedProduct.id,
-                        name: selectedProduct.name,
-                        sku: selectedProduct.sku,
-                        price: selectedProduct.price,
-                        barcode: selectedProduct.barcode,
-                        url: `${window.location.origin}/product/${selectedProduct.id}`,
-                      })}
-                      size={120}
-                      bgColor="white"
-                      fgColor="#1f2937"
-                    />
-                    <div className="flex flex-col gap-2 w-full">
+                    <div className="flex gap-2 pt-2">
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="w-full"
                         onClick={() => {
                           const canvas = document.querySelector('canvas');
                           if (canvas) {
@@ -1931,12 +1889,11 @@ export default function Inventory() {
                         }}
                       >
                         <Download className="mr-2 h-4 w-4" />
-                        Download
+                        QR Code
                       </Button>
                       <Button 
                         variant="outline" 
                         size="sm"
-                        className="w-full"
                         onClick={() => {
                           const productUrl = `${window.location.origin}/product/${selectedProduct.id}`;
                           navigator.clipboard.writeText(productUrl);
@@ -1950,9 +1907,121 @@ export default function Inventory() {
                         Copy Link
                       </Button>
                     </div>
-                    <p className="text-xs text-slate-500 text-center">
-                      Scan to view details
-                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Middle Column - Stock & Pricing Info */}
+              <div className="space-y-6">
+                <Card className="border-orange-200">
+                  <CardHeader className="pb-3">
+                    <h3 className="font-semibold text-lg text-slate-900">Stock & Inventory</h3>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Current Stock</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-blue-600">
+                          {enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0}
+                        </span>
+                        <span className="text-sm text-slate-500">units</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Reorder Level</Label>
+                      <p className="text-sm">{selectedProduct.reorderLevel || 10} units</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Status</Label>
+                      <div className="flex flex-col gap-2">
+                        {getStockStatusBadge(
+                          enrichedProducts.find(p => p.id === selectedProduct.id)?.stockStatus || 'in_stock',
+                          enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0
+                        )}
+                        <Badge variant={selectedProduct.isActive ? "default" : "secondary"}>
+                          {selectedProduct.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Stock Value</Label>
+                      <p className="text-lg font-semibold text-purple-600">
+                        ${((enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0) * parseFloat(selectedProduct.costPrice || "0")).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Potential Revenue</Label>
+                      <p className="text-lg font-semibold text-green-600">
+                        ${((enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0) * parseFloat(selectedProduct.price)).toFixed(2)}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - Analytics & Actions */}
+              <div className="space-y-6">
+                <Card className="border-blue-200">
+                  <CardHeader className="pb-3">
+                    <h3 className="font-semibold text-lg text-slate-900">Quick Actions</h3>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button 
+                      className="w-full"
+                      onClick={() => {
+                        setSelectedProductForReorder(selectedProduct);
+                        setOpenReorderModal(true);
+                      }}
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Reorder Stock
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        setSelectedProduct(selectedProduct);
+                        setOpenStockUpdate(true);
+                        setOpenProductDetails(false);
+                      }}
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Update Stock
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => {
+                        handleEditProduct(selectedProduct);
+                        setOpenProductDetails(false);
+                      }}
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Product
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-green-200">
+                  <CardHeader className="pb-3">
+                    <h3 className="font-semibold text-lg text-slate-900">Sales Analytics</h3>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">This Month</Label>
+                      <p className="text-lg font-bold text-green-600">12 units sold</p>
+                      <p className="text-xs text-slate-500">Revenue: $1,080.00</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Last 30 Days</Label>
+                      <p className="text-sm">15 units sold</p>
+                      <p className="text-xs text-slate-500">Avg. per day: 0.5 units</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Top Customer</Label>
+                      <p className="text-sm">Sarah Johnson</p>
+                      <p className="text-xs text-slate-500">3 purchases</p>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -2512,8 +2581,14 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
   // Invoice-like calculations
   const [taxRate, setTaxRate] = useState(8.5);
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [discountType, setDiscountType] = useState<'fixed' | 'percentage'>('fixed');
   const [shippingCost, setShippingCost] = useState(50);
+  const [handlingCost, setHandlingCost] = useState(25);
   const [notes, setNotes] = useState("");
+  const [orderReference, setOrderReference] = useState(`PO-${Date.now().toString().slice(-6)}`);
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState(
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  );
 
   const filteredProducts = products.filter(p => 
     p.supplierId === selectedSupplierId && 
@@ -2529,10 +2604,10 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
   };
 
   const subtotal = calculateSubtotal();
-  const discountTotal = discountAmount;
+  const discountTotal = discountType === 'percentage' ? (subtotal * discountAmount) / 100 : discountAmount;
   const taxableAmount = subtotal - discountTotal;
   const taxAmount = (taxableAmount * taxRate) / 100;
-  const finalTotal = taxableAmount + taxAmount + shippingCost;
+  const finalTotal = taxableAmount + taxAmount + shippingCost + handlingCost;
 
   const handleProductSelect = (productId: string, checked: boolean) => {
     if (checked) {
@@ -2600,21 +2675,80 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Label>Select Supplier</Label>
-        <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose supplier..." />
-          </SelectTrigger>
-          <SelectContent>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={supplier.id}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="space-y-6 max-h-[80vh] overflow-y-auto">
+      {/* Purchase Order Header */}
+      <div className="bg-gradient-to-r from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-orange-800">Create Purchase Order</h2>
+            <p className="text-sm text-orange-600">Generate bulk reorder for multiple products</p>
+          </div>
+          <div className="text-right">
+            <div className="text-sm text-orange-600">Order #</div>
+            <div className="font-mono text-lg font-bold text-orange-800">{orderReference}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Order Details Grid */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Left Column */}
+        <div className="space-y-4">
+          <div>
+            <Label className="text-base font-semibold">Supplier</Label>
+            <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Choose supplier for bulk order" />
+              </SelectTrigger>
+              <SelectContent>
+                {suppliers.map((supplier) => (
+                  <SelectItem key={supplier.id} value={supplier.id}>
+                    <div className="flex items-center space-x-2">
+                      <Building className="h-4 w-4" />
+                      <span>{supplier.name}</span>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {products.filter(p => p.supplierId === supplier.id).length} products
+                      </Badge>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-base font-semibold">Expected Delivery Date</Label>
+            <Input
+              type="date"
+              value={expectedDeliveryDate}
+              onChange={(e) => setExpectedDeliveryDate(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="space-y-4">
+          <div>
+            <Label className="text-base font-semibold">Purchase Order Reference</Label>
+            <Input
+              value={orderReference}
+              onChange={(e) => setOrderReference(e.target.value)}
+              className="mt-2"
+              placeholder="PO-123456"
+            />
+          </div>
+
+          <div>
+            <Label className="text-base font-semibold">Order Date</Label>
+            <Input
+              type="date"
+              value={new Date().toISOString().split('T')[0]}
+              disabled
+              className="mt-2 bg-slate-50"
+            />
+          </div>
+        </div>
       </div>
 
       {selectedSupplierId && (
@@ -2772,81 +2906,134 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
       )}
 
       {selectedProducts.length > 0 && (
-        <div className="space-y-4">
-          {/* Invoice Calculations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="tax-rate">Tax Rate (%)</Label>
-                <Input
-                  id="tax-rate"
-                  type="number"
-                  step="0.1"
-                  value={taxRate}
-                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <Label htmlFor="discount">Discount Amount ($)</Label>
-                <Input
-                  id="discount"
-                  type="number"
-                  step="0.01"
-                  value={discountAmount}
-                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                  className="mt-1"
-                />
-              </div>
+        <div className="space-y-6">
+          {/* Professional Order Summary and Calculations */}
+          <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-lg text-slate-800">Order Calculations</h3>
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                Professional Invoice Format
+              </Badge>
             </div>
-            <div className="space-y-3">
-              <div>
-                <Label htmlFor="shipping">Shipping Cost ($)</Label>
-                <Input
-                  id="shipping"
-                  type="number"
-                  step="0.01"
-                  value={shippingCost}
-                  onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
-                  className="mt-1"
-                />
+            
+            <div className="grid grid-cols-3 gap-6">
+              {/* Tax & Discount */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="taxRate" className="text-sm font-medium">Tax Rate (%)</Label>
+                  <Input
+                    id="taxRate"
+                    type="number"
+                    step="0.1"
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Discount Type</Label>
+                  <div className="flex space-x-2 mt-1">
+                    <Button
+                      variant={discountType === 'fixed' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDiscountType('fixed')}
+                      className="flex-1"
+                    >
+                      $ Fixed
+                    </Button>
+                    <Button
+                      variant={discountType === 'percentage' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setDiscountType('percentage')}
+                      className="flex-1"
+                    >
+                      % Percent
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="discount" className="text-sm font-medium">
+                    Discount {discountType === 'percentage' ? '(%)' : '($)'}
+                  </Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    step="0.01"
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Additional notes for this purchase order..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="mt-1"
-                  rows={2}
-                />
+
+              {/* Shipping & Handling */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="shipping" className="text-sm font-medium">Shipping Cost ($)</Label>
+                  <Input
+                    id="shipping"
+                    type="number"
+                    step="0.01"
+                    value={shippingCost}
+                    onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="handling" className="text-sm font-medium">Handling Fee ($)</Label>
+                  <Input
+                    id="handling"
+                    type="number"
+                    step="0.01"
+                    value={handlingCost}
+                    onChange={(e) => setHandlingCost(parseFloat(e.target.value) || 0)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="notes" className="text-sm font-medium">Purchase Notes</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Additional notes for this purchase order..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="mt-1"
+                    rows={4}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Invoice Summary */}
-          <div className="bg-slate-50 p-4 rounded-lg">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span>Subtotal ({selectedProducts.length} products):</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+          {/* Professional Invoice Summary */}
+          <div className="bg-gradient-to-r from-slate-50 to-blue-50 p-6 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-lg text-slate-800 mb-4">Purchase Order Summary</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2">
+                <span className="text-slate-600">Subtotal ({selectedProducts.length} products):</span>
+                <span className="font-semibold text-slate-800">${subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Discount:</span>
-                <span className="font-medium text-red-600">-${discountTotal.toFixed(2)}</span>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-slate-600">
+                  Discount {discountType === 'percentage' ? `(${discountAmount}%)` : ''}:
+                </span>
+                <span className="font-semibold text-red-600">-${discountTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Tax ({taxRate}%):</span>
-                <span className="font-medium">${taxAmount.toFixed(2)}</span>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-slate-600">Tax ({taxRate}%):</span>
+                <span className="font-semibold text-slate-800">${taxAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span>Shipping:</span>
-                <span className="font-medium">${shippingCost.toFixed(2)}</span>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-slate-600">Shipping & Handling:</span>
+                <span className="font-semibold text-slate-800">${(shippingCost + handlingCost).toFixed(2)}</span>
               </div>
-              <div className="border-t pt-2 flex justify-between items-center">
-                <span className="font-semibold text-lg">Total:</span>
-                <span className="font-semibold text-lg text-blue-600">${finalTotal.toFixed(2)}</span>
+              <div className="border-t border-blue-300 pt-3 flex justify-between items-center">
+                <span className="font-bold text-lg text-slate-800">Grand Total:</span>
+                <span className="font-bold text-xl text-blue-600">${finalTotal.toFixed(2)}</span>
               </div>
             </div>
           </div>
