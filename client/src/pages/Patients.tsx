@@ -81,6 +81,10 @@ export default function Patients() {
   const [createPrescriptionOpen, setCreatePrescriptionOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [couponModalOpen, setCouponModalOpen] = useState(false);
+  const [addCouponOpen, setAddCouponOpen] = useState(false);
+  const [redeemCouponOpen, setRedeemCouponOpen] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState<any>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -210,6 +214,9 @@ export default function Patients() {
       bloodGroup: "",
       username: "",
       password: "",
+      nationalId: "",
+      nisNumber: "",
+      insuranceCoupons: [],
       isActive: true,
     },
   });
@@ -237,6 +244,9 @@ export default function Patients() {
       bloodGroup: "",
       username: "",
       password: "",
+      nationalId: "",
+      nisNumber: "",
+      insuranceCoupons: [],
       isActive: true,
     },
   });
@@ -1825,6 +1835,34 @@ export default function Patients() {
                                 </FormItem>
                               )}
                             />
+
+                            <FormField
+                              control={form.control}
+                              name="nationalId"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>National ID Number</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} placeholder="Enter national ID number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="nisNumber"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>NIS Number</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} placeholder="Enter NIS number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           </div>
                         </TabsContent>
 
@@ -2034,6 +2072,78 @@ export default function Patients() {
                               )}
                             />
                           </div>
+
+                          {/* Insurance Coupons Section */}
+                          <div className="border rounded-lg p-4 bg-green-50">
+                            <h4 className="font-medium text-green-800 mb-3 flex items-center">
+                              <CreditCard className="h-4 w-4 mr-2" />
+                              Insurance Coupons & Benefits
+                            </h4>
+                            <div className="space-y-3">
+                              <p className="text-sm text-green-700">
+                                Add insurance coupons, government subsidies, or special benefits available to this patient.
+                              </p>
+                              <div className="space-y-2">
+                                {form.watch('insuranceCoupons')?.map((coupon: any, index: number) => (
+                                  <div key={index} className="flex gap-2 items-end">
+                                    <div className="flex-1">
+                                      <label className="text-xs font-medium text-gray-600">Service Type</label>
+                                      <Input 
+                                        placeholder="e.g., Eye Exam, Glasses, Contact Lenses"
+                                        value={coupon.serviceType || ''}
+                                        onChange={(e) => {
+                                          const coupons = form.getValues('insuranceCoupons') || [];
+                                          coupons[index] = { ...coupons[index], serviceType: e.target.value };
+                                          form.setValue('insuranceCoupons', coupons);
+                                        }}
+                                      />
+                                    </div>
+                                    <div className="w-32">
+                                      <label className="text-xs font-medium text-gray-600">Coverage Amount</label>
+                                      <Input 
+                                        type="number" 
+                                        placeholder="Amount"
+                                        value={coupon.amount || ''}
+                                        onChange={(e) => {
+                                          const coupons = form.getValues('insuranceCoupons') || [];
+                                          coupons[index] = { ...coupons[index], amount: parseFloat(e.target.value) || 0 };
+                                          form.setValue('insuranceCoupons', coupons);
+                                        }}
+                                      />
+                                    </div>
+                                    <Button 
+                                      type="button" 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        const coupons = form.getValues('insuranceCoupons') || [];
+                                        coupons.splice(index, 1);
+                                        form.setValue('insuranceCoupons', coupons);
+                                        form.trigger('insuranceCoupons');
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                )) || []}
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => {
+                                    const coupons = form.getValues('insuranceCoupons') || [];
+                                    coupons.push({ serviceType: '', amount: 0 });
+                                    form.setValue('insuranceCoupons', coupons);
+                                    form.trigger('insuranceCoupons');
+                                  }}
+                                  className="w-full"
+                                >
+                                  <Plus className="h-4 w-4 mr-2" />
+                                  Add Insurance Coupon
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         </TabsContent>
 
                         {/* Loyalty Information Tab */}
@@ -2146,6 +2256,9 @@ export default function Patients() {
                 bloodGroup: patient.bloodGroup || "",
                 username: patient.username || "",
                 password: "", // Don't pre-fill password for security
+                nationalId: patient.nationalId || "",
+                nisNumber: patient.nisNumber || "",
+                insuranceCoupons: patient.insuranceCoupons || [],
                 isActive: patient.isActive ?? true,
               });
               setEditPatientOpen(true);

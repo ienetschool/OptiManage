@@ -599,6 +599,21 @@ export const patients = pgTable("patients", {
   username: varchar("username", { length: 50 }),
   password: varchar("password", { length: 255 }), // Will be hashed
   
+  // Additional Identity & Insurance Fields
+  nationalId: varchar("national_id", { length: 50 }),
+  nisNumber: varchar("nis_number", { length: 50 }),
+  
+  // Insurance Coupons/Government Benefits
+  insuranceCoupons: jsonb("insurance_coupons").$type<Array<{
+    couponCode: string;
+    serviceType: string;
+    amount: number;
+    issuedDate: string;
+    expiryDate: string;
+    status: 'active' | 'used' | 'expired';
+    description?: string;
+  }>>().default(sql`'[]'::jsonb`),
+  
   isActive: boolean("is_active").default(true),
   loyaltyTier: varchar("loyalty_tier", { length: 20 }).default("bronze"),
   loyaltyPoints: integer("loyalty_points").default(0),
@@ -726,6 +741,12 @@ export const invoices = pgTable("invoices", {
   paymentMethod: varchar("payment_method", { length: 20 }), // cash, card, check, digital
   paymentDate: timestamp("payment_date"),
   
+  // Coupon redemption fields for government and insurance coupons
+  appliedCouponCode: varchar("applied_coupon_code", { length: 50 }),
+  couponDiscount: decimal("coupon_discount", { precision: 10, scale: 2 }).default("0"),
+  couponType: varchar("coupon_type", { length: 30 }), // government, insurance, promotional
+  couponDescription: text("coupon_description"),
+  
   notes: text("notes"),
   customFields: jsonb("custom_fields"),
   
@@ -769,6 +790,12 @@ export const medicalInvoices = pgTable("medical_invoices", {
   paymentStatus: varchar("payment_status", { length: 20 }).default("pending"), // pending, partial, paid, overdue
   paymentMethod: varchar("payment_method", { length: 20 }), // cash, card, insurance, check
   paymentDate: timestamp("payment_date"),
+  
+  // Coupon redemption fields for government and insurance coupons
+  appliedCouponCode: varchar("applied_coupon_code", { length: 50 }),
+  couponDiscount: decimal("coupon_discount", { precision: 10, scale: 2 }).default("0"),
+  couponType: varchar("coupon_type", { length: 30 }), // government, insurance, promotional
+  couponDescription: text("coupon_description"),
   
   notes: text("notes"),
   qrCode: varchar("qr_code", { length: 255 }),

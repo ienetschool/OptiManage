@@ -394,6 +394,13 @@ export default function BillingPage() {
                                 variant="outline"
                                 size="sm"
                                 title="Print"
+                                onClick={() => {
+                                  // Open invoice in new window for printing
+                                  const printWindow = window.open(`/api/invoice/pdf/${invoice.invoiceNumber}`, '_blank');
+                                  printWindow?.addEventListener('load', () => {
+                                    printWindow.print();
+                                  });
+                                }}
                               >
                                 <Printer className="h-4 w-4" />
                               </Button>

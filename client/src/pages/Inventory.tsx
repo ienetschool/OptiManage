@@ -20,6 +20,7 @@ import {
 import QRCode from 'react-qr-code';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { insertProductSchema, insertCategorySchema, insertSupplierSchema, type Product, type Category, type Supplier, type InsertProduct, type InsertCategory, type InsertSupplier } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
@@ -40,7 +41,7 @@ export default function Inventory() {
   const [openProduct, setOpenProduct] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
   const [openSupplier, setOpenSupplier] = useState(false);
-  const [openStockUpdate, setOpenStockUpdate] = useState(false);
+  // Stock update dialog removed
   const [openProductDetails, setOpenProductDetails] = useState(false);
   const [openQRCode, setOpenQRCode] = useState(false);
   const [openReorderModal, setOpenReorderModal] = useState(false);
@@ -55,8 +56,7 @@ export default function Inventory() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [stockQuantity, setStockQuantity] = useState(0);
-  const [stockOperation, setStockOperation] = useState<'add' | 'remove' | 'set'>('add');
+  // Stock operation states removed
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -108,14 +108,14 @@ export default function Inventory() {
     handlingCost: number;
   }>({
     resolver: zodResolver(insertProductSchema.extend({
-      initialStock: insertProductSchema.shape.initialStock,
-      purchasePrice: insertProductSchema.shape.costPrice,
-      createPurchaseOrder: insertProductSchema.shape.isActive,
-      purchaseNotes: insertProductSchema.shape.description,
-      taxRate: insertProductSchema.shape.reorderLevel,
-      discountAmount: insertProductSchema.shape.reorderLevel,
-      shippingCost: insertProductSchema.shape.reorderLevel,
-      handlingCost: insertProductSchema.shape.reorderLevel,
+      initialStock: z.number().min(0).default(0),
+      purchasePrice: z.string().optional(),
+      createPurchaseOrder: z.boolean().default(false),
+      purchaseNotes: z.string().optional(),
+      taxRate: z.number().min(0).max(100).default(8.5),
+      discountAmount: z.number().min(0).default(0),
+      shippingCost: z.number().min(0).default(0),
+      handlingCost: z.number().min(0).default(0),
     })),
     defaultValues: {
       name: "",
@@ -273,26 +273,7 @@ export default function Inventory() {
     },
   });
 
-  const updateStockMutation = useMutation({
-    mutationFn: async ({ productId, operation, quantity }: { productId: string; operation: string; quantity: number }) => {
-      await apiRequest("POST", "/api/store-inventory/update", {
-        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
-        productId,
-        operation,
-        quantity,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
-      toast({
-        title: "Success",
-        description: "Stock updated successfully.",
-      });
-      setOpenStockUpdate(false);
-      setSelectedProduct(null);
-      setStockQuantity(0);
-    },
-  });
+  // Update Stock functionality removed - only Reorder Stock available
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: InsertCategory) => {
@@ -416,15 +397,7 @@ export default function Inventory() {
     }
   };
 
-  const handleStockUpdate = () => {
-    if (selectedProduct && stockQuantity > 0) {
-      updateStockMutation.mutate({
-        productId: selectedProduct.id,
-        operation: stockOperation,
-        quantity: stockQuantity,
-      });
-    }
-  };
+  // Stock update handler removed - only reorder functionality available
 
   const getStockStatusBadge = (status: string, quantity: number) => {
     switch (status) {
@@ -1315,8 +1288,8 @@ export default function Inventory() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                setSelectedProduct(product);
-                                setOpenStockUpdate(true);
+                                setSelectedProductForReorder(product);
+                                setOpenReorderModal(true);
                               }}
                               title="Reorder Stock"
                               className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
@@ -1718,80 +1691,132 @@ export default function Inventory() {
         </TabsContent>
       </Tabs>
 
-      {/* Stock Update Modal */}
-      <Dialog open={openStockUpdate} onOpenChange={setOpenStockUpdate}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Update Stock - {selectedProduct?.name}</DialogTitle>
-            <DialogDescription>
-              Current stock: {enrichedProducts.find(p => p.id === selectedProduct?.id)?.currentStock || 0} units
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="operation">Operation</Label>
-              <Select value={stockOperation} onValueChange={(value: 'add' | 'remove' | 'set') => setStockOperation(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="add">Add Stock</SelectItem>
-                  <SelectItem value="remove">Remove Stock</SelectItem>
-                  <SelectItem value="set">Set Stock</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div>
-              <Label htmlFor="quantity">Quantity</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                value={stockQuantity}
-                onChange={(e) => setStockQuantity(parseInt(e.target.value) || 0)}
-                placeholder="Enter quantity"
-              />
-            </div>
-            
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-sm font-medium">
-                New Stock Level: {
-                  stockOperation === 'add' ? (enrichedProducts.find(p => p.id === selectedProduct?.id)?.currentStock || 0) + stockQuantity :
-                  stockOperation === 'remove' ? Math.max(0, (enrichedProducts.find(p => p.id === selectedProduct?.id)?.currentStock || 0) - stockQuantity) :
-                  stockQuantity
-                } units
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setOpenStockUpdate(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleStockUpdate}
-              disabled={updateStockMutation.isPending || stockQuantity <= 0}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {updateStockMutation.isPending ? "Updating..." : "Update Stock"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Stock Update Modal removed - only reorder functionality available */}
 
       {/* Product Details Modal */}
       <Dialog open={openProductDetails} onOpenChange={setOpenProductDetails}>
         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b pb-4">
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <Package className="h-6 w-6 text-blue-600" />
-              {selectedProduct?.name}
-            </DialogTitle>
-            <DialogDescription>
-              Complete product information and details
-            </DialogDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="flex items-center gap-2 text-xl">
+                  <Package className="h-6 w-6 text-blue-600" />
+                  {selectedProduct?.name}
+                </DialogTitle>
+                <DialogDescription>
+                  Complete product information and details
+                </DialogDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.print()}
+                  className="print:hidden"
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Details
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    if (selectedProduct) {
+                      const printWindow = window.open('', '_blank');
+                      const enrichedProduct = enrichedProducts.find(p => p.id === selectedProduct.id);
+                      const printContent = `
+                        <html>
+                          <head>
+                            <title>Product Details - ${selectedProduct.name}</title>
+                            <style>
+                              body { font-family: Arial, sans-serif; padding: 20px; }
+                              .header { border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 20px; }
+                              .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                              .field { margin-bottom: 10px; }
+                              .label { font-weight: bold; color: #374151; }
+                              .value { color: #1f2937; }
+                              .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                              .in-stock { background: #dcfce7; color: #166534; }
+                              .low-stock { background: #fef3c7; color: #92400e; }
+                              .out-of-stock { background: #fecaca; color: #991b1b; }
+                              @media print { body { margin: 0; } }
+                            </style>
+                          </head>
+                          <body>
+                            <div class="header">
+                              <h1>${selectedProduct.name}</h1>
+                              <p>SKU: ${selectedProduct.sku}</p>
+                              <p>Generated: ${new Date().toLocaleDateString()}</p>
+                            </div>
+                            <div class="grid">
+                              <div>
+                                <div class="field">
+                                  <div class="label">Product Type:</div>
+                                  <div class="value">${selectedProduct.productType || 'N/A'}</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Description:</div>
+                                  <div class="value">${selectedProduct.description || 'No description'}</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Category:</div>
+                                  <div class="value">${enrichedProduct?.categoryName || 'N/A'}</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Supplier:</div>
+                                  <div class="value">${enrichedProduct?.supplierName || 'N/A'}</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Barcode:</div>
+                                  <div class="value">${selectedProduct.barcode || 'N/A'}</div>
+                                </div>
+                              </div>
+                              <div>
+                                <div class="field">
+                                  <div class="label">Selling Price:</div>
+                                  <div class="value">$${selectedProduct.price}</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Cost Price:</div>
+                                  <div class="value">$${selectedProduct.costPrice || 'N/A'}</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Current Stock:</div>
+                                  <div class="value">${enrichedProduct?.currentStock || 0} units</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Reorder Level:</div>
+                                  <div class="value">${selectedProduct.reorderLevel || 'N/A'} units</div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Stock Status:</div>
+                                  <div class="value">
+                                    <span class="status-badge ${enrichedProduct?.stockStatus === 'in_stock' ? 'in-stock' : enrichedProduct?.stockStatus === 'low_stock' ? 'low-stock' : 'out-of-stock'}">
+                                      ${enrichedProduct?.stockStatus === 'in_stock' ? 'In Stock' : enrichedProduct?.stockStatus === 'low_stock' ? 'Low Stock' : 'Out of Stock'}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div class="field">
+                                  <div class="label">Status:</div>
+                                  <div class="value">${selectedProduct.isActive ? 'Active' : 'Inactive'}</div>
+                                </div>
+                              </div>
+                            </div>
+                          </body>
+                        </html>
+                      `;
+                      printWindow?.document.write(printContent);
+                      printWindow?.document.close();
+                      printWindow?.print();
+                    }
+                  }}
+                  className="print:hidden"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export PDF
+                </Button>
+              </div>
+            </div>
           </DialogHeader>
           
           {selectedProduct && (

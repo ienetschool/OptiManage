@@ -327,124 +327,28 @@ function generateInvoiceHTML(invoiceId: string) {
 
 // Generate mock invoice data based on invoice ID
 function getInvoiceData(invoiceId: string) {
-  const baseData = {
-    'INV-2024-001': {
-      date: 'January 15, 2024',
-      dueDate: 'February 14, 2024',
-      status: 'paid',
-      supplier: {
-        name: 'Premium Frames Supplier Co.',
-        address: '789 Frame Boulevard',
-        city: 'Lens City',
-        state: 'LC',
-        zip: '54321',
-        phone: '(555) 111-2222',
-        email: 'orders@premiumframes.com'
-      },
-      items: [
-        {
-          name: 'Ray-Ban Classic Aviator',
-          description: 'Premium aviator sunglasses with UV protection',
-          sku: 'FR-076659',
-          quantity: 25,
-          unitCost: '45.00',
-          total: '1,125.00'
-        }
-      ],
-      subtotal: '1,125.00',
-      taxRate: '8.25',
-      tax: '92.81',
-      shipping: '15.99',
-      total: '1,233.80'
-    },
-    'INV-2023-089': {
-      date: 'December 10, 2023',
-      dueDate: 'January 9, 2024',
-      status: 'paid',
-      supplier: {
-        name: 'Vision Tech Solutions',
-        address: '321 Optical Street',
-        city: 'Vision Valley',
-        state: 'VV',
-        zip: '98765',
-        phone: '(555) 333-4444',
-        email: 'supply@visiontech.com'
-      },
-      items: [
-        {
-          name: 'Progressive Prescription Lenses',
-          description: 'High-index progressive lenses with anti-reflective coating',
-          sku: 'LE-089344',
-          quantity: 50,
-          unitCost: '32.50',
-          total: '1,625.00'
-        }
-      ],
-      subtotal: '1,625.00',
-      taxRate: '8.25',
-      tax: '134.06',
-      shipping: '25.99',
-      total: '1,785.05'
-    },
-    'INV-2023-045': {
-      date: 'October 5, 2023',
-      dueDate: 'November 4, 2023',
-      status: 'paid',
-      supplier: {
-        name: 'Optical Warehouse Direct',
-        address: '654 Supply Chain Road',
-        city: 'Distribution Center',
-        state: 'DC',
-        zip: '13579',
-        phone: '(555) 555-6666',
-        email: 'wholesale@opticalwarehouse.com'
-      },
-      items: [
-        {
-          name: 'Designer Frame Collection',
-          description: 'Mixed designer frames - premium collection starter pack',
-          sku: 'COL-045123',
-          quantity: 100,
-          unitCost: '28.75',
-          total: '2,875.00'
-        }
-      ],
-      subtotal: '2,875.00',
-      taxRate: '8.25',
-      tax: '237.19',
-      shipping: '45.99',
-      total: '3,158.18'
-    }
-  };
-
-  return baseData[invoiceId] || {
+  // Demo data removed - invoices will come from database
+  // Return minimal structure for compatibility - real data should come from database
+  return {
+    invoiceNumber: invoiceId,
     date: new Date().toLocaleDateString(),
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
     status: 'pending',
     supplier: {
-      name: 'Generic Supplier',
-      address: '123 Supply Street',
-      city: 'Supply City',
-      state: 'SC',
-      zip: '12345',
-      phone: '(555) 000-0000',
-      email: 'info@supplier.com'
+      name: 'Supplier',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      phone: '',
+      email: ''
     },
-    items: [
-      {
-        name: 'Sample Product',
-        description: 'Sample product description',
-        sku: 'SAM-12345',
-        quantity: 1,
-        unitCost: '50.00',
-        total: '50.00'
-      }
-    ],
-    subtotal: '50.00',
-    taxRate: '8.25',
-    tax: '4.13',
-    shipping: '10.00',
-    total: '64.13'
+    items: [],
+    subtotal: '0.00',
+    taxRate: '0.00',
+    tax: '0.00',
+    shipping: '0.00',
+    total: '0.00'
   };
 }
 
