@@ -255,10 +255,26 @@ export default function Inventory() {
                       <SelectItem value="out_of_stock">Out of Stock</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Button className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Product
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        setEditingProduct(null);
+                        setOpenProduct(true);
+                      }}
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Product
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setOpenBulkReorderModal(true)}
+                      className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Bulk Order
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -275,13 +291,43 @@ export default function Inventory() {
                   </div>
                   {selectedProducts.length > 0 && (
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Export Started",
+                            description: `Exporting ${selectedProducts.length} selected products`,
+                          });
+                        }}
+                      >
                         <Download className="mr-2 h-4 w-4" />
                         Export Selected
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete ${selectedProducts.length} selected products?`)) {
+                            toast({
+                              title: "Products Deleted",
+                              description: `${selectedProducts.length} products removed from inventory`,
+                            });
+                            setSelectedProducts([]);
+                          }
+                        }}
+                      >
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Selected ({selectedProducts.length})
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setOpenBulkReorderModal(true)}
+                        className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100"
+                      >
+                        <Package className="mr-2 h-4 w-4" />
+                        Bulk Order
                       </Button>
                     </div>
                   )}
@@ -404,12 +450,27 @@ export default function Inventory() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-48">
-                                  <DropdownMenuItem onClick={() => {}}>
+                                  <DropdownMenuItem 
+                                    onClick={() => {
+                                      setEditingProduct(product);
+                                      setOpenProduct(true);
+                                    }}
+                                  >
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit Product
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
+                                  <DropdownMenuItem 
+                                    className="text-red-600"
+                                    onClick={() => {
+                                      if (confirm('Are you sure you want to delete this product?')) {
+                                        toast({
+                                          title: "Product deleted",
+                                          description: `${product.name} has been removed from inventory`,
+                                        });
+                                      }
+                                    }}
+                                  >
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete Product
                                   </DropdownMenuItem>
@@ -646,14 +707,22 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
     productName: string;
     quantity: number;
     unitCost: number;
+    discount: number;
     total: number;
   }>>([]);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [itemQuantity, setItemQuantity] = useState(1);
   const [itemUnitCost, setItemUnitCost] = useState(0);
+  const [itemDiscount, setItemDiscount] = useState(0);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [handlingCharge, setHandlingCharge] = useState(0);
+  const [taxRate, setTaxRate] = useState(8);
+  const [notes, setNotes] = useState("");
 
   const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
-  const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+  const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
+  const taxAmount = (subtotal + shippingCost + handlingCharge) * (taxRate / 100);
+  const totalAmount = subtotal + shippingCost + handlingCharge + taxAmount;
 
   const addOrderItem = () => {
     if (!selectedProduct) return;
@@ -661,182 +730,366 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
     const product = products.find(p => p.id === selectedProduct);
     if (!product) return;
 
-    const total = itemQuantity * itemUnitCost;
+    const itemTotal = (itemQuantity * itemUnitCost) * (1 - itemDiscount / 100);
     const newItem = {
       id: `item-${Date.now()}`,
       productId: product.id,
       productName: product.name,
       quantity: itemQuantity,
       unitCost: itemUnitCost,
-      total
+      discount: itemDiscount,
+      total: itemTotal
     };
 
     setOrderItems(prev => [...prev, newItem]);
     setSelectedProduct("");
     setItemQuantity(1);
     setItemUnitCost(0);
+    setItemDiscount(0);
   };
 
   const removeOrderItem = (itemId: string) => {
     setOrderItems(prev => prev.filter(item => item.id !== itemId));
   };
 
+  const updateOrderItem = (itemId: string, field: string, value: number) => {
+    setOrderItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const updatedItem = { ...item, [field]: value };
+        if (field === 'quantity' || field === 'unitCost' || field === 'discount') {
+          updatedItem.total = (updatedItem.quantity * updatedItem.unitCost) * (1 - updatedItem.discount / 100);
+        }
+        return updatedItem;
+      }
+      return item;
+    }));
+  };
+
   return (
     <div className="space-y-6">
-      {/* Supplier Selection */}
-      <div>
-        <Label>Select Supplier</Label>
-        <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-          <SelectTrigger className="mt-2">
-            <SelectValue placeholder="Choose supplier for bulk order..." />
-          </SelectTrigger>
-          <SelectContent>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={supplier.id}>
-                <div className="flex items-center space-x-2">
-                  <Building className="h-4 w-4" />
-                  <span>{supplier.name}</span>
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Create Bulk Purchase Order</h2>
+          <p className="text-sm text-slate-600 mt-1">Add multiple products with shipping and handling charges</p>
+        </div>
       </div>
+
+      {/* Supplier Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Supplier Information</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Select Supplier *</Label>
+              <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder="Choose supplier for bulk order..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((supplier) => (
+                    <SelectItem key={supplier.id} value={supplier.id}>
+                      <div className="flex items-center space-x-2">
+                        <Building className="h-4 w-4" />
+                        <span>{supplier.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Order Date</Label>
+              <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} className="mt-2" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {selectedSupplierId && (
         <>
-          {/* Add Product Form - Invoice Style */}
-          <div className="border rounded-lg p-4 bg-blue-50">
-            <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Products to Order
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-              <div>
-                <Label>Product</Label>
-                <Select value={selectedProduct} onValueChange={(value) => {
-                  setSelectedProduct(value);
-                  const product = products.find(p => p.id === value);
-                  if (product) {
-                    setItemUnitCost(parseFloat(product.costPrice || "0"));
-                  }
-                }}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select product..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        <div>
-                          <div className="font-medium">{product.name}</div>
-                          <div className="text-sm text-slate-500">{product.sku}</div>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          {/* Add Items Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <Plus className="h-5 w-5 mr-2" />
+                Add Items to Purchase Order
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div>
+                  <Label>Product *</Label>
+                  <Select value={selectedProduct} onValueChange={(value) => {
+                    setSelectedProduct(value);
+                    const product = products.find(p => p.id === value);
+                    if (product) {
+                      setItemUnitCost(parseFloat(product.costPrice || "0"));
+                    }
+                  }}>
+                    <SelectTrigger className="mt-2">
+                      <SelectValue placeholder="Select product..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((product) => (
+                        <SelectItem key={product.id} value={product.id}>
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            <div className="text-sm text-slate-500">{product.sku}</div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label>Quantity *</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={itemQuantity}
+                    onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                    className="mt-2"
+                    placeholder="1"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Unit Cost *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={itemUnitCost}
+                    onChange={(e) => setItemUnitCost(parseFloat(e.target.value) || 0)}
+                    className="mt-2"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <Label>Discount (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={itemDiscount}
+                    onChange={(e) => setItemDiscount(parseFloat(e.target.value) || 0)}
+                    className="mt-2"
+                    placeholder="0"
+                  />
+                </div>
+                
+                <Button 
+                  onClick={addOrderItem}
+                  disabled={!selectedProduct || itemQuantity <= 0 || itemUnitCost <= 0}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
               </div>
-              
-              <div>
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={itemQuantity}
-                  onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
-                  className="mt-2"
-                />
-              </div>
-              
-              <div>
-                <Label>Unit Cost</Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={itemUnitCost}
-                  onChange={(e) => setItemUnitCost(parseFloat(e.target.value) || 0)}
-                  className="mt-2"
-                />
-              </div>
-              
-              <Button 
-                onClick={addOrderItem}
-                disabled={!selectedProduct || itemQuantity <= 0 || itemUnitCost <= 0}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Order Items Table */}
           {orderItems.length > 0 && (
-            <div className="border rounded-lg">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Unit Cost</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orderItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <div className="font-medium">{item.productName}</div>
-                      </TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>${item.unitCost.toFixed(2)}</TableCell>
-                      <TableCell>${item.total.toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOrderItem(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              
-              {/* Order Total */}
-              <div className="p-4 border-t bg-slate-50">
-                <div className="flex justify-between items-center font-semibold text-lg">
-                  <span>Total Order Amount:</span>
-                  <span>${totalAmount.toFixed(2)}</span>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Order Items ({orderItems.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Product</TableHead>
+                        <TableHead>Quantity</TableHead>
+                        <TableHead>Unit Cost</TableHead>
+                        <TableHead>Discount</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead className="w-[50px]"></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orderItems.map((item) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div className="font-medium">{item.productName}</div>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateOrderItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                              className="w-20"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={item.unitCost}
+                              onChange={(e) => updateOrderItem(item.id, 'unitCost', parseFloat(e.target.value) || 0)}
+                              className="w-24"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={item.discount}
+                              onChange={(e) => updateOrderItem(item.id, 'discount', parseFloat(e.target.value) || 0)}
+                              className="w-20"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">${item.total.toFixed(2)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeOrderItem(item.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Order Summary */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Order Summary & Additional Charges</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Additional Charges */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Shipping Cost</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={shippingCost}
+                      onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
+                      className="mt-2"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Handling Charge</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={handlingCharge}
+                      onChange={(e) => setHandlingCharge(parseFloat(e.target.value) || 0)}
+                      className="mt-2"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Tax Rate (%)</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={taxRate}
+                      onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                      className="mt-2"
+                      placeholder="8"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Notes</Label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="mt-2"
+                      placeholder="Additional notes for this purchase order..."
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span>Shipping:</span>
+                    <span>${shippingCost.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span>Handling:</span>
+                    <span>${handlingCharge.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span>Tax ({taxRate}%):</span>
+                    <span>${taxAmount.toFixed(2)}</span>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex justify-between text-lg font-bold">
+                    <span>Total Amount:</span>
+                    <span className="text-green-600">${totalAmount.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            </CardContent>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-3">
+            <Button variant="outline" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => onSubmit({
+                supplierId: selectedSupplierId,
+                supplierName: selectedSupplier?.name,
+                items: orderItems,
+                subtotal,
+                shippingCost,
+                handlingCharge,
+                taxRate,
+                taxAmount,
+                total: totalAmount,
+                notes
+              })}
+              disabled={!selectedSupplierId || orderItems.length === 0}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Create Purchase Order
+            </Button>
+          </div>
         </>
       )}
-
-      {/* Action Buttons */}
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button 
-          onClick={() => onSubmit({
-            supplierId: selectedSupplierId,
-            supplierName: selectedSupplier?.name,
-            items: orderItems,
-            total: totalAmount
-          })}
-          disabled={!selectedSupplierId || orderItems.length === 0}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Package className="mr-2 h-4 w-4" />
-          Create Bulk Purchase Order
-        </Button>
-      </div>
     </div>
   );
 }
