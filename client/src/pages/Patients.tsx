@@ -1836,33 +1836,7 @@ export default function Patients() {
                               )}
                             />
 
-                            <FormField
-                              control={form.control}
-                              name="nationalId"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>National ID Number</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} value={field.value || ""} placeholder="Enter national ID number" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
 
-                            <FormField
-                              control={form.control}
-                              name="nisNumber"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>NIS Number</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} value={field.value || ""} placeholder="Enter NIS number" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
                           </div>
                         </TabsContent>
 
@@ -2071,6 +2045,34 @@ export default function Patients() {
                                 </FormItem>
                               )}
                             />
+
+                            <FormField
+                              control={form.control}
+                              name="nationalId"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>National ID Number</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} placeholder="Enter national ID number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="nisNumber"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>NIS Number</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} placeholder="Enter NIS number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           </div>
 
                           {/* Insurance Coupons Section */}
@@ -2087,16 +2089,41 @@ export default function Patients() {
                                 {form.watch('insuranceCoupons')?.map((coupon: any, index: number) => (
                                   <div key={index} className="flex gap-2 items-end">
                                     <div className="flex-1">
-                                      <label className="text-xs font-medium text-gray-600">Service Type</label>
+                                      <label className="text-xs font-medium text-gray-600">Coupon Number</label>
                                       <Input 
-                                        placeholder="e.g., Eye Exam, Glasses, Contact Lenses"
-                                        value={coupon.serviceType || ''}
+                                        placeholder="Enter coupon code/number"
+                                        value={coupon.couponCode || ''}
                                         onChange={(e) => {
                                           const coupons = form.getValues('insuranceCoupons') || [];
-                                          coupons[index] = { ...coupons[index], serviceType: e.target.value };
+                                          coupons[index] = { ...coupons[index], couponCode: e.target.value };
                                           form.setValue('insuranceCoupons', coupons);
                                         }}
                                       />
+                                    </div>
+                                    <div className="flex-1">
+                                      <label className="text-xs font-medium text-gray-600">Service Type</label>
+                                      <Select 
+                                        value={coupon.serviceType || ''}
+                                        onValueChange={(value) => {
+                                          const coupons = form.getValues('insuranceCoupons') || [];
+                                          coupons[index] = { ...coupons[index], serviceType: value };
+                                          form.setValue('insuranceCoupons', coupons);
+                                        }}
+                                      >
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select service type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="eye_exam">Eye Exam</SelectItem>
+                                          <SelectItem value="glasses">Glasses</SelectItem>
+                                          <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                                          <SelectItem value="surgery">Surgery</SelectItem>
+                                          <SelectItem value="treatment">Treatment</SelectItem>
+                                          <SelectItem value="consultation">Consultation</SelectItem>
+                                          <SelectItem value="diagnostic">Diagnostic Tests</SelectItem>
+                                          <SelectItem value="other">Other</SelectItem>
+                                        </SelectContent>
+                                      </Select>
                                     </div>
                                     <div className="w-32">
                                       <label className="text-xs font-medium text-gray-600">Coverage Amount</label>
@@ -3017,20 +3044,53 @@ export default function Patients() {
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-700 mb-2">Insurance Information</h4>
+                    <h4 className="font-medium text-gray-700 mb-2">Insurance & Identity Information</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-600">Insurance Provider:</span>
                         <span className="font-medium">{selectedPatient.insuranceProvider || 'None'}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Insurance Number:</span>
+                        <span className="text-gray-600">Policy Number:</span>
                         <span className="font-mono">{selectedPatient.insuranceNumber || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">National ID:</span>
+                        <span className="font-mono">{selectedPatient.nationalId || 'N/A'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">NIS Number:</span>
+                        <span className="font-mono">{selectedPatient.nisNumber || 'N/A'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Loyalty Points:</span>
                         <span className="font-semibold text-green-600">{selectedPatient.loyaltyPoints || 0}</span>
                       </div>
+                      
+                      {/* Insurance Coupons Display */}
+                      {selectedPatient.insuranceCoupons && selectedPatient.insuranceCoupons.length > 0 && (
+                        <div className="mt-4">
+                          <h5 className="font-medium text-gray-700 mb-2 flex items-center">
+                            <CreditCard className="h-4 w-4 mr-1" />
+                            Insurance Coupons ({selectedPatient.insuranceCoupons.length})
+                          </h5>
+                          <div className="space-y-1">
+                            {selectedPatient.insuranceCoupons.map((coupon: any, index: number) => (
+                              <div key={index} className="bg-green-50 p-2 rounded border border-green-200 text-sm">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-medium">{coupon.couponCode}</span>
+                                  <Badge variant={coupon.status === 'active' ? 'default' : coupon.status === 'used' ? 'secondary' : 'destructive'}>
+                                    {coupon.status}
+                                  </Badge>
+                                </div>
+                                <div className="text-gray-600 text-xs">
+                                  {coupon.serviceType} • ${coupon.amount}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -4112,6 +4172,136 @@ export default function Patients() {
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={editForm.control}
+                      name="nationalId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>National ID Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter national ID number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="nisNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>NIS Number</FormLabel>
+                          <FormControl>
+                            <Input {...field} value={field.value || ""} placeholder="Enter NIS number" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Insurance Coupons Section for Edit Form */}
+                  <div className="border rounded-lg p-4 bg-green-50">
+                    <h4 className="font-medium text-green-800 mb-3 flex items-center">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Insurance Coupons & Benefits
+                    </h4>
+                    <div className="space-y-3">
+                      <p className="text-sm text-green-700">
+                        Manage insurance coupons, government subsidies, or special benefits for this patient.
+                      </p>
+                      <div className="space-y-2">
+                        {editForm.watch('insuranceCoupons')?.map((coupon: any, index: number) => (
+                          <div key={index} className="flex gap-2 items-end">
+                            <div className="flex-1">
+                              <label className="text-xs font-medium text-gray-600">Coupon Number</label>
+                              <Input 
+                                placeholder="Enter coupon code/number"
+                                value={coupon.couponCode || ''}
+                                onChange={(e) => {
+                                  const coupons = editForm.getValues('insuranceCoupons') || [];
+                                  coupons[index] = { ...coupons[index], couponCode: e.target.value };
+                                  editForm.setValue('insuranceCoupons', coupons);
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <label className="text-xs font-medium text-gray-600">Service Type</label>
+                              <Select 
+                                value={coupon.serviceType || ''}
+                                onValueChange={(value) => {
+                                  const coupons = editForm.getValues('insuranceCoupons') || [];
+                                  coupons[index] = { ...coupons[index], serviceType: value };
+                                  editForm.setValue('insuranceCoupons', coupons);
+                                }}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select service type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="eye_exam">Eye Exam</SelectItem>
+                                  <SelectItem value="glasses">Glasses</SelectItem>
+                                  <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                                  <SelectItem value="surgery">Surgery</SelectItem>
+                                  <SelectItem value="treatment">Treatment</SelectItem>
+                                  <SelectItem value="consultation">Consultation</SelectItem>
+                                  <SelectItem value="diagnostic">Diagnostic Tests</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="w-32">
+                              <label className="text-xs font-medium text-gray-600">Coverage Amount</label>
+                              <Input 
+                                type="number" 
+                                placeholder="Amount"
+                                value={coupon.amount || ''}
+                                onChange={(e) => {
+                                  const coupons = editForm.getValues('insuranceCoupons') || [];
+                                  coupons[index] = { ...coupons[index], amount: parseFloat(e.target.value) || 0 };
+                                  editForm.setValue('insuranceCoupons', coupons);
+                                }}
+                              />
+                            </div>
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                const coupons = editForm.getValues('insuranceCoupons') || [];
+                                coupons.splice(index, 1);
+                                editForm.setValue('insuranceCoupons', coupons);
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )) || []}
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            const coupons = editForm.getValues('insuranceCoupons') || [];
+                            coupons.push({
+                              couponCode: '',
+                              serviceType: '',
+                              amount: 0,
+                              issuedDate: new Date().toISOString(),
+                              expiryDate: '',
+                              status: 'active'
+                            });
+                            editForm.setValue('insuranceCoupons', coupons);
+                          }}
+                          className="w-full"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Insurance Coupon
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </TabsContent>
 
