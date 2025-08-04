@@ -4,6 +4,8 @@
 OptiStore Pro is a comprehensive multi-store management system designed for optical retail businesses. It provides a centralized platform for managing multiple store locations, inventory, sales, appointments, and customer relationships. The application aims to streamline operations, enhance customer engagement, and provide valuable business insights. Key capabilities include centralized multi-store management, detailed patient medical profiles, advanced prescription history, professional billing and invoicing, medical document generation (PDF reports, QR codes), and a robust staff management module with payroll and document tracking. The system is designed to be production-ready, supporting a full range of business operations and offering a modern, user-friendly interface.
 
 ## Recent Updates (August 2025)
+✅ **Inventory Management Overhaul (August 4, 2025)**: Completely rebuilt inventory page with professional layout, fixed black space issues, replaced reorder icons with supplier selection functionality, removed direct stock updates (reorder billing only), and implemented comprehensive bulk order system with invoice-style interface. Created server configuration files for deployment.
+
 ✅ **Migration to Standard Replit Environment (August 4, 2025)**: Successfully migrated OptiStore Pro from Replit Agent to standard Replit environment. Set up PostgreSQL database with proper connection, installed all required dependencies (tsx, postgresql tools), imported complete database backup with all tables and data, and verified full application functionality.
 
 ✅ **Staff & HR Module Enhancements**: Completed comprehensive Staff & HR module with Access & Permissions tab featuring username auto-generation, enhanced Payroll & Documents tab with working hours management, and advanced Attendance system with manual entry and QR code scanning capabilities.
@@ -38,6 +40,7 @@ Preferred communication style: Simple, everyday language.
 - **API Style**: RESTful API with JSON responses
 - **Middleware**: Express middleware for request logging, JSON parsing, and error handling
 - **Session Management**: Express sessions with PostgreSQL storage
+- **Configuration**: Comprehensive configuration system with environment-specific settings (server/config.ts, deployment.config.js)
 
 ### Database Architecture
 - **Database**: PostgreSQL (primary) / MySQL (deployment option)
@@ -57,6 +60,7 @@ Preferred communication style: Simple, everyday language.
 - **Medical Practice Management**: Comprehensive medical database schema and workflows, including advanced prescription management, QR code generation for medical records, detailed patient medical profiles, and professional billing.
 - **Dashboard & Analytics**: Real-time KPI tracking, store performance comparison, inventory alerts, and recent activity.
 - **Enhanced CRM Features**: SMTP Email Integration, Cash Payment Support, Custom Fields System for all entities, and expanded payment methods (cash, card, check, digital). Comprehensive payment processing system with automatic invoice generation and doctor assignment logic based on payment status.
+- **Professional Inventory Management**: Complete inventory overhaul with supplier-based reordering system, bulk purchase orders, professional invoice-style interface, responsive design, and proper stock management workflow. All stock updates require purchase order process with supplier selection.
 - **Store Settings**: Comprehensive store-specific configuration including domain management, payment gateway, SMS gateway, SMTP email setup, and website settings.
 - **Website Management**: Professional visual page editor with comprehensive pagination (10/20/50 items per page), advanced filtering (status, type, search), bulk operations (publish, draft, delete), data sharing capabilities (JSON/CSV export, clipboard copy, share links), checkbox selection system, and enhanced page management interface with responsive design.
 

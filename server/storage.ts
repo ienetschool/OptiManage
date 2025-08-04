@@ -144,6 +144,16 @@ export interface IStorage {
   // Payments operations - Combine invoices and medical invoices as payment records
   getPayments(): Promise<any[]>;
   updatePaymentStatus(paymentId: string, status: string): Promise<any>;
+
+  // Patient operations
+  getPatients(): Promise<any[]>;
+  getPatient(id: string): Promise<any | undefined>;
+  insertPatient(patient: any): Promise<any>;
+  updatePatient(id: string, patient: any): Promise<any>;
+
+  // Enhanced inventory operations
+  getSupplier(id: string): Promise<Supplier | undefined>;
+  insertInvoice(invoice: any): Promise<any>;
 }
 
 // Global in-memory storage for created invoices (persists across requests)
@@ -1179,6 +1189,67 @@ export class DatabaseStorage implements IStorage {
       console.error(`❌ Error updating payment status:`, error);
       throw error;
     }
+  }
+
+  // Patient operations
+  async getPatients(): Promise<any[]> {
+    try {
+      const allPatients = await db.select().from(patients).orderBy(patients.lastName, patients.firstName);
+      return allPatients;
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      return [];
+    }
+  }
+
+  async getPatient(id: string): Promise<any | undefined> {
+    try {
+      const [patient] = await db.select().from(patients).where(eq(patients.id, id));
+      return patient;
+    } catch (error) {
+      console.error("Error fetching patient:", error);
+      return undefined;
+    }
+  }
+
+  async insertPatient(patientData: any): Promise<any> {
+    try {
+      const [newPatient] = await db.insert(patients).values(patientData).returning();
+      return newPatient;
+    } catch (error) {
+      console.error("Error inserting patient:", error);
+      throw error;
+    }
+  }
+
+  async updatePatient(id: string, patientData: any): Promise<any> {
+    try {
+      const [updatedPatient] = await db
+        .update(patients)
+        .set({ ...patientData, updatedAt: new Date() })
+        .where(eq(patients.id, id))
+        .returning();
+      return updatedPatient;
+    } catch (error) {
+      console.error("Error updating patient:", error);
+      throw error;
+    }
+  }
+
+  // Enhanced inventory operations
+  async getSupplier(id: string): Promise<Supplier | undefined> {
+    try {
+      const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, id));
+      return supplier;
+    } catch (error) {
+      console.error("Error fetching supplier:", error);
+      return undefined;
+    }
+  }
+
+  async insertInvoice(invoiceData: any): Promise<any> {
+    // Use the existing createInvoice method
+    return this.createInvoice(invoiceData, invoiceData.items || []);
   }
 }
 
