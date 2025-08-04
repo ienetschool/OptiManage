@@ -503,11 +503,11 @@ export default function Inventory() {
             </DialogHeader>
             <BulkReorderForm 
               suppliers={suppliers}
-              products={products.filter(p => selectedProducts.includes(p.id))}
+              products={products}
               onSubmit={(data) => {
                 toast({
                   title: "Bulk Purchase Order Created",
-                  description: `Bulk order created for ${selectedProducts.length} products`,
+                  description: `Bulk order created with ${data.items.length} products`,
                 });
                 setOpenBulkReorderModal(false);
                 setSelectedProducts([]);
@@ -640,13 +640,50 @@ interface BulkReorderFormProps {
 
 function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorderFormProps) {
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
-  const [productQuantities, setProductQuantities] = useState<Record<string, { quantity: number; unitCost: number }>>({});
+  const [orderItems, setOrderItems] = useState<Array<{
+    id: string;
+    productId: string;
+    productName: string;
+    quantity: number;
+    unitCost: number;
+    total: number;
+  }>>([]);
+  const [selectedProduct, setSelectedProduct] = useState("");
+  const [itemQuantity, setItemQuantity] = useState(1);
+  const [itemUnitCost, setItemUnitCost] = useState(0);
 
   const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
-  const total = Object.values(productQuantities).reduce((sum, item) => sum + (item.quantity * item.unitCost), 0);
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.total, 0);
+
+  const addOrderItem = () => {
+    if (!selectedProduct) return;
+    
+    const product = products.find(p => p.id === selectedProduct);
+    if (!product) return;
+
+    const total = itemQuantity * itemUnitCost;
+    const newItem = {
+      id: `item-${Date.now()}`,
+      productId: product.id,
+      productName: product.name,
+      quantity: itemQuantity,
+      unitCost: itemUnitCost,
+      total
+    };
+
+    setOrderItems(prev => [...prev, newItem]);
+    setSelectedProduct("");
+    setItemQuantity(1);
+    setItemUnitCost(0);
+  };
+
+  const removeOrderItem = (itemId: string) => {
+    setOrderItems(prev => prev.filter(item => item.id !== itemId));
+  };
 
   return (
     <div className="space-y-6">
+      {/* Supplier Selection */}
       <div>
         <Label>Select Supplier</Label>
         <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
@@ -667,84 +704,121 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
       </div>
 
       {selectedSupplierId && (
-        <div className="space-y-4">
-          <h3 className="font-semibold">Products to Order</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>Current Stock</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit Cost</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-slate-500">{product.sku}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{product.currentStock || 0} units</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={productQuantities[product.id]?.quantity || (product.reorderLevel || 10) * 2}
-                      onChange={(e) => {
-                        const quantity = parseInt(e.target.value) || 0;
-                        setProductQuantities(prev => ({
-                          ...prev,
-                          [product.id]: {
-                            quantity,
-                            unitCost: prev[product.id]?.unitCost || parseFloat(product.costPrice || "0")
-                          }
-                        }));
-                      }}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={productQuantities[product.id]?.unitCost || parseFloat(product.costPrice || "0")}
-                      onChange={(e) => {
-                        const unitCost = parseFloat(e.target.value) || 0;
-                        setProductQuantities(prev => ({
-                          ...prev,
-                          [product.id]: {
-                            quantity: prev[product.id]?.quantity || (product.reorderLevel || 10) * 2,
-                            unitCost
-                          }
-                        }));
-                      }}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-medium">
-                      ${((productQuantities[product.id]?.quantity || (product.reorderLevel || 10) * 2) * 
-                         (productQuantities[product.id]?.unitCost || parseFloat(product.costPrice || "0"))).toFixed(2)}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          <div className="bg-slate-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-lg">Grand Total:</span>
-              <span className="font-bold text-xl text-blue-600">${total.toFixed(2)}</span>
+        <>
+          {/* Add Product Form - Invoice Style */}
+          <div className="border rounded-lg p-4 bg-blue-50">
+            <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Products to Order
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+              <div>
+                <Label>Product</Label>
+                <Select value={selectedProduct} onValueChange={(value) => {
+                  setSelectedProduct(value);
+                  const product = products.find(p => p.id === value);
+                  if (product) {
+                    setItemUnitCost(parseFloat(product.costPrice || "0"));
+                  }
+                }}>
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select product..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((product) => (
+                      <SelectItem key={product.id} value={product.id}>
+                        <div>
+                          <div className="font-medium">{product.name}</div>
+                          <div className="text-sm text-slate-500">{product.sku}</div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label>Quantity</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={itemQuantity}
+                  onChange={(e) => setItemQuantity(parseInt(e.target.value) || 1)}
+                  className="mt-2"
+                />
+              </div>
+              
+              <div>
+                <Label>Unit Cost</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={itemUnitCost}
+                  onChange={(e) => setItemUnitCost(parseFloat(e.target.value) || 0)}
+                  className="mt-2"
+                />
+              </div>
+              
+              <Button 
+                onClick={addOrderItem}
+                disabled={!selectedProduct || itemQuantity <= 0 || itemUnitCost <= 0}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add
+              </Button>
             </div>
           </div>
-        </div>
+
+          {/* Order Items Table */}
+          {orderItems.length > 0 && (
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit Cost</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {orderItems.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="font-medium">{item.productName}</div>
+                      </TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>${item.unitCost.toFixed(2)}</TableCell>
+                      <TableCell>${item.total.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeOrderItem(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {/* Order Total */}
+              <div className="p-4 border-t bg-slate-50">
+                <div className="flex justify-between items-center font-semibold text-lg">
+                  <span>Total Order Amount:</span>
+                  <span>${totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
+      {/* Action Buttons */}
       <div className="flex justify-end space-x-2">
         <Button variant="outline" onClick={onCancel}>
           Cancel
@@ -753,10 +827,10 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
           onClick={() => onSubmit({
             supplierId: selectedSupplierId,
             supplierName: selectedSupplier?.name,
-            products: productQuantities,
-            total
+            items: orderItems,
+            total: totalAmount
           })}
-          disabled={!selectedSupplierId || Object.keys(productQuantities).length === 0}
+          disabled={!selectedSupplierId || orderItems.length === 0}
           className="bg-orange-600 hover:bg-orange-700"
         >
           <Package className="mr-2 h-4 w-4" />
@@ -766,3 +840,4 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
     </div>
   );
 }
+

@@ -1902,6 +1902,141 @@ export default function Patients() {
                             />
                           </div>
 
+
+
+                          {/* Portal Access Section */}
+                          <div className="border rounded-lg p-4 bg-blue-50 mt-4">
+                            <h4 className="font-medium text-blue-800 mb-3 flex items-center">
+                              <User className="h-4 w-4 mr-2" />
+                              Portal Access Credentials
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="username"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Username</FormLabel>
+                                    <FormControl>
+                                      <div className="flex gap-2">
+                                        <Input {...field} placeholder="Auto-generated username" value={field.value || ""} />
+                                        <Button 
+                                          type="button" 
+                                          variant="outline" 
+                                          size="sm"
+                                          onClick={() => {
+                                            const firstName = form.getValues('firstName');
+                                            const lastName = form.getValues('lastName');
+                                            const email = form.getValues('email');
+                                            console.log('Manual generation - Form values:', { firstName, lastName, email });
+                                            
+                                            if (firstName && lastName && email) {
+                                              const username = generateUsername(firstName, lastName, email);
+                                              form.setValue('username', username);
+                                              console.log('Manual username generation:', username);
+                                              // Trigger form re-render to show the new value
+                                              form.trigger('username');
+                                            } else {
+                                              alert('Please fill in First Name, Last Name, and Email first');
+                                            }
+                                          }}
+                                          title="Generate username from name and email"
+                                        >
+                                          <RefreshCw className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      <strong>Auto-generates on registration.</strong> Fill First Name, Last Name, and Email, then click the refresh icon to preview, or leave blank for auto-generation.
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name="password"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Password</FormLabel>
+                                    <FormControl>
+                                      <Input type="password" {...field} placeholder="Enter portal password" value={field.value || ""} />
+                                    </FormControl>
+                                    <FormDescription className="text-xs">
+                                      Minimum 8 characters for portal access
+                                    </FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        {/* Medical Information Tab */}
+                        <TabsContent value="medical" className="space-y-4">
+                          <FormField
+                            control={form.control}
+                            name="allergies"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Known Allergies</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} value={field.value || ""} placeholder="List any known allergies..." />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="medicalHistory"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Medical History</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} value={field.value || ""} placeholder="Enter relevant medical history..." />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </TabsContent>
+
+                        {/* Insurance Information Tab */}
+                        <TabsContent value="insurance" className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="insuranceProvider"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Insurance Provider</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} placeholder="Enter insurance provider" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="insuranceNumber"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Policy Number</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} placeholder="Enter policy number" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
                           {/* Government Identity Section */}
                           <div className="border rounded-lg p-4 bg-yellow-50 mt-4">
                             <h4 className="font-medium text-yellow-800 mb-3 flex items-center">
@@ -2042,139 +2177,6 @@ export default function Patients() {
                                 )}
                               />
                             </div>
-                          </div>
-
-                          {/* Portal Access Section */}
-                          <div className="border rounded-lg p-4 bg-blue-50 mt-4">
-                            <h4 className="font-medium text-blue-800 mb-3 flex items-center">
-                              <User className="h-4 w-4 mr-2" />
-                              Portal Access Credentials
-                            </h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <FormField
-                                control={form.control}
-                                name="username"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Username</FormLabel>
-                                    <FormControl>
-                                      <div className="flex gap-2">
-                                        <Input {...field} placeholder="Auto-generated username" value={field.value || ""} />
-                                        <Button 
-                                          type="button" 
-                                          variant="outline" 
-                                          size="sm"
-                                          onClick={() => {
-                                            const firstName = form.getValues('firstName');
-                                            const lastName = form.getValues('lastName');
-                                            const email = form.getValues('email');
-                                            console.log('Manual generation - Form values:', { firstName, lastName, email });
-                                            
-                                            if (firstName && lastName && email) {
-                                              const username = generateUsername(firstName, lastName, email);
-                                              form.setValue('username', username);
-                                              console.log('Manual username generation:', username);
-                                              // Trigger form re-render to show the new value
-                                              form.trigger('username');
-                                            } else {
-                                              alert('Please fill in First Name, Last Name, and Email first');
-                                            }
-                                          }}
-                                          title="Generate username from name and email"
-                                        >
-                                          <RefreshCw className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </FormControl>
-                                    <FormDescription className="text-xs">
-                                      <strong>Auto-generates on registration.</strong> Fill First Name, Last Name, and Email, then click the refresh icon to preview, or leave blank for auto-generation.
-                                    </FormDescription>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              
-                              <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Password</FormLabel>
-                                    <FormControl>
-                                      <Input type="password" {...field} placeholder="Enter portal password" value={field.value || ""} />
-                                    </FormControl>
-                                    <FormDescription className="text-xs">
-                                      Minimum 8 characters for portal access
-                                    </FormDescription>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                          </div>
-                        </TabsContent>
-
-                        {/* Medical Information Tab */}
-                        <TabsContent value="medical" className="space-y-4">
-                          <FormField
-                            control={form.control}
-                            name="allergies"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Known Allergies</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} value={field.value || ""} placeholder="List any known allergies..." />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="medicalHistory"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Medical History</FormLabel>
-                                <FormControl>
-                                  <Textarea {...field} value={field.value || ""} placeholder="Enter relevant medical history..." />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </TabsContent>
-
-                        {/* Insurance Information Tab */}
-                        <TabsContent value="insurance" className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="insuranceProvider"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Insurance Provider</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} value={field.value || ""} placeholder="Enter insurance provider" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={form.control}
-                              name="insuranceNumber"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Policy Number</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} value={field.value || ""} placeholder="Enter policy number" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
                           </div>
                         </TabsContent>
 
