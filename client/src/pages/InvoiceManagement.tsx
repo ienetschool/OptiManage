@@ -123,11 +123,6 @@ const invoiceItemSchema = z.object({
 export default function InvoiceManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  
-  // Government Coupon States
-  const [couponCode, setCouponCode] = useState("");
-  const [couponServiceType, setCouponServiceType] = useState("");
-  const [couponAmount, setCouponAmount] = useState("");
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([]);
@@ -1425,84 +1420,6 @@ export default function InvoiceManagement() {
                               </FormItem>
                             )}
                           />
-                        </div>
-
-                        {/* Government Coupon Redemption Section */}
-                        <div className="border rounded-lg p-4 bg-green-50 mt-4">
-                          <h4 className="font-medium text-green-800 mb-3 flex items-center">
-                            <Receipt className="h-4 w-4 mr-2" />
-                            Government Coupon Redemption
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Coupon Code</label>
-                              <Input 
-                                placeholder="Enter government coupon code"
-                                value={couponCode}
-                                onChange={(e) => setCouponCode(e.target.value)}
-                              />
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Service Type</label>
-                              <Select value={couponServiceType} onValueChange={setCouponServiceType}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select service" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="eye-exam">Eye Examination</SelectItem>
-                                  <SelectItem value="contact-lens">Contact Lens Fitting</SelectItem>
-                                  <SelectItem value="glasses-fitting">Glasses Fitting</SelectItem>
-                                  <SelectItem value="consultation">Consultation</SelectItem>
-                                  <SelectItem value="follow-up">Follow-up Visit</SelectItem>
-                                  <SelectItem value="all-services">All Services</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            
-                            <div className="space-y-2">
-                              <label className="text-sm font-medium">Coupon Amount</label>
-                              <div className="flex gap-2">
-                                <Input 
-                                  type="number"
-                                  step="0.01"
-                                  placeholder="0.00"
-                                  value={couponAmount}
-                                  onChange={(e) => setCouponAmount(e.target.value)}
-                                />
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (couponCode && couponAmount && couponServiceType) {
-                                      const amount = parseFloat(couponAmount);
-                                      const currentDiscount = invoiceForm.getValues('discountAmount') || 0;
-                                      invoiceForm.setValue('discountAmount', currentDiscount + amount);
-                                      toast({
-                                        title: "Coupon Applied",
-                                        description: `$${amount.toFixed(2)} discount applied from coupon ${couponCode}`,
-                                      });
-                                      setCouponCode('');
-                                      setCouponAmount('');
-                                      setCouponServiceType('');
-                                    } else {
-                                      toast({
-                                        title: "Incomplete Information",
-                                        description: "Please fill in all coupon fields",
-                                        variant: "destructive"
-                                      });
-                                    }
-                                  }}
-                                >
-                                  Apply
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-xs text-green-700 mt-2">
-                            Enter patient's government coupon details to apply discount to applicable services
-                          </p>
                         </div>
 
                         <FormField

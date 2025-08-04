@@ -358,7 +358,7 @@ export default function Inventory() {
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
-                              <div className="font-medium">{product.currentStock || 0} units</div>
+                              <div className="font-medium">{product.currentStock} units</div>
                               <div className="text-xs text-slate-500">
                                 Reorder at: {product.reorderLevel}
                               </div>
@@ -366,7 +366,7 @@ export default function Inventory() {
                           </TableCell>
                           <TableCell>
                             <div className="space-y-2">
-                              {getStockStatusBadge(product.stockStatus, product.currentStock || 0)}
+                              {getStockStatusBadge(product.stockStatus, product.currentStock)}
                               <Badge variant={product.isActive ? "default" : "secondary"} className="block w-fit">
                                 {product.isActive ? "Active" : "Inactive"}
                               </Badge>

@@ -569,17 +569,6 @@ export const patients = pgTable("patients", {
   insuranceProvider: varchar("insurance_provider", { length: 100 }),
   insuranceNumber: varchar("insurance_number", { length: 50 }),
   
-  // Enhanced Identity and Government Fields
-  nationalIdNumber: varchar("national_id_number", { length: 50 }),
-  nisNumber: varchar("nis_number", { length: 50 }),
-  
-  // Government Insurance/Coupon System
-  governmentCouponCode: varchar("government_coupon_code", { length: 100 }),
-  couponAmount: decimal("coupon_amount", { precision: 10, scale: 2 }),
-  couponServiceType: varchar("coupon_service_type", { length: 100 }), // which service this coupon applies to
-  couponExpiryDate: date("coupon_expiry_date"),
-  couponStatus: varchar("coupon_status", { length: 20 }).default("active"), // active, used, expired, cancelled
-  
   // Extended Medical Records Fields (merged from medical records module)
   currentMedications: text("current_medications"),
   previousEyeConditions: text("previous_eye_conditions"),
