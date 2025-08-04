@@ -1821,9 +1821,9 @@ export default function Inventory() {
           
           {selectedProduct && (
             <>
-            <div className="grid grid-cols-4 gap-6 py-4">
+            <div className="grid grid-cols-3 gap-4 py-4">
               {/* Left Column - Product Basic Info */}
-              <div className="col-span-2 space-y-6">
+              <div className="space-y-4">
                 <Card className="border-slate-200">
                   <CardHeader className="pb-3">
                     <h3 className="font-semibold text-lg text-slate-900">Basic Information</h3>
@@ -1885,7 +1885,7 @@ export default function Inventory() {
               </div>
 
               {/* Middle Column - Stock Info */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <Card className="border-orange-200">
                   <CardHeader className="pb-3">
                     <h3 className="font-semibold text-lg text-slate-900">Stock Information</h3>
@@ -1921,7 +1921,7 @@ export default function Inventory() {
               </div>
 
               {/* Right Column - QR Code */}
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <Card className="border-purple-200">
                   <CardHeader className="pb-3">
                     <h3 className="font-semibold text-lg text-slate-900">QR Code</h3>
@@ -1936,7 +1936,7 @@ export default function Inventory() {
                         barcode: selectedProduct.barcode,
                         url: `${window.location.origin}/product/${selectedProduct.id}`,
                       })}
-                      size={120}
+                      size={80}
                       bgColor="white"
                       fgColor="#1f2937"
                     />
@@ -1983,7 +1983,7 @@ export default function Inventory() {
               </div>
             </div>
             
-            <div className="col-span-3 border-t pt-6 mt-6">
+            <div className="border-t pt-4 mt-4">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium text-slate-800">Purchase Invoices & Stock History</h4>
                 <Button 
