@@ -517,19 +517,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/products', isAuthenticated, async (req, res) => {
     try {
+      console.log("Product creation request:", req.body);
+      
       // Handle empty categoryId and supplierId by setting them to null
       const requestData = {
         ...req.body,
         categoryId: req.body.categoryId || null,
-        supplierId: req.body.supplierId || null
+        supplierId: req.body.supplierId || null,
+        // Handle empty numeric fields
+        price: req.body.price || "0",
+        costPrice: req.body.costPrice || null,
+        reorderLevel: req.body.reorderLevel || 10
       };
       
       const validatedData = insertProductSchema.parse(requestData);
       const product = await storage.createProduct(validatedData);
+      console.log("Product created successfully:", product.id);
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
-      res.status(400).json({ message: "Failed to create product" });
+      res.status(400).json({ message: "Failed to create product", error: error.message });
     }
   });
 

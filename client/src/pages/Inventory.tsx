@@ -194,6 +194,12 @@ export default function Inventory() {
       
       // Create initial inventory record if stock is provided
       if (initialStock && initialStock > 0) {
+        console.log("Creating inventory with:", { 
+          storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+          productId: productId, 
+          quantity: initialStock 
+        });
+        
         await apiRequest("POST", "/api/store-inventory", {
           storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
           productId: productId,
