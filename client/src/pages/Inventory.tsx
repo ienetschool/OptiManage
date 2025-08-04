@@ -57,6 +57,7 @@ export default function Inventory() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [stockQuantity, setStockQuantity] = useState(0);
   const [stockOperation, setStockOperation] = useState<'add' | 'remove' | 'set'>('add');
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -308,6 +309,22 @@ export default function Inventory() {
     },
   });
 
+  const updateCategoryMutation = useMutation({
+    mutationFn: async (data: InsertCategory & { id: string }) => {
+      await apiRequest("PATCH", `/api/categories/${data.id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({
+        title: "Success",
+        description: "Category updated successfully.",
+      });
+      setOpenCategory(false);
+      setEditingCategory(null);
+      categoryForm.reset();
+    },
+  });
+
   const createSupplierMutation = useMutation({
     mutationFn: async (data: InsertSupplier) => {
       await apiRequest("POST", "/api/suppliers", data);
@@ -372,6 +389,15 @@ export default function Inventory() {
       handlingCost: 0,
     });
     setOpenProduct(true);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    categoryForm.reset({
+      name: category.name,
+      description: category.description || "",
+    });
+    setOpenCategory(true);
   };
 
   const handleProductOpenChange = (open: boolean) => {
@@ -1388,7 +1414,13 @@ export default function Inventory() {
               <p className="text-sm text-slate-600">Organize your products into categories for better management</p>
             </div>
             
-            <Dialog open={openCategory} onOpenChange={setOpenCategory}>
+            <Dialog open={openCategory} onOpenChange={(open) => {
+              setOpenCategory(open);
+              if (!open) {
+                setEditingCategory(null);
+                categoryForm.reset();
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button className="bg-blue-600 hover:bg-blue-700">
                   <Plus className="mr-2 h-4 w-4" />
@@ -1397,14 +1429,20 @@ export default function Inventory() {
               </DialogTrigger>
               <DialogContent className="max-w-md">
                 <DialogHeader>
-                  <DialogTitle>Add New Category</DialogTitle>
+                  <DialogTitle>{editingCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
                   <DialogDescription>
-                    Create a new product category to organize your inventory
+                    {editingCategory ? "Update category information" : "Create a new product category to organize your inventory"}
                   </DialogDescription>
                 </DialogHeader>
                 
                 <Form {...categoryForm}>
-                  <form onSubmit={categoryForm.handleSubmit((data) => createCategoryMutation.mutate(data))} className="space-y-4">
+                  <form onSubmit={categoryForm.handleSubmit((data) => {
+                    if (editingCategory) {
+                      updateCategoryMutation.mutate({ ...data, id: editingCategory.id });
+                    } else {
+                      createCategoryMutation.mutate(data);
+                    }
+                  })} className="space-y-4">
                     <FormField
                       control={categoryForm.control}
                       name="name"
@@ -1447,10 +1485,13 @@ export default function Inventory() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={createCategoryMutation.isPending}
+                        disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
-                        {createCategoryMutation.isPending ? "Creating..." : "Create Category"}
+                        {editingCategory 
+                          ? (updateCategoryMutation.isPending ? "Updating..." : "Update Category")
+                          : (createCategoryMutation.isPending ? "Creating..." : "Create Category")
+                        }
                       </Button>
                     </div>
                   </form>
@@ -1476,7 +1517,11 @@ export default function Inventory() {
                       </span> products
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => handleEditCategory(category)}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="sm" className="text-red-600">
@@ -2419,8 +2464,13 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [productData, setProductData] = useState<Record<string, { quantity: number; unitCost: number }>>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showProductSearch, setShowProductSearch] = useState(false);
 
-  const filteredProducts = products.filter(p => p.supplierId === selectedSupplierId);
+  const filteredProducts = products.filter(p => 
+    p.supplierId === selectedSupplierId && 
+    (searchTerm === "" || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   const calculateSubtotal = () => {
     return selectedProducts.reduce((total, productId) => {
@@ -2482,84 +2532,157 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
         </Select>
       </div>
 
-      {selectedSupplierId && filteredProducts.length > 0 && (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">Select</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Current Stock</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit Cost</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Checkbox 
-                      checked={selectedProducts.includes(product.id)}
-                      onCheckedChange={(checked) => handleProductSelect(product.id, !!checked)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-slate-500">{product.sku}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={product.currentStock <= (product.reorderLevel || 10) ? "destructive" : "default"}>
-                      {product.currentStock} units
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {selectedProducts.includes(product.id) && (
-                      <Input
-                        type="number"
-                        min="1"
-                        value={productData[product.id]?.quantity || 0}
-                        onChange={(e) => {
-                          const quantity = parseInt(e.target.value) || 0;
-                          setProductData(prev => ({
-                            ...prev,
-                            [product.id]: { ...prev[product.id], quantity }
-                          }));
-                        }}
-                        className="w-20"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {selectedProducts.includes(product.id) && (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={productData[product.id]?.unitCost || 0}
-                        onChange={(e) => {
-                          const unitCost = parseFloat(e.target.value) || 0;
-                          setProductData(prev => ({
-                            ...prev,
-                            [product.id]: { ...prev[product.id], unitCost }
-                          }));
-                        }}
-                        className="w-24"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {selectedProducts.includes(product.id) && (
-                      <span className="font-medium text-green-600">
-                        ${((productData[product.id]?.quantity || 0) * (productData[product.id]?.unitCost || 0)).toFixed(2)}
-                      </span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+      {selectedSupplierId && (
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                placeholder="Search products by name or SKU..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button
+              onClick={() => setShowProductSearch(!showProductSearch)}
+              variant="outline"
+              className="min-w-[120px]"
+            >
+              <Search className="mr-2 h-4 w-4" />
+              {showProductSearch ? "Hide Search" : "Search Products"}
+            </Button>
+          </div>
+
+          {selectedProducts.length > 0 && (
+            <div className="border rounded-lg">
+              <div className="p-4 bg-slate-50 border-b">
+                <h4 className="font-medium">Selected Products ({selectedProducts.length})</h4>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">Remove</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Current Stock</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Unit Cost</TableHead>
+                    <TableHead>Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {products.filter(p => selectedProducts.includes(p.id)).map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleProductSelect(product.id, false)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-sm text-slate-500">{product.sku}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={product.currentStock <= (product.reorderLevel || 10) ? "destructive" : "default"}>
+                          {product.currentStock} units
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={productData[product.id]?.quantity || 0}
+                          onChange={(e) => {
+                            const quantity = parseInt(e.target.value) || 0;
+                            setProductData(prev => ({
+                              ...prev,
+                              [product.id]: { ...prev[product.id], quantity }
+                            }));
+                          }}
+                          className="w-20"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={productData[product.id]?.unitCost || 0}
+                          onChange={(e) => {
+                            const unitCost = parseFloat(e.target.value) || 0;
+                            setProductData(prev => ({
+                              ...prev,
+                              [product.id]: { ...prev[product.id], unitCost }
+                            }));
+                          }}
+                          className="w-24"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-green-600">
+                          ${((productData[product.id]?.quantity || 0) * (productData[product.id]?.unitCost || 0)).toFixed(2)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {(showProductSearch || searchTerm !== "") && filteredProducts.length > 0 && (
+            <div className="border rounded-lg">
+              <div className="p-4 bg-blue-50 border-b">
+                <h4 className="font-medium">Available Products</h4>
+                {searchTerm && <p className="text-sm text-slate-600">Showing results for "{searchTerm}"</p>}
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Current Stock</TableHead>
+                      <TableHead>Cost Price</TableHead>
+                      <TableHead className="w-12">Add</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.filter(p => !selectedProducts.includes(p.id)).map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-slate-500">{product.sku}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={product.currentStock <= (product.reorderLevel || 10) ? "destructive" : "default"}>
+                            {product.currentStock} units
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          ${product.costPrice || "0.00"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            onClick={() => handleProductSelect(product.id, true)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
