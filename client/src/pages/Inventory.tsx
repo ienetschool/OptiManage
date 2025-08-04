@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Separator } from "@/components/ui/separator";
 import { 
   Plus, Package, AlertTriangle, Search, Edit, Trash2, TrendingDown, TrendingUp, 
   Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3,
@@ -25,6 +26,7 @@ import { insertProductSchema, insertCategorySchema, insertSupplierSchema, type P
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { format } from "date-fns";
 
 // Product types for optical store
 const PRODUCT_TYPES = [
@@ -49,7 +51,7 @@ export default function Inventory() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
