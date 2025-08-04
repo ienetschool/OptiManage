@@ -104,6 +104,7 @@ export interface IStorage {
   // Inventory operations
   getStoreInventory(storeId: string): Promise<StoreInventory[]>;
   updateInventory(storeId: string, productId: string, quantity: number): Promise<StoreInventory>;
+  createInventory(inventoryData: any): Promise<StoreInventory>;
 
   // Dashboard KPIs
   getDashboardKPIs(): Promise<{
@@ -397,21 +398,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInventory(storeId: string, productId: string, quantity: number): Promise<StoreInventory> {
-    const [inventory] = await db
-      .insert(storeInventory)
-      .values({
-        storeId,
-        productId,
-        quantity,
-        lastRestocked: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: [storeInventory.storeId, storeInventory.productId],
-        set: {
+    // Try to find existing inventory first
+    const existingInventory = await db
+      .select()
+      .from(storeInventory)
+      .where(and(eq(storeInventory.storeId, storeId), eq(storeInventory.productId, productId)))
+      .limit(1);
+
+    if (existingInventory.length > 0) {
+      // Update existing inventory
+      const [updated] = await db
+        .update(storeInventory)
+        .set({
           quantity,
           lastRestocked: new Date(),
           updatedAt: new Date(),
-        },
+        })
+        .where(and(eq(storeInventory.storeId, storeId), eq(storeInventory.productId, productId)))
+        .returning();
+      return updated;
+    } else {
+      // Create new inventory record
+      const [inventory] = await db
+        .insert(storeInventory)
+        .values({
+          storeId,
+          productId,
+          quantity,
+          lastRestocked: new Date(),
+        })
+        .returning();
+      return inventory;
+    }
+  }
+
+  async createInventory(inventoryData: any): Promise<StoreInventory> {
+    const [inventory] = await db
+      .insert(storeInventory)
+      .values({
+        storeId: inventoryData.storeId,
+        productId: inventoryData.productId,
+        quantity: inventoryData.quantity,
+        minStock: inventoryData.minStock || 10,
+        maxStock: inventoryData.maxStock || 100,
+        lastRestocked: new Date(inventoryData.lastRestocked || new Date()),
       })
       .returning();
     return inventory;
