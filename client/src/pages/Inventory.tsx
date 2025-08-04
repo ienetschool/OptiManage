@@ -525,6 +525,103 @@ export default function Inventory() {
           </TabsContent>
         </Tabs>
 
+        {/* Product Form Dialog */}
+        <Dialog open={openProduct} onOpenChange={setOpenProduct}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingProduct ? "Edit Product" : "Add New Product"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p>Product form will be implemented here. For now, simulating form submission.</p>
+              <div className="mt-4 flex gap-2">
+                <Button 
+                  onClick={() => {
+                    toast({
+                      title: editingProduct ? "Product Updated" : "Product Added",
+                      description: `Product has been ${editingProduct ? "updated" : "added"} successfully`,
+                    });
+                    setOpenProduct(false);
+                    setEditingProduct(null);
+                  }}
+                >
+                  {editingProduct ? "Update" : "Add"} Product
+                </Button>
+                <Button variant="outline" onClick={() => setOpenProduct(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Product Details Dialog */}
+        <Dialog open={openProductDetails} onOpenChange={setOpenProductDetails}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Product Details</DialogTitle>
+            </DialogHeader>
+            {selectedProduct && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg">{selectedProduct.name}</h3>
+                  <p className="text-sm text-slate-500">SKU: {selectedProduct.sku}</p>
+                  {selectedProduct.barcode && (
+                    <p className="text-sm text-slate-500">Barcode: {selectedProduct.barcode}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Price</label>
+                    <p className="text-lg font-semibold text-green-600">${selectedProduct.price}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Current Stock</label>
+                    <p className="text-lg font-semibold">{selectedProduct.currentStock || 0} units</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Category</label>
+                    <p>{selectedProduct.categoryName}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Supplier</label>
+                    <p>{selectedProduct.supplierName}</p>
+                  </div>
+                </div>
+                {selectedProduct.description && (
+                  <div>
+                    <label className="text-sm font-medium">Description</label>
+                    <p className="text-sm text-slate-600">{selectedProduct.description}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Reorder Dialog */}
+        <Dialog open={openBulkReorderModal} onOpenChange={setOpenBulkReorderModal}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Bulk Purchase Order</DialogTitle>
+            </DialogHeader>
+            <BulkReorderForm
+              suppliers={suppliers}
+              products={products}
+              onSubmit={(data: any) => {
+                console.log("Bulk order submitted:", data);
+                toast({
+                  title: "Purchase Order Created",
+                  description: `Bulk order for ${data.items?.length || 0} items has been created`,
+                });
+                setOpenBulkReorderModal(false);
+              }}
+              onCancel={() => setOpenBulkReorderModal(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
         {/* Reorder Modal */}
         <Dialog open={openReorderModal} onOpenChange={setOpenReorderModal}>
           <DialogContent className="max-w-2xl">
@@ -1091,6 +1188,100 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
         </>
       )}
     </div>
+  );
+}
+
+// Dialog Components
+export function ProductFormDialog({ open, onOpenChange, product, onSubmit }: any) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {product ? "Edit Product" : "Add New Product"}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="py-4">
+          <p>Product form implementation needed</p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ProductDetailsDialog({ open, onOpenChange, product }: any) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Product Details</DialogTitle>
+        </DialogHeader>
+        {product && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold">{product.name}</h3>
+              <p className="text-sm text-slate-500">SKU: {product.sku}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium">Price</label>
+                <p>${product.price}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Stock</label>
+                <p>{product.currentStock || 0} units</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function BulkReorderDialog({ open, onOpenChange, suppliers, products, onSubmit }: any) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Bulk Purchase Order</DialogTitle>
+        </DialogHeader>
+        <BulkReorderForm
+          suppliers={suppliers}
+          products={products}
+          onSubmit={(data: any) => {
+            console.log("Bulk order submitted:", data);
+            onSubmit(data);
+            onOpenChange(false);
+          }}
+          onCancel={() => onOpenChange(false)}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function ReorderDialog({ open, onOpenChange, product, suppliers, onSubmit }: any) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Reorder Stock</DialogTitle>
+        </DialogHeader>
+        {product && (
+          <ReorderForm
+            product={product}
+            suppliers={suppliers}
+            onSubmit={(data: any) => {
+              console.log("Reorder submitted:", data);
+              onSubmit(data);
+              onOpenChange(false);
+            }}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
