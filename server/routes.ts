@@ -27,6 +27,419 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { addTestRoutes } from "./testAuth";
 
+// Professional invoice HTML generator
+function generateInvoiceHTML(invoiceId: string) {
+  const currentDate = new Date().toLocaleDateString();
+  const invoiceData = getInvoiceData(invoiceId);
+  
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice ${invoiceId} - OptiStore Pro</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 20px; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .invoice-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 20px;
+        }
+        
+        .company-info h1 {
+            color: #2563eb;
+            font-size: 28px;
+            margin: 0 0 10px 0;
+            font-weight: bold;
+        }
+        
+        .company-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .invoice-details {
+            text-align: right;
+        }
+        
+        .invoice-details h2 {
+            color: #1f2937;
+            font-size: 24px;
+            margin: 0 0 10px 0;
+        }
+        
+        .invoice-number {
+            background: #2563eb;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        
+        .billing-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .billing-section h3 {
+            color: #1f2937;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .items-table th {
+            background: #2563eb;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .items-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .items-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        
+        .items-table tr:hover {
+            background: #f1f5f9;
+        }
+        
+        .total-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        
+        .total-table {
+            width: 300px;
+        }
+        
+        .total-table tr td:first-child {
+            text-align: right;
+            font-weight: bold;
+            padding: 8px 15px;
+        }
+        
+        .total-table tr td:last-child {
+            text-align: right;
+            padding: 8px 15px;
+            border-left: 2px solid #e5e7eb;
+        }
+        
+        .total-row {
+            background: #2563eb;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e5e7eb;
+            text-align: center;
+            color: #666;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-paid {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-pending {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .print-button {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+        
+        .print-button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div class="company-info">
+                <h1>OptiStore Pro</h1>
+                <p><strong>Optical Retail Management</strong></p>
+                <p>123 Vision Street</p>
+                <p>Eyecare City, EC 12345</p>
+                <p>Phone: (555) 123-4567</p>
+                <p>Email: billing@optistorepro.com</p>
+            </div>
+            <div class="invoice-details">
+                <h2>PURCHASE INVOICE</h2>
+                <div class="invoice-number">${invoiceId}</div>
+                <p><strong>Date:</strong> ${invoiceData.date}</p>
+                <p><strong>Due Date:</strong> ${invoiceData.dueDate}</p>
+                <div class="status-badge ${invoiceData.status === 'paid' ? 'status-paid' : 'status-pending'}">
+                    ${invoiceData.status.toUpperCase()}
+                </div>
+            </div>
+        </div>
+        
+        <div class="billing-info">
+            <div class="billing-section">
+                <h3>Bill To:</h3>
+                <p><strong>${invoiceData.supplier.name}</strong></p>
+                <p>${invoiceData.supplier.address}</p>
+                <p>${invoiceData.supplier.city}, ${invoiceData.supplier.state} ${invoiceData.supplier.zip}</p>
+                <p>Phone: ${invoiceData.supplier.phone}</p>
+                <p>Email: ${invoiceData.supplier.email}</p>
+            </div>
+            <div class="billing-section">
+                <h3>Ship To:</h3>
+                <p><strong>OptiStore Pro - Main Location</strong></p>
+                <p>456 Inventory Avenue</p>
+                <p>Stock City, SC 67890</p>
+                <p>Phone: (555) 987-6543</p>
+            </div>
+        </div>
+        
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th>SKU</th>
+                    <th>Quantity</th>
+                    <th>Unit Cost</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${invoiceData.items.map(item => `
+                    <tr>
+                        <td>
+                            <strong>${item.name}</strong>
+                            <br><small>${item.description}</small>
+                        </td>
+                        <td>${item.sku}</td>
+                        <td>${item.quantity}</td>
+                        <td>$${item.unitCost}</td>
+                        <td>$${item.total}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <div class="total-section">
+            <table class="total-table">
+                <tr>
+                    <td>Subtotal:</td>
+                    <td>$${invoiceData.subtotal}</td>
+                </tr>
+                <tr>
+                    <td>Tax (${invoiceData.taxRate}%):</td>
+                    <td>$${invoiceData.tax}</td>
+                </tr>
+                <tr>
+                    <td>Shipping:</td>
+                    <td>$${invoiceData.shipping}</td>
+                </tr>
+                <tr class="total-row">
+                    <td>TOTAL:</td>
+                    <td>$${invoiceData.total}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <button class="print-button no-print" onclick="window.print()">Print Invoice</button>
+            <p><strong>Thank you for your business!</strong></p>
+            <p>Payment Terms: Net 30 days | Late payments subject to 1.5% monthly fee</p>
+            <p>For questions about this invoice, please contact: billing@optistorepro.com</p>
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
+// Generate mock invoice data based on invoice ID
+function getInvoiceData(invoiceId: string) {
+  const baseData = {
+    'INV-2024-001': {
+      date: 'January 15, 2024',
+      dueDate: 'February 14, 2024',
+      status: 'paid',
+      supplier: {
+        name: 'Premium Frames Supplier Co.',
+        address: '789 Frame Boulevard',
+        city: 'Lens City',
+        state: 'LC',
+        zip: '54321',
+        phone: '(555) 111-2222',
+        email: 'orders@premiumframes.com'
+      },
+      items: [
+        {
+          name: 'Ray-Ban Classic Aviator',
+          description: 'Premium aviator sunglasses with UV protection',
+          sku: 'FR-076659',
+          quantity: 25,
+          unitCost: '45.00',
+          total: '1,125.00'
+        }
+      ],
+      subtotal: '1,125.00',
+      taxRate: '8.25',
+      tax: '92.81',
+      shipping: '15.99',
+      total: '1,233.80'
+    },
+    'INV-2023-089': {
+      date: 'December 10, 2023',
+      dueDate: 'January 9, 2024',
+      status: 'paid',
+      supplier: {
+        name: 'Vision Tech Solutions',
+        address: '321 Optical Street',
+        city: 'Vision Valley',
+        state: 'VV',
+        zip: '98765',
+        phone: '(555) 333-4444',
+        email: 'supply@visiontech.com'
+      },
+      items: [
+        {
+          name: 'Progressive Prescription Lenses',
+          description: 'High-index progressive lenses with anti-reflective coating',
+          sku: 'LE-089344',
+          quantity: 50,
+          unitCost: '32.50',
+          total: '1,625.00'
+        }
+      ],
+      subtotal: '1,625.00',
+      taxRate: '8.25',
+      tax: '134.06',
+      shipping: '25.99',
+      total: '1,785.05'
+    },
+    'INV-2023-045': {
+      date: 'October 5, 2023',
+      dueDate: 'November 4, 2023',
+      status: 'paid',
+      supplier: {
+        name: 'Optical Warehouse Direct',
+        address: '654 Supply Chain Road',
+        city: 'Distribution Center',
+        state: 'DC',
+        zip: '13579',
+        phone: '(555) 555-6666',
+        email: 'wholesale@opticalwarehouse.com'
+      },
+      items: [
+        {
+          name: 'Designer Frame Collection',
+          description: 'Mixed designer frames - premium collection starter pack',
+          sku: 'COL-045123',
+          quantity: 100,
+          unitCost: '28.75',
+          total: '2,875.00'
+        }
+      ],
+      subtotal: '2,875.00',
+      taxRate: '8.25',
+      tax: '237.19',
+      shipping: '45.99',
+      total: '3,158.18'
+    }
+  };
+
+  return baseData[invoiceId] || {
+    date: new Date().toLocaleDateString(),
+    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    status: 'pending',
+    supplier: {
+      name: 'Generic Supplier',
+      address: '123 Supply Street',
+      city: 'Supply City',
+      state: 'SC',
+      zip: '12345',
+      phone: '(555) 000-0000',
+      email: 'info@supplier.com'
+    },
+    items: [
+      {
+        name: 'Sample Product',
+        description: 'Sample product description',
+        sku: 'SAM-12345',
+        quantity: 1,
+        unitCost: '50.00',
+        total: '50.00'
+      }
+    ],
+    subtotal: '50.00',
+    taxRate: '8.25',
+    tax: '4.13',
+    shipping: '10.00',
+    total: '64.13'
+  };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupOAuthAuth(app);
@@ -1038,62 +1451,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/invoice/pdf/:invoiceId', (req, res) => {
     const { invoiceId } = req.params;
     
-    // Mock PDF content
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoiceId}.pdf"`);
-    
-    // Generate a simple PDF-like response (in production, use a PDF library)
-    const pdfContent = `%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
->>
-endobj
-4 0 obj
-<<
-/Length 44
->>
-stream
-BT
-/F1 12 Tf
-72 720 Td
-(Invoice ${invoiceId}) Tj
-ET
-endstream
-endobj
-xref
-0 5
-0000000000 65535 f 
-0000000009 00000 n 
-0000000058 00000 n 
-0000000115 00000 n 
-0000000214 00000 n 
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-309
-%%EOF`;
-    
-    res.send(pdfContent);
+    try {
+      // Create professional HTML invoice template
+      const invoiceHtml = generateInvoiceHTML(invoiceId);
+      
+      // Set response headers for HTML display (we'll convert to PDF on client side)
+      res.setHeader('Content-Type', 'text/html');
+      res.send(invoiceHtml);
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      res.status(500).json({ error: 'Failed to generate invoice' });
+    }
   });
 
   app.get('/api/invoices/download/:productId', (req, res) => {
