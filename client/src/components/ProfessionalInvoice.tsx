@@ -49,16 +49,16 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
         <title>Invoice ${invoice.invoiceNumber} - OptiStore Pro</title>
         <style>
           @page { 
-            size: A4 portrait; 
-            margin: 15mm 15mm 20mm 15mm; 
+            size: A4; 
+            margin: 12mm; 
             @top-center {
               content: "OptiStore Pro - Invoice ${invoice.invoiceNumber}";
-              font-size: 8pt;
+              font-size: 9pt;
               color: #666;
             }
             @bottom-center {
               content: "Page " counter(page) " | Generated on ${format(new Date(), 'MMMM dd, yyyy')}";
-              font-size: 7pt;
+              font-size: 8pt;
               color: #666;
             }
           }
@@ -67,31 +67,31 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           
           body { 
             font-family: 'Arial', 'Helvetica', sans-serif; 
-            font-size: 9pt; 
-            line-height: 1.3; 
+            font-size: 10pt; 
+            line-height: 1.4; 
             color: #2c3e50; 
             background: white;
           }
           
           .invoice-container { 
-            max-width: 180mm; 
+            max-width: 210mm; 
             margin: 0 auto; 
             background: white; 
-            min-height: 257mm;
-            padding: 10mm 0;
+            min-height: 297mm;
+            padding: 0;
           }
           
           /* Header Section */
           .invoice-header { 
             background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%); 
             color: white; 
-            padding: 15px; 
-            border-radius: 6px; 
-            margin-bottom: 20px;
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            min-height: 65px;
+            min-height: 80px;
           }
           
           .company-info {
@@ -99,40 +99,40 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           }
           
           .company-name { 
-            font-size: 18pt; 
+            font-size: 22pt; 
             font-weight: 900; 
-            margin-bottom: 4px; 
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            margin-bottom: 5px; 
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
           }
           
           .company-tagline { 
-            font-size: 8pt; 
+            font-size: 10pt; 
             opacity: 0.9; 
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             font-style: italic;
           }
           
           .company-address { 
-            font-size: 7pt; 
+            font-size: 8pt; 
             opacity: 0.85; 
-            line-height: 1.2;
+            line-height: 1.3;
           }
           
           .invoice-meta { 
             text-align: right; 
             background: rgba(255,255,255,0.15); 
-            padding: 12px 16px; 
-            border-radius: 6px; 
+            padding: 15px 20px; 
+            border-radius: 8px; 
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.2);
           }
           
           .invoice-title { 
-            font-size: 16pt; 
+            font-size: 20pt; 
             font-weight: 800; 
-            margin-bottom: 6px; 
+            margin-bottom: 8px; 
             text-transform: uppercase; 
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
           }
           
           .invoice-number { 

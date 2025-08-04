@@ -11,7 +11,6 @@ import { registerMedicalRecordsRoutes } from "./routes/medicalRoutes";
 import { registerPaymentRoutes } from "./routes/paymentRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
-import { registerInventoryRoutes } from "./routes/inventoryRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -476,9 +475,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register analytics routes
   registerAnalyticsRoutes(app);
-  
-  // Register inventory routes
-  registerInventoryRoutes(app);
   
   // Register medical routes (includes patients, doctors, prescriptions)
   registerMedicalRoutes(app);
