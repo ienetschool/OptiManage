@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { 
   Plus, Package, AlertTriangle, Search, Edit, Trash2, TrendingDown, TrendingUp, 
   Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3,
@@ -26,7 +25,6 @@ import { insertProductSchema, insertCategorySchema, insertSupplierSchema, type P
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { format } from "date-fns";
 
 // Product types for optical store
 const PRODUCT_TYPES = [
@@ -51,7 +49,7 @@ export default function Inventory() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -526,229 +524,6 @@ export default function Inventory() {
             </div>
           </TabsContent>
         </Tabs>
-
-        {/* Product Form Dialog */}
-        <Dialog open={openProduct} onOpenChange={setOpenProduct}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingProduct ? "Edit Product" : "Add New Product"}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <p>Product form will be implemented here. For now, simulating form submission.</p>
-              <div className="mt-4 flex gap-2">
-                <Button 
-                  onClick={() => {
-                    toast({
-                      title: editingProduct ? "Product Updated" : "Product Added",
-                      description: `Product has been ${editingProduct ? "updated" : "added"} successfully`,
-                    });
-                    setOpenProduct(false);
-                    setEditingProduct(null);
-                  }}
-                >
-                  {editingProduct ? "Update" : "Add"} Product
-                </Button>
-                <Button variant="outline" onClick={() => setOpenProduct(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Product Details Dialog */}
-        <Dialog open={openProductDetails} onOpenChange={setOpenProductDetails}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Product Details
-              </DialogTitle>
-            </DialogHeader>
-            {selectedProduct && (
-              <div className="space-y-6">
-                {/* Header with Product Name and Status */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-2xl font-bold text-slate-900">{selectedProduct.name}</h3>
-                    <div className="flex items-center gap-4 mt-2">
-                      <p className="text-sm text-slate-500">SKU: <span className="font-mono">{selectedProduct.sku}</span></p>
-                      {selectedProduct.barcode && (
-                        <p className="text-sm text-slate-500">Barcode: <span className="font-mono">{selectedProduct.barcode}</span></p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    {getStockStatusBadge(selectedProduct.stockStatus, selectedProduct.currentStock || 0)}
-                    <Badge variant={selectedProduct.isActive ? "default" : "secondary"}>
-                      {selectedProduct.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </div>
-
-                {/* Product Type and Category */}
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full">
-                    <span className="text-lg">{getProductTypeIcon(selectedProduct.productType || "frames")}</span>
-                    <span className="text-sm font-medium text-blue-700 capitalize">
-                      {PRODUCT_TYPES.find(t => t.value === selectedProduct.productType)?.label || selectedProduct.productType}
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-2 px-3 py-1 bg-slate-50 rounded-full">
-                    <span className="text-sm text-slate-600">{selectedProduct.categoryName || 'Uncategorized'}</span>
-                  </div>
-                </div>
-
-                {/* Key Metrics Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-green-600">${selectedProduct.price}</div>
-                      <div className="text-sm text-slate-500">Selling Price</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-blue-600">{selectedProduct.currentStock || 0}</div>
-                      <div className="text-sm text-slate-500">Current Stock</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-orange-600">${selectedProduct.costPrice || 0}</div>
-                      <div className="text-sm text-slate-500">Cost Price</div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-purple-600">{selectedProduct.reorderLevel || 0}</div>
-                      <div className="text-sm text-slate-500">Reorder Level</div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Detailed Information */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Product Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Product Information</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {selectedProduct.description && (
-                        <div>
-                          <label className="text-sm font-medium text-slate-700">Description</label>
-                          <p className="text-sm text-slate-600 mt-1">{selectedProduct.description}</p>
-                        </div>
-                      )}
-                      <div>
-                        <label className="text-sm font-medium text-slate-700">Supplier</label>
-                        <p className="text-sm text-slate-600 mt-1">{selectedProduct.supplierName || 'No Supplier Assigned'}</p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-slate-700">Created</label>
-                        <p className="text-sm text-slate-600 mt-1">
-                          {selectedProduct.createdAt ? format(new Date(selectedProduct.createdAt), 'PPP') : 'N/A'}
-                        </p>
-                      </div>
-                      {selectedProduct.updatedAt && (
-                        <div>
-                          <label className="text-sm font-medium text-slate-700">Last Updated</label>
-                          <p className="text-sm text-slate-600 mt-1">
-                            {format(new Date(selectedProduct.updatedAt), 'PPp')}
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  {/* Stock Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Inventory Status</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium text-slate-700">Stock Status</label>
-                        <div className="mt-1">
-                          {getStockStatusBadge(selectedProduct.stockStatus, selectedProduct.currentStock || 0)}
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-slate-700">Profit Margin</label>
-                        <p className="text-sm font-semibold text-green-600 mt-1">
-                          ${(parseFloat(selectedProduct.price || "0") - parseFloat(selectedProduct.costPrice || "0")).toFixed(2)}
-                          {selectedProduct.costPrice && selectedProduct.price && (
-                            <span className="text-xs text-slate-500 ml-1">
-                              ({(((parseFloat(selectedProduct.price) - parseFloat(selectedProduct.costPrice)) / parseFloat(selectedProduct.price)) * 100).toFixed(1)}%)
-                            </span>
-                          )}
-                        </p>
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium text-slate-700">Total Inventory Value</label>
-                        <p className="text-sm font-semibold text-blue-600 mt-1">
-                          ${((selectedProduct.currentStock || 0) * parseFloat(selectedProduct.costPrice || "0")).toFixed(2)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex justify-end gap-3 pt-4 border-t">
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setEditingProduct(selectedProduct);
-                      setOpenProductDetails(false);
-                      setOpenProduct(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Product
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedProductForReorder(selectedProduct);
-                      setOpenProductDetails(false);
-                      setOpenReorderModal(true);
-                    }}
-                    className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                  >
-                    <Package className="h-4 w-4 mr-2" />
-                    Reorder Stock
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Bulk Reorder Dialog */}
-        <Dialog open={openBulkReorderModal} onOpenChange={setOpenBulkReorderModal}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Bulk Purchase Order</DialogTitle>
-            </DialogHeader>
-            <BulkReorderForm
-              suppliers={suppliers}
-              products={products}
-              onSubmit={(data: any) => {
-                console.log("Bulk order submitted:", data);
-                toast({
-                  title: "Purchase Order Created",
-                  description: `Bulk order for ${data.items?.length || 0} items has been created`,
-                });
-                setOpenBulkReorderModal(false);
-              }}
-              onCancel={() => setOpenBulkReorderModal(false)}
-            />
-          </DialogContent>
-        </Dialog>
 
         {/* Reorder Modal */}
         <Dialog open={openReorderModal} onOpenChange={setOpenReorderModal}>
@@ -1316,100 +1091,6 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
         </>
       )}
     </div>
-  );
-}
-
-// Dialog Components
-export function ProductFormDialog({ open, onOpenChange, product, onSubmit }: any) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {product ? "Edit Product" : "Add New Product"}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="py-4">
-          <p>Product form implementation needed</p>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function ProductDetailsDialog({ open, onOpenChange, product }: any) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Product Details</DialogTitle>
-        </DialogHeader>
-        {product && (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-semibold">{product.name}</h3>
-              <p className="text-sm text-slate-500">SKU: {product.sku}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Price</label>
-                <p>${product.price}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Stock</label>
-                <p>{product.currentStock || 0} units</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function BulkReorderDialog({ open, onOpenChange, suppliers, products, onSubmit }: any) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Bulk Purchase Order</DialogTitle>
-        </DialogHeader>
-        <BulkReorderForm
-          suppliers={suppliers}
-          products={products}
-          onSubmit={(data: any) => {
-            console.log("Bulk order submitted:", data);
-            onSubmit(data);
-            onOpenChange(false);
-          }}
-          onCancel={() => onOpenChange(false)}
-        />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export function ReorderDialog({ open, onOpenChange, product, suppliers, onSubmit }: any) {
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Reorder Stock</DialogTitle>
-        </DialogHeader>
-        {product && (
-          <ReorderForm
-            product={product}
-            suppliers={suppliers}
-            onSubmit={(data: any) => {
-              console.log("Reorder submitted:", data);
-              onSubmit(data);
-              onOpenChange(false);
-            }}
-            onCancel={() => onOpenChange(false)}
-          />
-        )}
-      </DialogContent>
-    </Dialog>
   );
 }
 
