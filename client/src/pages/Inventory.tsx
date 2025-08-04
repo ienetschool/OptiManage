@@ -15,7 +15,7 @@ import {
   Plus, Package, AlertTriangle, Search, Edit, Trash2, TrendingDown, TrendingUp, 
   Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3,
   QrCode, Download, Share, Printer, FileText, Copy, ExternalLink,
-  CheckCircle2, Clock, AlertCircle, XCircle, Share2, Calculator
+  CheckCircle2, Clock, AlertCircle, XCircle, Share2, Calculator, RefreshCw
 } from "lucide-react";
 import QRCode from 'react-qr-code';
 import { useForm } from "react-hook-form";
@@ -1316,11 +1316,12 @@ export default function Inventory() {
                               size="sm"
                               onClick={() => {
                                 setSelectedProduct(product);
-                                setOpenQRCode(true);
+                                setOpenStockUpdate(true);
                               }}
-                              title="Generate QR Code"
+                              title="Reorder Stock"
+                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                             >
-                              <QrCode className="h-4 w-4" />
+                              <RefreshCw className="h-4 w-4" />
                             </Button>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -1332,48 +1333,6 @@ export default function Inventory() {
                                 <DropdownMenuItem onClick={() => handleEditProduct(product)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Edit Product
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  setSelectedProduct(product);
-                                  setOpenStockUpdate(true);
-                                }}>
-                                  <Package className="mr-2 h-4 w-4" />
-                                  Update Stock
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => {
-                                  const productUrl = `${window.location.origin}/product/${product.id}`;
-                                  navigator.clipboard.writeText(productUrl);
-                                  toast({
-                                    title: "Link Copied",
-                                    description: "Product link copied to clipboard",
-                                  });
-                                }}>
-                                  <Share className="mr-2 h-4 w-4" />
-                                  Share Product
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => {
-                                  const printContent = `
-                                    <html>
-                                      <head><title>Product: ${product.name}</title></head>
-                                      <body style="font-family: Arial, sans-serif; padding: 20px;">
-                                        <h1>${product.name}</h1>
-                                        <p><strong>SKU:</strong> ${product.sku}</p>
-                                        <p><strong>Price:</strong> $${product.price}</p>
-                                        <p><strong>Stock:</strong> ${product.currentStock} units</p>
-                                        <p><strong>Description:</strong> ${product.description || 'N/A'}</p>
-                                      </body>
-                                    </html>
-                                  `;
-                                  const printWindow = window.open('', '_blank');
-                                  if (printWindow) {
-                                    printWindow.document.write(printContent);
-                                    printWindow.document.close(); 
-                                    printWindow.print();
-                                  }
-                                }}>
-                                  <Printer className="mr-2 h-4 w-4" />
-                                  Print Product
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-red-600">
@@ -1824,7 +1783,7 @@ export default function Inventory() {
 
       {/* Product Details Modal */}
       <Dialog open={openProductDetails} onOpenChange={setOpenProductDetails}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="border-b pb-4">
             <DialogTitle className="flex items-center gap-2 text-xl">
               <Package className="h-6 w-6 text-blue-600" />
@@ -2259,10 +2218,25 @@ export default function Inventory() {
               currentStock={enrichedProducts.find(p => p.id === selectedProductForReorder.id)?.currentStock || 0}
               onSubmit={(data) => {
                 console.log('Reorder submitted:', data);
-                toast({
-                  title: "Purchase Order Created",
-                  description: `Reorder for ${data.quantity} units of ${selectedProductForReorder.name} has been processed.`,
-                });
+                
+                if (data.success) {
+                  toast({
+                    title: "Purchase Order Created Successfully",
+                    description: data.message || `Reorder has been processed and invoice ${data.invoice?.invoiceNumber} created.`,
+                  });
+                  
+                  // Refresh data
+                  queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                } else {
+                  toast({
+                    title: "Reorder Failed",
+                    description: data.error || "Failed to process reorder. Please try again.",
+                    variant: "destructive",
+                  });
+                }
+                
                 setOpenReorderModal(false);
               }}
               onCancel={() => setOpenReorderModal(false)}
@@ -2286,10 +2260,25 @@ export default function Inventory() {
             products={enrichedProducts}
             onSubmit={(data) => {
               console.log('Bulk reorder submitted:', data);
-              toast({
-                title: "Bulk Purchase Order Created",
-                description: `Bulk reorder for ${data.selectedProducts.length} products has been processed.`,
-              });
+              
+              if (data.success) {
+                toast({
+                  title: "Bulk Purchase Order Created Successfully",
+                  description: data.message || `Bulk reorder has been processed and invoice ${data.invoice?.invoiceNumber} created.`,
+                });
+                
+                // Refresh data
+                queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+              } else {
+                toast({
+                  title: "Bulk Reorder Failed",
+                  description: data.error || "Failed to process bulk reorder. Please try again.",
+                  variant: "destructive",
+                });
+              }
+              
               setOpenBulkReorderModal(false);
               setSelectedSupplierId("");
               setSelectedProductsForBulkReorder([]);
@@ -2329,20 +2318,47 @@ function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormP
   const taxAmount = subtotal * (taxRate / 100);
   const total = subtotal + taxAmount - discount + shipping + handling;
 
-  const handleSubmit = () => {
-    onSubmit({
-      productId: product.id,
-      quantity,
-      unitCost,
-      taxRate,
-      discount,
-      shipping,
-      handling,
-      notes,
-      subtotal,
-      taxAmount,
-      total
-    });
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('/api/products/reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          quantity,
+          unitCost,
+          notes,
+          taxRate,
+          discount,
+          shipping,
+          handling,
+          subtotal,
+          taxAmount,
+          total
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process reorder');
+      }
+
+      const result = await response.json();
+      
+      onSubmit({
+        success: true,
+        invoice: result.invoice,
+        updatedProduct: result.updatedProduct,
+        message: result.message
+      });
+    } catch (error) {
+      console.error('Reorder error:', error);
+      onSubmit({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to process reorder'
+      });
+    }
   };
 
   return (
@@ -2492,6 +2508,12 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
   const [productData, setProductData] = useState<Record<string, { quantity: number; unitCost: number }>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [showProductSearch, setShowProductSearch] = useState(false);
+  
+  // Invoice-like calculations
+  const [taxRate, setTaxRate] = useState(8.5);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [shippingCost, setShippingCost] = useState(50);
+  const [notes, setNotes] = useState("");
 
   const filteredProducts = products.filter(p => 
     p.supplierId === selectedSupplierId && 
@@ -2505,6 +2527,12 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
       return total + (data.quantity * data.unitCost);
     }, 0);
   };
+
+  const subtotal = calculateSubtotal();
+  const discountTotal = discountAmount;
+  const taxableAmount = subtotal - discountTotal;
+  const taxAmount = (taxableAmount * taxRate) / 100;
+  const finalTotal = taxableAmount + taxAmount + shippingCost;
 
   const handleProductSelect = (productId: string, checked: boolean) => {
     if (checked) {
@@ -2529,15 +2557,46 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
     }
   };
 
-  const handleSubmit = () => {
-    const subtotal = calculateSubtotal();
-    onSubmit({
-      supplierId: selectedSupplierId,
-      selectedProducts,
-      productData,
-      subtotal,
-      total: subtotal * 1.085 // 8.5% tax
-    });
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('/api/products/bulk-reorder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          supplierId: selectedSupplierId,
+          selectedProducts,
+          productData,
+          subtotal,
+          taxRate,
+          taxAmount,
+          discountAmount,
+          shippingCost,
+          total: finalTotal,
+          notes
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process bulk reorder');
+      }
+
+      const result = await response.json();
+      
+      onSubmit({
+        success: true,
+        invoice: result.invoice,
+        updatedProducts: result.updatedProducts,
+        message: result.message
+      });
+    } catch (error) {
+      console.error('Bulk reorder error:', error);
+      onSubmit({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to process bulk reorder'
+      });
+    }
   };
 
   return (
@@ -2713,10 +2772,83 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
       )}
 
       {selectedProducts.length > 0 && (
-        <div className="bg-slate-50 p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span>Total ({selectedProducts.length} products):</span>
-            <span className="font-semibold text-lg text-blue-600">${(calculateSubtotal() * 1.085).toFixed(2)}</span>
+        <div className="space-y-4">
+          {/* Invoice Calculations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="tax-rate">Tax Rate (%)</Label>
+                <Input
+                  id="tax-rate"
+                  type="number"
+                  step="0.1"
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="discount">Discount Amount ($)</Label>
+                <Input
+                  id="discount"
+                  type="number"
+                  step="0.01"
+                  value={discountAmount}
+                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="shipping">Shipping Cost ($)</Label>
+                <Input
+                  id="shipping"
+                  type="number"
+                  step="0.01"
+                  value={shippingCost}
+                  onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Additional notes for this purchase order..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Invoice Summary */}
+          <div className="bg-slate-50 p-4 rounded-lg">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span>Subtotal ({selectedProducts.length} products):</span>
+                <span className="font-medium">${subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Discount:</span>
+                <span className="font-medium text-red-600">-${discountTotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Tax ({taxRate}%):</span>
+                <span className="font-medium">${taxAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Shipping:</span>
+                <span className="font-medium">${shippingCost.toFixed(2)}</span>
+              </div>
+              <div className="border-t pt-2 flex justify-between items-center">
+                <span className="font-semibold text-lg">Total:</span>
+                <span className="font-semibold text-lg text-blue-600">${finalTotal.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -47,19 +47,21 @@ function generateInvoiceHTML(invoiceId: string) {
         
         body {
             font-family: 'Arial', sans-serif;
-            line-height: 1.6;
+            line-height: 1.4;
             color: #333;
-            max-width: 800px;
+            max-width: 210mm;  /* A4 width */
             margin: 0 auto;
-            padding: 20px;
+            padding: 15mm;     /* A4 margin */
             background-color: #f9f9f9;
+            font-size: 11px;   /* Smaller font for A4 */
         }
         
         .invoice-container {
             background: white;
-            padding: 40px;
-            border-radius: 10px;
+            padding: 20mm;     /* A4 optimized padding */
+            border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-height: 250mm; /* A4 height minus margins */
         }
         
         .header {
@@ -73,14 +75,15 @@ function generateInvoiceHTML(invoiceId: string) {
         
         .company-info h1 {
             color: #2563eb;
-            font-size: 28px;
-            margin: 0 0 10px 0;
+            font-size: 20px;   /* Smaller for A4 */
+            margin: 0 0 8px 0;
             font-weight: bold;
         }
         
         .company-info p {
-            margin: 5px 0;
+            margin: 3px 0;
             color: #666;
+            font-size: 10px;   /* Smaller text */
         }
         
         .invoice-details {
@@ -89,25 +92,26 @@ function generateInvoiceHTML(invoiceId: string) {
         
         .invoice-details h2 {
             color: #1f2937;
-            font-size: 24px;
-            margin: 0 0 10px 0;
+            font-size: 18px;   /* Smaller for A4 */
+            margin: 0 0 8px 0;
         }
         
         .invoice-number {
             background: #2563eb;
             color: white;
-            padding: 8px 16px;
-            border-radius: 5px;
+            padding: 6px 12px;  /* Smaller padding */
+            border-radius: 4px;
             font-weight: bold;
             display: inline-block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
         }
         
         .billing-info {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
+            gap: 20mm;          /* A4 optimized gap */
+            margin-bottom: 20px;
         }
         
         .billing-section h3 {
@@ -129,14 +133,16 @@ function generateInvoiceHTML(invoiceId: string) {
         .items-table th {
             background: #2563eb;
             color: white;
-            padding: 15px;
+            padding: 8px;      /* Smaller padding */
             text-align: left;
             font-weight: bold;
+            font-size: 10px;
         }
         
         .items-table td {
-            padding: 15px;
+            padding: 6px 8px;  /* Smaller padding */
             border-bottom: 1px solid #e5e7eb;
+            font-size: 10px;
         }
         
         .items-table tr:nth-child(even) {
@@ -160,19 +166,21 @@ function generateInvoiceHTML(invoiceId: string) {
         .total-table tr td:first-child {
             text-align: right;
             font-weight: bold;
-            padding: 8px 15px;
+            padding: 4px 8px;   /* Smaller padding */
+            font-size: 10px;
         }
         
         .total-table tr td:last-child {
             text-align: right;
-            padding: 8px 15px;
+            padding: 4px 8px;   /* Smaller padding */
             border-left: 2px solid #e5e7eb;
+            font-size: 10px;
         }
         
         .total-row {
             background: #2563eb;
             color: white;
-            font-size: 18px;
+            font-size: 12px;    /* Smaller for A4 */
             font-weight: bold;
         }
         
@@ -1413,6 +1421,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+
+  // Product Reorder API
+  app.post('/api/products/reorder', isAuthenticated, async (req, res) => {
+    try {
+      const { productId, quantity, unitCost, notes, supplierId } = req.body;
+      
+      // Get current product
+      const products = await storage.getProducts();
+      const product = products.find(p => p.id === productId);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      
+      // Update product stock
+      const updatedProduct = {
+        ...product,
+        currentStock: (product.currentStock || 0) + quantity,
+        costPrice: unitCost ? unitCost.toString() : product.costPrice,
+        lastRestockedAt: new Date().toISOString()
+      };
+      
+      await storage.updateProduct(productId, updatedProduct);
+      
+      // Create purchase invoice
+      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
+      const subtotal = quantity * unitCost;
+      const taxAmount = subtotal * 0.085; // 8.5% tax
+      const total = subtotal + taxAmount;
+      
+      const invoice = {
+        id: `reorder-${Date.now()}`,
+        invoiceNumber,
+        customerId: null,
+        customerName: "Supplier Purchase",
+        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+        storeName: "OptiStore Pro",
+        date: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+        subtotal,
+        taxRate: 8.5,
+        taxAmount,
+        discountAmount: 0,
+        total,
+        status: "paid" as const,
+        paymentMethod: "bank_transfer" as const,
+        paymentDate: new Date().toISOString(),
+        notes: notes || `Restock order for ${product.name}`,
+        items: [{
+          id: `item-${Date.now()}`,
+          productId: product.id,
+          productName: product.name,
+          description: `Restock - ${quantity} units`,
+          quantity,
+          unitPrice: unitCost,
+          discount: 0,
+          total: subtotal
+        }],
+        source: "reorder"
+      };
+      
+      // Store the invoice
+      await storage.createInvoice(invoice);
+      
+      res.json({
+        success: true,
+        invoice,
+        updatedProduct,
+        message: `Successfully reordered ${quantity} units of ${product.name}`
+      });
+      
+    } catch (error) {
+      console.error("Error processing reorder:", error);
+      res.status(500).json({ message: "Failed to process reorder" });
+    }
+  });
+
+  // Bulk Reorder API
+  app.post('/api/products/bulk-reorder', isAuthenticated, async (req, res) => {
+    try {
+      const { supplierId, selectedProducts, productData, subtotal, taxRate, taxAmount, discountAmount, shippingCost, total, notes } = req.body;
+      
+      // Get products
+      const products = await storage.getProducts();
+      const invoiceItems = [];
+      const updatedProducts = [];
+      
+      // Process each selected product
+      for (const productId of selectedProducts) {
+        const product = products.find(p => p.id === productId);
+        const data = productData[productId];
+        
+        if (product && data) {
+          // Update stock
+          const updatedProduct = {
+            ...product,
+            currentStock: (product.currentStock || 0) + data.quantity,
+            costPrice: data.unitCost ? data.unitCost.toString() : product.costPrice,
+            lastRestockedAt: new Date().toISOString()
+          };
+          
+          await storage.updateProduct(productId, updatedProduct);
+          updatedProducts.push(updatedProduct);
+          
+          // Add to invoice items
+          invoiceItems.push({
+            id: `item-${Date.now()}-${productId}`,
+            productId: product.id,
+            productName: product.name,
+            description: `Bulk restock - ${data.quantity} units`,
+            quantity: data.quantity,
+            unitPrice: data.unitCost,
+            discount: 0,
+            total: data.quantity * data.unitCost
+          });
+        }
+      }
+      
+      // Create bulk purchase invoice
+      const invoiceNumber = `INV-BULK-${Date.now().toString().slice(-6)}`;
+      
+      const invoice = {
+        id: `bulk-reorder-${Date.now()}`,
+        invoiceNumber,
+        customerId: null,
+        customerName: "Bulk Supplier Purchase",
+        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+        storeName: "OptiStore Pro",
+        date: new Date().toISOString(),
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        subtotal,
+        taxRate,
+        taxAmount,
+        discountAmount,
+        shippingCost,
+        total,
+        status: "paid" as const,
+        paymentMethod: "bank_transfer" as const,
+        paymentDate: new Date().toISOString(),
+        notes: notes || `Bulk restock order for ${selectedProducts.length} products`,
+        items: invoiceItems,
+        source: "bulk_reorder"
+      };
+      
+      // Store the invoice
+      await storage.createInvoice(invoice);
+      
+      res.json({
+        success: true,
+        invoice,
+        updatedProducts,
+        message: `Successfully processed bulk reorder for ${selectedProducts.length} products`
+      });
+      
+    } catch (error) {
+      console.error("Error processing bulk reorder:", error);
+      res.status(500).json({ message: "Failed to process bulk reorder" });
+    }
+  });
 
   // Dashboard route
   app.get('/api/dashboard', isAuthenticated, async (req, res) => {
