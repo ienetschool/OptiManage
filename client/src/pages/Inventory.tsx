@@ -1824,9 +1824,12 @@ export default function Inventory() {
 
       {/* Product Details Modal */}
       <Dialog open={openProductDetails} onOpenChange={setOpenProductDetails}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{selectedProduct?.name}</DialogTitle>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <Package className="h-6 w-6 text-blue-600" />
+              {selectedProduct?.name}
+            </DialogTitle>
             <DialogDescription>
               Complete product information and details
             </DialogDescription>
@@ -1834,141 +1837,165 @@ export default function Inventory() {
           
           {selectedProduct && (
             <>
-            <div className="grid grid-cols-3 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">SKU</Label>
-                  <p className="text-sm">{selectedProduct.sku}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Product Type</Label>
-                  <p className="text-sm flex items-center gap-2">
-                    {getProductTypeIcon(selectedProduct.productType || "frames")}
-                    {PRODUCT_TYPES.find(t => t.value === selectedProduct.productType)?.label}
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Category</Label>
-                  <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.categoryName}</p>
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Supplier</Label>
-                  <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.supplierName}</p>
-                </div>
-                
-                {selectedProduct.description && (
-                  <div>
-                    <Label className="text-sm font-medium text-slate-500">Description</Label>
-                    <p className="text-sm">{selectedProduct.description}</p>
-                  </div>
-                )}
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Selling Price</Label>
-                  <p className="text-lg font-semibold text-green-600">${selectedProduct.price}</p>
-                </div>
-                
-                {selectedProduct.costPrice && (
-                  <div>
-                    <Label className="text-sm font-medium text-slate-500">Cost Price</Label>
-                    <p className="text-sm">${selectedProduct.costPrice}</p>
-                  </div>
-                )}
-                
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Current Stock</Label>
-                  <p className="text-lg font-semibold">
-                    {enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0} units
-                  </p>
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Reorder Level</Label>
-                  <p className="text-sm">{selectedProduct.reorderLevel} units</p>
-                </div>
-                
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Status</Label>
-                  <div className="flex gap-2">
-                    {getStockStatusBadge(
-                      enrichedProducts.find(p => p.id === selectedProduct.id)?.stockStatus || 'in_stock',
-                      enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0
+            <div className="grid grid-cols-4 gap-6 py-4">
+              {/* Left Column - Product Basic Info */}
+              <div className="col-span-2 space-y-6">
+                <Card className="border-slate-200">
+                  <CardHeader className="pb-3">
+                    <h3 className="font-semibold text-lg text-slate-900">Basic Information</h3>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">SKU</Label>
+                        <p className="text-sm font-mono bg-slate-100 px-2 py-1 rounded">{selectedProduct.sku}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Product Type</Label>
+                        <p className="text-sm flex items-center gap-2">
+                          {getProductTypeIcon(selectedProduct.productType || "frames")}
+                          {PRODUCT_TYPES.find(t => t.value === selectedProduct.productType)?.label}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Selling Price</Label>
+                        <p className="text-xl font-bold text-green-600">${selectedProduct.price}</p>
+                      </div>
+                      {selectedProduct.costPrice && (
+                        <div>
+                          <Label className="text-sm font-medium text-slate-600">Cost Price</Label>
+                          <p className="text-lg font-semibold text-slate-700">${selectedProduct.costPrice}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Category</Label>
+                        <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.categoryName}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Supplier</Label>
+                        <p className="text-sm">{enrichedProducts.find(p => p.id === selectedProduct.id)?.supplierName}</p>
+                      </div>
+                    </div>
+
+                    {selectedProduct.description && (
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Description</Label>
+                        <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded">{selectedProduct.description}</p>
+                      </div>
                     )}
-                    <Badge variant={selectedProduct.isActive ? "default" : "secondary"}>
-                      {selectedProduct.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {selectedProduct.barcode && (
-                  <div>
-                    <Label className="text-sm font-medium text-slate-500">Barcode</Label>
-                    <p className="text-sm font-mono">{selectedProduct.barcode}</p>
-                  </div>
-                )}
+
+                    {selectedProduct.barcode && (
+                      <div>
+                        <Label className="text-sm font-medium text-slate-600">Barcode</Label>
+                        <p className="text-sm font-mono bg-slate-100 px-2 py-1 rounded w-fit">{selectedProduct.barcode}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* QR Code Section */}
-              <div className="flex flex-col items-center space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-slate-500">Product QR Code</Label>
-                </div>
-                <div className="p-4 bg-white border-2 border-slate-200 rounded-lg shadow-sm">
-                  <QRCode
-                    value={JSON.stringify({
-                      id: selectedProduct.id,
-                      name: selectedProduct.name,
-                      sku: selectedProduct.sku,
-                      price: selectedProduct.price,
-                      barcode: selectedProduct.barcode,
-                      url: `${window.location.origin}/product/${selectedProduct.id}`,
-                    })}
-                    size={160}
-                    bgColor="white"
-                    fgColor="#1f2937"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      const canvas = document.querySelector('canvas');
-                      if (canvas) {
-                        const link = document.createElement('a');
-                        link.download = `qr-${selectedProduct.sku}.png`;
-                        link.href = canvas.toDataURL();
-                        link.click();
-                      }
-                    }}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      const productUrl = `${window.location.origin}/product/${selectedProduct.id}`;
-                      navigator.clipboard.writeText(productUrl);
-                      toast({
-                        title: "Link Copied",
-                        description: "Product link copied to clipboard",
-                      });
-                    }}
-                  >
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Link
-                  </Button>
-                </div>
-                <p className="text-xs text-slate-500 text-center">
-                  Scan to view product details
-                </p>
+              {/* Middle Column - Stock Info */}
+              <div className="space-y-6">
+                <Card className="border-orange-200">
+                  <CardHeader className="pb-3">
+                    <h3 className="font-semibold text-lg text-slate-900">Stock Information</h3>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Current Stock</Label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-bold text-blue-600">
+                          {enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0}
+                        </span>
+                        <span className="text-sm text-slate-500">units</span>
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Reorder Level</Label>
+                      <p className="text-sm">{selectedProduct.reorderLevel} units</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-slate-600">Status</Label>
+                      <div className="flex flex-col gap-2">
+                        {getStockStatusBadge(
+                          enrichedProducts.find(p => p.id === selectedProduct.id)?.stockStatus || 'in_stock',
+                          enrichedProducts.find(p => p.id === selectedProduct.id)?.currentStock || 0
+                        )}
+                        <Badge variant={selectedProduct.isActive ? "default" : "secondary"}>
+                          {selectedProduct.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Right Column - QR Code */}
+              <div className="space-y-6">
+                <Card className="border-purple-200">
+                  <CardHeader className="pb-3">
+                    <h3 className="font-semibold text-lg text-slate-900">QR Code</h3>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center space-y-3">
+                    <QRCode
+                      value={JSON.stringify({
+                        id: selectedProduct.id,
+                        name: selectedProduct.name,
+                        sku: selectedProduct.sku,
+                        price: selectedProduct.price,
+                        barcode: selectedProduct.barcode,
+                        url: `${window.location.origin}/product/${selectedProduct.id}`,
+                      })}
+                      size={120}
+                      bgColor="white"
+                      fgColor="#1f2937"
+                    />
+                    <div className="flex flex-col gap-2 w-full">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          const canvas = document.querySelector('canvas');
+                          if (canvas) {
+                            const link = document.createElement('a');
+                            link.download = `qr-${selectedProduct.sku}.png`;
+                            link.href = canvas.toDataURL();
+                            link.click();
+                          }
+                        }}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          const productUrl = `${window.location.origin}/product/${selectedProduct.id}`;
+                          navigator.clipboard.writeText(productUrl);
+                          toast({
+                            title: "Link Copied",
+                            description: "Product link copied to clipboard",
+                          });
+                        }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy Link
+                      </Button>
+                    </div>
+                    <p className="text-xs text-slate-500 text-center">
+                      Scan to view details
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
             
@@ -1989,25 +2016,24 @@ export default function Inventory() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Mock Purchase History - Replace with real data */}
-                <Card className="border-blue-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Last Purchase</span>
-                      <Badge variant="outline" className="text-xs">INV-2024-001</Badge>
+              {/* Purchase History List */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50/30">
+                  <div className="flex items-center space-x-4">
+                    <Badge variant="secondary" className="text-xs">Last Purchase</Badge>
+                    <div>
+                      <p className="font-medium text-sm">25 units</p>
+                      <p className="text-xs text-slate-600">Jan 15, 2024</p>
                     </div>
-                    <p className="text-lg font-semibold text-blue-600">25 units</p>
-                    <p className="text-xs text-slate-500">Jan 15, 2024</p>
-                    <div className="flex gap-1 mt-3">
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-xs text-slate-500 font-mono">INV-2024-001</span>
+                    <div className="flex gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs h-7"
-                        onClick={() => {
-                          // Create mock PDF invoice
-                          window.open(`/api/invoice/pdf/INV-2024-001`, '_blank');
-                        }}
+                        className="h-8 px-3"
+                        onClick={() => window.open(`/api/invoice/pdf/INV-2024-001`, '_blank')}
                       >
                         <FileText className="mr-1 h-3 w-3" />
                         PDF
@@ -2015,7 +2041,7 @@ export default function Inventory() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs h-7"
+                        className="h-8 px-3"
                         onClick={() => {
                           if (!selectedProduct) return;
                           const invoiceData = {
@@ -2037,25 +2063,25 @@ export default function Inventory() {
                         Share
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                <Card className="border-green-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Previous Order</span>
-                      <Badge variant="outline" className="text-xs">INV-2023-089</Badge>
+                <div className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50/30">
+                  <div className="flex items-center space-x-4">
+                    <Badge variant="secondary" className="text-xs">Previous Order</Badge>
+                    <div>
+                      <p className="font-medium text-sm">50 units</p>
+                      <p className="text-xs text-slate-600">Dec 10, 2023</p>
                     </div>
-                    <p className="text-lg font-semibold text-green-600">50 units</p>
-                    <p className="text-xs text-slate-500">Dec 10, 2023</p>
-                    <div className="flex gap-1 mt-3">
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-xs text-slate-500 font-mono">INV-2023-089</span>
+                    <div className="flex gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs h-7"
-                        onClick={() => {
-                          window.open(`/api/invoice/pdf/INV-2023-089`, '_blank');
-                        }}
+                        className="h-8 px-3"
+                        onClick={() => window.open(`/api/invoice/pdf/INV-2023-089`, '_blank')}
                       >
                         <FileText className="mr-1 h-3 w-3" />
                         PDF
@@ -2063,7 +2089,7 @@ export default function Inventory() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs h-7"
+                        className="h-8 px-3"
                         onClick={() => {
                           if (!selectedProduct) return;
                           const invoiceData = {
@@ -2085,25 +2111,25 @@ export default function Inventory() {
                         Share
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
-                <Card className="border-amber-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Initial Stock</span>
-                      <Badge variant="outline" className="text-xs">INV-2023-045</Badge>
+                <div className="flex items-center justify-between p-4 border border-purple-200 rounded-lg bg-purple-50/30">
+                  <div className="flex items-center space-x-4">
+                    <Badge variant="secondary" className="text-xs">Initial Stock</Badge>
+                    <div>
+                      <p className="font-medium text-sm">100 units</p>
+                      <p className="text-xs text-slate-600">Oct 5, 2023</p>
                     </div>
-                    <p className="text-lg font-semibold text-amber-600">100 units</p>
-                    <p className="text-xs text-slate-500">Oct 5, 2023</p>
-                    <div className="flex gap-1 mt-3">
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-xs text-slate-500 font-mono">INV-2023-045</span>
+                    <div className="flex gap-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs h-7"
-                        onClick={() => {
-                          window.open(`/api/invoice/pdf/INV-2023-045`, '_blank');
-                        }}
+                        className="h-8 px-3"
+                        onClick={() => window.open(`/api/invoice/pdf/INV-2023-045`, '_blank')}
                       >
                         <FileText className="mr-1 h-3 w-3" />
                         PDF
@@ -2111,7 +2137,7 @@ export default function Inventory() {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="text-xs h-7"
+                        className="h-8 px-3"
                         onClick={() => {
                           if (!selectedProduct) return;
                           const invoiceData = {
@@ -2133,8 +2159,8 @@ export default function Inventory() {
                         Share
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             </div>
             </>
