@@ -15,7 +15,7 @@ import {
   Plus, Package, AlertTriangle, Search, Edit, Trash2, TrendingDown, TrendingUp, 
   Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3,
   QrCode, Download, Share, Printer, FileText, Copy, ExternalLink,
-  CheckCircle2, Clock, AlertCircle, XCircle, Share2, Calculator
+  CheckCircle2, Clock, AlertCircle, XCircle, Share2
 } from "lucide-react";
 import QRCode from 'react-qr-code';
 import { useForm } from "react-hook-form";
@@ -1788,7 +1788,6 @@ export default function Inventory() {
           </DialogHeader>
           
           {selectedProduct && (
-            <>
             <div className="grid grid-cols-3 gap-6">
               <div className="space-y-4">
                 <div>
@@ -1926,7 +1925,8 @@ export default function Inventory() {
                 </p>
               </div>
             </div>
-            
+
+            {/* Purchase Invoices Section */}
             <div className="col-span-3 border-t pt-6 mt-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="font-medium text-slate-800">Purchase Invoices & Stock History</h4>
@@ -2092,19 +2092,26 @@ export default function Inventory() {
                 </Card>
               </div>
             </div>
-            </>
           )}
           
           <div className="flex justify-end space-x-2 pt-4 border-t">
             <Button variant="outline" onClick={() => setOpenProductDetails(false)}>
               Close
             </Button>
+          </div>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setOpenProductDetails(false)}>
+              Close
+            </Button>
             <Button 
               onClick={() => {
-                if (selectedProduct) {
-                  setOpenProductDetails(false);
-                  handleEditProduct(selectedProduct);
-                }
+                setOpenProductDetails(false);
+                handleEditProduct(selectedProduct);
               }}
               className="bg-blue-600 hover:bg-blue-700"
             >
@@ -2183,19 +2190,94 @@ export default function Inventory() {
           </DialogHeader>
           
           {selectedProductForReorder && (
-            <ReorderForm 
-              product={selectedProductForReorder}
-              currentStock={enrichedProducts.find(p => p.id === selectedProductForReorder.id)?.currentStock || 0}
-              onSubmit={(data) => {
-                console.log('Reorder submitted:', data);
-                toast({
-                  title: "Purchase Order Created",
-                  description: `Reorder for ${data.quantity} units of ${selectedProductForReorder.name} has been processed.`,
-                });
-                setOpenReorderModal(false);
-              }}
-              onCancel={() => setOpenReorderModal(false)}
-            />
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Current Stock</Label>
+                  <p className="text-lg font-semibold text-blue-600">
+                    {enrichedProducts.find(p => p.id === selectedProductForReorder.id)?.currentStock || 0} units
+                  </p>
+                </div>
+                <div>
+                  <Label>Reorder Level</Label>
+                  <p className="text-sm text-slate-600">{selectedProductForReorder.reorderLevel} units</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="reorderQuantity">Quantity to Order</Label>
+                  <Input
+                    id="reorderQuantity"
+                    type="number"
+                    min="1"
+                    defaultValue={(selectedProductForReorder.reorderLevel || 10) * 2}
+                    placeholder="Enter quantity"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="unitCost">Unit Cost</Label>
+                  <Input
+                    id="unitCost"
+                    type="number"
+                    step="0.01"
+                    defaultValue={selectedProductForReorder.costPrice || ""}
+                    placeholder="Enter unit cost"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="taxRate">Tax Rate (%)</Label>
+                  <Input
+                    id="taxRate"
+                    type="number"
+                    step="0.1"
+                    defaultValue="8.5"
+                    placeholder="8.5"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="discount">Discount</Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    step="0.01"
+                    defaultValue="0"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shipping">Shipping Cost</Label>
+                  <Input
+                    id="shipping"
+                    type="number"
+                    step="0.01"
+                    defaultValue="0"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="notes">Purchase Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Additional notes for this purchase order..."
+                  className="min-h-[60px]"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setOpenReorderModal(false)}>
+                  Cancel
+                </Button>
+                <Button className="bg-orange-600 hover:bg-orange-700">
+                  Create Purchase Order & Invoice
+                </Button>
+              </div>
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -2210,381 +2292,235 @@ export default function Inventory() {
             </DialogDescription>
           </DialogHeader>
           
-          <BulkReorderForm 
-            suppliers={suppliers}
-            products={enrichedProducts}
-            onSubmit={(data) => {
-              console.log('Bulk reorder submitted:', data);
-              toast({
-                title: "Bulk Purchase Order Created",
-                description: `Bulk reorder for ${data.selectedProducts.length} products has been processed.`,
-              });
-              setOpenBulkReorderModal(false);
-              setSelectedSupplierId("");
-              setSelectedProductsForBulkReorder([]);
-              setBulkReorderData({});
-            }}
-            onCancel={() => {
-              setOpenBulkReorderModal(false);
-              setSelectedSupplierId("");
-              setSelectedProductsForBulkReorder([]);
-              setBulkReorderData({});
-            }}
-          />
+          <div className="space-y-6">
+            {/* Supplier Selection */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Select Supplier</Label>
+                <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose supplier..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Purchase Date</Label>
+                <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} />
+              </div>
+            </div>
+
+            {/* Product Selection Table */}
+            {selectedSupplierId && (
+              <div className="border rounded-lg">
+                <div className="p-4 bg-slate-50 border-b">
+                  <h4 className="font-medium">Products from {suppliers.find(s => s.id === selectedSupplierId)?.name}</h4>
+                  <p className="text-sm text-slate-600">Select products to include in bulk reorder</p>
+                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">Select</TableHead>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Current Stock</TableHead>
+                      <TableHead>Reorder Level</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Unit Cost</TableHead>
+                      <TableHead>Subtotal</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {enrichedProducts.filter(p => p.supplierId === selectedSupplierId).map((product) => (
+                      <TableRow key={product.id} className={selectedProductsForBulkReorder.includes(product.id) ? "bg-blue-50" : ""}>
+                        <TableCell>
+                          <Checkbox 
+                            checked={selectedProductsForBulkReorder.includes(product.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedProductsForBulkReorder([...selectedProductsForBulkReorder, product.id]);
+                                // Initialize default values
+                                setBulkReorderData(prev => ({
+                                  ...prev,
+                                  [product.id]: { 
+                                    quantity: (product.reorderLevel || 10) * 2,
+                                    unitCost: parseFloat(product.costPrice || "0")
+                                  }
+                                }));
+                              } else {
+                                setSelectedProductsForBulkReorder(selectedProductsForBulkReorder.filter(id => id !== product.id));
+                                setBulkReorderData(prev => {
+                                  const newData = { ...prev };
+                                  delete newData[product.id];
+                                  return newData;
+                                });
+                              }
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl">{getProductTypeIcon(product.productType || "frames")}</div>
+                            <div>
+                              <p className="font-medium">{product.name}</p>
+                              <p className="text-sm text-slate-500">{product.sku}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={product.currentStock <= (product.reorderLevel || 10) ? "destructive" : "default"}>
+                            {product.currentStock} units
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-amber-600 font-medium">{product.reorderLevel || 10} units</span>
+                        </TableCell>
+                        <TableCell>
+                          {selectedProductsForBulkReorder.includes(product.id) && (
+                            <Input
+                              type="number"
+                              min="1"
+                              value={bulkReorderData[product.id]?.quantity || (product.reorderLevel || 10) * 2}
+                              className="w-20"
+                              onChange={(e) => {
+                                const quantity = parseInt(e.target.value) || 0;
+                                setBulkReorderData(prev => ({
+                                  ...prev,
+                                  [product.id]: { ...prev[product.id], quantity }
+                                }));
+                              }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {selectedProductsForBulkReorder.includes(product.id) && (
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={bulkReorderData[product.id]?.unitCost || parseFloat(product.costPrice || "0")}
+                              className="w-24"
+                              onChange={(e) => {
+                                const unitCost = parseFloat(e.target.value) || 0;
+                                setBulkReorderData(prev => ({
+                                  ...prev,
+                                  [product.id]: { ...prev[product.id], unitCost }
+                                }));
+                              }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {selectedProductsForBulkReorder.includes(product.id) && (
+                            <span className="font-medium text-green-600">
+                              ${((bulkReorderData[product.id]?.quantity || (product.reorderLevel || 10) * 2) * 
+                                 (bulkReorderData[product.id]?.unitCost || parseFloat(product.costPrice || "0"))).toFixed(2)}
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+
+            {/* Order Summary & Costs */}
+            {selectedProductsForBulkReorder.length > 0 && (
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h4 className="font-medium">Additional Costs</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Tax Rate (%)</Label>
+                      <Input type="number" step="0.1" defaultValue="8.5" id="bulkTaxRate" />
+                    </div>
+                    <div>
+                      <Label>Discount Amount</Label>
+                      <Input type="number" step="0.01" defaultValue="0" id="bulkDiscount" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Shipping Cost</Label>
+                      <Input type="number" step="0.01" defaultValue="0" id="bulkShipping" />
+                    </div>
+                    <div>
+                      <Label>Handling Fee</Label>
+                      <Input type="number" step="0.01" defaultValue="0" id="bulkHandling" />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Purchase Notes</Label>
+                    <Textarea placeholder="Notes for this bulk purchase order..." className="min-h-[80px]" />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Order Summary</h4>
+                  <div className="bg-slate-50 p-4 rounded-lg space-y-3">
+                    <div className="flex justify-between">
+                      <span>Products Selected:</span>
+                      <span className="font-medium">{selectedProductsForBulkReorder.length} items</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Subtotal:</span>
+                      <span className="font-medium">${calculateBulkSubtotal().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tax (8.5%):</span>
+                      <span>${(calculateBulkSubtotal() * 0.085).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Shipping:</span>
+                      <span>$0.00</span>
+                    </div>
+                    <div className="border-t pt-2 flex justify-between font-semibold text-lg">
+                      <span>Total Amount:</span>
+                      <span className="text-blue-600">${(calculateBulkSubtotal() * 1.085).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h5 className="font-medium text-blue-800 mb-2">Invoice Generation</h5>
+                    <p className="text-sm text-blue-600">
+                      This will automatically generate a comprehensive purchase invoice with:
+                    </p>
+                    <ul className="text-sm text-blue-600 mt-2 space-y-1">
+                      <li>• PDF invoice download</li>
+                      <li>• Inventory stock updates</li>
+                      <li>• Accounting entry creation</li>
+                      <li>• Email notification to supplier</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => {
+                setOpenBulkReorderModal(false);
+                setSelectedSupplierId("");
+                setSelectedProductsForBulkReorder([]);
+                setBulkReorderData({});
+              }}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-orange-600 hover:bg-orange-700"
+                disabled={selectedProductsForBulkReorder.length === 0}
+              >
+                <Package className="mr-2 h-4 w-4" />
+                Create Bulk Purchase Order & Invoices ({selectedProductsForBulkReorder.length} items)
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </main>
-  );
-}
-
-// Reorder Form Component
-interface ReorderFormProps {
-  product: Product;
-  currentStock: number;
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
-}
-
-function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormProps) {
-  const [quantity, setQuantity] = useState((product.reorderLevel || 10) * 2);
-  const [unitCost, setUnitCost] = useState(parseFloat(product.costPrice || "0"));
-  const [taxRate, setTaxRate] = useState(8.5);
-  const [discount, setDiscount] = useState(0);
-  const [shipping, setShipping] = useState(0);
-  const [handling, setHandling] = useState(0);
-  const [notes, setNotes] = useState("");
-
-  const subtotal = quantity * unitCost;
-  const taxAmount = subtotal * (taxRate / 100);
-  const total = subtotal + taxAmount - discount + shipping + handling;
-
-  const handleSubmit = () => {
-    onSubmit({
-      productId: product.id,
-      quantity,
-      unitCost,
-      taxRate,
-      discount,
-      shipping,
-      handling,
-      notes,
-      subtotal,
-      taxAmount,
-      total
-    });
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label>Current Stock</Label>
-          <p className="text-lg font-semibold text-blue-600">{currentStock} units</p>
-        </div>
-        <div>
-          <Label>Reorder Level</Label>
-          <p className="text-sm text-slate-600">{product.reorderLevel || 10} units</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <Label htmlFor="quantity">Quantity to Order</Label>
-          <Input
-            id="quantity"
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-            placeholder="Enter quantity"
-          />
-        </div>
-        <div>
-          <Label htmlFor="unitCost">Unit Cost</Label>
-          <Input
-            id="unitCost"
-            type="number"
-            step="0.01"
-            value={unitCost}
-            onChange={(e) => setUnitCost(parseFloat(e.target.value) || 0)}
-            placeholder="Enter unit cost"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4">
-        <div>
-          <Label htmlFor="taxRate">Tax Rate (%)</Label>
-          <Input
-            id="taxRate"
-            type="number"
-            step="0.1"
-            value={taxRate}
-            onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-            placeholder="8.5"
-          />
-        </div>
-        <div>
-          <Label htmlFor="discount">Discount</Label>
-          <Input
-            id="discount"
-            type="number"
-            step="0.01"
-            value={discount}
-            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <Label htmlFor="shipping">Shipping</Label>
-          <Input
-            id="shipping"
-            type="number"
-            step="0.01"
-            value={shipping}
-            onChange={(e) => setShipping(parseFloat(e.target.value) || 0)}
-            placeholder="0.00"
-          />
-        </div>
-        <div>
-          <Label htmlFor="handling">Handling</Label>
-          <Input
-            id="handling"
-            type="number"
-            step="0.01"
-            value={handling}
-            onChange={(e) => setHandling(parseFloat(e.target.value) || 0)}
-            placeholder="0.00"
-          />
-        </div>
-      </div>
-
-      <div>
-        <Label htmlFor="notes">Purchase Notes</Label>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Additional notes for this purchase order..."
-          className="min-h-[60px]"
-        />
-      </div>
-
-      {/* Cost Summary */}
-      <div className="bg-slate-50 p-4 rounded-lg space-y-2">
-        <div className="flex justify-between">
-          <span>Subtotal:</span>
-          <span className="font-medium">${subtotal.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Tax ({taxRate}%):</span>
-          <span>${taxAmount.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Discount:</span>
-          <span>-${discount.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Shipping & Handling:</span>
-          <span>${(shipping + handling).toFixed(2)}</span>
-        </div>
-        <div className="border-t pt-2 flex justify-between font-semibold text-lg">
-          <span>Total:</span>
-          <span className="text-blue-600">${total.toFixed(2)}</span>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button onClick={handleSubmit} className="bg-orange-600 hover:bg-orange-700">
-          <Calculator className="mr-2 h-4 w-4" />
-          Create Purchase Order & Invoice
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// Bulk Reorder Form Component
-interface BulkReorderFormProps {
-  suppliers: Supplier[];
-  products: any[];
-  onSubmit: (data: any) => void;
-  onCancel: () => void;
-}
-
-function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorderFormProps) {
-  const [selectedSupplierId, setSelectedSupplierId] = useState("");
-  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [productData, setProductData] = useState<Record<string, { quantity: number; unitCost: number }>>({});
-
-  const filteredProducts = products.filter(p => p.supplierId === selectedSupplierId);
-
-  const calculateSubtotal = () => {
-    return selectedProducts.reduce((total, productId) => {
-      const data = productData[productId];
-      if (!data) return total;
-      return total + (data.quantity * data.unitCost);
-    }, 0);
-  };
-
-  const handleProductSelect = (productId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedProducts([...selectedProducts, productId]);
-      const product = products.find(p => p.id === productId);
-      if (product) {
-        setProductData(prev => ({
-          ...prev,
-          [productId]: {
-            quantity: (product.reorderLevel || 10) * 2,
-            unitCost: parseFloat(product.costPrice || "0")
-          }
-        }));
-      }
-    } else {
-      setSelectedProducts(selectedProducts.filter(id => id !== productId));
-      setProductData(prev => {
-        const newData = { ...prev };
-        delete newData[productId];
-        return newData;
-      });
-    }
-  };
-
-  const handleSubmit = () => {
-    const subtotal = calculateSubtotal();
-    onSubmit({
-      supplierId: selectedSupplierId,
-      selectedProducts,
-      productData,
-      subtotal,
-      total: subtotal * 1.085 // 8.5% tax
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <Label>Select Supplier</Label>
-        <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Choose supplier..." />
-          </SelectTrigger>
-          <SelectContent>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={supplier.id}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {selectedSupplierId && filteredProducts.length > 0 && (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12">Select</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Current Stock</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit Cost</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell>
-                    <Checkbox 
-                      checked={selectedProducts.includes(product.id)}
-                      onCheckedChange={(checked) => handleProductSelect(product.id, !!checked)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-sm text-slate-500">{product.sku}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={product.currentStock <= (product.reorderLevel || 10) ? "destructive" : "default"}>
-                      {product.currentStock} units
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {selectedProducts.includes(product.id) && (
-                      <Input
-                        type="number"
-                        min="1"
-                        value={productData[product.id]?.quantity || 0}
-                        onChange={(e) => {
-                          const quantity = parseInt(e.target.value) || 0;
-                          setProductData(prev => ({
-                            ...prev,
-                            [product.id]: { ...prev[product.id], quantity }
-                          }));
-                        }}
-                        className="w-20"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {selectedProducts.includes(product.id) && (
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={productData[product.id]?.unitCost || 0}
-                        onChange={(e) => {
-                          const unitCost = parseFloat(e.target.value) || 0;
-                          setProductData(prev => ({
-                            ...prev,
-                            [product.id]: { ...prev[product.id], unitCost }
-                          }));
-                        }}
-                        className="w-24"
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {selectedProducts.includes(product.id) && (
-                      <span className="font-medium text-green-600">
-                        ${((productData[product.id]?.quantity || 0) * (productData[product.id]?.unitCost || 0)).toFixed(2)}
-                      </span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {selectedProducts.length > 0 && (
-        <div className="bg-slate-50 p-4 rounded-lg">
-          <div className="flex justify-between items-center">
-            <span>Total ({selectedProducts.length} products):</span>
-            <span className="font-semibold text-lg text-blue-600">${(calculateSubtotal() * 1.085).toFixed(2)}</span>
-          </div>
-        </div>
-      )}
-
-      <div className="flex justify-end space-x-2">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          disabled={selectedProducts.length === 0}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Package className="mr-2 h-4 w-4" />
-          Create Bulk Purchase Order ({selectedProducts.length} items)
-        </Button>
-      </div>
-    </div>
   );
 }
