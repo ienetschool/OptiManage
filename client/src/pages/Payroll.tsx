@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import QRCode from "react-qr-code";
 
 export default function Payroll() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -554,171 +555,66 @@ export default function Payroll() {
                 <div class="employee-section">
                   <div class="qr-code-container">
                     <div class="qr-code">
-                      <svg viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
-                        <rect width="25" height="25" fill="white"/>
-                        <g fill="#2d3748">
-                          <!-- QR Code Pattern -->
-                          <rect x="0" y="0" width="1" height="1"/>
-                          <rect x="1" y="0" width="1" height="1"/>
-                          <rect x="2" y="0" width="1" height="1"/>
-                          <rect x="3" y="0" width="1" height="1"/>
-                          <rect x="4" y="0" width="1" height="1"/>
-                          <rect x="5" y="0" width="1" height="1"/>
-                          <rect x="6" y="0" width="1" height="1"/>
-                          <rect x="8" y="0" width="1" height="1"/>
-                          <rect x="10" y="0" width="1" height="1"/>
-                          <rect x="12" y="0" width="1" height="1"/>
-                          <rect x="14" y="0" width="1" height="1"/>
-                          <rect x="16" y="0" width="1" height="1"/>
-                          <rect x="18" y="0" width="1" height="1"/>
-                          <rect x="19" y="0" width="1" height="1"/>
-                          <rect x="20" y="0" width="1" height="1"/>
-                          <rect x="21" y="0" width="1" height="1"/>
-                          <rect x="22" y="0" width="1" height="1"/>
-                          <rect x="23" y="0" width="1" height="1"/>
-                          <rect x="24" y="0" width="1" height="1"/>
+                      <svg viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="21" height="21" fill="white"/>
+                        <g fill="black">
+                          <!-- Top-left finder pattern -->
+                          <rect x="0" y="0" width="7" height="7" fill="black"/>
+                          <rect x="1" y="1" width="5" height="5" fill="white"/>
+                          <rect x="2" y="2" width="3" height="3" fill="black"/>
                           
-                          <rect x="0" y="1" width="1" height="1"/>
-                          <rect x="6" y="1" width="1" height="1"/>
-                          <rect x="10" y="1" width="1" height="1"/>
-                          <rect x="12" y="1" width="1" height="1"/>
-                          <rect x="14" y="1" width="1" height="1"/>
-                          <rect x="18" y="1" width="1" height="1"/>
-                          <rect x="24" y="1" width="1" height="1"/>
+                          <!-- Top-right finder pattern -->
+                          <rect x="14" y="0" width="7" height="7" fill="black"/>
+                          <rect x="15" y="1" width="5" height="5" fill="white"/>
+                          <rect x="16" y="2" width="3" height="3" fill="black"/>
                           
-                          <rect x="0" y="2" width="1" height="1"/>
-                          <rect x="2" y="2" width="1" height="1"/>
-                          <rect x="3" y="2" width="1" height="1"/>
-                          <rect x="4" y="2" width="1" height="1"/>
-                          <rect x="6" y="2" width="1" height="1"/>
-                          <rect x="8" y="2" width="1" height="1"/>
-                          <rect x="12" y="2" width="1" height="1"/>
-                          <rect x="16" y="2" width="1" height="1"/>
-                          <rect x="18" y="2" width="1" height="1"/>
-                          <rect x="20" y="2" width="1" height="1"/>
-                          <rect x="21" y="2" width="1" height="1"/>
-                          <rect x="22" y="2" width="1" height="1"/>
-                          <rect x="24" y="2" width="1" height="1"/>
+                          <!-- Bottom-left finder pattern -->
+                          <rect x="0" y="14" width="7" height="7" fill="black"/>
+                          <rect x="1" y="15" width="5" height="5" fill="white"/>
+                          <rect x="2" y="16" width="3" height="3" fill="black"/>
                           
-                          <rect x="0" y="3" width="1" height="1"/>
-                          <rect x="2" y="3" width="1" height="1"/>
-                          <rect x="3" y="3" width="1" height="1"/>
-                          <rect x="4" y="3" width="1" height="1"/>
-                          <rect x="6" y="3" width="1" height="1"/>
-                          <rect x="8" y="3" width="1" height="1"/>
-                          <rect x="10" y="3" width="1" height="1"/>
-                          <rect x="14" y="3" width="1" height="1"/>
-                          <rect x="16" y="3" width="1" height="1"/>
-                          <rect x="18" y="3" width="1" height="1"/>
-                          <rect x="20" y="3" width="1" height="1"/>
-                          <rect x="21" y="3" width="1" height="1"/>
-                          <rect x="22" y="3" width="1" height="1"/>
-                          <rect x="24" y="3" width="1" height="1"/>
-                          
-                          <rect x="0" y="4" width="1" height="1"/>
-                          <rect x="2" y="4" width="1" height="1"/>
-                          <rect x="3" y="4" width="1" height="1"/>
-                          <rect x="4" y="4" width="1" height="1"/>
-                          <rect x="6" y="4" width="1" height="1"/>
-                          <rect x="8" y="4" width="1" height="1"/>
-                          <rect x="10" y="4" width="1" height="1"/>
-                          <rect x="12" y="4" width="1" height="1"/>
-                          <rect x="14" y="4" width="1" height="1"/>
-                          <rect x="16" y="4" width="1" height="1"/>
-                          <rect x="18" y="4" width="1" height="1"/>
-                          <rect x="20" y="4" width="1" height="1"/>
-                          <rect x="21" y="4" width="1" height="1"/>
-                          <rect x="22" y="4" width="1" height="1"/>
-                          <rect x="24" y="4" width="1" height="1"/>
-                          
-                          <rect x="0" y="5" width="1" height="1"/>
-                          <rect x="6" y="5" width="1" height="1"/>
-                          <rect x="8" y="5" width="1" height="1"/>
-                          <rect x="10" y="5" width="1" height="1"/>
-                          <rect x="12" y="5" width="1" height="1"/>
-                          <rect x="14" y="5" width="1" height="1"/>
-                          <rect x="16" y="5" width="1" height="1"/>
-                          <rect x="18" y="5" width="1" height="1"/>
-                          <rect x="24" y="5" width="1" height="1"/>
-                          
-                          <rect x="0" y="6" width="1" height="1"/>
-                          <rect x="1" y="6" width="1" height="1"/>
-                          <rect x="2" y="6" width="1" height="1"/>
-                          <rect x="3" y="6" width="1" height="1"/>
-                          <rect x="4" y="6" width="1" height="1"/>
-                          <rect x="5" y="6" width="1" height="1"/>
-                          <rect x="6" y="6" width="1" height="1"/>
+                          <!-- Timing patterns -->
                           <rect x="8" y="6" width="1" height="1"/>
                           <rect x="10" y="6" width="1" height="1"/>
                           <rect x="12" y="6" width="1" height="1"/>
-                          <rect x="14" y="6" width="1" height="1"/>
-                          <rect x="16" y="6" width="1" height="1"/>
-                          <rect x="18" y="6" width="1" height="1"/>
-                          <rect x="19" y="6" width="1" height="1"/>
-                          <rect x="20" y="6" width="1" height="1"/>
-                          <rect x="21" y="6" width="1" height="1"/>
-                          <rect x="22" y="6" width="1" height="1"/>
-                          <rect x="23" y="6" width="1" height="1"/>
-                          <rect x="24" y="6" width="1" height="1"/>
-                          
-                          <!-- Middle patterns -->
-                          <rect x="10" y="8" width="1" height="1"/>
-                          <rect x="12" y="8" width="1" height="1"/>
-                          <rect x="14" y="8" width="1" height="1"/>
-                          
-                          <rect x="0" y="10" width="1" height="1"/>
-                          <rect x="2" y="10" width="1" height="1"/>
-                          <rect x="4" y="10" width="1" height="1"/>
+                          <rect x="6" y="8" width="1" height="1"/>
                           <rect x="6" y="10" width="1" height="1"/>
+                          <rect x="6" y="12" width="1" height="1"/>
+                          
+                          <!-- Data modules -->
+                          <rect x="8" y="8" width="1" height="1"/>
+                          <rect x="9" y="8" width="1" height="1"/>
+                          <rect x="11" y="8" width="1" height="1"/>
+                          <rect x="12" y="8" width="1" height="1"/>
+                          <rect x="8" y="9" width="1" height="1"/>
+                          <rect x="10" y="9" width="1" height="1"/>
+                          <rect x="12" y="9" width="1" height="1"/>
                           <rect x="8" y="10" width="1" height="1"/>
-                          <rect x="10" y="10" width="1" height="1"/>
+                          <rect x="9" y="10" width="1" height="1"/>
+                          <rect x="11" y="10" width="1" height="1"/>
+                          <rect x="8" y="11" width="1" height="1"/>
+                          <rect x="10" y="11" width="1" height="1"/>
+                          <rect x="12" y="11" width="1" height="1"/>
+                          <rect x="9" y="12" width="1" height="1"/>
+                          <rect x="11" y="12" width="1" height="1"/>
+                          
+                          <!-- Additional data pattern -->
+                          <rect x="14" y="8" width="1" height="1"/>
+                          <rect x="15" y="8" width="1" height="1"/>
+                          <rect x="17" y="8" width="1" height="1"/>
+                          <rect x="14" y="9" width="1" height="1"/>
+                          <rect x="16" y="9" width="1" height="1"/>
                           <rect x="14" y="10" width="1" height="1"/>
-                          <rect x="16" y="10" width="1" height="1"/>
-                          <rect x="18" y="10" width="1" height="1"/>
-                          <rect x="20" y="10" width="1" height="1"/>
-                          <rect x="22" y="10" width="1" height="1"/>
-                          <rect x="24" y="10" width="1" height="1"/>
-                          
-                          <!-- Bottom corner pattern -->
-                          <rect x="0" y="18" width="1" height="1"/>
-                          <rect x="1" y="18" width="1" height="1"/>
-                          <rect x="2" y="18" width="1" height="1"/>
-                          <rect x="3" y="18" width="1" height="1"/>
-                          <rect x="4" y="18" width="1" height="1"/>
-                          <rect x="5" y="18" width="1" height="1"/>
-                          <rect x="6" y="18" width="1" height="1"/>
-                          
-                          <rect x="0" y="19" width="1" height="1"/>
-                          <rect x="6" y="19" width="1" height="1"/>
-                          
-                          <rect x="0" y="20" width="1" height="1"/>
-                          <rect x="2" y="20" width="1" height="1"/>
-                          <rect x="3" y="20" width="1" height="1"/>
-                          <rect x="4" y="20" width="1" height="1"/>
-                          <rect x="6" y="20" width="1" height="1"/>
-                          
-                          <rect x="0" y="21" width="1" height="1"/>
-                          <rect x="2" y="21" width="1" height="1"/>
-                          <rect x="3" y="21" width="1" height="1"/>
-                          <rect x="4" y="21" width="1" height="1"/>
-                          <rect x="6" y="21" width="1" height="1"/>
-                          
-                          <rect x="0" y="22" width="1" height="1"/>
-                          <rect x="2" y="22" width="1" height="1"/>
-                          <rect x="3" y="22" width="1" height="1"/>
-                          <rect x="4" y="22" width="1" height="1"/>
-                          <rect x="6" y="22" width="1" height="1"/>
-                          
-                          <rect x="0" y="23" width="1" height="1"/>
-                          <rect x="6" y="23" width="1" height="1"/>
-                          
-                          <rect x="0" y="24" width="1" height="1"/>
-                          <rect x="1" y="24" width="1" height="1"/>
-                          <rect x="2" y="24" width="1" height="1"/>
-                          <rect x="3" y="24" width="1" height="1"/>
-                          <rect x="4" y="24" width="1" height="1"/>
-                          <rect x="5" y="24" width="1" height="1"/>
-                          <rect x="6" y="24" width="1" height="1"/>
+                          <rect x="15" y="10" width="1" height="1"/>
+                          <rect x="17" y="10" width="1" height="1"/>
+                          <rect x="8" y="14" width="1" height="1"/>
+                          <rect x="9" y="14" width="1" height="1"/>
+                          <rect x="11" y="14" width="1" height="1"/>
+                          <rect x="8" y="15" width="1" height="1"/>
+                          <rect x="10" y="15" width="1" height="1"/>
+                          <rect x="8" y="16" width="1" height="1"/>
+                          <rect x="9" y="16" width="1" height="1"/>
+                          <rect x="11" y="16" width="1" height="1"/>
                         </g>
                       </svg>
                     </div>
