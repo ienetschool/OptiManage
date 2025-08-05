@@ -636,7 +636,9 @@ export default function InvoiceManagement() {
       @media screen, print {
         .header { background: #4F46E5 !important; color: white !important; }
         .qr-section { background: white !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        .qr-section svg { fill: #4F46E5 !important; display: block !important; }
+        .qr-section svg { display: block !important; }
+        .qr-section svg rect[fill="black"] { fill: black !important; }
+        .qr-section svg rect[fill="white"] { fill: white !important; }
         .invoice-type { background: #4F46E5 !important; color: white !important; }
         .invoice-number { background: #4F46E5 !important; color: white !important; }
         .items-table th { background: #4F46E5 !important; color: white !important; }
@@ -675,111 +677,36 @@ export default function InvoiceManagement() {
       <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
         <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
           <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
-            <svg width="64" height="64" viewBox="0 0 21 21" style="shape-rendering: crispEdges;">
-              <!-- White background -->
-              <rect x="0" y="0" width="21" height="21" fill="white"/>
+            <div style="width: 60px; height: 60px; background: white; position: relative;">
+              <!-- CSS-based QR code pattern using solid blocks -->
+              <div style="position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #000; border-radius: 2px;"></div>
+              <div style="position: absolute; top: 4px; left: 4px; width: 14px; height: 14px; background: #fff; border-radius: 1px;"></div>
+              <div style="position: absolute; top: 6px; left: 6px; width: 10px; height: 10px; background: #000; border-radius: 1px;"></div>
               
-              <!-- Top-left finder pattern -->
-              <rect x="0" y="0" width="7" height="7" fill="black"/>
-              <rect x="1" y="1" width="5" height="5" fill="white"/>
-              <rect x="2" y="2" width="3" height="3" fill="black"/>
+              <div style="position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: #000; border-radius: 2px;"></div>
+              <div style="position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; background: #fff; border-radius: 1px;"></div>
+              <div style="position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; background: #000; border-radius: 1px;"></div>
               
-              <!-- Top-right finder pattern -->
-              <rect x="14" y="0" width="7" height="7" fill="black"/>
-              <rect x="15" y="1" width="5" height="5" fill="white"/>
-              <rect x="16" y="2" width="3" height="3" fill="black"/>
+              <div style="position: absolute; bottom: 2px; left: 2px; width: 18px; height: 18px; background: #000; border-radius: 2px;"></div>
+              <div style="position: absolute; bottom: 4px; left: 4px; width: 14px; height: 14px; background: #fff; border-radius: 1px;"></div>
+              <div style="position: absolute; bottom: 6px; left: 6px; width: 10px; height: 10px; background: #000; border-radius: 1px;"></div>
               
-              <!-- Bottom-left finder pattern -->
-              <rect x="0" y="14" width="7" height="7" fill="black"/>
-              <rect x="1" y="15" width="5" height="5" fill="white"/>
-              <rect x="2" y="16" width="3" height="3" fill="black"/>
+              <!-- Data pattern dots -->
+              <div style="position: absolute; top: 25px; left: 25px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 25px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 32px; left: 25px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 32px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
               
-              <!-- Timing patterns (horizontal) -->
-              <rect x="8" y="6" width="1" height="1" fill="black"/>
-              <rect x="10" y="6" width="1" height="1" fill="black"/>
-              <rect x="12" y="6" width="1" height="1" fill="black"/>
+              <div style="position: absolute; top: 12px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 18px; left: 25px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 45px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 45px; left: 45px; width: 3px; height: 3px; background: #000;"></div>
               
-              <!-- Timing patterns (vertical) -->
-              <rect x="6" y="8" width="1" height="1" fill="black"/>
-              <rect x="6" y="10" width="1" height="1" fill="black"/>
-              <rect x="6" y="12" width="1" height="1" fill="black"/>
-              
-              <!-- Data modules - scattered pattern for authentic look -->
-              <rect x="9" y="0" width="1" height="1" fill="black"/>
-              <rect x="11" y="0" width="1" height="1" fill="black"/>
-              <rect x="13" y="0" width="1" height="1" fill="black"/>
-              
-              <rect x="8" y="1" width="1" height="1" fill="black"/>
-              <rect x="10" y="1" width="1" height="1" fill="black"/>
-              <rect x="12" y="1" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="2" width="1" height="1" fill="black"/>
-              <rect x="11" y="2" width="1" height="1" fill="black"/>
-              <rect x="13" y="2" width="1" height="1" fill="black"/>
-              
-              <rect x="8" y="3" width="1" height="1" fill="black"/>
-              <rect x="12" y="3" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="4" width="1" height="1" fill="black"/>
-              <rect x="11" y="4" width="1" height="1" fill="black"/>
-              <rect x="13" y="4" width="1" height="1" fill="black"/>
-              
-              <!-- Center data area -->
-              <rect x="8" y="8" width="1" height="1" fill="black"/>
-              <rect x="10" y="8" width="1" height="1" fill="black"/>
-              <rect x="12" y="8" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="9" width="1" height="1" fill="black"/>
-              <rect x="11" y="9" width="1" height="1" fill="black"/>
-              
-              <rect x="8" y="10" width="1" height="1" fill="black"/>
-              <rect x="12" y="10" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="11" width="1" height="1" fill="black"/>
-              <rect x="11" y="11" width="1" height="1" fill="black"/>
-              
-              <rect x="10" y="12" width="1" height="1" fill="black"/>
-              <rect x="12" y="12" width="1" height="1" fill="black"/>
-              
-              <!-- Bottom right data -->
-              <rect x="14" y="8" width="1" height="1" fill="black"/>
-              <rect x="16" y="8" width="1" height="1" fill="black"/>
-              <rect x="18" y="8" width="1" height="1" fill="black"/>
-              <rect x="20" y="8" width="1" height="1" fill="black"/>
-              
-              <rect x="15" y="9" width="1" height="1" fill="black"/>
-              <rect x="17" y="9" width="1" height="1" fill="black"/>
-              <rect x="19" y="9" width="1" height="1" fill="black"/>
-              
-              <rect x="14" y="10" width="1" height="1" fill="black"/>
-              <rect x="16" y="10" width="1" height="1" fill="black"/>
-              <rect x="18" y="10" width="1" height="1" fill="black"/>
-              <rect x="20" y="10" width="1" height="1" fill="black"/>
-              
-              <!-- Bottom area -->
-              <rect x="8" y="14" width="1" height="1" fill="black"/>
-              <rect x="10" y="14" width="1" height="1" fill="black"/>
-              <rect x="12" y="14" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="15" width="1" height="1" fill="black"/>
-              <rect x="11" y="15" width="1" height="1" fill="black"/>
-              
-              <rect x="8" y="16" width="1" height="1" fill="black"/>
-              <rect x="10" y="16" width="1" height="1" fill="black"/>
-              <rect x="12" y="16" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="17" width="1" height="1" fill="black"/>
-              <rect x="11" y="17" width="1" height="1" fill="black"/>
-              
-              <rect x="8" y="18" width="1" height="1" fill="black"/>
-              <rect x="10" y="18" width="1" height="1" fill="black"/>
-              <rect x="12" y="18" width="1" height="1" fill="black"/>
-              
-              <rect x="9" y="19" width="1" height="1" fill="black"/>
-              <rect x="11" y="19" width="1" height="1" fill="black"/>
-              
-              <rect x="10" y="20" width="1" height="1" fill="black"/>
-            </svg>
+              <div style="position: absolute; top: 25px; right: 25px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 32px; right: 25px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 25px; right: 32px; width: 3px; height: 3px; background: #000;"></div>
+              <div style="position: absolute; top: 32px; right: 32px; width: 3px; height: 3px; background: #000;"></div>
+            </div>
           </div>
           <div class="company-info" style="text-align: center; flex-grow: 1;">
             <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
