@@ -1700,8 +1700,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send('Invoice not found');
       }
 
-
-
       const invoiceData = {
         invoiceNumber: invoice.invoiceNumber,
         date: new Date(invoice.date || '').toLocaleDateString('en-US'),
