@@ -35,7 +35,12 @@ function InventoryPurchasesCard() {
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
-  const inventoryExpenditures = (accountingSummary as any)?.expenditureBreakdown?.inventory || 0;
+  // Use totalExpenditures from the API response
+  const inventoryExpenditures = (accountingSummary as any)?.totalExpenditures || 0;
+  
+  // Debug logging to check the value
+  console.log('💰 Debug - Raw totalExpenditures:', (accountingSummary as any)?.totalExpenditures);
+  console.log('💰 Debug - Final inventoryExpenditures:', inventoryExpenditures);
 
   return (
     <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
