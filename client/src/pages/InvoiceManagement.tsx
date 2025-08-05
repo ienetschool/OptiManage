@@ -279,19 +279,44 @@ export default function InvoiceManagement() {
   // Enhance invoice data with customer names and sort by latest date first
   const enrichedInvoices = React.useMemo(() => {
     if (!Array.isArray(invoices)) return [];
-    return invoices.map((invoice: any) => {
+    
+    const mapped = invoices.map((invoice: any) => {
       const customer = customers.find(c => c.id === invoice.customerId);
       return {
         ...invoice,
         customerName: customer ? `${customer.firstName} ${customer.lastName}` : 
                     invoice.customerName || 'Guest Customer'
       };
-    }).sort((a: any, b: any) => {
-      // Sort by date in descending order (latest first)
-      const dateA = new Date(a.date || a.issueDate || a.createdAt || 0);
-      const dateB = new Date(b.date || b.issueDate || b.createdAt || 0);
+    });
+    
+    // Sort by date in descending order (latest first)
+    const sorted = mapped.sort((a: any, b: any) => {
+      // Try multiple date fields and use creation date as fallback
+      const dateA = new Date(a.date || a.issueDate || a.createdAt || a.invoiceNumber?.split('-')[1] || 0);
+      const dateB = new Date(b.date || b.issueDate || b.createdAt || b.invoiceNumber?.split('-')[1] || 0);
+      
+      // Debug logging for first few items
+      if (mapped.length > 0 && mapped.indexOf(a) < 3) {
+        console.log(`🔍 SORTING DEBUG: ${a.invoiceNumber}`, {
+          originalDate: a.date,
+          issueDate: a.issueDate, 
+          createdAt: a.createdAt,
+          parsedDate: dateA,
+          timestamp: dateA.getTime()
+        });
+      }
+      
       return dateB.getTime() - dateA.getTime();
     });
+    
+    console.log(`📋 SORTED INVOICES (first 5):`, sorted.slice(0, 5).map(inv => ({
+      number: inv.invoiceNumber,
+      date: inv.date,
+      issueDate: inv.issueDate,
+      createdAt: inv.createdAt
+    })));
+    
+    return sorted;
   }, [invoices, customers]);
 
   const { data: products = [], refetch: refetchProducts, isLoading: productsLoading } = useQuery<Product[]>({
