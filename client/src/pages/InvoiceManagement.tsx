@@ -619,7 +619,8 @@ export default function InvoiceManagement() {
 
   // Professional A4 Invoice Generation - Blue Design with Print Media CSS
   const generateProfessionalInvoice = (invoice: Invoice) => {
-    console.log('🖨️ Starting invoice generation for:', invoice.invoiceNumber);
+    console.log('🖨️ PRINT FUNCTION CALLED - Starting invoice generation for:', invoice.invoiceNumber);
+    console.log('📋 PRINT FUNCTION - Invoice data:', invoice);
     
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
@@ -627,11 +628,13 @@ export default function InvoiceManagement() {
     
     // Create a simple base64 encoded QR-like pattern image
     const createSimpleQRPattern = () => {
+      console.log('🎨 QR PATTERN GENERATION - Starting canvas creation');
       // This is a simple base64 encoded 80x80 black and white pattern that looks like a QR code
       const canvas = document.createElement('canvas');
       canvas.width = 80;
       canvas.height = 80;
       const ctx = canvas.getContext('2d');
+      console.log('🎨 QR PATTERN GENERATION - Canvas created, context:', ctx ? 'SUCCESS' : 'FAILED');
       
       if (ctx) {
         // White background
@@ -679,7 +682,9 @@ export default function InvoiceManagement() {
     };
     
     const qrCodeDataURL = createSimpleQRPattern();
-    console.log('📋 QR Code pattern created successfully');
+    console.log('📋 QR PATTERN GENERATION - Pattern created successfully');
+    console.log('📋 QR PATTERN GENERATION - Data URL length:', qrCodeDataURL.length);
+    console.log('📋 QR PATTERN GENERATION - Data URL preview:', qrCodeDataURL.substring(0, 100) + '...');
 
     try {
       // Create invoice HTML with embedded QR code
@@ -826,10 +831,17 @@ export default function InvoiceManagement() {
       document.body.appendChild(printContent);
       
       // Print and clean up
+      console.log('🖨️ PRINT PROCESS - About to call window.print()');
+      console.log('🖨️ PRINT PROCESS - Print content element created and added to DOM');
+      console.log('🖨️ PRINT PROCESS - QR image src in DOM:', printContent.innerHTML.includes('data:image/png;base64') ? 'CONTAINS DATA URL' : 'NO DATA URL FOUND');
+      
       window.print();
+      
+      console.log('🖨️ PRINT PROCESS - window.print() called, cleaning up in 1 second');
       setTimeout(() => {
         document.body.removeChild(printContent);
         document.head.removeChild(style);
+        console.log('🖨️ PRINT PROCESS - Cleanup completed');
       }, 1000);
     } catch (error) {
       console.error('Error generating QR code:', error);
@@ -1856,7 +1868,8 @@ export default function InvoiceManagement() {
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          console.log('Print button clicked!');
+                          console.log('🖨️ PRINT BUTTON CLICKED - Starting print process');
+                          console.log('📋 Selected invoice:', selectedInvoice);
                           generateProfessionalInvoice(selectedInvoice);
                         }}
                       >
