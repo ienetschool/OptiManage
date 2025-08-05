@@ -105,23 +105,30 @@ export default function StaffPage() {
             }
             body { 
               font-family: 'Arial', sans-serif; 
-              background: #f0f0f0; 
-              padding: 20px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
+              background: white; 
+              padding: 10mm;
+            }
+            .page-container {
+              width: 210mm;
+              height: 297mm;
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              grid-template-rows: 1fr 1fr;
+              gap: 5mm;
+              margin: 0 auto;
             }
             .id-card-container {
               display: flex;
-              gap: 20px;
+              gap: 2mm;
+              justify-content: center;
+              align-items: center;
             }
             .id-card {
-              width: 350px;
-              height: 550px;
+              width: 85mm;
+              height: 130mm;
               background: white;
-              border-radius: 20px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
               overflow: hidden;
               position: relative;
             }
@@ -150,18 +157,18 @@ export default function StaffPage() {
             }
             .company-header {
               text-align: center;
-              padding: 30px 20px 20px;
+              padding: 15px 10px 10px;
               position: relative;
               z-index: 2;
             }
             .company-name {
-              font-size: 24px;
+              font-size: 16px;
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 3px;
               text-shadow: 0 2px 4px rgba(0,0,0,0.2);
             }
             .company-slogan {
-              font-size: 12px;
+              font-size: 9px;
               opacity: 0.9;
               text-transform: uppercase;
               letter-spacing: 1px;
@@ -174,18 +181,25 @@ export default function StaffPage() {
               z-index: 2;
             }
             .photo-circle {
-              width: 120px;
-              height: 120px;
+              width: 80px;
+              height: 80px;
               border-radius: 50%;
               background: white;
-              border: 5px solid rgba(255,255,255,0.3);
+              border: 3px solid rgba(255,255,255,0.3);
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 48px;
+              font-size: 32px;
               color: #2a5298;
               font-weight: bold;
-              box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+              box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+              overflow: hidden;
+            }
+            .photo-circle img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+              border-radius: 50%;
             }
             .employee-info {
               text-align: center;
@@ -194,17 +208,17 @@ export default function StaffPage() {
               z-index: 2;
             }
             .employee-name {
-              font-size: 24px;
+              font-size: 16px;
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 3px;
               text-shadow: 0 2px 4px rgba(0,0,0,0.2);
             }
             .employee-position {
-              font-size: 16px;
+              font-size: 12px;
               opacity: 0.9;
               text-transform: uppercase;
               letter-spacing: 1px;
-              margin-bottom: 20px;
+              margin-bottom: 15px;
             }
             .employee-details {
               background: rgba(255,255,255,0.1);
@@ -217,11 +231,56 @@ export default function StaffPage() {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              margin-bottom: 12px;
-              font-size: 14px;
+              margin-bottom: 8px;
+              font-size: 10px;
             }
             .detail-row:last-child {
               margin-bottom: 0;
+            }
+            .qr-code-section {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              padding: 15px;
+            }
+            .qr-code {
+              width: 60px;
+              height: 60px;
+              background: white;
+              border: 2px solid rgba(255,255,255,0.3);
+              border-radius: 8px;
+              padding: 4px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .qr-grid {
+              line-height: 0;
+              font-size: 0;
+            }
+            .qr-block {
+              display: inline-block;
+              width: 2px;
+              height: 2px;
+              background: white;
+            }
+            .qr-block.filled {
+              background: black;
+            }
+            .footer-section {
+              text-align: center;
+              padding: 10px 15px;
+              font-size: 8px;
+              opacity: 0.8;
+              border-top: 1px solid rgba(255,255,255,0.2);
+              margin-top: auto;
+            }
+            .authorized-signature {
+              text-align: center;
+              padding: 10px;
+              font-size: 10px;
+              border-top: 1px solid rgba(255,255,255,0.2);
+              margin-top: 10px;
             }
             .detail-label {
               font-weight: 600;
@@ -299,21 +358,26 @@ export default function StaffPage() {
           </style>
         </head>
         <body>
-          <div class="id-card-container">
-            <!-- Front of ID Card -->
-            <div class="id-card">
-              <div class="card-front">
-                <div class="blue-curve"></div>
-                <div class="company-header">
-                  <div class="company-name">OPTISTORE PRO</div>
-                  <div class="company-slogan">Medical Excellence</div>
-                </div>
-                
-                <div class="photo-section">
-                  <div class="photo-circle">
-                    ${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}
+          <div class="page-container">
+            <!-- Card 1 -->
+            <div class="id-card-container">
+              <!-- Front of ID Card -->
+              <div class="id-card">
+                <div class="card-front">
+                  <div class="blue-curve"></div>
+                  <div class="company-header">
+                    <div class="company-name">OPTISTORE PRO</div>
+                    <div class="company-slogan">Medical Excellence</div>
                   </div>
-                </div>
+                  
+                  <div class="photo-section">
+                    <div class="photo-circle">
+                      ${staff.staffPhoto ? 
+                        `<img src="${staff.staffPhoto}" alt="${staff.firstName} ${staff.lastName}" />` : 
+                        `${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}`
+                      }
+                    </div>
+                  </div>
                 
                 <div class="employee-info">
                   <div class="employee-name">${staff.firstName.toUpperCase()} ${staff.lastName.toUpperCase()}</div>
@@ -355,57 +419,25 @@ export default function StaffPage() {
                 
                 <div class="qr-section">
                   <div class="qr-code-wrapper">
-                    <svg viewBox="0 0 21 21" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="21" height="21" fill="white"/>
-                      <g fill="black">
-                        <rect x="0" y="0" width="7" height="7"/>
-                        <rect x="1" y="1" width="5" height="5" fill="white"/>
-                        <rect x="2" y="2" width="3" height="3"/>
-                        <rect x="14" y="0" width="7" height="7"/>
-                        <rect x="15" y="1" width="5" height="5" fill="white"/>
-                        <rect x="16" y="2" width="3" height="3"/>
-                        <rect x="0" y="14" width="7" height="7"/>
-                        <rect x="1" y="15" width="5" height="5" fill="white"/>
-                        <rect x="2" y="16" width="3" height="3"/>
-                        <rect x="8" y="6" width="1" height="1"/>
-                        <rect x="10" y="6" width="1" height="1"/>
-                        <rect x="12" y="6" width="1" height="1"/>
-                        <rect x="6" y="8" width="1" height="1"/>
-                        <rect x="6" y="10" width="1" height="1"/>
-                        <rect x="6" y="12" width="1" height="1"/>
-                        <rect x="8" y="8" width="1" height="1"/>
-                        <rect x="9" y="8" width="1" height="1"/>
-                        <rect x="11" y="8" width="1" height="1"/>
-                        <rect x="12" y="8" width="1" height="1"/>
-                        <rect x="8" y="9" width="1" height="1"/>
-                        <rect x="10" y="9" width="1" height="1"/>
-                        <rect x="12" y="9" width="1" height="1"/>
-                        <rect x="8" y="10" width="1" height="1"/>
-                        <rect x="9" y="10" width="1" height="1"/>
-                        <rect x="11" y="10" width="1" height="1"/>
-                        <rect x="8" y="11" width="1" height="1"/>
-                        <rect x="10" y="11" width="1" height="1"/>
-                        <rect x="12" y="11" width="1" height="1"/>
-                        <rect x="9" y="12" width="1" height="1"/>
-                        <rect x="11" y="12" width="1" height="1"/>
-                        <rect x="14" y="8" width="1" height="1"/>
-                        <rect x="15" y="8" width="1" height="1"/>
-                        <rect x="17" y="8" width="1" height="1"/>
-                        <rect x="14" y="9" width="1" height="1"/>
-                        <rect x="16" y="9" width="1" height="1"/>
-                        <rect x="14" y="10" width="1" height="1"/>
-                        <rect x="15" y="10" width="1" height="1"/>
-                        <rect x="17" y="10" width="1" height="1"/>
-                        <rect x="8" y="14" width="1" height="1"/>
-                        <rect x="9" y="14" width="1" height="1"/>
-                        <rect x="11" y="14" width="1" height="1"/>
-                        <rect x="8" y="15" width="1" height="1"/>
-                        <rect x="10" y="15" width="1" height="1"/>
-                        <rect x="8" y="16" width="1" height="1"/>
-                        <rect x="9" y="16" width="1" height="1"/>
-                        <rect x="11" y="16" width="1" height="1"/>
-                      </g>
-                    </svg>
+                    <div class="qr-code">
+                      <div class="qr-grid">
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -414,11 +446,175 @@ export default function StaffPage() {
                   <div class="signature-text">Authorized Signature</div>
                 </div>
                 
-                <div style="text-align: center; margin-top: 30px;">
+                <div class="footer-section">
                   <div class="company-name">OPTISTORE PRO</div>
+                  <div style="font-size: 7px; margin-top: 5px; line-height: 1.2;">
+                    123 Vision Street, Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567 | Email: info@optistorepro.com
+                  </div>
                 </div>
               </div>
             </div>
+            
+            <!-- Back of ID Card -->
+            <div class="id-card">
+              <div class="card-back">
+                <div class="section-title">Terms & Conditions</div>
+                <ul class="info-list">
+                  <li>This card is property of OptiStore Pro Medical Center</li>
+                  <li>Must be worn visibly during work hours</li>
+                  <li>Report immediately if lost or stolen</li>
+                  <li>Valid for current employment period only</li>
+                  <li>Access permissions subject to role assignments</li>
+                </ul>
+                
+                <div class="qr-section">
+                  <div class="qr-code-wrapper">
+                    <div class="qr-code">
+                      <div class="qr-grid">
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="signature-area">
+                  <div class="signature-line"></div>
+                  <div class="signature-text">Authorized Signature</div>
+                </div>
+                
+                <div class="footer-section">
+                  <div class="company-name">OPTISTORE PRO</div>
+                  <div style="font-size: 7px; margin-top: 5px; line-height: 1.2;">
+                    123 Vision Street, Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567 | Email: info@optistorepro.com
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+            
+            <!-- Duplicate cards for A4 printing (Cards 2, 3, 4) -->
+            ${Array(3).fill().map(() => `
+            <div class="id-card-container">
+              <!-- Front of ID Card -->
+              <div class="id-card">
+                <div class="card-front">
+                  <div class="blue-curve"></div>
+                  <div class="company-header">
+                    <div class="company-name">OPTISTORE PRO</div>
+                    <div class="company-slogan">Medical Excellence</div>
+                  </div>
+                  
+                  <div class="photo-section">
+                    <div class="photo-circle">
+                      ${staff.staffPhoto ? 
+                        `<img src="${staff.staffPhoto}" alt="${staff.firstName} ${staff.lastName}" />` : 
+                        `${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}`
+                      }
+                    </div>
+                  </div>
+                
+                <div class="employee-info">
+                  <div class="employee-name">${staff.firstName.toUpperCase()} ${staff.lastName.toUpperCase()}</div>
+                  <div class="employee-position">${staff.position}</div>
+                </div>
+                
+                <div class="employee-details">
+                  <div class="detail-row">
+                    <span class="detail-label">ID:</span>
+                    <span class="detail-value">${staff.staffCode}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Blood:</span>
+                    <span class="detail-value">${staff.bloodType || 'N/A'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${staff.email || 'N/A'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${staff.phone || 'N/A'}</span>
+                  </div>
+                </div>
+                
+                <div class="footer-section">
+                  <div class="company-name">OPTISTORE PRO</div>
+                  <div style="font-size: 7px; margin-top: 5px; line-height: 1.2;">
+                    123 Vision Street, Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567 | Email: info@optistorepro.com
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Back of ID Card -->
+            <div class="id-card">
+              <div class="card-back">
+                <div class="section-title">Terms & Conditions</div>
+                <ul class="info-list">
+                  <li>This card is property of OptiStore Pro Medical Center</li>
+                  <li>Must be worn visibly during work hours</li>
+                  <li>Report immediately if lost or stolen</li>
+                  <li>Valid for current employment period only</li>
+                  <li>Access permissions subject to role assignments</li>
+                </ul>
+                
+                <div class="qr-section">
+                  <div class="qr-code-wrapper">
+                    <div class="qr-code">
+                      <div class="qr-grid">
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><br>
+                        <div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div><div class="qr-block filled"></div><div class="qr-block"></div><div class="qr-block filled"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="signature-area">
+                  <div class="signature-line"></div>
+                  <div class="signature-text">Authorized Signature</div>
+                </div>
+                
+                <div class="footer-section">
+                  <div class="company-name">OPTISTORE PRO</div>
+                  <div style="font-size: 7px; margin-top: 5px; line-height: 1.2;">
+                    123 Vision Street, Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567 | Email: info@optistorepro.com
+                  </div>
+                </div>
+              </div>
+            </div>
+            </div>
+            `).join('')}
           </div>
           
           <script>
