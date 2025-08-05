@@ -313,7 +313,8 @@ export default function InvoiceManagement() {
       number: inv.invoiceNumber,
       date: inv.date,
       issueDate: inv.issueDate,
-      createdAt: inv.createdAt
+      createdAt: inv.createdAt,
+      parsedDateForSort: new Date(inv.date || inv.issueDate || inv.createdAt || 0).getTime()
     })));
     
     return sorted;
@@ -1762,7 +1763,7 @@ export default function InvoiceManagement() {
 
           {/* Enhanced Invoices Table with Pagination, Filtering, and Sorting */}
           <EnhancedDataTable
-            data={enrichedInvoices}
+            data={filteredInvoices}
             columns={invoiceColumns}
             title="Invoice Management"
             searchPlaceholder="Search invoices by invoice number, customer name, or store..."
