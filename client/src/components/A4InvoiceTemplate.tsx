@@ -1,9 +1,12 @@
 import React from "react";
 import QRCodeReact from "react-qr-code";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface InvoiceItem {
   id: string;
-  description: string;
+  productName: string;
+  description?: string;
   quantity: number;
   unitPrice: number;
   discount: number;
@@ -45,8 +48,36 @@ export default function A4InvoiceTemplate({
 }: A4InvoiceTemplateProps) {
   const taxRate = invoice.tax > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount) * 100).toFixed(1) : "0";
   
+  const printInvoice = () => {
+    window.print();
+  };
+
+  const downloadPDF = async () => {
+    const element = document.getElementById('a4-invoice-content');
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
+  };
+  
   return (
-    <div className="a4-invoice bg-white text-black" style={{ 
+    <div id="a4-invoice-content" className="a4-invoice bg-white text-black" style={{ 
       width: '210mm', 
       minHeight: '297mm', 
       padding: '20mm',
