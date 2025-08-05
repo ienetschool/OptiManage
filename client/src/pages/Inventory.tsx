@@ -1054,48 +1054,6 @@ export default function Inventory() {
                                 </FormItem>
                               )}
                             />
-
-                            <FormField
-                              control={productForm.control}
-                              name="shippingCost"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Shipping Cost</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      step="0.01"
-                                      placeholder="0.00" 
-                                      {...field}
-                                      value={field.value || ""}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-
-                            <FormField
-                              control={productForm.control}
-                              name="handlingCost"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Handling Cost</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      type="number" 
-                                      step="0.01"
-                                      placeholder="0.00" 
-                                      {...field}
-                                      value={field.value || ""}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
                           </div>
 
                           {/* Coupon Redemption Section */}
@@ -1168,6 +1126,50 @@ export default function Inventory() {
                                 )}
                               />
                             </div>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-4">
+                            <FormField
+                              control={productForm.control}
+                              name="shippingCost"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Shipping Cost</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      placeholder="0.00" 
+                                      {...field}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={productForm.control}
+                              name="handlingCost"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Handling Cost</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      step="0.01"
+                                      placeholder="0.00" 
+                                      {...field}
+                                      value={field.value || ""}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
                           </div>
 
                           <div className="p-4 bg-slate-50 rounded-lg space-y-2">
