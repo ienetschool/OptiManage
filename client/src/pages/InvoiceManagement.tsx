@@ -633,14 +633,19 @@ export default function InvoiceManagement() {
         .print-content, .print-content * { visibility: visible; }
         .print-content { position: absolute; left: 0; top: 0; width: 100%; }
       }
-      .header { background: #4F46E5 !important; color: white !important; }
-      .invoice-type { background: #4F46E5 !important; color: white !important; }
-      .invoice-number { background: #4F46E5 !important; color: white !important; }
-      .items-table th { background: #4F46E5 !important; color: white !important; }
-      .totals-table tr:last-child { background: #4F46E5 !important; color: white !important; }
-      .section-title { color: #4F46E5 !important; }
-      .notes-section { border-left-color: #4F46E5 !important; }
-      .notes-title { color: #4F46E5 !important; }
+      @media screen, print {
+        .header { background: #4F46E5 !important; color: white !important; }
+        .qr-section { background: white !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+        .qr-section svg { fill: #4F46E5 !important; display: block !important; }
+        .invoice-type { background: #4F46E5 !important; color: white !important; }
+        .invoice-number { background: #4F46E5 !important; color: white !important; }
+        .items-table th { background: #4F46E5 !important; color: white !important; }
+        .totals-table tr:last-child { background: #4F46E5 !important; color: white !important; }
+        .section-title { color: #4F46E5 !important; }
+        .notes-section { border-left-color: #4F46E5 !important; }
+        .notes-title { color: #4F46E5 !important; }
+        .invoice-info-section { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+      }
     `;
     document.head.appendChild(style);
 
@@ -670,29 +675,52 @@ export default function InvoiceManagement() {
       <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
         <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
           <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-            <svg width="60" height="60" viewBox="0 0 100 100" style="fill: #4F46E5;">
-              <rect x="0" y="0" width="20" height="20"/>
-              <rect x="25" y="0" width="15" height="15"/>
-              <rect x="45" y="0" width="10" height="10"/>
-              <rect x="60" y="0" width="20" height="20"/>
-              <rect x="85" y="0" width="15" height="15"/>
-              <rect x="0" y="25" width="15" height="15"/>
-              <rect x="20" y="25" width="10" height="10"/>
-              <rect x="35" y="25" width="15" height="15"/>
-              <rect x="55" y="25" width="10" height="10"/>
-              <rect x="70" y="25" width="15" height="15"/>
-              <rect x="90" y="25" width="10" height="10"/>
-              <rect x="0" y="45" width="10" height="10"/>
-              <rect x="15" y="45" width="20" height="20"/>
-              <rect x="40" y="45" width="15" height="15"/>
-              <rect x="60" y="45" width="10" height="10"/>
-              <rect x="75" y="45" width="25" height="25"/>
-              <rect x="0" y="70" width="15" height="15"/>
-              <rect x="20" y="70" width="10" height="10"/>
-              <rect x="35" y="70" width="20" height="20"/>
-              <rect x="60" y="70" width="15" height="15"/>
-              <rect x="80" y="70" width="10" height="10"/>
-              <rect x="95" y="70" width="5" height="5"/>
+            <svg width="60" height="60" viewBox="0 0 21 21" style="fill: #4F46E5; shape-rendering: crispEdges;">
+              <!-- QR Code Pattern -->
+              <!-- Top-left finder pattern -->
+              <rect x="0" y="0" width="7" height="7" fill="#4F46E5"/>
+              <rect x="1" y="1" width="5" height="5" fill="white"/>
+              <rect x="2" y="2" width="3" height="3" fill="#4F46E5"/>
+              
+              <!-- Top-right finder pattern -->
+              <rect x="14" y="0" width="7" height="7" fill="#4F46E5"/>
+              <rect x="15" y="1" width="5" height="5" fill="white"/>
+              <rect x="16" y="2" width="3" height="3" fill="#4F46E5"/>
+              
+              <!-- Bottom-left finder pattern -->
+              <rect x="0" y="14" width="7" height="7" fill="#4F46E5"/>
+              <rect x="1" y="15" width="5" height="5" fill="white"/>
+              <rect x="2" y="16" width="3" height="3" fill="#4F46E5"/>
+              
+              <!-- Timing patterns -->
+              <rect x="8" y="6" width="1" height="1"/>
+              <rect x="10" y="6" width="1" height="1"/>
+              <rect x="12" y="6" width="1" height="1"/>
+              <rect x="6" y="8" width="1" height="1"/>
+              <rect x="6" y="10" width="1" height="1"/>
+              <rect x="6" y="12" width="1" height="1"/>
+              
+              <!-- Data modules (sample pattern) -->
+              <rect x="9" y="0" width="1" height="1"/>
+              <rect x="11" y="0" width="1" height="1"/>
+              <rect x="9" y="1" width="1" height="1"/>
+              <rect x="8" y="2" width="1" height="1"/>
+              <rect x="10" y="2" width="1" height="1"/>
+              <rect x="12" y="2" width="1" height="1"/>
+              <rect x="8" y="8" width="1" height="1"/>
+              <rect x="9" y="8" width="1" height="1"/>
+              <rect x="11" y="8" width="1" height="1"/>
+              <rect x="12" y="8" width="1" height="1"/>
+              <rect x="14" y="8" width="1" height="1"/>
+              <rect x="16" y="8" width="1" height="1"/>
+              <rect x="18" y="8" width="1" height="1"/>
+              <rect x="20" y="8" width="1" height="1"/>
+              <rect x="8" y="9" width="1" height="1"/>
+              <rect x="10" y="9" width="1" height="1"/>
+              <rect x="12" y="9" width="1" height="1"/>
+              <rect x="15" y="9" width="1" height="1"/>
+              <rect x="17" y="9" width="1" height="1"/>
+              <rect x="19" y="9" width="1" height="1"/>
             </svg>
           </div>
           <div class="company-info" style="text-align: center; flex-grow: 1;">
