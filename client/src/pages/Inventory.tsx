@@ -190,9 +190,14 @@ export default function Inventory() {
       }
       
       const response = await apiRequest("POST", "/api/products", productData);
+      console.log("API response:", response);
       const product = response as Product;
       const productId = product.id;
       console.log("Product created with ID:", productId);
+      
+      if (!productId) {
+        throw new Error("Product ID not returned from API");
+      }
       
       // Create initial inventory record if stock is provided
       if (initialStock && initialStock > 0) {
