@@ -1572,6 +1572,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect(`/api/invoice/pdf/INV-${productId.slice(0, 8)}`);
   });
 
+  // Invoice demo route
+  app.get('/invoice-demo', async (req, res) => {
+    try {
+      const { readFile } = await import('fs/promises');
+      const { join } = await import('path');
+      const invoiceHtml = await readFile(join(process.cwd(), 'invoice_demo.html'), 'utf8');
+      res.setHeader('Content-Type', 'text/html');
+      res.send(invoiceHtml);
+    } catch (error) {
+      res.status(404).send('Invoice demo not found');
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
