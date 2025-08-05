@@ -630,7 +630,7 @@ export default function InvoiceManagement() {
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Professional Invoice - ${invoice.invoiceNumber}</title>
+        <title>Invoice - ${invoice.invoiceNumber}</title>
         <style>
           @page { size: A4; margin: 10mm; }
           * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -653,9 +653,9 @@ export default function InvoiceManagement() {
           }
           
           .header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+            background: #4F46E5;
             color: white;
-            padding: 40px;
+            padding: 30px;
             text-align: center;
             position: relative;
           }
@@ -672,9 +672,9 @@ export default function InvoiceManagement() {
           }
           
           .company-name {
-            font-size: 32pt;
-            font-weight: 900;
-            margin-bottom: 8px;
+            font-size: 36pt;
+            font-weight: 700;
+            margin-bottom: 5px;
             position: relative;
             z-index: 2;
           }
@@ -1035,7 +1035,7 @@ export default function InvoiceManagement() {
       <body>
         <div class="invoice-container">
           <div class="header">
-            <div class="company-name">${storeName}</div>
+            <div class="company-name">OptiStore Pro</div>
             <div class="company-tagline">Optical Retail Management</div>
             <div class="company-address">
               123 Vision Street<br/>
