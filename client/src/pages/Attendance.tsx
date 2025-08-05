@@ -32,6 +32,7 @@ export default function Attendance() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [manualEntryOpen, setManualEntryOpen] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
@@ -685,8 +686,82 @@ export default function Attendance() {
                 <Button variant="outline" className="flex-1" onClick={() => setQrScannerOpen(false)}>
                   Cancel
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button 
+                  className="flex-1" 
+                  onClick={() => {
+                    setQrScannerOpen(false);
+                    setManualEntryOpen(true);
+                  }}
+                >
                   Manual Entry
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Entry Modal */}
+      {manualEntryOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h3 className="text-lg font-semibold">Manual Attendance Entry</h3>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setManualEntryOpen(false)}
+                className="h-6 w-6 rounded-full"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <div className="space-y-3">
+                <Label>Select Staff Member</Label>
+                <div className="max-h-64 overflow-y-auto border rounded-lg">
+                  {staffData.map((staff) => (
+                    <div key={staff.id} className="border-b last:border-b-0">
+                      <div className="p-3 hover:bg-gray-50 cursor-pointer" onClick={() => {
+                        const attendanceRecord = todayAttendance.find(a => a.staffId === staff.id);
+                        if (attendanceRecord) {
+                          const action = attendanceRecord.clockIn && !attendanceRecord.clockOut ? 'out' : 'in';
+                          handleClockAction(staff.id, action);
+                          toast({
+                            title: `Clock ${action === 'in' ? 'In' : 'Out'} Successful`,
+                            description: `${staff.firstName} ${staff.lastName} has been clocked ${action}`,
+                          });
+                          setManualEntryOpen(false);
+                        }
+                      }}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{staff.firstName} {staff.lastName}</p>
+                            <p className="text-sm text-gray-500">{staff.staffCode} • {staff.role}</p>
+                          </div>
+                          <div className="text-right">
+                            {(() => {
+                              const attendanceRecord = todayAttendance.find(a => a.staffId === staff.id);
+                              if (!attendanceRecord?.clockIn) {
+                                return <Badge variant="outline">Clock In</Badge>;
+                              } else if (attendanceRecord.clockIn && !attendanceRecord.clockOut) {
+                                return <Badge variant="secondary">Clock Out</Badge>;
+                              } else {
+                                return <Badge variant="default">Complete</Badge>;
+                              }
+                            })()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex space-x-2 pt-4 border-t">
+                <Button variant="outline" className="flex-1" onClick={() => setManualEntryOpen(false)}>
+                  Cancel
                 </Button>
               </div>
             </div>
