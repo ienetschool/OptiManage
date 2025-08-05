@@ -626,65 +626,57 @@ export default function InvoiceManagement() {
     const store = stores.find(s => s.id === invoice.storeId);
     const storeName = store?.name || 'OptiStore Pro';
     
-    // Create a simple base64 encoded QR-like pattern image
-    const createSimpleQRPattern = () => {
-      console.log('🎨 QR PATTERN GENERATION - Starting canvas creation');
-      // This is a simple base64 encoded 80x80 black and white pattern that looks like a QR code
-      const canvas = document.createElement('canvas');
-      canvas.width = 80;
-      canvas.height = 80;
-      const ctx = canvas.getContext('2d');
-      console.log('🎨 QR PATTERN GENERATION - Canvas created, context:', ctx ? 'SUCCESS' : 'FAILED');
+    // Create SVG-based QR pattern that works reliably in print mode
+    const createSVGQRPattern = () => {
+      console.log('🎨 SVG QR GENERATION - Creating SVG pattern');
       
-      if (ctx) {
-        // White background
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(0, 0, 80, 80);
-        
-        // Black border
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, 80, 4);
-        ctx.fillRect(0, 0, 4, 80);
-        ctx.fillRect(76, 0, 4, 80);
-        ctx.fillRect(0, 76, 80, 4);
-        
-        // QR-like pattern
-        const pattern = [
-          [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
-          [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
-          [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
-          [1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1],
-          [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
-          [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
-          [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
-          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-          [1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1],
-          [0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,1,0],
-          [1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1],
-          [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-          [1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1],
-          [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-          [1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1],
-          [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1],
-          [1,0,1,1,1,0,1,0,0,1,1,1,1,0,1,0,1]
-        ];
-        
-        for (let i = 0; i < pattern.length; i++) {
-          for (let j = 0; j < pattern[i].length; j++) {
-            if (pattern[i][j] === 1) {
-              ctx.fillRect(8 + j * 4, 8 + i * 4, 4, 4);
-            }
+      // QR-like pattern data
+      const pattern = [
+        [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
+        [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
+        [1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1],
+        [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
+        [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
+        [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1],
+        [0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,1,0],
+        [1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1],
+        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+        [1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1],
+        [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+        [1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1],
+        [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1],
+        [1,0,1,1,1,0,1,0,0,1,1,1,1,0,1,0,1]
+      ];
+      
+      let svgRects = '';
+      for (let i = 0; i < pattern.length; i++) {
+        for (let j = 0; j < pattern[i].length; j++) {
+          if (pattern[i][j] === 1) {
+            svgRects += `<rect x="${4 + j * 4}" y="${4 + i * 4}" width="4" height="4" fill="black"/>`;
           }
         }
       }
       
-      return canvas.toDataURL('image/png');
+      const svgQR = `
+        <svg width="76" height="76" xmlns="http://www.w3.org/2000/svg">
+          <rect width="76" height="76" fill="white"/>
+          <rect x="0" y="0" width="76" height="4" fill="black"/>
+          <rect x="0" y="0" width="4" height="76" fill="black"/>
+          <rect x="72" y="0" width="4" height="76" fill="black"/>
+          <rect x="0" y="72" width="76" height="4" fill="black"/>
+          ${svgRects}
+        </svg>
+      `;
+      
+      return 'data:image/svg+xml;base64,' + btoa(svgQR);
     };
     
-    const qrCodeDataURL = createSimpleQRPattern();
-    console.log('📋 QR PATTERN GENERATION - Pattern created successfully');
-    console.log('📋 QR PATTERN GENERATION - Data URL length:', qrCodeDataURL.length);
-    console.log('📋 QR PATTERN GENERATION - Data URL preview:', qrCodeDataURL.substring(0, 100) + '...');
+    const qrCodeDataURL = createSVGQRPattern();
+    console.log('📋 SVG QR GENERATION - SVG pattern created successfully');
+    console.log('📋 SVG QR GENERATION - Data URL length:', qrCodeDataURL.length);
 
     try {
       // Create invoice HTML with embedded QR code
@@ -810,7 +802,8 @@ export default function InvoiceManagement() {
         }
         @media screen, print {
           .header { background: #4F46E5 !important; color: white !important; }
-          .qr-section img { display: block !important; }
+          .qr-section { background: white !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+          .qr-section img { display: block !important; width: 76px !important; height: 76px !important; }
           .invoice-type { background: #4F46E5 !important; color: white !important; }
           .invoice-number { background: #4F46E5 !important; color: white !important; }
           .items-table th { background: #4F46E5 !important; color: white !important; }
