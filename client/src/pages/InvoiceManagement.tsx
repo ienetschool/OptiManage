@@ -675,10 +675,9 @@ export default function InvoiceManagement() {
         </div>
         
         <div class="content" style="padding: 30px;">
-          <div class="invoice-type" style="background: #4F46E5; color: white; padding: 10px 20px; border-radius: 5px; font-size: 14pt; font-weight: 700; text-transform: uppercase; text-align: center; margin-bottom: 20px; display: inline-block;">PURCHASE INVOICE</div>
-          
-          <div class="invoice-header" style="display: flex; justify-content: space-between; margin: 30px 0; gap: 30px;">
+          <div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin: 30px 0; gap: 30px;">
             <div>
+              <div class="invoice-type" style="background: #4F46E5; color: white; padding: 10px 20px; border-radius: 5px; font-size: 14pt; font-weight: 700; text-transform: uppercase; text-align: center; margin-bottom: 15px; display: inline-block;">PURCHASE INVOICE</div>
               <div class="invoice-number" style="background: #4F46E5; color: white; padding: 6px 12px; border-radius: 4px; font-size: 12pt; font-weight: 700; display: inline-block; margin-bottom: 10px;">${invoice.invoiceNumber}</div>
               <div style="font-size: 10pt; color: #64748b; margin-top: 4px;">
                 Date: ${invoice.date ? new Date(invoice.date).toLocaleDateString() : new Date().toLocaleDateString()}<br/>
