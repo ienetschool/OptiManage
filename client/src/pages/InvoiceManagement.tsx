@@ -618,46 +618,70 @@ export default function InvoiceManagement() {
   };
 
   // Professional A4 Invoice Generation - Blue Design with Print Media CSS
-  const generateProfessionalInvoice = async (invoice: Invoice) => {
+  const generateProfessionalInvoice = (invoice: Invoice) => {
+    console.log('🖨️ Starting invoice generation for:', invoice.invoiceNumber);
+    
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
     const storeName = store?.name || 'OptiStore Pro';
     
-    try {
-      console.log('🖨️ Starting invoice generation for:', invoice.invoiceNumber);
-      
-      // Generate QR code using canvas (this works in print mode)
-      const qrData = generateInvoiceQR(invoice);
-      console.log('📊 QR Data generated:', qrData);
-      
-      // Create a canvas element to generate QR code
+    // Create a simple base64 encoded QR-like pattern image
+    const createSimpleQRPattern = () => {
+      // This is a simple base64 encoded 80x80 black and white pattern that looks like a QR code
       const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
       canvas.width = 80;
       canvas.height = 80;
+      const ctx = canvas.getContext('2d');
       
-      // Fill with white background
       if (ctx) {
-        ctx.fillStyle = 'white';
+        // White background
+        ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, 80, 80);
         
-        // Draw a simple pattern for the QR code (black squares)
-        ctx.fillStyle = 'black';
-        const size = 4;
+        // Black border
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 80, 4);
+        ctx.fillRect(0, 0, 4, 80);
+        ctx.fillRect(76, 0, 4, 80);
+        ctx.fillRect(0, 76, 80, 4);
         
-        // Create a simple QR-like pattern
-        for (let i = 0; i < 20; i++) {
-          for (let j = 0; j < 20; j++) {
-            if ((i + j) % 3 === 0 || (i * j) % 7 === 0) {
-              ctx.fillRect(i * size, j * size, size, size);
+        // QR-like pattern
+        const pattern = [
+          [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
+          [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
+          [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
+          [1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1],
+          [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
+          [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
+          [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
+          [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+          [1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1],
+          [0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,1,0],
+          [1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1],
+          [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+          [1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1],
+          [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
+          [1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1],
+          [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1],
+          [1,0,1,1,1,0,1,0,0,1,1,1,1,0,1,0,1]
+        ];
+        
+        for (let i = 0; i < pattern.length; i++) {
+          for (let j = 0; j < pattern[i].length; j++) {
+            if (pattern[i][j] === 1) {
+              ctx.fillRect(8 + j * 4, 8 + i * 4, 4, 4);
             }
           }
         }
       }
       
-      const qrCodeDataURL = canvas.toDataURL('image/png');
-      console.log('📋 QR Code canvas created:', qrCodeDataURL.substring(0, 50) + '...');
+      return canvas.toDataURL('image/png');
+    };
+    
+    const qrCodeDataURL = createSimpleQRPattern();
+    console.log('📋 QR Code pattern created successfully');
 
+    try {
       // Create invoice HTML with embedded QR code
       const invoiceHTML = `
         <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
