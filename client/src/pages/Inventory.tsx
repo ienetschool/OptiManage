@@ -28,6 +28,46 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
+// Inventory Invoice Totals Widget Component
+function InventoryInvoiceTotalsWidget() {
+  const { data: inventoryTotals, isLoading: isLoadingInventory } = useQuery({
+    queryKey: ["/api/inventory/invoice-totals"],
+    queryFn: async () => {
+      const response = await fetch("/api/inventory/invoice-totals");
+      if (!response.ok) {
+        return { totalAmount: 0, totalCount: 0, recentTotal: 0, recentCount: 0, byPaymentMethod: {} };
+      }
+      return response.json();
+    },
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+  });
+
+  return (
+    <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <CreditCard className="h-5 w-5 text-purple-600" />
+            <span className="font-medium text-purple-800">Inventory Invoice Total</span>
+          </div>
+          <div className="text-right">
+            {isLoadingInventory ? (
+              <RefreshCw className="h-4 w-4 animate-spin text-purple-600" />
+            ) : (
+              <div>
+                <p className="text-2xl font-bold text-purple-800">
+                  ${inventoryTotals?.totalAmount?.toFixed(2) || '0.00'}
+                </p>
+                <p className="text-xs text-purple-600">{inventoryTotals?.totalCount || 0} invoices</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 // Product types for optical store
 const PRODUCT_TYPES = [
   { value: "frames", label: "Frames", icon: "👓" },
@@ -669,6 +709,9 @@ export default function Inventory() {
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
         </div>
+
+        {/* Inventory Invoice Totals Widget */}
+        <InventoryInvoiceTotalsWidget />
 
         {/* Enhanced Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

@@ -481,78 +481,27 @@ export default function Payments() {
         </div>
       </div>
 
-      {/* Inventory Invoice Totals Widget */}
+      {/* Inventory Invoice Totals Widget - Compact */}
       <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center space-x-2 text-purple-800">
-            <Building2 className="h-5 w-5" />
-            <span>Inventory Invoice Totals</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoadingInventory ? (
-            <div className="flex items-center justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin text-purple-600" />
-              <span className="ml-2 text-purple-600">Loading inventory data...</span>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Building2 className="h-5 w-5 text-purple-600" />
+              <span className="font-medium text-purple-800">Inventory Invoice Total</span>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <p className="text-sm font-medium text-purple-600">Total Inventory Purchases</p>
-                <p className="text-3xl font-bold text-purple-800">
-                  ${inventoryTotals?.totalAmount?.toFixed(2) || '0.00'}
-                </p>
-                <p className="text-xs text-purple-600">{inventoryTotals?.totalCount || 0} invoices</p>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm font-medium text-purple-600">Last 7 Days</p>
-                <p className="text-2xl font-bold text-purple-700">
-                  ${inventoryTotals?.recentTotal?.toFixed(2) || '0.00'}
-                </p>
-                <p className="text-xs text-purple-600">{inventoryTotals?.recentCount || 0} recent purchases</p>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm font-medium text-purple-600">Primary Method</p>
-                <p className="text-xl font-bold text-purple-700 capitalize">
-                  {inventoryTotals?.byPaymentMethod ? 
-                    Object.entries(inventoryTotals.byPaymentMethod)
-                      .sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A' 
-                    : 'N/A'}
-                </p>
-                <p className="text-xs text-purple-600">Most used payment method</p>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm font-medium text-purple-600">Last Updated</p>
-                <p className="text-sm font-bold text-purple-700">
-                  {inventoryTotals?.lastUpdated ? 
-                    new Date(inventoryTotals.lastUpdated).toLocaleTimeString() : 
-                    'Never'}
-                </p>
-                <p className="text-xs text-purple-600">Data freshness</p>
-              </div>
+            <div className="text-right">
+              {isLoadingInventory ? (
+                <RefreshCw className="h-4 w-4 animate-spin text-purple-600" />
+              ) : (
+                <div>
+                  <p className="text-2xl font-bold text-purple-800">
+                    ${inventoryTotals?.totalAmount?.toFixed(2) || '0.00'}
+                  </p>
+                  <p className="text-xs text-purple-600">{inventoryTotals?.totalCount || 0} invoices</p>
+                </div>
+              )}
             </div>
-          )}
-          
-          {inventoryTotals?.byPaymentMethod && Object.keys(inventoryTotals.byPaymentMethod).length > 0 && (
-            <Separator className="my-4" />
-          )}
-          
-          {inventoryTotals?.byPaymentMethod && Object.keys(inventoryTotals.byPaymentMethod).length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-purple-700 mb-3">Payment Method Breakdown</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {Object.entries(inventoryTotals.byPaymentMethod).map(([method, amount]) => (
-                  <div key={method} className="bg-white/60 rounded-lg p-3 text-center">
-                    <p className="text-xs font-medium text-purple-600 capitalize">{method}</p>
-                    <p className="text-sm font-bold text-purple-800">${amount.toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
