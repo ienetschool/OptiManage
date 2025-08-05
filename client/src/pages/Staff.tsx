@@ -87,6 +87,355 @@ export default function StaffPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // ID Card print function
+  const printIDCard = (staff: Staff) => {
+    const printWindow = window.open('', '_blank', 'width=800,height=600');
+    if (!printWindow) return;
+
+    const idCardHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>ID Card - ${staff.firstName} ${staff.lastName}</title>
+          <style>
+            * { 
+              margin: 0; 
+              padding: 0; 
+              box-sizing: border-box; 
+            }
+            body { 
+              font-family: 'Arial', sans-serif; 
+              background: #f0f0f0; 
+              padding: 20px;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+            .id-card-container {
+              display: flex;
+              gap: 20px;
+            }
+            .id-card {
+              width: 350px;
+              height: 550px;
+              background: white;
+              border-radius: 20px;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              overflow: hidden;
+              position: relative;
+            }
+            .card-front {
+              background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #6fa8dc 100%);
+              color: white;
+              position: relative;
+              height: 100%;
+            }
+            .card-back {
+              background: linear-gradient(135deg, #6fa8dc 0%, #2a5298 50%, #1e3c72 100%);
+              color: white;
+              position: relative;
+              height: 100%;
+              padding: 30px;
+            }
+            .blue-curve {
+              position: absolute;
+              width: 200%;
+              height: 200px;
+              background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+              border-radius: 50%;
+              top: -100px;
+              left: -50%;
+              transform: rotate(-15deg);
+            }
+            .company-header {
+              text-align: center;
+              padding: 30px 20px 20px;
+              position: relative;
+              z-index: 2;
+            }
+            .company-name {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 5px;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            .company-slogan {
+              font-size: 12px;
+              opacity: 0.9;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            .photo-section {
+              display: flex;
+              justify-content: center;
+              margin: 20px 0;
+              position: relative;
+              z-index: 2;
+            }
+            .photo-circle {
+              width: 120px;
+              height: 120px;
+              border-radius: 50%;
+              background: white;
+              border: 5px solid rgba(255,255,255,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 48px;
+              color: #2a5298;
+              font-weight: bold;
+              box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+            .employee-info {
+              text-align: center;
+              padding: 20px;
+              position: relative;
+              z-index: 2;
+            }
+            .employee-name {
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 5px;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            .employee-position {
+              font-size: 16px;
+              opacity: 0.9;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              margin-bottom: 20px;
+            }
+            .employee-details {
+              background: rgba(255,255,255,0.1);
+              border-radius: 15px;
+              padding: 20px;
+              margin: 20px;
+              backdrop-filter: blur(10px);
+            }
+            .detail-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 12px;
+              font-size: 14px;
+            }
+            .detail-row:last-child {
+              margin-bottom: 0;
+            }
+            .detail-label {
+              font-weight: 600;
+              opacity: 0.9;
+            }
+            .detail-value {
+              font-weight: 500;
+            }
+            .back-content {
+              text-align: left;
+            }
+            .section-title {
+              font-size: 16px;
+              font-weight: bold;
+              margin-bottom: 15px;
+              color: #fff;
+              border-bottom: 2px solid rgba(255,255,255,0.3);
+              padding-bottom: 5px;
+            }
+            .info-list {
+              list-style: none;
+              margin-bottom: 25px;
+            }
+            .info-list li {
+              font-size: 12px;
+              line-height: 1.6;
+              margin-bottom: 8px;
+              padding-left: 15px;
+              position: relative;
+            }
+            .info-list li:before {
+              content: '▶';
+              position: absolute;
+              left: 0;
+              color: rgba(255,255,255,0.7);
+            }
+            .qr-section {
+              text-align: center;
+              margin: 20px 0;
+            }
+            .qr-code-wrapper {
+              background: white;
+              border-radius: 10px;
+              padding: 15px;
+              display: inline-block;
+              box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+            .signature-area {
+              margin-top: 30px;
+              text-align: center;
+            }
+            .signature-line {
+              width: 200px;
+              height: 1px;
+              background: rgba(255,255,255,0.5);
+              margin: 20px auto 10px;
+            }
+            .signature-text {
+              font-size: 12px;
+              opacity: 0.8;
+            }
+            @media print {
+              body { 
+                background: white; 
+                padding: 0;
+              }
+              .id-card-container {
+                gap: 10px;
+              }
+              .id-card {
+                box-shadow: none;
+                break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="id-card-container">
+            <!-- Front of ID Card -->
+            <div class="id-card">
+              <div class="card-front">
+                <div class="blue-curve"></div>
+                <div class="company-header">
+                  <div class="company-name">OPTISTORE PRO</div>
+                  <div class="company-slogan">Medical Excellence</div>
+                </div>
+                
+                <div class="photo-section">
+                  <div class="photo-circle">
+                    ${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}
+                  </div>
+                </div>
+                
+                <div class="employee-info">
+                  <div class="employee-name">${staff.firstName.toUpperCase()} ${staff.lastName.toUpperCase()}</div>
+                  <div class="employee-position">${staff.position}</div>
+                </div>
+                
+                <div class="employee-details">
+                  <div class="detail-row">
+                    <span class="detail-label">ID:</span>
+                    <span class="detail-value">${staff.staffCode}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Blood:</span>
+                    <span class="detail-value">${staff.bloodType || 'N/A'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${staff.email || 'N/A'}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Phone:</span>
+                    <span class="detail-value">${staff.phone || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Back of ID Card -->
+            <div class="id-card">
+              <div class="card-back">
+                <div class="section-title">Terms & Conditions</div>
+                <ul class="info-list">
+                  <li>This card is property of OptiStore Pro Medical Center</li>
+                  <li>Must be worn visibly during work hours</li>
+                  <li>Report immediately if lost or stolen</li>
+                  <li>Valid for current employment period only</li>
+                  <li>Access permissions subject to role assignments</li>
+                </ul>
+                
+                <div class="qr-section">
+                  <div class="qr-code-wrapper">
+                    <svg viewBox="0 0 21 21" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="21" height="21" fill="white"/>
+                      <g fill="black">
+                        <rect x="0" y="0" width="7" height="7"/>
+                        <rect x="1" y="1" width="5" height="5" fill="white"/>
+                        <rect x="2" y="2" width="3" height="3"/>
+                        <rect x="14" y="0" width="7" height="7"/>
+                        <rect x="15" y="1" width="5" height="5" fill="white"/>
+                        <rect x="16" y="2" width="3" height="3"/>
+                        <rect x="0" y="14" width="7" height="7"/>
+                        <rect x="1" y="15" width="5" height="5" fill="white"/>
+                        <rect x="2" y="16" width="3" height="3"/>
+                        <rect x="8" y="6" width="1" height="1"/>
+                        <rect x="10" y="6" width="1" height="1"/>
+                        <rect x="12" y="6" width="1" height="1"/>
+                        <rect x="6" y="8" width="1" height="1"/>
+                        <rect x="6" y="10" width="1" height="1"/>
+                        <rect x="6" y="12" width="1" height="1"/>
+                        <rect x="8" y="8" width="1" height="1"/>
+                        <rect x="9" y="8" width="1" height="1"/>
+                        <rect x="11" y="8" width="1" height="1"/>
+                        <rect x="12" y="8" width="1" height="1"/>
+                        <rect x="8" y="9" width="1" height="1"/>
+                        <rect x="10" y="9" width="1" height="1"/>
+                        <rect x="12" y="9" width="1" height="1"/>
+                        <rect x="8" y="10" width="1" height="1"/>
+                        <rect x="9" y="10" width="1" height="1"/>
+                        <rect x="11" y="10" width="1" height="1"/>
+                        <rect x="8" y="11" width="1" height="1"/>
+                        <rect x="10" y="11" width="1" height="1"/>
+                        <rect x="12" y="11" width="1" height="1"/>
+                        <rect x="9" y="12" width="1" height="1"/>
+                        <rect x="11" y="12" width="1" height="1"/>
+                        <rect x="14" y="8" width="1" height="1"/>
+                        <rect x="15" y="8" width="1" height="1"/>
+                        <rect x="17" y="8" width="1" height="1"/>
+                        <rect x="14" y="9" width="1" height="1"/>
+                        <rect x="16" y="9" width="1" height="1"/>
+                        <rect x="14" y="10" width="1" height="1"/>
+                        <rect x="15" y="10" width="1" height="1"/>
+                        <rect x="17" y="10" width="1" height="1"/>
+                        <rect x="8" y="14" width="1" height="1"/>
+                        <rect x="9" y="14" width="1" height="1"/>
+                        <rect x="11" y="14" width="1" height="1"/>
+                        <rect x="8" y="15" width="1" height="1"/>
+                        <rect x="10" y="15" width="1" height="1"/>
+                        <rect x="8" y="16" width="1" height="1"/>
+                        <rect x="9" y="16" width="1" height="1"/>
+                        <rect x="11" y="16" width="1" height="1"/>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+                
+                <div class="signature-area">
+                  <div class="signature-line"></div>
+                  <div class="signature-text">Authorized Signature</div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                  <div class="company-name">OPTISTORE PRO</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(idCardHTML);
+    printWindow.document.close();
+  };
+
   // Calculate totals
   const grossSalary = basicSalary + houseAllowance + transportAllowance + medicalAllowance + otherAllowances;
   const totalDeductions = incomeTax + providentFund + healthInsurance + otherDeductions;
@@ -1769,7 +2118,7 @@ export default function StaffPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => generateStaffIDCard(staff)}
+                                onClick={() => printIDCard(staff)}
                                 title="Generate ID Card"
                               >
                                 <QrCode className="h-4 w-4" />
@@ -1802,7 +2151,7 @@ export default function StaffPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => generateStaffIDCard(selectedStaff)}
+                      onClick={() => printIDCard(selectedStaff)}
                       title="Generate ID Card"
                     >
                       <QrCode className="h-4 w-4" />
