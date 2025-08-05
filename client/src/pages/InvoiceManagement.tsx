@@ -110,6 +110,10 @@ const invoiceSchema = z.object({
   discountAmount: z.coerce.number().min(0),
   paymentMethod: z.string().optional(),
   notes: z.string().optional(),
+  // Coupon redemption fields
+  appliedCouponCode: z.string().optional(),
+  serviceType: z.enum(['eye_exam', 'glasses', 'contact_lenses', 'surgery', 'treatment', 'consultation', 'diagnostic', 'other']).optional(),
+  couponDiscountAmount: z.coerce.number().min(0).default(0),
 });
 
 const invoiceItemSchema = z.object({
@@ -296,6 +300,9 @@ export default function InvoiceManagement() {
     defaultValues: {
       taxRate: 8.5,
       discountAmount: 0,
+      appliedCouponCode: "",
+      serviceType: undefined,
+      couponDiscountAmount: 0,
     },
   });
 
@@ -340,6 +347,9 @@ export default function InvoiceManagement() {
       invoiceForm.reset({
         taxRate: 8.5,
         discountAmount: 0,
+        appliedCouponCode: "",
+        serviceType: undefined,
+        couponDiscountAmount: 0,
       });
       setInvoiceItems([]);
     },
@@ -436,11 +446,13 @@ export default function InvoiceManagement() {
   // Calculate totals with proper decimal handling - CONSISTENT WITH BACKEND
   const subtotal = invoiceItems.reduce((sum, item) => sum + parseFloat(item.total.toString()), 0);
   const discountAmount = parseFloat(invoiceForm.watch("discountAmount")?.toString() || "0");
+  const couponDiscountAmount = parseFloat(invoiceForm.watch("couponDiscountAmount")?.toString() || "0");
   const taxRate = parseFloat(invoiceForm.watch("taxRate")?.toString() || "0");
   
-  // Backend calculation method: tax on full subtotal, then subtract discount
+  // Backend calculation method: tax on full subtotal, then subtract discounts (regular + coupon)
   const taxAmount = (subtotal * taxRate) / 100;
-  const grandTotal = subtotal + taxAmount - discountAmount;
+  const totalDiscounts = discountAmount + couponDiscountAmount;
+  const grandTotal = subtotal + taxAmount - totalDiscounts;
   
 
 
@@ -470,6 +482,10 @@ export default function InvoiceManagement() {
       storeId: data.storeId || "5ff902af-3849-4ea6-945b-4d49175d6638",
       dueDate: data.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       notes: data.notes || "",
+      // Add coupon redemption data
+      appliedCouponCode: data.appliedCouponCode || null,
+      serviceType: data.serviceType || null,
+      couponDiscountAmount: parseFloat(couponDiscountAmount.toFixed(2)),
     };
 
     createInvoiceMutation.mutate(invoiceData);
@@ -1144,6 +1160,77 @@ export default function InvoiceManagement() {
                       />
                     </div>
 
+                    {/* Coupon Redemption Section */}
+                    <div className="border rounded-lg p-4 bg-green-50">
+                      <h3 className="text-lg font-medium text-green-800 mb-4 flex items-center">
+                        <CreditCard className="h-5 w-5 mr-2" />
+                        Coupon Redemption
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={invoiceForm.control}
+                          name="appliedCouponCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coupon Code</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Enter coupon code" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={invoiceForm.control}
+                          name="serviceType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Service Type</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select service type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="eye_exam">Eye Exam</SelectItem>
+                                  <SelectItem value="glasses">Glasses</SelectItem>
+                                  <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                                  <SelectItem value="surgery">Surgery</SelectItem>
+                                  <SelectItem value="treatment">Treatment</SelectItem>
+                                  <SelectItem value="consultation">Consultation</SelectItem>
+                                  <SelectItem value="diagnostic">Diagnostic Tests</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={invoiceForm.control}
+                          name="couponDiscountAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coupon Amount ($)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                  placeholder="0.00"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
                     {/* Add Items Section */}
                     <div className="border rounded-lg p-4">
                       <h3 className="text-lg font-medium mb-4">Invoice Items</h3>
@@ -1470,6 +1557,12 @@ export default function InvoiceManagement() {
                           <span>Discount:</span>
                           <span>-${discountAmount.toFixed(2)}</span>
                         </div>
+                        {couponDiscountAmount > 0 && (
+                          <div className="flex justify-between text-green-600">
+                            <span>Coupon Discount:</span>
+                            <span>-${couponDiscountAmount.toFixed(2)}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
                           <span>Tax ({taxRate}%):</span>
                           <span>${taxAmount.toFixed(2)}</span>
