@@ -1180,6 +1180,7 @@ export class DatabaseStorage implements IStorage {
       }));
       
       // Convert expenditures to payment records
+      console.log(`🔍 DEBUG: globalExpenditures length = ${globalExpenditures.length}`, globalExpenditures);
       const expenditurePayments = globalExpenditures.map(expenditure => ({
         id: `exp-${expenditure.invoiceId}`,
         invoiceId: expenditure.invoiceId,

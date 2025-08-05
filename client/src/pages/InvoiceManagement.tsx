@@ -307,14 +307,19 @@ export default function InvoiceManagement() {
     queryKey: ["/api/stores"],
   });
 
-  // Debug product loading
+  // Debug product loading - Enhanced
   React.useEffect(() => {
     console.log("🔍 PRODUCTS DEBUG:");
     console.log("  - Products array length:", products.length);
     console.log("  - Products loading:", productsLoading);
     console.log("  - First 3 products:", products.slice(0, 3));
     console.log("  - All product names:", products.map(p => p.name));
-  }, [products, productsLoading]);
+    console.log("  - Inventory length:", inventory.length);
+    console.log("  - Product types:", [...new Set(products.map(p => typeof p))]);
+    if (products.length === 0 && !productsLoading) {
+      console.warn("⚠️ NO PRODUCTS LOADED - Check API endpoint");
+    }
+  }, [products, productsLoading, inventory]);
 
   // Forms
   const invoiceForm = useForm<z.infer<typeof invoiceSchema>>({
@@ -1317,7 +1322,9 @@ export default function InvoiceManagement() {
                                         value={productSearchTerm}
                                         onValueChange={setProductSearchTerm}
                                       />
-                                      <CommandEmpty>No product found.</CommandEmpty>
+                                      <CommandEmpty>
+                                        {productsLoading ? "Loading products..." : `No products found. (Total available: ${products.length})`}
+                                      </CommandEmpty>
                                       <CommandGroup className="max-h-48 overflow-y-auto">
                                         <CommandItem
                                           value="custom"
