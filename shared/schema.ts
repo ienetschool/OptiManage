@@ -853,7 +853,7 @@ export const chartOfAccounts = pgTable("chart_of_accounts", {
   accountNumber: varchar("account_number").unique().notNull(),
   accountName: varchar("account_name").notNull(),
   categoryId: varchar("category_id").references(() => accountCategories.id).notNull(),
-  parentAccountId: varchar("parent_account_id").references(() => chartOfAccounts.id),
+  parentAccountId: varchar("parent_account_id"),
   accountType: varchar("account_type").notNull(), // asset, liability, equity, revenue, expense
   subType: varchar("sub_type"), // current_asset, fixed_asset, current_liability, etc.
   normalBalance: varchar("normal_balance").notNull(), // debit, credit

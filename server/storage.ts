@@ -1372,8 +1372,8 @@ export class DatabaseStorage implements IStorage {
     const fiscalPeriod = new Date().getMonth() + 1;
 
     // Determine accounts based on transaction type
-    let debitAccount: string;
-    let creditAccount: string;
+    let debitAccount: string | undefined;
+    let creditAccount: string | undefined;
 
     switch (transactionType) {
       case 'income':
@@ -1524,7 +1524,7 @@ export class DatabaseStorage implements IStorage {
 
     for (const account of accounts) {
       if (account.categoryId) {
-        await db.insert(chartOfAccounts).values(account).onConflictDoNothing();
+        await db.insert(chartOfAccounts).values([account]).onConflictDoNothing();
       }
     }
   }
@@ -1542,7 +1542,6 @@ export class DatabaseStorage implements IStorage {
     try {
       // Create expenditure invoice in database for persistence
       const expenditureInvoice = await db.insert(invoices).values({
-        id: `expenditure-${Date.now()}`,
         invoiceNumber: `EXP-${expenditure.invoiceId.replace('INV-', '')}`,
         customerId: null,
         storeId: expenditure.storeId,
@@ -1555,8 +1554,7 @@ export class DatabaseStorage implements IStorage {
         total: expenditure.amount,
         status: 'paid',
         paymentMethod: expenditure.paymentMethod,
-        notes: `${expenditure.description} - Supplier: ${expenditure.supplierName}`,
-        source: 'expenditure' // Mark as expenditure for accounting categorization
+        notes: `${expenditure.description} - Supplier: ${expenditure.supplierName}`
       }).returning();
 
       console.log(`💰 PERSISTENT EXPENDITURE CREATED: ${expenditure.supplierName} - $${expenditure.amount} for ${expenditure.description}`);
