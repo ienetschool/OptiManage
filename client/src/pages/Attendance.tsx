@@ -161,37 +161,89 @@ export default function Attendance() {
     };
   }, [qrScannerOpen]);
 
-  // QR Code scanner handler
+  // QR Code scanner handler with enhanced validation
   const handleQRScan = (qrData: string) => {
+    console.log('QR Code scanned:', qrData);
+    
     try {
+      // Try to parse as JSON first (for OptiStore QR codes)
       const qrStaffData = JSON.parse(qrData);
-      if (qrStaffData.staffCode) {
-        // Find staff member by QR code data in both staffCode and employeeId
+      
+      // Validate QR code structure for OptiStore attendance
+      if (!qrStaffData.staffCode && !qrStaffData.employeeId) {
+        toast({
+          title: "Invalid QR Code Format",
+          description: "This QR code is not an OptiStore staff attendance code",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Additional validation - check if it's specifically for attendance
+      if (qrStaffData.type && qrStaffData.type !== 'attendance') {
+        toast({
+          title: "Wrong QR Code Type",
+          description: `This QR code is for ${qrStaffData.type}, not attendance`,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const staffCode = qrStaffData.staffCode || qrStaffData.employeeId;
+      
+      // Find staff member by QR code data
+      const staff = todayAttendance.find(s => 
+        s.staffCode === staffCode || 
+        s.staffCode === qrStaffData.employeeId ||
+        s.staffCode === qrStaffData.staffCode
+      );
+      
+      if (staff) {
+        const action = staff.clockIn && !staff.clockOut ? 'out' : 'in';
+        handleClockAction(staff.staffId, action);
+        toast({
+          title: `Clock ${action === 'in' ? 'In' : 'Out'} Successful`,
+          description: `${staff.staffName} (${staffCode}) has been clocked ${action}`,
+        });
+      } else {
+        toast({
+          title: "Staff Not Found",
+          description: `No active staff member found with code: ${staffCode}`,
+          variant: "destructive"
+        });
+      }
+      
+    } catch (error) {
+      // If it's not JSON, check if it's a plain text staff code
+      const plainStaffCode = qrData.trim();
+      
+      // Check if it matches OptiStore staff code pattern (e.g., STF-304783)
+      if (plainStaffCode.match(/^(STF|EMP)-\d+$/)) {
         const staff = todayAttendance.find(s => 
-          s.staffCode === qrStaffData.staffCode || 
-          s.staffCode === qrStaffData.employeeId
+          s.staffCode === plainStaffCode
         );
+        
         if (staff) {
           const action = staff.clockIn && !staff.clockOut ? 'out' : 'in';
           handleClockAction(staff.staffId, action);
           toast({
             title: `Clock ${action === 'in' ? 'In' : 'Out'} Successful`,
-            description: `${staff.staffName} has been clocked ${action}`,
+            description: `${staff.staffName} (${plainStaffCode}) has been clocked ${action}`,
           });
         } else {
           toast({
             title: "Staff Not Found",
-            description: `Could not find staff member with code: ${qrStaffData.staffCode}`,
+            description: `No staff member found with code: ${plainStaffCode}`,
             variant: "destructive"
           });
         }
+      } else {
+        toast({
+          title: "Invalid QR Code",
+          description: "This QR code is not a valid OptiStore attendance code",
+          variant: "destructive"
+        });
       }
-    } catch (error) {
-      toast({
-        title: "Invalid QR Code",
-        description: "This QR code is not valid for attendance",
-        variant: "destructive"
-      });
     }
   };
 
@@ -557,20 +609,58 @@ export default function Attendance() {
                   <div className="p-8 text-center">
                     <QrCode className="h-16 w-16 mx-auto mb-4 text-gray-400" />
                     <p className="text-red-600 mb-4">{cameraError}</p>
-                    <Button 
-                      onClick={() => {
-                        const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
-                        const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
-                        handleQRScan(sampleQRData);
-                        setQrScannerOpen(false);
-                      }}
-                      className="w-full"
-                    >
-                      Simulate Scan: {staffData.length > 0 ? staffData[0].firstName + " " + staffData[0].lastName : "Dr. Smita Ghosh"}
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Click above for demo mode
-                    </p>
+                    <div className="space-y-2">
+                      <Button 
+                        onClick={() => {
+                          const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
+                          const sampleQRData = JSON.stringify({ 
+                            staffCode: realStaffCode,
+                            type: "attendance",
+                            store: "OptiStore Pro",
+                            timestamp: new Date().toISOString()
+                          });
+                          handleQRScan(sampleQRData);
+                          setQrScannerOpen(false);
+                        }}
+                        className="w-full"
+                      >
+                        Test Valid QR: {staffData.length > 0 ? staffData[0].firstName + " " + staffData[0].lastName : "Dr. Smita Ghosh"}
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          // Test invalid QR
+                          handleQRScan("https://www.google.com");
+                          setQrScannerOpen(false);
+                        }}
+                        className="w-full"
+                      >
+                        Test Invalid QR (Google URL)
+                      </Button>
+                      
+                      <Button 
+                        variant="outline"
+                        onClick={() => {
+                          // Test wrong type QR
+                          const wrongTypeQR = JSON.stringify({ 
+                            staffCode: "STF-304783",
+                            type: "inventory",
+                            store: "OptiStore Pro"
+                          });
+                          handleQRScan(wrongTypeQR);
+                          setQrScannerOpen(false);
+                        }}
+                        className="w-full"
+                      >
+                        Test Wrong Type QR (Inventory)
+                      </Button>
+                    </div>
+                    
+                    <div className="text-xs text-gray-600 mt-3 p-2 bg-gray-50 rounded">
+                      <p className="font-medium mb-1">Valid QR Format:</p>
+                      <code className="text-xs">{"{ staffCode: 'STF-304783', type: 'attendance' }"}</code>
+                    </div>
                   </div>
                 ) : (
                   <div className="relative">
