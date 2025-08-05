@@ -55,6 +55,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import AppLayout from "@/components/layout/AppLayout";
 import PublicLayout from "@/components/layout/PublicLayout";
 import PatientPortalLayout from "@/components/layout/PatientPortalLayout";
+import PrintPreview from "@/pages/PrintPreview";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -67,6 +68,11 @@ function Router() {
 
   return (
     <Switch>
+      {/* Print Preview Route - Standalone for direct printing */}
+      <Route path="/print-preview/:invoiceId?">
+        <PrintPreview />
+      </Route>
+      
       {/* Patient Portal routes (clean UI without menu/top bar) */}
       <Route path="/patient-portal">
         <PatientPortalLayout title="Patient Portal" description="Access your medical information and services">
