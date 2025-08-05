@@ -282,17 +282,24 @@ export default function Payroll() {
                 background: linear-gradient(135deg, #5b63e8 0%, #4c54d2 100%);
                 color: white;
                 padding: 20px;
-                text-align: center;
                 position: relative;
+                display: flex;
+                align-items: center;
+              }
+              .logo-section {
+                width: 60px;
+                margin-right: 20px;
               }
               .logo-box {
                 width: 60px;
                 height: 60px;
                 background: rgba(255, 255, 255, 0.2);
                 border-radius: 8px;
-                display: inline-block;
-                margin-bottom: 15px;
                 border: 2px solid rgba(255, 255, 255, 0.3);
+              }
+              .company-info {
+                flex: 1;
+                text-align: center;
               }
               .company-title {
                 font-size: 24px;
@@ -388,6 +395,11 @@ export default function Payroll() {
                 font-size: 10px;
                 color: #64748b;
                 margin-bottom: 5px;
+                padding: 4px;
+              }
+              .qr-code svg {
+                width: 100%;
+                height: 100%;
               }
               .qr-label {
                 font-size: 10px;
@@ -498,17 +510,21 @@ export default function Payroll() {
             <div class="payslip-container">
               <!-- Header Section -->
               <div class="header">
-                <div class="logo-box"></div>
+                <div class="logo-section">
+                  <div class="logo-box"></div>
+                </div>
+                <div class="company-info">
+                  <div class="company-title">OptiStore Pro</div>
+                  <div class="company-subtitle">Medical Center</div>
+                  <div class="company-details">
+                    123 Vision Street<br>
+                    Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                  </div>
+                </div>
                 <div class="payslip-badges">
                   <div class="badge">PAYSLIP #${String(payroll.id).padStart(6, '0')}</div>
                   <div class="badge">${payroll.payPeriod}</div>
-                </div>
-                <div class="company-title">OptiStore Pro</div>
-                <div class="company-subtitle">Medical Center</div>
-                <div class="company-details">
-                  123 Vision Street<br>
-                  Eyecare City, EC 12345<br>
-                  Phone: (555) 123-4567 | Email: billing@optistorepro.com
                 </div>
               </div>
 
@@ -538,67 +554,171 @@ export default function Payroll() {
                 <div class="employee-section">
                   <div class="qr-code-container">
                     <div class="qr-code">
-                      <svg width="60" height="60" viewBox="0 0 60 60">
-                        <rect width="60" height="60" fill="white"/>
+                      <svg viewBox="0 0 25 25" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="25" height="25" fill="white"/>
                         <g fill="#2d3748">
-                          <rect x="0" y="0" width="6" height="6"/>
-                          <rect x="6" y="0" width="6" height="6"/>
-                          <rect x="18" y="0" width="6" height="6"/>
-                          <rect x="30" y="0" width="6" height="6"/>
-                          <rect x="42" y="0" width="6" height="6"/>
-                          <rect x="48" y="0" width="6" height="6"/>
-                          <rect x="54" y="0" width="6" height="6"/>
-                          <rect x="0" y="6" width="6" height="6"/>
-                          <rect x="36" y="6" width="6" height="6"/>
-                          <rect x="54" y="6" width="6" height="6"/>
-                          <rect x="0" y="12" width="6" height="6"/>
-                          <rect x="12" y="12" width="6" height="6"/>
-                          <rect x="18" y="12" width="6" height="6"/>
-                          <rect x="24" y="12" width="6" height="6"/>
-                          <rect x="36" y="12" width="6" height="6"/>
-                          <rect x="54" y="12" width="6" height="6"/>
-                          <rect x="0" y="18" width="6" height="6"/>
-                          <rect x="12" y="18" width="6" height="6"/>
-                          <rect x="18" y="18" width="6" height="6"/>
-                          <rect x="24" y="18" width="6" height="6"/>
-                          <rect x="36" y="18" width="6" height="6"/>
-                          <rect x="54" y="18" width="6" height="6"/>
-                          <rect x="0" y="24" width="6" height="6"/>
-                          <rect x="12" y="24" width="6" height="6"/>
-                          <rect x="18" y="24" width="6" height="6"/>
-                          <rect x="24" y="24" width="6" height="6"/>
-                          <rect x="36" y="24" width="6" height="6"/>
-                          <rect x="54" y="24" width="6" height="6"/>
-                          <rect x="0" y="30" width="6" height="6"/>
-                          <rect x="36" y="30" width="6" height="6"/>
-                          <rect x="54" y="30" width="6" height="6"/>
-                          <rect x="0" y="36" width="6" height="6"/>
-                          <rect x="6" y="36" width="6" height="6"/>
-                          <rect x="12" y="36" width="6" height="6"/>
-                          <rect x="18" y="36" width="6" height="6"/>
-                          <rect x="24" y="36" width="6" height="6"/>
-                          <rect x="30" y="36" width="6" height="6"/>
-                          <rect x="36" y="36" width="6" height="6"/>
-                          <rect x="42" y="36" width="6" height="6"/>
-                          <rect x="48" y="36" width="6" height="6"/>
-                          <rect x="54" y="36" width="6" height="6"/>
-                          <rect x="12" y="42" width="6" height="6"/>
-                          <rect x="24" y="42" width="6" height="6"/>
-                          <rect x="30" y="42" width="6" height="6"/>
-                          <rect x="42" y="42" width="6" height="6"/>
-                          <rect x="0" y="48" width="6" height="6"/>
-                          <rect x="6" y="48" width="6" height="6"/>
-                          <rect x="18" y="48" width="6" height="6"/>
-                          <rect x="30" y="48" width="6" height="6"/>
-                          <rect x="36" y="48" width="6" height="6"/>
-                          <rect x="48" y="48" width="6" height="6"/>
-                          <rect x="0" y="54" width="6" height="6"/>
-                          <rect x="12" y="54" width="6" height="6"/>
-                          <rect x="24" y="54" width="6" height="6"/>
-                          <rect x="30" y="54" width="6" height="6"/>
-                          <rect x="42" y="54" width="6" height="6"/>
-                          <rect x="48" y="54" width="6" height="6"/>
-                          <rect x="54" y="54" width="6" height="6"/>
+                          <!-- QR Code Pattern -->
+                          <rect x="0" y="0" width="1" height="1"/>
+                          <rect x="1" y="0" width="1" height="1"/>
+                          <rect x="2" y="0" width="1" height="1"/>
+                          <rect x="3" y="0" width="1" height="1"/>
+                          <rect x="4" y="0" width="1" height="1"/>
+                          <rect x="5" y="0" width="1" height="1"/>
+                          <rect x="6" y="0" width="1" height="1"/>
+                          <rect x="8" y="0" width="1" height="1"/>
+                          <rect x="10" y="0" width="1" height="1"/>
+                          <rect x="12" y="0" width="1" height="1"/>
+                          <rect x="14" y="0" width="1" height="1"/>
+                          <rect x="16" y="0" width="1" height="1"/>
+                          <rect x="18" y="0" width="1" height="1"/>
+                          <rect x="19" y="0" width="1" height="1"/>
+                          <rect x="20" y="0" width="1" height="1"/>
+                          <rect x="21" y="0" width="1" height="1"/>
+                          <rect x="22" y="0" width="1" height="1"/>
+                          <rect x="23" y="0" width="1" height="1"/>
+                          <rect x="24" y="0" width="1" height="1"/>
+                          
+                          <rect x="0" y="1" width="1" height="1"/>
+                          <rect x="6" y="1" width="1" height="1"/>
+                          <rect x="10" y="1" width="1" height="1"/>
+                          <rect x="12" y="1" width="1" height="1"/>
+                          <rect x="14" y="1" width="1" height="1"/>
+                          <rect x="18" y="1" width="1" height="1"/>
+                          <rect x="24" y="1" width="1" height="1"/>
+                          
+                          <rect x="0" y="2" width="1" height="1"/>
+                          <rect x="2" y="2" width="1" height="1"/>
+                          <rect x="3" y="2" width="1" height="1"/>
+                          <rect x="4" y="2" width="1" height="1"/>
+                          <rect x="6" y="2" width="1" height="1"/>
+                          <rect x="8" y="2" width="1" height="1"/>
+                          <rect x="12" y="2" width="1" height="1"/>
+                          <rect x="16" y="2" width="1" height="1"/>
+                          <rect x="18" y="2" width="1" height="1"/>
+                          <rect x="20" y="2" width="1" height="1"/>
+                          <rect x="21" y="2" width="1" height="1"/>
+                          <rect x="22" y="2" width="1" height="1"/>
+                          <rect x="24" y="2" width="1" height="1"/>
+                          
+                          <rect x="0" y="3" width="1" height="1"/>
+                          <rect x="2" y="3" width="1" height="1"/>
+                          <rect x="3" y="3" width="1" height="1"/>
+                          <rect x="4" y="3" width="1" height="1"/>
+                          <rect x="6" y="3" width="1" height="1"/>
+                          <rect x="8" y="3" width="1" height="1"/>
+                          <rect x="10" y="3" width="1" height="1"/>
+                          <rect x="14" y="3" width="1" height="1"/>
+                          <rect x="16" y="3" width="1" height="1"/>
+                          <rect x="18" y="3" width="1" height="1"/>
+                          <rect x="20" y="3" width="1" height="1"/>
+                          <rect x="21" y="3" width="1" height="1"/>
+                          <rect x="22" y="3" width="1" height="1"/>
+                          <rect x="24" y="3" width="1" height="1"/>
+                          
+                          <rect x="0" y="4" width="1" height="1"/>
+                          <rect x="2" y="4" width="1" height="1"/>
+                          <rect x="3" y="4" width="1" height="1"/>
+                          <rect x="4" y="4" width="1" height="1"/>
+                          <rect x="6" y="4" width="1" height="1"/>
+                          <rect x="8" y="4" width="1" height="1"/>
+                          <rect x="10" y="4" width="1" height="1"/>
+                          <rect x="12" y="4" width="1" height="1"/>
+                          <rect x="14" y="4" width="1" height="1"/>
+                          <rect x="16" y="4" width="1" height="1"/>
+                          <rect x="18" y="4" width="1" height="1"/>
+                          <rect x="20" y="4" width="1" height="1"/>
+                          <rect x="21" y="4" width="1" height="1"/>
+                          <rect x="22" y="4" width="1" height="1"/>
+                          <rect x="24" y="4" width="1" height="1"/>
+                          
+                          <rect x="0" y="5" width="1" height="1"/>
+                          <rect x="6" y="5" width="1" height="1"/>
+                          <rect x="8" y="5" width="1" height="1"/>
+                          <rect x="10" y="5" width="1" height="1"/>
+                          <rect x="12" y="5" width="1" height="1"/>
+                          <rect x="14" y="5" width="1" height="1"/>
+                          <rect x="16" y="5" width="1" height="1"/>
+                          <rect x="18" y="5" width="1" height="1"/>
+                          <rect x="24" y="5" width="1" height="1"/>
+                          
+                          <rect x="0" y="6" width="1" height="1"/>
+                          <rect x="1" y="6" width="1" height="1"/>
+                          <rect x="2" y="6" width="1" height="1"/>
+                          <rect x="3" y="6" width="1" height="1"/>
+                          <rect x="4" y="6" width="1" height="1"/>
+                          <rect x="5" y="6" width="1" height="1"/>
+                          <rect x="6" y="6" width="1" height="1"/>
+                          <rect x="8" y="6" width="1" height="1"/>
+                          <rect x="10" y="6" width="1" height="1"/>
+                          <rect x="12" y="6" width="1" height="1"/>
+                          <rect x="14" y="6" width="1" height="1"/>
+                          <rect x="16" y="6" width="1" height="1"/>
+                          <rect x="18" y="6" width="1" height="1"/>
+                          <rect x="19" y="6" width="1" height="1"/>
+                          <rect x="20" y="6" width="1" height="1"/>
+                          <rect x="21" y="6" width="1" height="1"/>
+                          <rect x="22" y="6" width="1" height="1"/>
+                          <rect x="23" y="6" width="1" height="1"/>
+                          <rect x="24" y="6" width="1" height="1"/>
+                          
+                          <!-- Middle patterns -->
+                          <rect x="10" y="8" width="1" height="1"/>
+                          <rect x="12" y="8" width="1" height="1"/>
+                          <rect x="14" y="8" width="1" height="1"/>
+                          
+                          <rect x="0" y="10" width="1" height="1"/>
+                          <rect x="2" y="10" width="1" height="1"/>
+                          <rect x="4" y="10" width="1" height="1"/>
+                          <rect x="6" y="10" width="1" height="1"/>
+                          <rect x="8" y="10" width="1" height="1"/>
+                          <rect x="10" y="10" width="1" height="1"/>
+                          <rect x="14" y="10" width="1" height="1"/>
+                          <rect x="16" y="10" width="1" height="1"/>
+                          <rect x="18" y="10" width="1" height="1"/>
+                          <rect x="20" y="10" width="1" height="1"/>
+                          <rect x="22" y="10" width="1" height="1"/>
+                          <rect x="24" y="10" width="1" height="1"/>
+                          
+                          <!-- Bottom corner pattern -->
+                          <rect x="0" y="18" width="1" height="1"/>
+                          <rect x="1" y="18" width="1" height="1"/>
+                          <rect x="2" y="18" width="1" height="1"/>
+                          <rect x="3" y="18" width="1" height="1"/>
+                          <rect x="4" y="18" width="1" height="1"/>
+                          <rect x="5" y="18" width="1" height="1"/>
+                          <rect x="6" y="18" width="1" height="1"/>
+                          
+                          <rect x="0" y="19" width="1" height="1"/>
+                          <rect x="6" y="19" width="1" height="1"/>
+                          
+                          <rect x="0" y="20" width="1" height="1"/>
+                          <rect x="2" y="20" width="1" height="1"/>
+                          <rect x="3" y="20" width="1" height="1"/>
+                          <rect x="4" y="20" width="1" height="1"/>
+                          <rect x="6" y="20" width="1" height="1"/>
+                          
+                          <rect x="0" y="21" width="1" height="1"/>
+                          <rect x="2" y="21" width="1" height="1"/>
+                          <rect x="3" y="21" width="1" height="1"/>
+                          <rect x="4" y="21" width="1" height="1"/>
+                          <rect x="6" y="21" width="1" height="1"/>
+                          
+                          <rect x="0" y="22" width="1" height="1"/>
+                          <rect x="2" y="22" width="1" height="1"/>
+                          <rect x="3" y="22" width="1" height="1"/>
+                          <rect x="4" y="22" width="1" height="1"/>
+                          <rect x="6" y="22" width="1" height="1"/>
+                          
+                          <rect x="0" y="23" width="1" height="1"/>
+                          <rect x="6" y="23" width="1" height="1"/>
+                          
+                          <rect x="0" y="24" width="1" height="1"/>
+                          <rect x="1" y="24" width="1" height="1"/>
+                          <rect x="2" y="24" width="1" height="1"/>
+                          <rect x="3" y="24" width="1" height="1"/>
+                          <rect x="4" y="24" width="1" height="1"/>
+                          <rect x="5" y="24" width="1" height="1"/>
+                          <rect x="6" y="24" width="1" height="1"/>
                         </g>
                       </svg>
                     </div>
