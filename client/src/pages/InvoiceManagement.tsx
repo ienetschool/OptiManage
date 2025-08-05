@@ -617,7 +617,79 @@ export default function InvoiceManagement() {
   };
 
   // Professional A4 Invoice Generation - Blue Design with Print Media CSS
-  const generateProfessionalInvoice = (invoice: Invoice) => {
+  const generateProfessionalInvoice = async (invoice: Invoice) => {
+    const customer = customers.find(c => c.id === invoice.customerId);
+    const store = stores.find(s => s.id === invoice.storeId);
+    const storeName = store?.name || 'OptiStore Pro';
+    
+    try {
+      // Generate QR code data URL using qrcode library
+      const QRCode = await import('qrcode');
+      const qrData = generateInvoiceQR(invoice);
+      const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+        width: 60,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+
+      // Create style for print with color preservation
+      const style = document.createElement('style');
+      style.textContent = `
+        @media print {
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          .print-content { display: block !important; }
+          .no-print { display: none !important; }
+          body * { visibility: hidden; }
+          .print-content, .print-content * { visibility: visible; }
+          .print-content { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+        @media screen, print {
+          .header { background: #4F46E5 !important; color: white !important; }
+          .qr-section { background: white !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+          .qr-section img { display: block !important; }
+          .invoice-type { background: #4F46E5 !important; color: white !important; }
+          .invoice-number { background: #4F46E5 !important; color: white !important; }
+          .items-table th { background: #4F46E5 !important; color: white !important; }
+          .totals-table tr:last-child { background: #4F46E5 !important; color: white !important; }
+          .section-title { color: #4F46E5 !important; }
+          .notes-section { border-left-color: #4F46E5 !important; }
+          .notes-title { color: #4F46E5 !important; }
+          .invoice-info-section { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Create print content
+      const printContent = document.createElement('div');
+      printContent.className = 'print-content';
+      printContent.style.display = 'none';
+      printContent.innerHTML = generateInvoiceHTML(invoice, customer, storeName);
+      document.body.appendChild(printContent);
+      
+      // Inject real QR code as image
+      const qrPlaceholder = printContent.querySelector(`#qr-placeholder-${invoice.id}`);
+      if (qrPlaceholder) {
+        qrPlaceholder.innerHTML = `<img src="${qrCodeDataURL}" alt="Invoice QR Code" style="width: 60px; height: 60px;" />`;
+      }
+      
+      // Print and clean up
+      window.print();
+      setTimeout(() => {
+        document.body.removeChild(printContent);
+        document.head.removeChild(style);
+      }, 1000);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      // Fallback: use the existing CSS grid QR code
+      generateProfessionalInvoiceFallback(invoice);
+    }
+  };
+
+  // Fallback function with CSS grid QR code (original implementation)
+  const generateProfessionalInvoiceFallback = (invoice: Invoice) => {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
     const storeName = store?.name || 'OptiStore Pro';
@@ -636,9 +708,6 @@ export default function InvoiceManagement() {
       @media screen, print {
         .header { background: #4F46E5 !important; color: white !important; }
         .qr-section { background: white !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
-        .qr-section svg { display: block !important; }
-        .qr-section svg rect[fill="black"] { fill: black !important; }
-        .qr-section svg rect[fill="white"] { fill: white !important; }
         .invoice-type { background: #4F46E5 !important; color: white !important; }
         .invoice-number { background: #4F46E5 !important; color: white !important; }
         .items-table th { background: #4F46E5 !important; color: white !important; }
@@ -651,11 +720,31 @@ export default function InvoiceManagement() {
     `;
     document.head.appendChild(style);
 
-    // Create print content
+    // Create print content with CSS grid QR code
     const printContent = document.createElement('div');
     printContent.className = 'print-content';
     printContent.style.display = 'none';
-    printContent.innerHTML = generateInvoiceHTML(invoice, customer, storeName);
+    printContent.innerHTML = generateInvoiceHTML(invoice, customer, storeName).replace(
+      `<div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;" id="qr-placeholder-${invoice.id}">
+            <!-- QR Code will be injected here -->
+          </div>`,
+      `<div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
+            <div style="width: 52px; height: 52px; background: white; position: relative; display: grid; grid-template-columns: repeat(13, 4px); grid-template-rows: repeat(13, 4px); gap: 0;">
+              <!-- CSS Grid QR Code Pattern -->
+              <div style="grid-column: 1/8; grid-row: 1/8; background: #000;"></div>
+              <div style="grid-column: 2/7; grid-row: 2/7; background: #fff;"></div>
+              <div style="grid-column: 3/6; grid-row: 3/6; background: #000;"></div>
+              <div style="grid-column: 7/14; grid-row: 1/8; background: #000;"></div>
+              <div style="grid-column: 8/13; grid-row: 2/7; background: #fff;"></div>
+              <div style="grid-column: 9/12; grid-row: 3/6; background: #000;"></div>
+              <div style="grid-column: 1/8; grid-row: 7/14; background: #000;"></div>
+              <div style="grid-column: 2/7; grid-row: 8/13; background: #fff;"></div>
+              <div style="grid-column: 3/6; grid-row: 9/12; background: #000;"></div>
+              <div style="grid-column: 9; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 11; background: #000;"></div>
+            </div>
+          </div>`
+    );
     document.body.appendChild(printContent);
     
     // Print and clean up
@@ -676,37 +765,8 @@ export default function InvoiceManagement() {
     return `
       <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
         <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
-          <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
-            <div style="width: 52px; height: 52px; background: white; position: relative; display: grid; grid-template-columns: repeat(13, 4px); grid-template-rows: repeat(13, 4px); gap: 0;">
-              <!-- Top-left finder pattern (7x7) -->
-              <div style="grid-column: 1/8; grid-row: 1/8; background: #000;"></div>
-              <div style="grid-column: 2/7; grid-row: 2/7; background: #fff;"></div>
-              <div style="grid-column: 3/6; grid-row: 3/6; background: #000;"></div>
-              
-              <!-- Top-right finder pattern (7x7) -->
-              <div style="grid-column: 7/14; grid-row: 1/8; background: #000;"></div>
-              <div style="grid-column: 8/13; grid-row: 2/7; background: #fff;"></div>
-              <div style="grid-column: 9/12; grid-row: 3/6; background: #000;"></div>
-              
-              <!-- Bottom-left finder pattern (7x7) -->
-              <div style="grid-column: 1/8; grid-row: 7/14; background: #000;"></div>
-              <div style="grid-column: 2/7; grid-row: 8/13; background: #fff;"></div>
-              <div style="grid-column: 3/6; grid-row: 9/12; background: #000;"></div>
-              
-              <!-- Timing patterns -->
-              <div style="grid-column: 9; grid-row: 7; background: #000;"></div>
-              <div style="grid-column: 11; grid-row: 7; background: #000;"></div>
-              <div style="grid-column: 7; grid-row: 9; background: #000;"></div>
-              <div style="grid-column: 7; grid-row: 11; background: #000;"></div>
-              
-              <!-- Data dots -->
-              <div style="grid-column: 9; grid-row: 9; background: #000;"></div>
-              <div style="grid-column: 11; grid-row: 9; background: #000;"></div>
-              <div style="grid-column: 9; grid-row: 11; background: #000;"></div>
-              <div style="grid-column: 11; grid-row: 11; background: #000;"></div>
-              <div style="grid-column: 10; grid-row: 8; background: #000;"></div>
-              <div style="grid-column: 12; grid-row: 10; background: #000;"></div>
-            </div>
+          <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;" id="qr-placeholder-${invoice.id}">
+            <!-- QR Code will be injected here -->
           </div>
           <div class="company-info" style="text-align: center; flex-grow: 1;">
             <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
