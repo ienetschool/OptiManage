@@ -289,8 +289,7 @@ export default function InvoiceManagement() {
   const { data: products = [], refetch: refetchProducts, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     staleTime: 0, // Force fresh data
-    cacheTime: 0, // Don't cache
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
     refetchOnWindowFocus: true, // Refresh when window gains focus
     refetchOnMount: true, // Always refetch on mount
   });
@@ -299,8 +298,7 @@ export default function InvoiceManagement() {
   const { data: inventory = [], refetch: refetchInventory } = useQuery({
     queryKey: ["/api/store-inventory"],
     staleTime: 0, // Force fresh data
-    cacheTime: 0, // Don't cache
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
     refetchOnWindowFocus: true, // Refresh when window gains focus
     refetchOnMount: true, // Always refetch on mount
   });
@@ -308,6 +306,15 @@ export default function InvoiceManagement() {
   const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
     queryKey: ["/api/stores"],
   });
+
+  // Debug product loading
+  React.useEffect(() => {
+    console.log("🔍 PRODUCTS DEBUG:");
+    console.log("  - Products array length:", products.length);
+    console.log("  - Products loading:", productsLoading);
+    console.log("  - First 3 products:", products.slice(0, 3));
+    console.log("  - All product names:", products.map(p => p.name));
+  }, [products, productsLoading]);
 
   // Forms
   const invoiceForm = useForm<z.infer<typeof invoiceSchema>>({
@@ -1266,10 +1273,18 @@ export default function InvoiceManagement() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={async () => {
+                                      // Force complete cache invalidation and refetch
+                                      queryClient.removeQueries({ queryKey: ["/api/products"] });
+                                      queryClient.removeQueries({ queryKey: ["/api/store-inventory"] });
+                                      await Promise.all([
+                                        queryClient.refetchQueries({ queryKey: ["/api/products"] }),
+                                        queryClient.refetchQueries({ queryKey: ["/api/store-inventory"] })
+                                      ]);
+                                      // Also manually refetch with fresh timestamps
                                       await Promise.all([refetchProducts(), refetchInventory()]);
                                       toast({
                                         title: "Products Refreshed",
-                                        description: "Product list and inventory updated with latest items.",
+                                        description: "Product list and inventory completely refreshed with latest items.",
                                       });
                                     }}
                                     className="h-6 px-2 text-xs"
@@ -1330,16 +1345,19 @@ export default function InvoiceManagement() {
                                         </CommandItem>
                                         
                                         {products.length > 0 && (
-                                          <div className="px-3 py-2 text-xs font-semibold text-slate-600 bg-slate-50 border-t border-b">
-                                            AVAILABLE PRODUCTS ({products.length})
+                                          <div className="px-3 py-2 text-xs font-semibold text-blue-600 bg-blue-50 border-t border-b">
+                                            🔄 LOADED PRODUCTS: {products.length} total 
+                                            {productsLoading ? " (Loading...)" : " (Ready)"}
                                           </div>
                                         )}
                                         
                                         {products
-                                          .filter(product => 
-                                            product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-                                            product.category.toLowerCase().includes(productSearchTerm.toLowerCase())
-                                          )
+                                          .filter(product => {
+                                            if (!productSearchTerm) return true; // Show all if no search term
+                                            return product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                                                   (product.category && product.category.toLowerCase().includes(productSearchTerm.toLowerCase())) ||
+                                                   (product.sku && product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()));
+                                          })
                                           .map((product) => {
                                             // Find stock for this product
                                             const productStock = inventory.find((item: any) => item.productId === product.id);
