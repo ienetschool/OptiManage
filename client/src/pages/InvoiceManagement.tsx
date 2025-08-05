@@ -616,388 +616,141 @@ export default function InvoiceManagement() {
     return JSON.stringify(qrData);
   };
 
-  // Professional A4 Invoice Generation - Blue Design
+  // Professional A4 Invoice Generation - Blue Design with Print Media CSS
   const generateProfessionalInvoice = (invoice: Invoice) => {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
     const storeName = store?.name || 'OptiStore Pro';
     
-    const printWindow = window.open('', '_blank', 'width=900,height=1200');
-    if (!printWindow) return;
+    // Create style for print with color preservation
+    const style = document.createElement('style');
+    style.textContent = `
+      @media print {
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .print-content { display: block !important; }
+        .no-print { display: none !important; }
+        body * { visibility: hidden; }
+        .print-content, .print-content * { visibility: visible; }
+        .print-content { position: absolute; left: 0; top: 0; width: 100%; }
+      }
+      .header { background: #4F46E5 !important; color: white !important; }
+      .invoice-type { background: #4F46E5 !important; color: white !important; }
+      .invoice-number { background: #4F46E5 !important; color: white !important; }
+      .items-table th { background: #4F46E5 !important; color: white !important; }
+      .totals-table tr:last-child { background: #4F46E5 !important; color: white !important; }
+      .section-title { color: #4F46E5 !important; }
+      .notes-section { border-left-color: #4F46E5 !important; }
+      .notes-title { color: #4F46E5 !important; }
+    `;
+    document.head.appendChild(style);
+
+    // Create print content
+    const printContent = document.createElement('div');
+    printContent.className = 'print-content';
+    printContent.style.display = 'none';
+    printContent.innerHTML = generateInvoiceHTML(invoice, customer, storeName);
+    document.body.appendChild(printContent);
     
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Invoice - ${invoice.invoiceNumber}</title>
-        <style>
-          @page { size: A4; margin: 10mm; }
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { 
-            font-family: 'Inter', 'Segoe UI', sans-serif; 
-            font-size: 12pt; 
-            color: #1a202c; 
-            background: white;
-            line-height: 1.6;
-          }
-          
-          .invoice-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-          }
-          
-          .header {
-            background: #4F46E5;
-            color: white;
-            padding: 30px;
-            text-align: center;
-          }
-          
-          .company-name {
-            font-size: 24pt;
-            font-weight: 700;
-            margin-bottom: 5px;
-          }
-          
-          .company-tagline {
-            font-size: 11pt;
-            opacity: 0.9;
-            margin-bottom: 10px;
-          }
-          
-          .company-address {
-            font-size: 10pt;
-            opacity: 0.8;
-          }
-          
-          .content {
-            padding: 30px;
-          }
-          
-          .invoice-type {
-            background: #4F46E5;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            font-size: 14pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            text-align: center;
-            margin-bottom: 20px;
-            display: inline-block;
-          }
-          
-          .invoice-number {
-            background: #4F46E5;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-size: 12pt;
-            font-weight: 700;
-            display: inline-block;
-            margin-bottom: 10px;
-          }
-          
-          .billing-section {
-            display: flex;
-            justify-content: space-between;
-            margin: 30px 0;
-            gap: 30px;
-          }
-          
-          .bill-to, .ship-to {
-            flex: 1;
-          }
-          
-          .section-title {
-            font-size: 11pt;
-            font-weight: 700;
-            color: #4F46E5;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-          }
-          
-          .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-          }
-          
-          .items-table th {
-            background: #4F46E5;
-            color: white;
-            padding: 10px;
-            text-align: left;
-            font-weight: 700;
-            font-size: 10pt;
-            text-transform: uppercase;
-          }
-          
-          .items-table td {
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 10pt;
-          }
-          
-          .items-table tr:nth-child(even) {
-            background: #f8fafc;
-          }
-          
-          .text-right {
-            text-align: right;
-          }
-          
-          .text-center {
-            text-align: center;
-          }
-          
-          .totals-section {
-            margin-top: 30px;
-            display: flex;
-            justify-content: flex-end;
-          }
-          
-          .totals-table {
-            width: 300px;
-            border-collapse: collapse;
-          }
-          
-          .totals-table td {
-            padding: 8px 12px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 10pt;
-          }
-          
-          .totals-table tr:last-child {
-            background: #4F46E5;
-            color: white;
-            font-weight: 700;
-          }
-          
-          .notes-section {
-            margin-top: 30px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 5px;
-            border-left: 4px solid #4F46E5;
-          }
-          
-          .notes-title {
-            font-weight: 700;
-            color: #4F46E5;
-            margin-bottom: 8px;
-            font-size: 11pt;
-          }
-          }
-          
-          .payment-info {
-            flex: 1;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-          }
-          
-          .payment-info h4 {
-            color: #1e40af;
-            font-size: 11pt;
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-          }
-          
-          .totals-card {
-            width: 350px;
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-          }
-          
-          .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            padding: 6px 0;
-            border-bottom: 1px solid #f1f5f9;
-          }
-          
-          .total-row:last-child {
-            border-bottom: none;
-          }
-          
-          .total-label {
-            font-weight: 600;
-            color: #475569;
-            font-size: 10pt;
-          }
-          
-          .total-value {
-            font-weight: 700;
-            color: #1e293b;
-            font-family: monospace;
-            font-size: 10pt;
-          }
-          
-          .grand-total {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-top: 8px;
-          }
-          
-          .grand-total .total-label {
-            color: white;
-            font-size: 11pt;
-            text-transform: uppercase;
-          }
-          
-          .grand-total .total-value {
-            color: white;
-            font-size: 16pt;
-            font-weight: 900;
-          }
-          
-          .notes {
-            margin-top: 30px;
-            padding: 16px;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            border: 1px solid #f59e0b;
-            border-radius: 8px;
-            border-left: 4px solid #d97706;
-          }
-          
-          .notes-title {
-            font-weight: 700;
-            color: #92400e;
-            margin-bottom: 6px;
-            font-size: 10pt;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-container">
-          <div class="header">
-            <div class="company-name">OptiStore Pro</div>
-            <div class="company-tagline">Optical Retail Management</div>
-            <div class="company-address">
-              123 Vision Street<br/>
-              Eyecare City, EC 12345<br/>
-              Phone: (555) 123-4567 | Email: billing@optistorepro.com
-            </div>
-          </div>
-          
-          <div class="content">
-            <div class="invoice-type">PURCHASE INVOICE</div>
-            
-            <div class="invoice-header">
-              <div>
-                <div class="invoice-number">${invoice.invoiceNumber}</div>
-                <div style="font-size: 10pt; color: #64748b; margin-top: 4px;">
-                  Date: ${invoice.date ? new Date(invoice.date).toLocaleDateString() : new Date().toLocaleDateString()}<br/>
-                  Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
-                </div>
-              </div>
-              <div class="payment-status">PAID</div>
-            </div>
-            
-            <div class="billing-section">
-              <div class="bill-to">
-                <div class="section-title">Bill To:</div>
-                <div style="font-size: 11pt; line-height: 1.5;">
-                  <strong>${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'Guest Customer'}</strong><br/>
-                  ${customer?.email || 'No email provided'}<br/>
-                  ${customer?.phone || 'No phone provided'}
-                </div>
-              </div>
-              
-              <div class="ship-to">
-                <div class="section-title">Ship To:</div>
-                <div style="font-size: 11pt; line-height: 1.5;">
-                  <strong>${storeName} - Main Location</strong><br/>
-                  455 Inventory Avenue<br/>
-                  Stock City, SC 67890<br/>
-                  Phone: (555) 987-6543
-                </div>
-              </div>
-            </div>
-            
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>Item Description</th>
-                  <th class="text-center">Quantity</th>
-                  <th class="text-right">Unit Cost</th>
-                  <th class="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${invoice.items && invoice.items.length > 0 
-                  ? invoice.items.map(item => `
-                    <tr>
-                      <td>${item.productName || item.description || 'Item'}</td>
-                      <td class="text-center">${item.quantity || 1}</td>
-                      <td class="text-right">$${(item.unitPrice || 0).toFixed(2)}</td>
-                      <td class="text-right">$${(item.total || 0).toFixed(2)}</td>
-                    </tr>
-                  `).join('')
-                  : '<tr><td colspan="4" style="text-align: center; color: #64748b;">No items available</td></tr>'
-                }
-              </tbody>
-            </table>
-            
-            <div class="totals-section">
-              <table class="totals-table">
-                <tr>
-                  <td>Subtotal:</td>
-                  <td class="text-right">$${(invoice.subtotal || 0).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td>Tax (${invoice.taxRate || 0}%):</td>
-                  <td class="text-right">$${(invoice.taxAmount || 0).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td>Shipping:</td>
-                  <td class="text-right">$0.00</td>
-                </tr>
-                <tr>
-                  <td><strong>TOTAL:</strong></td>
-                  <td class="text-right"><strong>$${(invoice.total || 0).toFixed(2)}</strong></td>
-                </tr>
-              </table>
-            </div>
-            
-            ${invoice.notes ? `
-              <div class="notes-section">
-                <div class="notes-title">Notes:</div>
-                <div class="notes-content">${invoice.notes}</div>
-              </div>
-            ` : ''}
-          </div>
-        </div>
-      </body>
-      <script>
-        window.addEventListener('load', function() {
-          setTimeout(function() {
-            window.print();
-            setTimeout(function() {
-              window.close();
-            }, 500);
-          }, 1000);
-        });
-      </script>
-    </html>
-    `);
-    
-    printWindow.document.close();
-    printWindow.focus();
+    // Print and clean up
+    window.print();
     setTimeout(() => {
-      printWindow.print();
-    }, 250);
+      document.body.removeChild(printContent);
+      document.head.removeChild(style);
+    }, 1000);
+  };
+
+  // Generate PDF function
+  const generatePDF = (invoice: Invoice) => {
+    generateProfessionalInvoice(invoice);
+  };
+
+  // Generate invoice HTML content
+  const generateInvoiceHTML = (invoice: Invoice, customer: any, storeName: string) => {
+    return `
+      <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
+        <div class="header" style="background: #4F46E5; color: white; padding: 30px; text-align: center;">
+          <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
+          <div class="company-tagline" style="font-size: 11pt; opacity: 0.9; margin-bottom: 10px;">Optical Retail Management</div>
+          <div class="company-address" style="font-size: 10pt; opacity: 0.8;">123 Vision Street<br/>Eyecare City, EC 12345<br/>Phone: (555) 123-4567 | Email: billing@optistorepro.com</div>
+        </div>
+        
+        <div class="content" style="padding: 30px;">
+          <div class="invoice-type" style="background: #4F46E5; color: white; padding: 10px 20px; border-radius: 5px; font-size: 14pt; font-weight: 700; text-transform: uppercase; text-align: center; margin-bottom: 20px; display: inline-block;">PURCHASE INVOICE</div>
+          
+          <div class="invoice-header" style="display: flex; justify-content: space-between; margin: 30px 0; gap: 30px;">
+            <div>
+              <div class="invoice-number" style="background: #4F46E5; color: white; padding: 6px 12px; border-radius: 4px; font-size: 12pt; font-weight: 700; display: inline-block; margin-bottom: 10px;">${invoice.invoiceNumber}</div>
+              <div style="font-size: 10pt; color: #64748b; margin-top: 4px;">
+                Date: ${invoice.date ? new Date(invoice.date).toLocaleDateString() : new Date().toLocaleDateString()}<br/>
+                Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
+              </div>
+            </div>
+            <div style="background: #10b981; color: white; padding: 6px 12px; border-radius: 4px; font-weight: 700; height: fit-content;">PAID</div>
+          </div>
+          
+          <div class="billing-section" style="display: flex; justify-content: space-between; margin: 30px 0; gap: 30px;">
+            <div class="bill-to" style="flex: 1;">
+              <div class="section-title" style="font-size: 11pt; font-weight: 700; color: #4F46E5; margin-bottom: 8px; text-transform: uppercase;">Bill To:</div>
+              <div style="font-size: 11pt; line-height: 1.5;">
+                <strong>${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'Guest Customer'}</strong><br/>
+                ${customer?.email || 'No email provided'}<br/>
+                ${customer?.phone || 'No phone provided'}
+              </div>
+            </div>
+            
+            <div class="ship-to" style="flex: 1;">
+              <div class="section-title" style="font-size: 11pt; font-weight: 700; color: #4F46E5; margin-bottom: 8px; text-transform: uppercase;">Ship To:</div>
+              <div style="font-size: 11pt; line-height: 1.5;">
+                <strong>${storeName} - Main Location</strong><br/>
+                455 Inventory Avenue<br/>
+                Stock City, SC 67890<br/>
+                Phone: (555) 987-6543
+              </div>
+            </div>
+          </div>
+          
+          <table class="items-table" style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+              <tr>
+                <th style="background: #4F46E5; color: white; padding: 10px; text-align: left; font-weight: 700; font-size: 10pt; text-transform: uppercase;">Item Description</th>
+                <th style="background: #4F46E5; color: white; padding: 10px; text-align: center; font-weight: 700; font-size: 10pt; text-transform: uppercase;">Quantity</th>
+                <th style="background: #4F46E5; color: white; padding: 10px; text-align: right; font-weight: 700; font-size: 10pt; text-transform: uppercase;">Unit Cost</th>
+                <th style="background: #4F46E5; color: white; padding: 10px; text-align: right; font-weight: 700; font-size: 10pt; text-transform: uppercase;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoice.items && invoice.items.length > 0 
+                ? invoice.items.map(item => `
+                  <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 10pt;">${item.productName || item.description || 'Item'}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; text-align: center;">${item.quantity || 1}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; text-align: right;">$${(item.unitPrice || 0).toFixed(2)}</td>
+                    <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; text-align: right;">$${(item.total || 0).toFixed(2)}</td>
+                  </tr>
+                `).join('')
+                : '<tr><td colspan="4" style="padding: 10px; text-align: center; color: #64748b;">No items available</td></tr>'
+              }
+            </tbody>
+          </table>
+          
+          <div class="totals-section" style="margin-top: 30px; display: flex; justify-content: flex-end;">
+            <table class="totals-table" style="width: 300px; border-collapse: collapse;">
+              <tr><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt;">Subtotal:</td><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; text-align: right;">$${invoice.subtotal.toFixed(2)}</td></tr>
+              ${invoice.discountAmount > 0 ? `<tr><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt;">Discount:</td><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; text-align: right;">-$${invoice.discountAmount.toFixed(2)}</td></tr>` : ''}
+              <tr><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt;">Tax:</td><td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-size: 10pt; text-align: right;">$${invoice.taxAmount.toFixed(2)}</td></tr>
+              <tr style="background: #4F46E5; color: white; font-weight: 700;"><td style="padding: 8px 12px; font-size: 10pt;">TOTAL:</td><td style="padding: 8px 12px; font-size: 10pt; text-align: right;">$${invoice.total.toFixed(2)}</td></tr>
+            </table>
+          </div>
+          
+          ${invoice.notes ? `
+          <div class="notes-section" style="margin-top: 30px; padding: 15px; background: #f8fafc; border-radius: 5px; border-left: 4px solid #4F46E5;">
+            <div class="notes-title" style="font-weight: 700; color: #4F46E5; margin-bottom: 8px; font-size: 11pt;">Notes:</div>
+            <div style="color: #64748b; font-size: 10pt; line-height: 1.5;">${invoice.notes}</div>
+          </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
   };
   return (
     <>
@@ -1841,7 +1594,7 @@ export default function InvoiceManagement() {
                       <Button 
                         size="sm"
                         variant="outline"
-                        onClick={() => setShowInvoicePreview(true)}
+                        onClick={() => generatePDF(selectedInvoice)}
                       >
                         <Download className="h-4 w-4 mr-2" />
                         PDF
