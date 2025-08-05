@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Grid Test</title>
+    <style>
+        body { padding: 20px; background: #f0f0f0; }
+        .test-container { background: #4F46E5; padding: 20px; }
+    </style>
+</head>
+<body>
+    <h2>QR Code Grid Test</h2>
+    <div class="test-container" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: center; align-items: center;">
+        <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
+            <div style="width: 52px; height: 52px; background: white; position: relative; display: grid; grid-template-columns: repeat(13, 4px); grid-template-rows: repeat(13, 4px); gap: 0;">
+              <!-- Top-left finder pattern (7x7) -->
+              <div style="grid-column: 1/8; grid-row: 1/8; background: #000;"></div>
+              <div style="grid-column: 2/7; grid-row: 2/7; background: #fff;"></div>
+              <div style="grid-column: 3/6; grid-row: 3/6; background: #000;"></div>
+              
+              <!-- Top-right finder pattern (7x7) -->
+              <div style="grid-column: 7/14; grid-row: 1/8; background: #000;"></div>
+              <div style="grid-column: 8/13; grid-row: 2/7; background: #fff;"></div>
+              <div style="grid-column: 9/12; grid-row: 3/6; background: #000;"></div>
+              
+              <!-- Bottom-left finder pattern (7x7) -->
+              <div style="grid-column: 1/8; grid-row: 7/14; background: #000;"></div>
+              <div style="grid-column: 2/7; grid-row: 8/13; background: #fff;"></div>
+              <div style="grid-column: 3/6; grid-row: 9/12; background: #000;"></div>
+              
+              <!-- Timing patterns -->
+              <div style="grid-column: 9; grid-row: 7; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 7; background: #000;"></div>
+              <div style="grid-column: 7; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 7; grid-row: 11; background: #000;"></div>
+              
+              <!-- Data dots -->
+              <div style="grid-column: 9; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 9; grid-row: 11; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 11; background: #000;"></div>
+              <div style="grid-column: 10; grid-row: 8; background: #000;"></div>
+              <div style="grid-column: 12; grid-row: 10; background: #000;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <p>This should show a proper QR code with 3 corner finder patterns and data dots.</p>
+</body>
+</html>

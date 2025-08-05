@@ -677,35 +677,35 @@ export default function InvoiceManagement() {
       <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
         <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
           <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
-            <div style="width: 60px; height: 60px; background: white; position: relative;">
-              <!-- CSS-based QR code pattern using solid blocks -->
-              <div style="position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; background: #000; border-radius: 2px;"></div>
-              <div style="position: absolute; top: 4px; left: 4px; width: 14px; height: 14px; background: #fff; border-radius: 1px;"></div>
-              <div style="position: absolute; top: 6px; left: 6px; width: 10px; height: 10px; background: #000; border-radius: 1px;"></div>
+            <div style="width: 52px; height: 52px; background: white; position: relative; display: grid; grid-template-columns: repeat(13, 4px); grid-template-rows: repeat(13, 4px); gap: 0;">
+              <!-- Top-left finder pattern (7x7) -->
+              <div style="grid-column: 1/8; grid-row: 1/8; background: #000;"></div>
+              <div style="grid-column: 2/7; grid-row: 2/7; background: #fff;"></div>
+              <div style="grid-column: 3/6; grid-row: 3/6; background: #000;"></div>
               
-              <div style="position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: #000; border-radius: 2px;"></div>
-              <div style="position: absolute; top: 4px; right: 4px; width: 14px; height: 14px; background: #fff; border-radius: 1px;"></div>
-              <div style="position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; background: #000; border-radius: 1px;"></div>
+              <!-- Top-right finder pattern (7x7) -->
+              <div style="grid-column: 7/14; grid-row: 1/8; background: #000;"></div>
+              <div style="grid-column: 8/13; grid-row: 2/7; background: #fff;"></div>
+              <div style="grid-column: 9/12; grid-row: 3/6; background: #000;"></div>
               
-              <div style="position: absolute; bottom: 2px; left: 2px; width: 18px; height: 18px; background: #000; border-radius: 2px;"></div>
-              <div style="position: absolute; bottom: 4px; left: 4px; width: 14px; height: 14px; background: #fff; border-radius: 1px;"></div>
-              <div style="position: absolute; bottom: 6px; left: 6px; width: 10px; height: 10px; background: #000; border-radius: 1px;"></div>
+              <!-- Bottom-left finder pattern (7x7) -->
+              <div style="grid-column: 1/8; grid-row: 7/14; background: #000;"></div>
+              <div style="grid-column: 2/7; grid-row: 8/13; background: #fff;"></div>
+              <div style="grid-column: 3/6; grid-row: 9/12; background: #000;"></div>
               
-              <!-- Data pattern dots -->
-              <div style="position: absolute; top: 25px; left: 25px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 25px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 32px; left: 25px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 32px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
+              <!-- Timing patterns -->
+              <div style="grid-column: 9; grid-row: 7; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 7; background: #000;"></div>
+              <div style="grid-column: 7; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 7; grid-row: 11; background: #000;"></div>
               
-              <div style="position: absolute; top: 12px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 18px; left: 25px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 45px; left: 32px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 45px; left: 45px; width: 3px; height: 3px; background: #000;"></div>
-              
-              <div style="position: absolute; top: 25px; right: 25px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 32px; right: 25px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 25px; right: 32px; width: 3px; height: 3px; background: #000;"></div>
-              <div style="position: absolute; top: 32px; right: 32px; width: 3px; height: 3px; background: #000;"></div>
+              <!-- Data dots -->
+              <div style="grid-column: 9; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 9; background: #000;"></div>
+              <div style="grid-column: 9; grid-row: 11; background: #000;"></div>
+              <div style="grid-column: 11; grid-row: 11; background: #000;"></div>
+              <div style="grid-column: 10; grid-row: 8; background: #000;"></div>
+              <div style="grid-column: 12; grid-row: 10; background: #000;"></div>
             </div>
           </div>
           <div class="company-info" style="text-align: center; flex-grow: 1;">
