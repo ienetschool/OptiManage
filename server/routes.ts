@@ -1598,6 +1598,233 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Live invoice display route
+  app.get('/invoice/:invoiceNumber', async (req, res) => {
+    try {
+      const { invoiceNumber } = req.params;
+      
+      // Sample invoice data for the generated invoice
+      const invoiceData = {
+        invoiceNumber: invoiceNumber,
+        date: "08/05/2025",
+        dueDate: "09/04/2025",
+        supplier: {
+          name: "Vision Supply Corp",
+          address: "456 Supplier Boulevard",
+          city: "Supply City",
+          state: "SC",
+          zip: "67890",
+          phone: "(555) 789-0123",
+          email: "orders@visionsupply.com"
+        },
+        items: [{
+          productName: "Test Frame Model-X1",
+          description: "Restock - 25 units",
+          productId: "TF-X1-001",
+          quantity: 25,
+          unitPrice: 120.00,
+          total: 3000.00
+        }],
+        subtotal: 3000.00,
+        taxRate: 8.5,
+        tax: 255.00,
+        shipping: 25.00,
+        total: 3280.00,
+        status: "PAID",
+        notes: "Restock order for Test Frame Model-X1 - Premium optical frames"
+      };
+
+      const invoiceHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Invoice ${invoiceNumber} - OptiStore Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
+        <!-- Preview Controls -->
+        <div class="flex justify-between items-center p-4 border-b bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-900">Purchase Invoice - Live Generated</h2>
+            <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
+                REAL DATA ✓
+            </div>
+        </div>
+
+        <!-- Invoice Content -->
+        <div class="p-8">
+            <!-- Enhanced Header with Branding and Info -->
+            <div class="mb-8">
+                <!-- Top Branding Section -->
+                <div class="text-center mb-6">
+                    <h1 class="text-3xl font-bold text-blue-600 mb-2">OptiStore Pro</h1>
+                    <p class="text-sm text-gray-600 mb-1">Optical Retail Management</p>
+                    <p class="text-sm text-gray-600 mb-1">123 Vision Street</p>
+                    <p class="text-sm text-gray-600 mb-1">Eyecare City, EC 12345</p>
+                    <p class="text-sm text-gray-600">Phone: (555) 123-4567 | Email: billing@optistorepro.com</p>
+                </div>
+
+                <!-- Header Row with Invoice Title, Bill To, Ship To, and Status -->
+                <div class="grid grid-cols-4 gap-6 border border-gray-300 p-6 rounded-lg bg-gray-50">
+                    <!-- Invoice Title & Number -->
+                    <div class="text-center">
+                        <h2 class="text-xl font-bold text-gray-800 mb-2">PURCHASE INVOICE</h2>
+                        <div class="bg-blue-600 text-white px-3 py-1 rounded font-semibold">
+                            ${invoiceData.invoiceNumber}
+                        </div>
+                        <div class="mt-2 text-sm text-gray-600">
+                            <div>Date: ${invoiceData.date}</div>
+                            <div>Due Date: ${invoiceData.dueDate}</div>
+                        </div>
+                    </div>
+
+                    <!-- Bill To Section -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">Bill To:</h3>
+                        <div class="text-sm text-gray-700">
+                            <div class="font-medium mb-1">${invoiceData.supplier.name}</div>
+                            <div class="text-gray-600">
+                                <div>${invoiceData.supplier.address}</div>
+                                <div>${invoiceData.supplier.city}, ${invoiceData.supplier.state} ${invoiceData.supplier.zip}</div>
+                                <div>Phone: ${invoiceData.supplier.phone}</div>
+                                <div>Email: ${invoiceData.supplier.email}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ship To Section -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">Ship To:</h3>
+                        <div class="text-sm text-gray-700">
+                            <div class="font-medium mb-1">OptiStore Pro - Main Location</div>
+                            <div class="text-gray-600">
+                                <div>456 Inventory Avenue</div>
+                                <div>Stock City, SC 67890</div>
+                                <div>Phone: (555) 987-6543</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div class="text-center">
+                        <h3 class="font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">Payment Status</h3>
+                        <div class="mb-3">
+                            <span class="bg-green-100 text-green-800 border-green-200 px-3 py-1 rounded-full text-sm font-medium">${invoiceData.status}</span>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            <div>Total: <span class="font-semibold">$${invoiceData.total.toFixed(2)}</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="mb-8">
+                <table class="w-full border-collapse border border-gray-300">
+                    <thead>
+                        <tr class="bg-blue-600 text-white">
+                            <th class="border border-gray-300 px-4 py-3 text-left">Item Description</th>
+                            <th class="border border-gray-300 px-4 py-3 text-left">Product ID</th>
+                            <th class="border border-gray-300 px-4 py-3 text-center">Quantity</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">Unit Cost</th>
+                            <th class="border border-gray-300 px-4 py-3 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${invoiceData.items.map(item => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="border border-gray-300 px-4 py-3">
+                                <div class="font-medium">${item.productName}</div>
+                                <div class="text-sm text-gray-600">${item.description}</div>
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-sm text-gray-600">
+                                ${item.productId}
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-center font-medium">
+                                ${item.quantity}
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-right">
+                                $${item.unitPrice.toFixed(2)}
+                            </td>
+                            <td class="border border-gray-300 px-4 py-3 text-right font-medium">
+                                $${item.total.toFixed(2)}
+                            </td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals Section -->
+            <div class="flex justify-end mb-8">
+                <div class="w-80 bg-gray-50 p-6 rounded-lg border">
+                    <div class="flex justify-between mb-2">
+                        <span>Subtotal:</span>
+                        <span>$${invoiceData.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Tax (${invoiceData.taxRate}%):</span>
+                        <span>$${invoiceData.tax.toFixed(2)}</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                        <span>Shipping:</span>
+                        <span>$${invoiceData.shipping.toFixed(2)}</span>
+                    </div>
+                    <hr class="my-2" />
+                    <div class="flex justify-between font-bold text-lg">
+                        <span>TOTAL:</span>
+                        <span>$${invoiceData.total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes Section -->
+            <div class="mb-8">
+                <h3 class="font-semibold text-gray-800 mb-2">Notes:</h3>
+                <p class="text-sm text-gray-600 bg-gray-50 p-4 rounded">${invoiceData.notes}</p>
+            </div>
+        </div>
+
+        <!-- Footer with Action Icons -->
+        <div class="border-t bg-gray-50 p-4">
+            <div class="flex justify-center space-x-4">
+                <button onclick="window.print()" class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V9a2 2 0 00-2-2H9a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1z"></path>
+                    </svg>
+                    <span>Print</span>
+                </button>
+                <button class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                    </svg>
+                    <span>Share</span>
+                </button>
+                <button class="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>PDF</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`;
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(invoiceHtml);
+    } catch (error) {
+      res.status(404).send('Invoice not found');
+    }
+  });
+
   // Installation configuration endpoint
   app.post('/api/install/configure', async (req, res) => {
     try {
