@@ -253,7 +253,7 @@ export default function A4InvoiceTemplate({
                 color: '#2563eb',
                 border: '1px solid #ddd'
               }}>
-                DESCRIPTION
+                ITEM DESCRIPTION
               </th>
               <th style={{ 
                 padding: '8px 12px', 
@@ -262,9 +262,9 @@ export default function A4InvoiceTemplate({
                 fontWeight: 'bold',
                 color: '#2563eb',
                 border: '1px solid #ddd',
-                width: '60px'
+                width: '80px'
               }}>
-                QTY
+                QUANTITY
               </th>
               <th style={{ 
                 padding: '8px 12px', 
@@ -273,20 +273,9 @@ export default function A4InvoiceTemplate({
                 fontWeight: 'bold',
                 color: '#2563eb',
                 border: '1px solid #ddd',
-                width: '80px'
+                width: '100px'
               }}>
-                UNIT PRICE
-              </th>
-              <th style={{ 
-                padding: '8px 12px', 
-                textAlign: 'center',
-                fontSize: '9pt',
-                fontWeight: 'bold',
-                color: '#2563eb',
-                border: '1px solid #ddd',
-                width: '70px'
-              }}>
-                DISCOUNT
+                UNIT COST
               </th>
               <th style={{ 
                 padding: '8px 12px', 
@@ -295,7 +284,7 @@ export default function A4InvoiceTemplate({
                 fontWeight: 'bold',
                 color: '#2563eb',
                 border: '1px solid #ddd',
-                width: '80px'
+                width: '100px'
               }}>
                 TOTAL
               </th>
@@ -313,7 +302,12 @@ export default function A4InvoiceTemplate({
                   border: '1px solid #ddd',
                   verticalAlign: 'top'
                 }}>
-                  {item.description}
+                  <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>
+                    {item.productName || item.description}
+                  </div>
+                  <div style={{ fontSize: '9pt', color: '#666' }}>
+                    {item.description && item.productName ? item.description : ''}
+                  </div>
                 </td>
                 <td style={{ 
                   padding: '10px 12px',
@@ -331,15 +325,6 @@ export default function A4InvoiceTemplate({
                   border: '1px solid #ddd'
                 }}>
                   ${item.unitPrice.toFixed(2)}
-                </td>
-                <td style={{ 
-                  padding: '10px 12px',
-                  textAlign: 'center',
-                  fontSize: '10pt',
-                  border: '1px solid #ddd',
-                  color: '#dc2626'
-                }}>
-                  {item.discount}%
                 </td>
                 <td style={{ 
                   padding: '10px 12px',

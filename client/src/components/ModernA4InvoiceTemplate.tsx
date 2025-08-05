@@ -262,10 +262,10 @@ export default function ModernA4InvoiceTemplate({
                   fontWeight: 'bold',
                   fontSize: '14px'
                 }}>
-                  <div style={{ flex: '3', paddingRight: '20px' }}>Description</div>
+                  <div style={{ flex: '3', paddingRight: '20px' }}>Item Description</div>
+                  <div style={{ flex: '1', textAlign: 'center', paddingRight: '20px' }}>Quantity</div>
                   <div style={{ flex: '1', textAlign: 'right', paddingRight: '20px' }}>Unit Cost</div>
-                  <div style={{ flex: '1', textAlign: 'right', paddingRight: '20px' }}>Qty / Hr Rate</div>
-                  <div style={{ flex: '1', textAlign: 'right' }}>Amount</div>
+                  <div style={{ flex: '1', textAlign: 'right' }}>Total</div>
                 </div>
 
                 {/* Table Body */}
@@ -281,20 +281,20 @@ export default function ModernA4InvoiceTemplate({
                   >
                     <div style={{ flex: '3', paddingRight: '20px' }}>
                       <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: '14px' }}>
-                        {item.productName || 'Your Item Name'}
+                        {item.productName || item.description || 'Item Name'}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        {item.description || 'Item description goes here'}
+                        {item.description && item.productName ? item.description : ''}
                       </div>
                     </div>
-                    <div style={{ flex: '1', textAlign: 'right', paddingRight: '20px', fontSize: '14px' }}>
-                      ${item.unitPrice.toFixed(0)}
-                    </div>
-                    <div style={{ flex: '1', textAlign: 'right', paddingRight: '20px', fontSize: '14px' }}>
+                    <div style={{ flex: '1', textAlign: 'center', paddingRight: '20px', fontSize: '14px', fontWeight: 'bold' }}>
                       {item.quantity}
                     </div>
-                    <div style={{ flex: '1', textAlign: 'right', fontSize: '14px' }}>
-                      {item.total.toFixed(0)}
+                    <div style={{ flex: '1', textAlign: 'right', paddingRight: '20px', fontSize: '14px' }}>
+                      ${item.unitPrice.toFixed(2)}
+                    </div>
+                    <div style={{ flex: '1', textAlign: 'right', fontSize: '14px', fontWeight: 'bold' }}>
+                      ${item.total.toFixed(2)}
                     </div>
                   </div>
                 ))}

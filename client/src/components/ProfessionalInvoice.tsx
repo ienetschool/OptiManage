@@ -483,11 +483,10 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
             <table class="items-table">
               <thead>
                 <tr>
-                  <th style="width: 50%;">Description</th>
-                  <th style="width: 10%;" class="text-center">Qty</th>
-                  <th style="width: 15%;" class="text-right">Unit Price</th>
-                  <th style="width: 10%;" class="text-center">Discount</th>
-                  <th style="width: 15%;" class="text-right">Total</th>
+                  <th style="width: 50%;">Item Description</th>
+                  <th style="width: 15%;" class="text-center">Quantity</th>
+                  <th style="width: 17.5%;" class="text-right">Unit Cost</th>
+                  <th style="width: 17.5%;" class="text-right">Total</th>
                 </tr>
               </thead>
               <tbody>
@@ -495,13 +494,9 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
                   <tr>
                     <td>
                       <div class="font-medium">${item.productName}</div>
-                      <div style="font-size: 8pt; color: #6b7280; margin-top: 2px;">
-                        Product ID: ${item.productId.slice(0, 8)}
-                      </div>
                     </td>
-                    <td class="text-center">${item.quantity}</td>
+                    <td class="text-center font-medium">${item.quantity}</td>
                     <td class="text-right">$${item.unitPrice.toFixed(2)}</td>
-                    <td class="text-center">${item.discount || 0}%</td>
                     <td class="text-right font-medium">$${item.total.toFixed(2)}</td>
                   </tr>
                 `).join('')}
