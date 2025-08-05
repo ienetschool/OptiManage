@@ -38,10 +38,26 @@ export function registerAccountingRoutes(app: Express) {
       
       const expenditurePayments = filteredPayments.filter(payment => {
         // Expenditure sources: product purchases, reorders, supplier payments
+        const notes = (payment.notes || '').toLowerCase();
+        const source = (payment.source || '').toLowerCase();
+        
+        // Check for inventory-related keywords in notes and source
+        const isInventoryExpenditure = source.includes('reorder') ||
+                                     notes.includes('reorder') ||
+                                     notes.includes('reorder stock') ||
+                                     notes.includes('reorder product') ||
+                                     notes.includes('bulk reorder') ||
+                                     notes.includes('expenditure') ||
+                                     notes.includes('purchase') ||
+                                     notes.includes('restock') ||
+                                     notes.includes('supplier') ||
+                                     notes.includes('inventory purchase');
+        
         return payment.source === 'expenditure' || 
                payment.type === 'expenditure' ||
                payment.source === 'product_purchase' ||
-               payment.source === 'reorder';
+               payment.source === 'reorder' ||
+               isInventoryExpenditure;
       });
       
       // Calculate totals
@@ -59,9 +75,51 @@ export function registerAccountingRoutes(app: Express) {
       };
       
       const expendituresByCategory = {
-        inventory_purchases: expenditurePayments.filter(p => p.category === 'inventory' || p.source === 'product_purchase' || p.source === 'reorder').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
+        inventory_purchases: expenditurePayments.filter(p => {
+          const notes = (p.notes || '').toLowerCase();
+          const source = (p.source || '').toLowerCase();
+          
+          // Check for inventory-related keywords
+          const isInventoryExpenditure = source.includes('reorder') ||
+                                        notes.includes('reorder') ||
+                                        notes.includes('reorder stock') ||
+                                        notes.includes('reorder product') ||
+                                        notes.includes('bulk reorder') ||
+                                        notes.includes('expenditure') ||
+                                        notes.includes('purchase') ||
+                                        notes.includes('restock') ||
+                                        notes.includes('supplier') ||
+                                        notes.includes('inventory purchase');
+          
+          return p.category === 'inventory' || 
+                 p.source === 'product_purchase' || 
+                 p.source === 'reorder' ||
+                 isInventoryExpenditure;
+        }).reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
         operating_expenses: expenditurePayments.filter(p => p.category === 'operating').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
-        other: expenditurePayments.filter(p => !p.category || (!['inventory', 'operating'].includes(p.category))).reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0)
+        other: expenditurePayments.filter(p => {
+          const notes = (p.notes || '').toLowerCase();
+          const source = (p.source || '').toLowerCase();
+          
+          // Check if it's NOT an inventory expenditure and NOT operating
+          const isInventoryExpenditure = source.includes('reorder') ||
+                                        notes.includes('reorder') ||
+                                        notes.includes('reorder stock') ||
+                                        notes.includes('reorder product') ||
+                                        notes.includes('bulk reorder') ||
+                                        notes.includes('expenditure') ||
+                                        notes.includes('purchase') ||
+                                        notes.includes('restock') ||
+                                        notes.includes('supplier') ||
+                                        notes.includes('inventory purchase');
+          
+          return !p.category && 
+                 p.source !== 'product_purchase' && 
+                 p.source !== 'reorder' &&
+                 p.category !== 'inventory' &&
+                 p.category !== 'operating' &&
+                 !isInventoryExpenditure;
+        }).reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0)
       };
       
       const report = {
@@ -96,6 +154,7 @@ export function registerAccountingRoutes(app: Express) {
       };
       
       console.log(`💰 ACCOUNTING SUMMARY: Income: $${totalIncome.toFixed(2)}, Expenditures: $${totalExpenditures.toFixed(2)}, Net: $${netProfit.toFixed(2)}`);
+      console.log(`📊 EXPENDITURE BREAKDOWN: Inventory: $${expendituresByCategory.inventory_purchases.toFixed(2)}, Operating: $${expendituresByCategory.operating_expenses.toFixed(2)}, Other: $${expendituresByCategory.other.toFixed(2)}`);
       
       res.json(report);
     } catch (error) {
