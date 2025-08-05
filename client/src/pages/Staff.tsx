@@ -2657,10 +2657,242 @@ export default function StaffPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="payroll" className="space-y-4">
-                    <div className="text-center p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-blue-600">Edit complete staff details including salary, documents, and leave management.</p>
-                    </div>
+                  <TabsContent value="payroll" className="space-y-6">
+                    {/* Photo Upload Section */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Photo & Documents</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Staff Photo</Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                                 onClick={() => document.getElementById('edit-photo-upload')?.click()}>
+                              <User className="mx-auto h-12 w-12 text-gray-400" />
+                              <p className="mt-2 text-sm text-gray-500">Click to upload photo</p>
+                              <input 
+                                id="edit-photo-upload"
+                                type="file" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    toast({
+                                      title: "Photo uploaded",
+                                      description: `Selected: ${file.name}`,
+                                    });
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label>Qualification Documents</Label>
+                            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+                                 onClick={() => document.getElementById('edit-docs-upload')?.click()}>
+                              <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                              <p className="mt-2 text-sm text-gray-500">Upload certificates, degrees</p>
+                              <input 
+                                id="edit-docs-upload"
+                                type="file" 
+                                className="hidden" 
+                                accept=".pdf,.doc,.docx" 
+                                multiple
+                                onChange={(e) => {
+                                  const files = e.target.files;
+                                  if (files && files.length > 0) {
+                                    toast({
+                                      title: "Documents uploaded",
+                                      description: `${files.length} file(s) selected`,
+                                    });
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Salary & Benefits Section */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Salary & Benefits</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-3 gap-4">
+                          <FormField
+                            control={editForm.control}
+                            name="salary"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Base Salary</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    placeholder="Enter base salary"
+                                    {...field}
+                                    value={field.value || ""}
+                                    onChange={(e) => field.onChange(Number(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div>
+                            <Label>Monthly Bonus</Label>
+                            <Input type="number" placeholder="Enter bonus amount" className="mt-2" />
+                          </div>
+                          <div>
+                            <Label>Annual Leave</Label>
+                            <Input type="number" placeholder="Days per year" className="mt-2" defaultValue="21" />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Health Insurance</Label>
+                            <Select>
+                              <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Select plan" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="basic">Basic Plan</SelectItem>
+                                <SelectItem value="premium">Premium Plan</SelectItem>
+                                <SelectItem value="family">Family Plan</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Pension Plan</Label>
+                            <Select>
+                              <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Select plan" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="standard">Standard (5%)</SelectItem>
+                                <SelectItem value="enhanced">Enhanced (8%)</SelectItem>
+                                <SelectItem value="none">No Plan</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Deductions Section */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Deductions</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-3 gap-4">
+                          <div>
+                            <Label>Tax Rate (%)</Label>
+                            <Input type="number" placeholder="Tax percentage" className="mt-2" defaultValue="15" />
+                          </div>
+                          <div>
+                            <Label>Social Security (%)</Label>
+                            <Input type="number" placeholder="SS percentage" className="mt-2" defaultValue="6.2" />
+                          </div>
+                          <div>
+                            <Label>Other Deductions</Label>
+                            <Input type="number" placeholder="Additional amount" className="mt-2" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Working Hours Section */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Working Hours</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Weekly Hours</Label>
+                            <Input type="number" placeholder="Hours per week" className="mt-2" defaultValue="40" />
+                          </div>
+                          <div>
+                            <Label>Overtime Rate</Label>
+                            <Select>
+                              <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Select rate" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1.5">1.5x Base Rate</SelectItem>
+                                <SelectItem value="2.0">2.0x Base Rate</SelectItem>
+                                <SelectItem value="none">No Overtime</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Shift Pattern</Label>
+                            <Select>
+                              <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Select shift" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="day">Day Shift (9 AM - 5 PM)</SelectItem>
+                                <SelectItem value="evening">Evening Shift (2 PM - 10 PM)</SelectItem>
+                                <SelectItem value="flexible">Flexible Hours</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label>Break Duration (minutes)</Label>
+                            <Input type="number" placeholder="Break time" className="mt-2" defaultValue="60" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Leave Entitlements Section */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Leave Entitlements</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-4 gap-4">
+                          <div>
+                            <Label>Annual Leave</Label>
+                            <Input type="number" placeholder="Days" className="mt-2" defaultValue="21" />
+                          </div>
+                          <div>
+                            <Label>Sick Leave</Label>
+                            <Input type="number" placeholder="Days" className="mt-2" defaultValue="10" />
+                          </div>
+                          <div>
+                            <Label>Personal Leave</Label>
+                            <Input type="number" placeholder="Days" className="mt-2" defaultValue="5" />
+                          </div>
+                          <div>
+                            <Label>Emergency Leave</Label>
+                            <Input type="number" placeholder="Days" className="mt-2" defaultValue="3" />
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <CalendarDays className="h-5 w-5 text-green-600" />
+                            <span className="font-medium text-green-800">Leave Balance Summary</span>
+                          </div>
+                          <div className="mt-2 grid grid-cols-4 gap-4 text-sm text-green-700">
+                            <div>Annual: 18/21 remaining</div>
+                            <div>Sick: 8/10 remaining</div>
+                            <div>Personal: 3/5 remaining</div>
+                            <div>Emergency: 3/3 remaining</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </TabsContent>
                 </Tabs>
 
