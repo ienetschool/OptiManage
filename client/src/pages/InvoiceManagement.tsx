@@ -286,8 +286,16 @@ export default function InvoiceManagement() {
     });
   }, [invoices, customers]);
 
-  const { data: products = [] } = useQuery<Product[]>({
+  const { data: products = [], refetch: refetchProducts } = useQuery<Product[]>({
     queryKey: ["/api/products"],
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Auto-refresh every minute
+  });
+
+  // Fetch inventory data to show stock levels
+  const { data: inventory = [] } = useQuery({
+    queryKey: ["/api/store-inventory"],
+    staleTime: 30000, // 30 seconds
   });
 
   const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
@@ -338,6 +346,8 @@ export default function InvoiceManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
       
       toast({
         title: "Success",
@@ -878,7 +888,7 @@ export default function InvoiceManagement() {
             <h3>Bill To</h3>
             <div class="detail-row">
               <span class="detail-label">Customer:</span>
-              <span class="detail-value">${customer?.name || invoice.customerName || 'N/A'}</span>
+              <span class="detail-value">${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'N/A'}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Customer ID:</span>
@@ -1242,7 +1252,24 @@ export default function InvoiceManagement() {
                             name="productId"
                             render={({ field }) => (
                               <FormItem className="col-span-2">
-                                <FormLabel>Product</FormLabel>
+                                <FormLabel className="flex items-center justify-between">
+                                  <span>Product</span>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={async () => {
+                                      await refetchProducts();
+                                      toast({
+                                        title: "Products Refreshed",
+                                        description: "Product list has been updated with latest items.",
+                                      });
+                                    }}
+                                    className="h-6 px-2 text-xs"
+                                  >
+                                    🔄 Refresh
+                                  </Button>
+                                </FormLabel>
                                 <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
                                   <PopoverTrigger asChild>
                                     <FormControl>
@@ -1306,30 +1333,51 @@ export default function InvoiceManagement() {
                                             product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
                                             product.category.toLowerCase().includes(productSearchTerm.toLowerCase())
                                           )
-                                          .map((product) => (
-                                            <CommandItem
-                                              key={product.id}
-                                              value={product.id}
-                                              onSelect={() => {
-                                                field.onChange(product.id);
-                                                itemForm.setValue("unitPrice", Number(product.price));
-                                                setProductSearchOpen(false);
-                                                setProductSearchTerm("");
-                                              }}
-                                            >
-                                              <Check
-                                                className={`mr-2 h-4 w-4 ${
-                                                  field.value === product.id ? "opacity-100" : "opacity-0"
-                                                }`}
-                                              />
-                                              <div className="flex flex-col">
-                                                <span className="font-medium">{product.name}</span>
-                                                <span className="text-sm text-gray-500">
-                                                  {product.category} - ${Number(product.price).toFixed(2)}
-                                                </span>
-                                              </div>
-                                            </CommandItem>
-                                          ))}
+                                          .map((product) => {
+                                            // Find stock for this product
+                                            const productStock = inventory.find((item: any) => item.productId === product.id);
+                                            const stockLevel = productStock?.quantity || 0;
+                                            const stockStatus = stockLevel === 0 ? 'Out of Stock' : 
+                                                              stockLevel < 10 ? 'Low Stock' : 'In Stock';
+                                            const stockColor = stockLevel === 0 ? 'text-red-600' : 
+                                                             stockLevel < 10 ? 'text-orange-600' : 'text-green-600';
+                                            
+                                            return (
+                                              <CommandItem
+                                                key={product.id}
+                                                value={product.id}
+                                                onSelect={() => {
+                                                  field.onChange(product.id);
+                                                  itemForm.setValue("unitPrice", Number(product.price));
+                                                  setProductSearchOpen(false);
+                                                  setProductSearchTerm("");
+                                                }}
+                                                disabled={stockLevel === 0}
+                                              >
+                                                <Check
+                                                  className={`mr-2 h-4 w-4 ${
+                                                    field.value === product.id ? "opacity-100" : "opacity-0"
+                                                  }`}
+                                                />
+                                                <div className="flex items-center justify-between w-full">
+                                                  <div className="flex flex-col">
+                                                    <span className="font-medium">{product.name}</span>
+                                                    <span className="text-sm text-gray-500">
+                                                      {product.category} - ${Number(product.price).toFixed(2)}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex flex-col items-end">
+                                                    <span className={`text-xs font-medium ${stockColor}`}>
+                                                      {stockStatus}
+                                                    </span>
+                                                    <span className="text-xs text-gray-400">
+                                                      Stock: {stockLevel}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                              </CommandItem>
+                                            );
+                                          })}
                                       </CommandGroup>
                                     </Command>
                                   </PopoverContent>
