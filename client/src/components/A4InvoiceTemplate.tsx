@@ -143,17 +143,18 @@ export default function A4InvoiceTemplate({
             {invoice.invoiceNumber}
           </div>
           {/* QR Code */}
-          <div style={{ 
+          <div className="qr-code-container" style={{ 
             border: '1px solid #ddd',
             padding: '5px',
             display: 'inline-block',
-            backgroundColor: '#f9f9f9'
+            backgroundColor: '#ffffff'
           }}>
             <QRCodeReact 
               value={`Invoice: ${invoice.invoiceNumber}\nAmount: $${invoice.total.toFixed(2)}\nDate: ${new Date(invoice.issueDate).toLocaleDateString()}`}
               size={60}
               fgColor="#000000"
               bgColor="#ffffff"
+              style={{ display: 'block' }}
             />
           </div>
         </div>
@@ -560,6 +561,28 @@ export default function A4InvoiceTemplate({
           body {
             margin: 0;
             padding: 0;
+          }
+          
+          /* QR Code print fixes */
+          .qr-code-container {
+            border: 1px solid #000 !important;
+            padding: 5px !important;
+            display: inline-block !important;
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          .qr-code-container > div {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+          }
+          
+          .qr-code-container svg {
+            display: block !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
         

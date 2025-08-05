@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,10 +73,28 @@ interface ProfitLossReport {
 
 export default function Payments() {
   const { toast } = useToast();
+  
+  // Check for invoice payment parameter from URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const invoiceId = urlParams.get('invoice');
+    const action = urlParams.get('action');
+    
+    if (invoiceId && action === 'pay') {
+      // Auto-open payment dialog for this invoice
+      setSelectedPaymentInvoiceId(invoiceId);
+      setPaymentMethodDialog(true);
+      
+      // Clear URL parameters to avoid reopening on refresh
+      const newUrl = window.location.pathname;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }, []);
   const queryClient = useQueryClient();
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [paymentMethodDialog, setPaymentMethodDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [selectedPaymentInvoiceId, setSelectedPaymentInvoiceId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("payments");
   const [reportDateRange, setReportDateRange] = useState({ 
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
@@ -256,6 +274,39 @@ export default function Payments() {
     },
   });
 
+  // Process invoice payment mutation (when coming from invoice page)
+  const processInvoicePaymentMutation = useMutation({
+    mutationFn: async ({ invoiceId, paymentMethod }: { invoiceId: string; paymentMethod: string }) => {
+      const response = await fetch(`/api/invoices/${invoiceId}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentMethod }),
+      });
+      if (!response.ok) throw new Error("Failed to process invoice payment");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
+      toast({
+        title: "Payment Processed",
+        description: "Invoice payment completed successfully.",
+      });
+      setPaymentMethodDialog(false);
+      setSelectedPayment(null);
+      setSelectedPaymentMethod("");
+      setSelectedPaymentInvoiceId(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Payment Failed",
+        description: "Failed to process invoice payment. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
@@ -377,7 +428,7 @@ export default function Payments() {
             {payment.status === "pending" && (
               <DropdownMenuItem onClick={handlePayNow} className="text-green-600">
                 <CreditCard className="h-4 w-4 mr-2" />
-                Pay
+                Pay Now
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => window.open(`mailto:${payment.customerName}?subject=Payment Receipt&body=Your payment of $${payment.amount.toFixed(2)} has been processed.`)}>
@@ -650,7 +701,7 @@ export default function Payments() {
                         size="sm"
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
-                        Pay
+                        Pay Now
                       </Button>
                     )}
                     <PaymentActions payment={payment} />
@@ -1088,7 +1139,10 @@ export default function Payments() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Processing payment for {selectedPayment?.customerName} - ${selectedPayment?.amount.toFixed(2)}
+              {selectedPaymentInvoiceId 
+                ? `Processing payment for Invoice ID: ${selectedPaymentInvoiceId}`
+                : `Processing payment for ${selectedPayment?.customerName} - $${selectedPayment?.amount.toFixed(2)}`
+              }
             </p>
             <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
               <SelectTrigger>
@@ -1109,22 +1163,29 @@ export default function Payments() {
                   setPaymentMethodDialog(false);
                   setSelectedPayment(null);
                   setSelectedPaymentMethod("");
+                  setSelectedPaymentInvoiceId(null);
                 }}
               >
                 Cancel
               </Button>
               <Button 
                 onClick={() => {
-                  if (selectedPayment && selectedPaymentMethod) {
+                  if (selectedPaymentInvoiceId && selectedPaymentMethod) {
+                    // Create payment for invoice
+                    processInvoicePaymentMutation.mutate({
+                      invoiceId: selectedPaymentInvoiceId,
+                      paymentMethod: selectedPaymentMethod
+                    });
+                  } else if (selectedPayment && selectedPaymentMethod) {
                     processPaymentMutation.mutate({
                       paymentId: selectedPayment.id,
                       paymentMethod: selectedPaymentMethod
                     });
                   }
                 }}
-                disabled={!selectedPaymentMethod || processPaymentMutation.isPending}
+                disabled={!selectedPaymentMethod || processPaymentMutation.isPending || processInvoicePaymentMutation.isPending}
               >
-                {processPaymentMutation.isPending ? "Processing..." : "Process Payment"}
+                {(processPaymentMutation.isPending || processInvoicePaymentMutation.isPending) ? "Processing..." : "Process Payment"}
               </Button>
             </div>
           </div>

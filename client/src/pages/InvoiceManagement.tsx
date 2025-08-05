@@ -1881,14 +1881,14 @@ export default function InvoiceManagement() {
                       <Button
                         size="sm"
                         onClick={() => {
-                          toast({
-                            title: "Status Updated",
-                            description: "Invoice marked as paid",
-                          });
+                          // Navigate to payment for this specific invoice
+                          const paymentUrl = `/payments?invoice=${selectedInvoice.id}&action=pay`;
+                          window.location.href = paymentUrl;
                         }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
-                        Mark as Paid
+                        Pay Now
                       </Button>
                     )}
                     

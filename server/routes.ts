@@ -802,6 +802,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Process invoice payment endpoint
+  app.post('/api/invoices/:id/pay', isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { paymentMethod } = req.body;
+
+      if (!paymentMethod) {
+        return res.status(400).json({ message: "Payment method is required" });
+      }
+
+      console.log(`Processing payment for invoice: ${id}, method: ${paymentMethod}`);
+      
+      // Get the invoice
+      const invoice = await storage.getInvoice(id);
+      if (!invoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      // Update invoice status to paid
+      const updatedInvoice = await storage.updateInvoice(id, {
+        status: 'paid',
+        paymentMethod: paymentMethod,
+        paymentDate: new Date()
+      });
+
+      // Create a payment record
+      const paymentData = {
+        invoiceId: invoice.invoiceNumber,
+        customerName: invoice.customerName || `Customer-${invoice.customerId}`,
+        amount: invoice.total,
+        paymentMethod: paymentMethod,
+        status: 'completed',
+        paymentDate: new Date().toISOString(),
+        transactionId: `TXN-${Date.now()}`,
+        createdAt: new Date().toISOString()
+      };
+
+      await storage.createPayment(paymentData);
+
+      console.log(`✅ Invoice payment processed successfully: ${id}`);
+      res.json({ 
+        success: true, 
+        message: "Payment processed successfully",
+        invoice: updatedInvoice 
+      });
+    } catch (error) {
+      console.error(`❌ Error processing invoice payment:`, error);
+      res.status(500).json({ 
+        message: "Failed to process payment", 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      });
+    }
+  });
+
   // Sales routes
   app.get('/api/sales', isAuthenticated, async (req, res) => {
     try {
