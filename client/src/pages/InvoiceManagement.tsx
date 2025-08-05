@@ -49,6 +49,7 @@ import { format } from "date-fns";
 import { apiRequest } from "@/lib/queryClient";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import QRCodeReact from "react-qr-code";
+import QRCode from 'qrcode';
 
 import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
 import ModernA4InvoiceTemplate from "@/components/ModernA4InvoiceTemplate";
@@ -624,8 +625,8 @@ export default function InvoiceManagement() {
     
     try {
       // Generate QR code data URL using qrcode library
-      const QRCode = await import('qrcode');
       const qrData = generateInvoiceQR(invoice);
+      console.log('QR Data:', qrData);
       const qrCodeDataURL = await QRCode.toDataURL(qrData, {
         width: 80,
         margin: 2,
@@ -634,6 +635,7 @@ export default function InvoiceManagement() {
           light: '#FFFFFF'
         }
       });
+      console.log('QR Code Data URL generated:', qrCodeDataURL.substring(0, 50) + '...');
 
       // Create invoice HTML with embedded QR code
       const invoiceHTML = `
