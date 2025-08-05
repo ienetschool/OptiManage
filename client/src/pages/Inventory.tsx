@@ -28,7 +28,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-// Inventory Invoice Totals Widget Component
+// Inventory Purchase Totals Widget Component - Compact Style
 function InventoryInvoiceTotalsWidget() {
   const { data: inventoryTotals, isLoading: isLoadingInventory } = useQuery({
     queryKey: ["/api/inventory/invoice-totals"],
@@ -43,28 +43,28 @@ function InventoryInvoiceTotalsWidget() {
   });
 
   return (
-    <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <CreditCard className="h-5 w-5 text-purple-600" />
-            <span className="font-medium text-purple-800">Inventory Invoice Total</span>
-          </div>
-          <div className="text-right">
-            {isLoadingInventory ? (
-              <RefreshCw className="h-4 w-4 animate-spin text-purple-600" />
-            ) : (
-              <div>
-                <p className="text-2xl font-bold text-purple-800">
-                  ${inventoryTotals?.totalAmount?.toFixed(2) || '0.00'}
-                </p>
-                <p className="text-xs text-purple-600">{inventoryTotals?.totalCount || 0} invoices</p>
-              </div>
-            )}
-          </div>
+    <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
+      <div className="flex items-center space-x-3">
+        <div className="bg-orange-500 p-2 rounded">
+          <CreditCard className="h-5 w-5 text-white" />
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <div className="text-sm font-medium text-orange-700">Purchases Total</div>
+          {isLoadingInventory ? (
+            <RefreshCw className="h-4 w-4 animate-spin text-orange-600" />
+          ) : (
+            <>
+              <div className="text-2xl font-bold text-orange-900">
+                ${inventoryTotals?.totalAmount?.toFixed(2) || '0.00'}
+              </div>
+              <div className="text-xs text-orange-600">
+                {inventoryTotals?.totalCount || 0} purchase invoices
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
