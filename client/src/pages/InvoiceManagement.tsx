@@ -55,6 +55,7 @@ import ModernA4InvoiceTemplate from "@/components/ModernA4InvoiceTemplate";
 import PurchaseInvoiceTemplate from "@/components/PurchaseInvoiceTemplate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 interface Invoice {
@@ -1326,7 +1327,7 @@ export default function InvoiceManagement() {
                                       <CommandEmpty>
                                         {productsLoading ? "Loading products..." : `No products found. (Total available: ${products.length})`}
                                       </CommandEmpty>
-                                      <div className="max-h-[300px] overflow-y-auto">
+                                      <ScrollArea className="h-[300px]">
                                         <CommandGroup>
                                         <CommandItem
                                           value="custom"
@@ -1364,28 +1365,34 @@ export default function InvoiceManagement() {
                                           .filter(product => {
                                             if (!productSearchTerm) return true; // Show all if no search term
                                             return product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-                                                   (product.category && product.category.toLowerCase().includes(productSearchTerm.toLowerCase())) ||
-                                                   (product.sku && product.sku.toLowerCase().includes(productSearchTerm.toLowerCase()));
+                                                   (product.category && product.category.toLowerCase().includes(productSearchTerm.toLowerCase()));
                                           })
                                           .map((product) => {
-                                            // Find stock for this product
-                                            const productStock = inventory.find((item: any) => item.productId === product.id);
-                                            const stockLevel = productStock?.quantity || 0;
+                                            // Find stock for this product in inventory
+                                            const inventoryItem = Array.isArray(inventory) ? inventory.find(
+                                              (productInventory: any) => productInventory.productId === product.id
+                                            ) : null;
+                                            const stockLevel = inventoryItem?.quantity || 0;
                                             const stockStatus = stockLevel === 0 ? 'Out of Stock' : 
                                                               stockLevel < 10 ? 'Low Stock' : 'In Stock';
                                             const stockColor = stockLevel === 0 ? 'text-red-600' : 
                                                              stockLevel < 10 ? 'text-orange-600' : 'text-green-600';
+                                            const isOutOfStock = stockLevel === 0;
                                             
                                             return (
                                               <CommandItem
                                                 key={product.id}
-                                                value={`${product.name} ${product.sku || ''} ${product.category || ''}`}
+                                                value={`${product.name} ${product.category || ''}`}
+                                                disabled={isOutOfStock}
                                                 onSelect={() => {
-                                                  field.onChange(product.id);
-                                                  itemForm.setValue("unitPrice", Number(product.price));
-                                                  setProductSearchOpen(false);
-                                                  setProductSearchTerm("");
+                                                  if (!isOutOfStock) {
+                                                    field.onChange(product.id);
+                                                    itemForm.setValue("unitPrice", Number(product.price));
+                                                    setProductSearchOpen(false);
+                                                    setProductSearchTerm("");
+                                                  }
                                                 }}
+                                                className={isOutOfStock ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                                               >
                                                 <Check
                                                   className={`mr-2 h-4 w-4 ${
@@ -1396,7 +1403,7 @@ export default function InvoiceManagement() {
                                                   <div className="flex flex-col">
                                                     <span className="font-medium">{product.name}</span>
                                                     <span className="text-sm text-gray-500">
-                                                      SKU: {product.sku} | ${Number(product.price).toFixed(2)}
+                                                      ${Number(product.price).toFixed(2)}
                                                     </span>
                                                   </div>
                                                   <div className="flex flex-col items-end">
@@ -1412,7 +1419,7 @@ export default function InvoiceManagement() {
                                             );
                                           })}
                                         </CommandGroup>
-                                      </div>
+                                      </ScrollArea>
                                     </Command>
                                   </PopoverContent>
                                 </Popover>
