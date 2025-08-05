@@ -1108,7 +1108,7 @@ export class DatabaseStorage implements IStorage {
       const customersData = await db.select().from(customers);
       const patientsData = await db.select().from(patients);
       
-      // Convert regular invoices to payment records
+      // Convert regular invoices to payment records with proper categorization
       const regularPayments = invoiceRecords.map(invoice => ({
         id: `pay-${invoice.id}`,
         invoiceId: invoice.invoiceNumber,
@@ -1138,7 +1138,9 @@ export class DatabaseStorage implements IStorage {
         paymentDate: invoice.paymentDate || invoice.createdAt,
         transactionId: `TXN-${invoice.invoiceNumber}`,
         notes: invoice.notes,
-        source: 'regular_invoice'
+        // Categorize based on source: expenditures vs regular income
+        source: (invoice as any).source === 'expenditure' ? 'expenditure' : 'regular_invoice',
+        type: (invoice as any).source === 'expenditure' ? 'expenditure' : 'income'
       }));
       
       // Convert medical invoices to payment records
@@ -1458,7 +1460,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Add expenditure method
+  // Add expenditure method - Store in database for persistence
   async addExpenditure(expenditure: {
     invoiceId: string;
     supplierName: string;
@@ -1468,16 +1470,53 @@ export class DatabaseStorage implements IStorage {
     category: string;
     storeId: string;
   }): Promise<void> {
-    const expenditureRecord = {
-      id: `exp-${Date.now()}`,
-      ...expenditure,
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-      transactionId: `TXN-EXP-${expenditure.invoiceId}`
-    };
-    
-    globalExpenditures.push(expenditureRecord);
-    console.log(`✅ EXPENDITURE ADDED: ${expenditure.supplierName} - $${expenditure.amount} for ${expenditure.description}`);
+    try {
+      // Create expenditure invoice in database for persistence
+      const expenditureInvoice = await db.insert(invoices).values({
+        id: `expenditure-${Date.now()}`,
+        invoiceNumber: `EXP-${expenditure.invoiceId.replace('INV-', '')}`,
+        customerId: null,
+        storeId: expenditure.storeId,
+        date: new Date(),
+        dueDate: new Date(),
+        subtotal: expenditure.amount,
+        taxRate: 0,
+        taxAmount: 0,
+        discountAmount: 0,
+        total: expenditure.amount,
+        status: 'paid',
+        paymentMethod: expenditure.paymentMethod,
+        notes: `${expenditure.description} - Supplier: ${expenditure.supplierName}`,
+        source: 'expenditure' // Mark as expenditure for accounting categorization
+      }).returning();
+
+      console.log(`💰 PERSISTENT EXPENDITURE CREATED: ${expenditure.supplierName} - $${expenditure.amount} for ${expenditure.description}`);
+
+      // Also add to memory for backward compatibility
+      const expenditureRecord = {
+        id: `exp-${Date.now()}`,
+        ...expenditure,
+        status: 'completed',
+        createdAt: new Date().toISOString(),
+        transactionId: `TXN-EXP-${expenditure.invoiceId}`
+      };
+      
+      globalExpenditures.push(expenditureRecord);
+      console.log(`✅ EXPENDITURE ADDED TO BOTH DATABASE AND MEMORY`);
+    } catch (error) {
+      console.error('❌ Error adding expenditure:', error);
+      // Fallback to memory only
+      const expenditureRecord = {
+        id: `exp-${Date.now()}`,
+        ...expenditure,
+        status: 'completed',
+        createdAt: new Date().toISOString(),
+        transactionId: `TXN-EXP-${expenditure.invoiceId}`
+      };
+      
+      globalExpenditures.push(expenditureRecord);
+      console.log(`⚠️ EXPENDITURE ADDED TO MEMORY ONLY (DATABASE FAILED)`);
+    }
   }
 }
 

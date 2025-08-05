@@ -21,13 +21,21 @@ export function setupAccountingRoutes(app: any) {
         return paymentDate >= start && paymentDate <= end;
       });
 
-      // Separate revenue and expenditures
-      const revenuePayments = filteredPayments.filter(payment => 
-        payment.status === 'completed' && payment.type !== 'expenditure'
-      );
-      const expenditurePayments = filteredPayments.filter(payment => 
-        payment.type === 'expenditure'
-      );
+      // Categorize transactions based on source and type for proper accounting
+      const revenuePayments = filteredPayments.filter(payment => {
+        // Income: regular sales, quick sales, paid appointments, medical invoices
+        const isIncomeSource = ['regular_invoice', 'quick_sale', 'medical_invoice', 'appointment'].includes(payment.source);
+        const isCompleted = payment.status === 'completed';
+        const notExpenditure = payment.type !== 'expenditure' && payment.source !== 'expenditure';
+        return isIncomeSource && isCompleted && notExpenditure;
+      });
+
+      const expenditurePayments = filteredPayments.filter(payment => {
+        // Expenditures: inventory purchases, reorders, and any expenditure type
+        const isExpenditureSource = payment.source === 'expenditure' || payment.source === 'reorder';
+        const isExpenditureType = payment.type === 'expenditure';
+        return isExpenditureSource || isExpenditureType;
+      });
 
       // Calculate revenue (excluding expenditures)
       const revenue = revenuePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
