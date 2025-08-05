@@ -281,7 +281,7 @@ export default function Payroll() {
               .header {
                 background: linear-gradient(135deg, #5b63e8 0%, #4c54d2 100%);
                 color: white;
-                padding: 30px;
+                padding: 20px;
                 text-align: center;
                 position: relative;
               }
@@ -295,25 +295,25 @@ export default function Payroll() {
                 border: 2px solid rgba(255, 255, 255, 0.3);
               }
               .company-title {
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: bold;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
                 letter-spacing: -0.5px;
               }
               .company-subtitle {
-                font-size: 16px;
+                font-size: 14px;
                 opacity: 0.9;
-                margin-bottom: 15px;
+                margin-bottom: 10px;
               }
               .company-details {
-                font-size: 14px;
+                font-size: 12px;
                 opacity: 0.8;
-                line-height: 1.5;
+                line-height: 1.4;
               }
               .payslip-badges {
                 position: absolute;
-                top: 30px;
-                right: 30px;
+                top: 20px;
+                right: 20px;
                 text-align: right;
               }
               .badge {
@@ -321,10 +321,10 @@ export default function Payroll() {
                 background: rgba(255, 255, 255, 0.2);
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 border-radius: 4px;
-                padding: 8px 16px;
-                font-size: 12px;
+                padding: 6px 12px;
+                font-size: 11px;
                 font-weight: 600;
-                margin-bottom: 8px;
+                margin-bottom: 6px;
                 backdrop-filter: blur(10px);
               }
               .main-content {
@@ -368,6 +368,31 @@ export default function Payroll() {
                 padding: 20px;
                 margin-bottom: 30px;
                 border-left: 4px solid #5b63e8;
+                position: relative;
+              }
+              .qr-code-container {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                text-align: center;
+              }
+              .qr-code {
+                width: 80px;
+                height: 80px;
+                background: white;
+                border: 2px solid #e2e8f0;
+                border-radius: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                color: #64748b;
+                margin-bottom: 5px;
+              }
+              .qr-label {
+                font-size: 10px;
+                color: #64748b;
+                font-weight: 500;
               }
               .section-title {
                 color: #5b63e8;
@@ -475,7 +500,7 @@ export default function Payroll() {
               <div class="header">
                 <div class="logo-box"></div>
                 <div class="payslip-badges">
-                  <div class="badge">PAYSLIP</div>
+                  <div class="badge">PAYSLIP #${String(payroll.id).padStart(6, '0')}</div>
                   <div class="badge">${payroll.payPeriod}</div>
                 </div>
                 <div class="company-title">OptiStore Pro</div>
@@ -511,6 +536,74 @@ export default function Payroll() {
 
                 <!-- Employee Information -->
                 <div class="employee-section">
+                  <div class="qr-code-container">
+                    <div class="qr-code">
+                      <svg width="60" height="60" viewBox="0 0 60 60">
+                        <rect width="60" height="60" fill="white"/>
+                        <g fill="#2d3748">
+                          <rect x="0" y="0" width="6" height="6"/>
+                          <rect x="6" y="0" width="6" height="6"/>
+                          <rect x="18" y="0" width="6" height="6"/>
+                          <rect x="30" y="0" width="6" height="6"/>
+                          <rect x="42" y="0" width="6" height="6"/>
+                          <rect x="48" y="0" width="6" height="6"/>
+                          <rect x="54" y="0" width="6" height="6"/>
+                          <rect x="0" y="6" width="6" height="6"/>
+                          <rect x="36" y="6" width="6" height="6"/>
+                          <rect x="54" y="6" width="6" height="6"/>
+                          <rect x="0" y="12" width="6" height="6"/>
+                          <rect x="12" y="12" width="6" height="6"/>
+                          <rect x="18" y="12" width="6" height="6"/>
+                          <rect x="24" y="12" width="6" height="6"/>
+                          <rect x="36" y="12" width="6" height="6"/>
+                          <rect x="54" y="12" width="6" height="6"/>
+                          <rect x="0" y="18" width="6" height="6"/>
+                          <rect x="12" y="18" width="6" height="6"/>
+                          <rect x="18" y="18" width="6" height="6"/>
+                          <rect x="24" y="18" width="6" height="6"/>
+                          <rect x="36" y="18" width="6" height="6"/>
+                          <rect x="54" y="18" width="6" height="6"/>
+                          <rect x="0" y="24" width="6" height="6"/>
+                          <rect x="12" y="24" width="6" height="6"/>
+                          <rect x="18" y="24" width="6" height="6"/>
+                          <rect x="24" y="24" width="6" height="6"/>
+                          <rect x="36" y="24" width="6" height="6"/>
+                          <rect x="54" y="24" width="6" height="6"/>
+                          <rect x="0" y="30" width="6" height="6"/>
+                          <rect x="36" y="30" width="6" height="6"/>
+                          <rect x="54" y="30" width="6" height="6"/>
+                          <rect x="0" y="36" width="6" height="6"/>
+                          <rect x="6" y="36" width="6" height="6"/>
+                          <rect x="12" y="36" width="6" height="6"/>
+                          <rect x="18" y="36" width="6" height="6"/>
+                          <rect x="24" y="36" width="6" height="6"/>
+                          <rect x="30" y="36" width="6" height="6"/>
+                          <rect x="36" y="36" width="6" height="6"/>
+                          <rect x="42" y="36" width="6" height="6"/>
+                          <rect x="48" y="36" width="6" height="6"/>
+                          <rect x="54" y="36" width="6" height="6"/>
+                          <rect x="12" y="42" width="6" height="6"/>
+                          <rect x="24" y="42" width="6" height="6"/>
+                          <rect x="30" y="42" width="6" height="6"/>
+                          <rect x="42" y="42" width="6" height="6"/>
+                          <rect x="0" y="48" width="6" height="6"/>
+                          <rect x="6" y="48" width="6" height="6"/>
+                          <rect x="18" y="48" width="6" height="6"/>
+                          <rect x="30" y="48" width="6" height="6"/>
+                          <rect x="36" y="48" width="6" height="6"/>
+                          <rect x="48" y="48" width="6" height="6"/>
+                          <rect x="0" y="54" width="6" height="6"/>
+                          <rect x="12" y="54" width="6" height="6"/>
+                          <rect x="24" y="54" width="6" height="6"/>
+                          <rect x="30" y="54" width="6" height="6"/>
+                          <rect x="42" y="54" width="6" height="6"/>
+                          <rect x="48" y="54" width="6" height="6"/>
+                          <rect x="54" y="54" width="6" height="6"/>
+                        </g>
+                      </svg>
+                    </div>
+                    <div class="qr-label">Scan to Verify</div>
+                  </div>
                   <div class="section-title">Employee Information</div>
                   <div class="employee-name">${payroll.staffName}</div>
                   <div class="employee-details">
