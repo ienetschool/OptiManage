@@ -186,11 +186,29 @@ export default function Payments() {
     queryFn: async () => {
       const response = await fetch(`/api/accounting/profit-loss?startDate=${reportDateRange.start}&endDate=${reportDateRange.end}`);
       if (!response.ok) {
-        return { revenue: 0, cogs: 0, grossProfit: 0, expenses: 0, netProfit: 0, grossMargin: 0, netMargin: 0, entries: [] };
+        return { 
+          summary: { totalIncome: 0, totalExpenditures: 0, grossProfit: 0, netProfit: 0, profitMargin: 0 },
+          income: { total: 0, categories: {}, transactions: 0 },
+          expenditures: { total: 0, categories: {}, transactions: 0 },
+          entries: [] 
+        };
       }
       return response.json();
     },
-    enabled: activeTab === "analytics"
+    enabled: activeTab === "profit-loss" || activeTab === "accounting"
+  });
+
+  // Fetch accounting summary
+  const { data: accountingSummary, isLoading: isLoadingAccounting } = useQuery({
+    queryKey: ["/api/accounting/summary", "30d"],
+    queryFn: async () => {
+      const response = await fetch("/api/accounting/summary?period=30d");
+      if (!response.ok) {
+        return { totalIncome: 0, totalExpenditures: 0, netProfit: 0, incomeTransactions: 0, expenditureTransactions: 0 };
+      }
+      return response.json();
+    },
+    enabled: activeTab === "accounting"
   });
 
   // Payment processing mutation
@@ -693,8 +711,9 @@ export default function Payments() {
                       <Card>
                         <CardContent className="p-4">
                           <div className="text-center">
-                            <p className="text-sm text-gray-600">Revenue</p>
-                            <p className="text-xl font-bold text-green-600">${profitLossReport.revenue?.toFixed(2) || '0.00'}</p>
+                            <p className="text-sm text-gray-600">Total Income</p>
+                            <p className="text-xl font-bold text-green-600">${profitLossReport.summary?.totalIncome?.toFixed(2) || '0.00'}</p>
+                            <p className="text-xs text-gray-500">Sales, services, appointments</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -702,9 +721,9 @@ export default function Payments() {
                       <Card>
                         <CardContent className="p-4">
                           <div className="text-center">
-                            <p className="text-sm text-gray-600">Expenses</p>
-                            <p className="text-xl font-bold text-red-600">${profitLossReport.expenses?.toFixed(2) || '0.00'}</p>
-                            <p className="text-xs text-gray-500">Actual expenditures</p>
+                            <p className="text-sm text-gray-600">Total Expenditures</p>
+                            <p className="text-xl font-bold text-red-600">${profitLossReport.summary?.totalExpenditures?.toFixed(2) || '0.00'}</p>
+                            <p className="text-xs text-gray-500">Product purchases, expenses</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -713,7 +732,8 @@ export default function Payments() {
                         <CardContent className="p-4">
                           <div className="text-center">
                             <p className="text-sm text-gray-600">Gross Profit</p>
-                            <p className="text-xl font-bold text-blue-600">${profitLossReport.grossProfit?.toFixed(2) || '0.00'}</p>
+                            <p className="text-xl font-bold text-blue-600">${profitLossReport.summary?.grossProfit?.toFixed(2) || '0.00'}</p>
+                            <p className="text-xs text-gray-500">Income before expenses</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -722,7 +742,12 @@ export default function Payments() {
                         <CardContent className="p-4">
                           <div className="text-center">
                             <p className="text-sm text-gray-600">Net Profit</p>
-                            <p className="text-xl font-bold text-purple-600">${profitLossReport.netProfit?.toFixed(2) || '0.00'}</p>
+                            <p className={`text-xl font-bold ${(profitLossReport.summary?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              ${profitLossReport.summary?.netProfit?.toFixed(2) || '0.00'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Margin: {profitLossReport.summary?.profitMargin?.toFixed(1) || '0.0'}%
+                            </p>
                           </div>
                         </CardContent>
                       </Card>
@@ -735,24 +760,235 @@ export default function Payments() {
         </TabsContent>
 
         <TabsContent value="accounting" className="space-y-6">
+          {/* Accounting Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Income</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${accountingSummary?.totalIncome?.toFixed(2) || '0.00'}
+                    </p>
+                    <p className="text-xs text-slate-500">Sales, appointments, services</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Expenditures</p>
+                    <p className="text-2xl font-bold text-red-600">
+                      ${accountingSummary?.totalExpenditures?.toFixed(2) || '0.00'}
+                    </p>
+                    <p className="text-xs text-slate-500">Product purchases, reorders</p>
+                  </div>
+                  <TrendingDown className="h-8 w-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Net Profit</p>
+                    <p className={`text-2xl font-bold ${(accountingSummary?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      ${accountingSummary?.netProfit?.toFixed(2) || '0.00'}
+                    </p>
+                    <p className="text-xs text-slate-500">Income - Expenditures</p>
+                  </div>
+                  <Calculator className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Transactions</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {(accountingSummary?.incomeTransactions || 0) + (accountingSummary?.expenditureTransactions || 0)}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {accountingSummary?.incomeTransactions || 0} income, {accountingSummary?.expenditureTransactions || 0} expenditure
+                    </p>
+                  </div>
+                  <Receipt className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Income vs Expenditure Breakdown */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-green-600">
+                  <TrendingUp className="h-5 w-5" />
+                  <span>Income Categories (Last 30 Days)</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingAccounting ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : profitLossReport?.income ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                      <span className="font-medium">Product Sales</span>
+                      <span className="text-green-600 font-bold">
+                        ${profitLossReport.income.categories?.product_sales?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                      <span className="font-medium">Medical Services</span>
+                      <span className="text-blue-600 font-bold">
+                        ${profitLossReport.income.categories?.medical_services?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                      <span className="font-medium">Appointments</span>
+                      <span className="text-purple-600 font-bold">
+                        ${profitLossReport.income.categories?.appointments?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">Other Income</span>
+                      <span className="text-gray-600 font-bold">
+                        ${profitLossReport.income.categories?.other?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold">Total Income</span>
+                        <span className="text-lg font-bold text-green-600">
+                          ${profitLossReport.income.total?.toFixed(2) || '0.00'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No income data available for the selected period
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-red-600">
+                  <TrendingDown className="h-5 w-5" />
+                  <span>Expenditure Categories (Last 30 Days)</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingAccounting ? (
+                  <div className="text-center py-8">Loading...</div>
+                ) : profitLossReport?.expenditures ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                      <span className="font-medium">Inventory Purchases</span>
+                      <span className="text-red-600 font-bold">
+                        ${profitLossReport.expenditures.categories?.inventory_purchases?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                      <span className="font-medium">Operating Expenses</span>
+                      <span className="text-orange-600 font-bold">
+                        ${profitLossReport.expenditures.categories?.operating_expenses?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="font-medium">Other Expenses</span>
+                      <span className="text-gray-600 font-bold">
+                        ${profitLossReport.expenditures.categories?.other?.toFixed(2) || '0.00'}
+                      </span>
+                    </div>
+                    <div className="border-t pt-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold">Total Expenditures</span>
+                        <span className="text-lg font-bold text-red-600">
+                          ${profitLossReport.expenditures.total?.toFixed(2) || '0.00'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Net Profit Calculation */}
+                    <div className="border-t pt-3 bg-slate-50 p-3 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold">Net Profit</span>
+                        <span className={`text-lg font-bold ${(profitLossReport.summary?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          ${profitLossReport.summary?.netProfit?.toFixed(2) || '0.00'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Profit Margin: {profitLossReport.summary?.profitMargin?.toFixed(1) || '0.0'}%
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No expenditure data available for the selected period
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Transaction History */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5" />
-                <span>Accounting Management</span>
+                <Receipt className="h-5 w-5" />
+                <span>Recent Accounting Transactions</span>
               </CardTitle>
               <CardDescription>
-                Comprehensive accounting features and transaction management
+                All income and expenditure transactions categorized for accounting
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="text-center text-gray-500 py-8">
-                  <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-                  <p className="text-lg font-medium">Accounting Module</p>
-                  <p>Advanced accounting features coming soon...</p>
+              {isLoadingReport ? (
+                <div className="text-center py-8">Loading transactions...</div>
+              ) : profitLossReport?.entries?.length > 0 ? (
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {profitLossReport.entries.slice(0, 20).map((entry, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${entry.type === 'income' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <div>
+                          <p className="font-medium">{entry.description}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(entry.date).toLocaleDateString()} • {entry.category}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-bold ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                          {entry.type === 'income' ? '+' : '-'}${entry.amount.toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-500 capitalize">{entry.type}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {profitLossReport.entries.length > 20 && (
+                    <div className="text-center py-2 text-gray-500 text-sm">
+                      Showing 20 of {profitLossReport.entries.length} transactions
+                    </div>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Receipt className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                  <p className="text-lg font-medium">No Transactions Found</p>
+                  <p>Transactions will appear here as business activities occur</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

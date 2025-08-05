@@ -1,196 +1,231 @@
-import { Request, Response, NextFunction } from "express";
-import { storage } from "../storage";
+import type { Express } from "express";
 import { isAuthenticated } from "../oauthAuth";
+import { storage } from "../storage";
 
-export function setupAccountingRoutes(app: any) {
+export function registerAccountingRoutes(app: Express) {
   // Get profit & loss report
-  app.get("/api/accounting/profit-loss", isAuthenticated, async (req: Request, res: Response) => {
+  app.get("/api/accounting/profit-loss", isAuthenticated, async (req, res) => {
     try {
       const { startDate, endDate, storeId } = req.query;
       
-      if (!startDate || !endDate) {
-        return res.status(400).json({ message: "Start date and end date are required" });
-      }
-
-      // For now, calculate P&L from payment data including expenditures
-      const payments = await storage.getPayments();
-      const filteredPayments = payments.filter(payment => {
+      // Default to last 30 days if no dates provided
+      const start = startDate as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const end = endDate as string || new Date().toISOString().split('T')[0];
+      
+      console.log(`📊 PROFIT & LOSS REPORT: ${start} to ${end}`);
+      
+      // Get all payments for the period
+      const allPayments = await storage.getPayments();
+      
+      // Filter payments by date range
+      const filteredPayments = allPayments.filter(payment => {
         const paymentDate = new Date(payment.paymentDate);
-        const start = new Date(startDate as string);
-        const end = new Date(endDate as string);
-        return paymentDate >= start && paymentDate <= end;
+        const startDateObj = new Date(start);
+        const endDateObj = new Date(end);
+        return paymentDate >= startDateObj && paymentDate <= endDateObj;
       });
-
-      // Categorize transactions based on source and type for proper accounting
-      const revenuePayments = filteredPayments.filter(payment => {
-        // Income: regular sales, quick sales, paid appointments, medical invoices
-        const isIncomeSource = ['regular_invoice', 'quick_sale', 'medical_invoice', 'appointment'].includes(payment.source);
-        const isCompleted = payment.status === 'completed';
-        const notExpenditure = payment.type !== 'expenditure' && payment.source !== 'expenditure';
-        return isIncomeSource && isCompleted && notExpenditure;
+      
+      // Categorize payments into income and expenditures
+      const incomePayments = filteredPayments.filter(payment => {
+        // Income sources: regular invoices, medical invoices, appointments, sales
+        return payment.source === 'regular_invoice' || 
+               payment.source === 'medical_invoice' || 
+               payment.source === 'appointment' ||
+               payment.source === 'quick_sale' ||
+               payment.type === 'income' ||
+               (!payment.source && !payment.type); // Default to income for legacy records
       });
-
+      
       const expenditurePayments = filteredPayments.filter(payment => {
-        // Expenditures: inventory purchases, reorders, and any expenditure type
-        const isExpenditureSource = payment.source === 'expenditure' || payment.source === 'reorder';
-        const isExpenditureType = payment.type === 'expenditure';
-        return isExpenditureSource || isExpenditureType;
+        // Expenditure sources: product purchases, reorders, supplier payments
+        return payment.source === 'expenditure' || 
+               payment.type === 'expenditure' ||
+               payment.source === 'product_purchase' ||
+               payment.source === 'reorder';
       });
-
-      // Calculate revenue (excluding expenditures)
-      const revenue = revenuePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
       
-      // Calculate actual expenses from expenditures
-      const expenses = expenditurePayments.reduce((sum, expenditure) => sum + parseFloat(expenditure.amount), 0);
-      const cogs = expenses * 0.7; // Assume 70% of expenditures are COGS
+      // Calculate totals
+      const totalIncome = incomePayments.reduce((sum, payment) => sum + parseFloat(payment.amount || "0"), 0);
+      const totalExpenditures = expenditurePayments.reduce((sum, payment) => sum + parseFloat(payment.amount || "0"), 0);
+      const netProfit = totalIncome - totalExpenditures;
+      const profitMargin = totalIncome > 0 ? (netProfit / totalIncome) * 100 : 0;
       
-      const grossProfit = revenue - cogs;
-      const netProfit = grossProfit - expenses;
-
-      const report = {
-        period: { startDate, endDate },
-        revenue,
-        cogs,
-        grossProfit,
-        expenses,
-        netProfit,
-        grossMargin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
-        netMargin: revenue > 0 ? (netProfit / revenue) * 100 : 0,
-        entries: [
-          ...revenuePayments.map(payment => ({
-            date: payment.paymentDate,
-            description: `Payment from ${payment.customerName}`,
-            amount: parseFloat(payment.amount),
-            type: 'revenue',
-            source: payment.source
-          })),
-          ...expenditurePayments.map(expenditure => ({
-            date: expenditure.paymentDate,
-            description: expenditure.notes || `Expenditure - ${expenditure.customerName}`,
-            amount: -parseFloat(expenditure.amount), // Negative for expenses
-            type: 'expense',
-            source: expenditure.source,
-            category: expenditure.category
-          }))
-        ]
+      // Group by categories for detailed breakdown
+      const incomeByCategory = {
+        product_sales: incomePayments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
+        medical_services: incomePayments.filter(p => p.source === 'medical_invoice').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
+        appointments: incomePayments.filter(p => p.source === 'appointment').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
+        other: incomePayments.filter(p => !p.source || (!['regular_invoice', 'quick_sale', 'medical_invoice', 'appointment'].includes(p.source))).reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0)
       };
-
+      
+      const expendituresByCategory = {
+        inventory_purchases: expenditurePayments.filter(p => p.category === 'inventory' || p.source === 'product_purchase' || p.source === 'reorder').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
+        operating_expenses: expenditurePayments.filter(p => p.category === 'operating').reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0),
+        other: expenditurePayments.filter(p => !p.category || (!['inventory', 'operating'].includes(p.category))).reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0)
+      };
+      
+      const report = {
+        period: { startDate: start, endDate: end },
+        summary: {
+          totalIncome,
+          totalExpenditures,
+          grossProfit: totalIncome, // For service business, revenue = gross profit
+          netProfit,
+          profitMargin
+        },
+        income: {
+          total: totalIncome,
+          categories: incomeByCategory,
+          transactions: incomePayments.length
+        },
+        expenditures: {
+          total: totalExpenditures,
+          categories: expendituresByCategory,
+          transactions: expenditurePayments.length
+        },
+        entries: filteredPayments.map(payment => ({
+          id: payment.id,
+          date: payment.paymentDate,
+          description: `${payment.customerName} - ${payment.invoiceId}`,
+          category: payment.source || payment.type || 'income',
+          type: expenditurePayments.includes(payment) ? 'expenditure' : 'income',
+          amount: parseFloat(payment.amount || "0"),
+          source: payment.source,
+          notes: payment.notes
+        }))
+      };
+      
+      console.log(`💰 ACCOUNTING SUMMARY: Income: $${totalIncome.toFixed(2)}, Expenditures: $${totalExpenditures.toFixed(2)}, Net: $${netProfit.toFixed(2)}`);
+      
       res.json(report);
     } catch (error) {
-      console.error("Error generating profit/loss report:", error);
-      res.status(500).json({ message: "Failed to generate profit/loss report" });
-    }
-  });
-
-  // Get payment analytics
-  app.get("/api/accounting/analytics", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const payments = await storage.getPayments();
-      
-      // Separate revenue and expenditures for analytics
-      const revenuePayments = payments.filter(p => p.status === 'completed' && p.type !== 'expenditure');
-      const expenditurePayments = payments.filter(p => p.type === 'expenditure');
-      
-      const totalRevenue = revenuePayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-      const totalExpenses = expenditurePayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
-      const productSales = revenuePayments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + parseFloat(p.amount), 0);
-      const serviceSales = revenuePayments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + parseFloat(p.amount), 0);
-      
-      // Payment method breakdown
-      const paymentMethodBreakdown = payments.reduce((acc, payment) => {
-        const method = payment.paymentMethod || 'unknown';
-        acc[method] = (acc[method] || 0) + parseFloat(payment.amount);
-        return acc;
-      }, {} as Record<string, number>);
-
-      // Monthly trends (last 12 months)
-      const monthlyTrends = [];
-      for (let i = 11; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
-        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        
-        const monthPayments = payments.filter(p => {
-          const paymentDate = new Date(p.paymentDate);
-          return paymentDate >= monthStart && paymentDate <= monthEnd && p.status === 'completed';
-        });
-        
-        monthlyTrends.push({
-          month: date.toLocaleString('default', { month: 'short', year: 'numeric' }),
-          revenue: monthPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0),
-          transactions: monthPayments.length
-        });
-      }
-
-      // Expenditure breakdown by category
-      const expenditureByCategory = expenditurePayments.reduce((acc, exp) => {
-        const category = exp.category || 'other';
-        acc[category] = (acc[category] || 0) + parseFloat(exp.amount);
-        return acc;
-      }, {} as Record<string, number>);
-
-      res.json({
-        totalRevenue,
-        totalExpenses,
-        netIncome: totalRevenue - totalExpenses,
-        productSales,
-        serviceSales,
-        paymentMethodBreakdown,
-        expenditureByCategory,
-        monthlyTrends,
-        completionRate: payments.length > 0 ? (revenuePayments.length / payments.length) * 100 : 0,
-        averageTransaction: revenuePayments.length > 0 ? totalRevenue / revenuePayments.length : 0,
-        averageExpenditure: expenditurePayments.length > 0 ? totalExpenses / expenditurePayments.length : 0
+      console.error("Error generating profit & loss report:", error);
+      res.status(500).json({ 
+        message: "Failed to generate profit & loss report",
+        error: error.message 
       });
-    } catch (error) {
-      console.error("Error generating analytics:", error);
-      res.status(500).json({ message: "Failed to generate analytics" });
     }
   });
 
-  // Create payment transaction with accounting entries
-  app.post("/api/accounting/transactions", isAuthenticated, async (req: Request, res: Response) => {
+  // Get accounting summary (for dashboard widgets)
+  app.get("/api/accounting/summary", isAuthenticated, async (req, res) => {
     try {
-      const transactionData = {
-        ...req.body,
-        createdBy: req.user?.id || 'system'
-      };
-
-      const transaction = await storage.createPaymentTransaction(transactionData);
-      res.status(201).json(transaction);
-    } catch (error) {
-      console.error("Error creating payment transaction:", error);
-      res.status(500).json({ message: "Failed to create payment transaction" });
-    }
-  });
-
-  // Get accounting entries
-  app.get("/api/accounting/entries", isAuthenticated, async (req: Request, res: Response) => {
-    try {
-      const { accountId, startDate, endDate } = req.query;
+      const { period = '30d' } = req.query;
       
-      const entries = await storage.getAccountingEntries(
-        accountId as string,
-        startDate as string,
-        endDate as string
+      // Calculate date range based on period
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (period) {
+        case '7d':
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case '90d':
+          startDate.setDate(now.getDate() - 90);
+          break;
+        case '1y':
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+        default:
+          startDate.setDate(now.getDate() - 30);
+      }
+      
+      const allPayments = await storage.getPayments();
+      
+      // Filter by date range
+      const filteredPayments = allPayments.filter(payment => {
+        const paymentDate = new Date(payment.paymentDate);
+        return paymentDate >= startDate;
+      });
+      
+      // Calculate totals
+      const incomePayments = filteredPayments.filter(payment => 
+        payment.type !== 'expenditure' && payment.source !== 'expenditure'
+      );
+      const expenditurePayments = filteredPayments.filter(payment => 
+        payment.type === 'expenditure' || payment.source === 'expenditure'
       );
       
-      res.json(entries);
+      const totalIncome = incomePayments.reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0);
+      const totalExpenditures = expenditurePayments.reduce((sum, p) => sum + parseFloat(p.amount || "0"), 0);
+      
+      res.json({
+        period,
+        totalIncome,
+        totalExpenditures,
+        netProfit: totalIncome - totalExpenditures,
+        incomeTransactions: incomePayments.length,
+        expenditureTransactions: expenditurePayments.length,
+        totalTransactions: filteredPayments.length
+      });
     } catch (error) {
-      console.error("Error fetching accounting entries:", error);
-      res.status(500).json({ message: "Failed to fetch accounting entries" });
+      console.error("Error generating accounting summary:", error);
+      res.status(500).json({ 
+        message: "Failed to generate accounting summary",
+        error: error.message 
+      });
     }
   });
 
-  // Initialize chart of accounts
-  app.post("/api/accounting/initialize", isAuthenticated, async (req: Request, res: Response) => {
+  // Get cash flow report
+  app.get("/api/accounting/cash-flow", isAuthenticated, async (req, res) => {
     try {
-      await storage.initializeChartOfAccounts();
-      res.json({ message: "Chart of accounts initialized successfully" });
+      const { startDate, endDate } = req.query;
+      
+      const start = startDate as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const end = endDate as string || new Date().toISOString().split('T')[0];
+      
+      const allPayments = await storage.getPayments();
+      
+      // Filter by date range and group by date
+      const dailyCashFlow = {};
+      
+      allPayments.forEach(payment => {
+        const paymentDate = new Date(payment.paymentDate);
+        const startDateObj = new Date(start);
+        const endDateObj = new Date(end);
+        
+        if (paymentDate >= startDateObj && paymentDate <= endDateObj) {
+          const dateKey = paymentDate.toISOString().split('T')[0];
+          
+          if (!dailyCashFlow[dateKey]) {
+            dailyCashFlow[dateKey] = { income: 0, expenditures: 0, net: 0 };
+          }
+          
+          const amount = parseFloat(payment.amount || "0");
+          
+          if (payment.type === 'expenditure' || payment.source === 'expenditure') {
+            dailyCashFlow[dateKey].expenditures += amount;
+          } else {
+            dailyCashFlow[dateKey].income += amount;
+          }
+          
+          dailyCashFlow[dateKey].net = dailyCashFlow[dateKey].income - dailyCashFlow[dateKey].expenditures;
+        }
+      });
+      
+      // Convert to array format for charts
+      const cashFlowData = Object.entries(dailyCashFlow).map(([date, data]) => ({
+        date,
+        ...data
+      })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      
+      res.json({
+        period: { startDate: start, endDate: end },
+        dailyCashFlow: cashFlowData,
+        totalInflow: cashFlowData.reduce((sum, day) => sum + day.income, 0),
+        totalOutflow: cashFlowData.reduce((sum, day) => sum + day.expenditures, 0),
+        netCashFlow: cashFlowData.reduce((sum, day) => sum + day.net, 0)
+      });
     } catch (error) {
-      console.error("Error initializing chart of accounts:", error);
-      res.status(500).json({ message: "Failed to initialize chart of accounts" });
+      console.error("Error generating cash flow report:", error);
+      res.status(500).json({ 
+        message: "Failed to generate cash flow report",
+        error: error.message 
+      });
     }
   });
 }
