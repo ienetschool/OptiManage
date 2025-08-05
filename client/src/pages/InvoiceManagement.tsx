@@ -52,6 +52,7 @@ import QRCodeReact from "react-qr-code";
 
 import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
 import ModernA4InvoiceTemplate from "@/components/ModernA4InvoiceTemplate";
+import PurchaseInvoiceTemplate from "@/components/PurchaseInvoiceTemplate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
@@ -1377,14 +1378,14 @@ export default function InvoiceManagement() {
                                             return (
                                               <CommandItem
                                                 key={product.id}
-                                                value={product.id}
+                                                value={`${product.name} ${product.sku || ''} ${product.category || ''}`}
+                                                keywords={[product.name, product.sku, product.category, product.id]}
                                                 onSelect={() => {
                                                   field.onChange(product.id);
                                                   itemForm.setValue("unitPrice", Number(product.price));
                                                   setProductSearchOpen(false);
                                                   setProductSearchTerm("");
                                                 }}
-                                                disabled={stockLevel === 0}
                                               >
                                                 <Check
                                                   className={`mr-2 h-4 w-4 ${
@@ -1395,7 +1396,7 @@ export default function InvoiceManagement() {
                                                   <div className="flex flex-col">
                                                     <span className="font-medium">{product.name}</span>
                                                     <span className="text-sm text-gray-500">
-                                                      {product.category} - ${Number(product.price).toFixed(2)}
+                                                      SKU: {product.sku} | ${Number(product.price).toFixed(2)}
                                                     </span>
                                                   </div>
                                                   <div className="flex flex-col items-end">
@@ -1908,9 +1909,9 @@ export default function InvoiceManagement() {
             </Dialog>
           )}
 
-          {/* Modern A4 Invoice Template Preview */}
+          {/* Purchase Invoice Template Preview - Same as Inventory Purchase */}
           {showInvoicePreview && selectedInvoice && (
-            <ModernA4InvoiceTemplate
+            <PurchaseInvoiceTemplate
               invoice={selectedInvoice}
               onClose={() => setShowInvoicePreview(false)}
             />
