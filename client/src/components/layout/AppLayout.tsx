@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Menu, 
   X, 
@@ -84,6 +85,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { data: products = [] } = useQuery<any[]>({
     queryKey: ["/api/products"]
   });
+
+  const { data: inventory = [] } = useQuery<any[]>({
+    queryKey: ["/api/store-inventory"]
+  });
+
+  // Helper function to get stock for a product
+  const getProductStock = (productId: string) => {
+    const inventoryItem = inventory.find((item: any) => item.productId === productId);
+    return inventoryItem?.quantity || 0;
+  };
 
   // Combine customers and patients for dropdown with proper filtering
   const allCustomers = [
@@ -696,7 +707,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                                   onValueChange={setProductSearchTerm}
                                 />
                                 <CommandEmpty>No product found.</CommandEmpty>
-                                <CommandGroup className="max-h-48 overflow-y-auto">
+                                <ScrollArea className="h-[300px]">
+                                  <CommandGroup>
                                   <CommandItem
                                     value="custom"
                                     onSelect={() => {
@@ -733,31 +745,57 @@ export default function AppLayout({ children }: AppLayoutProps) {
                                       product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
                                       (product.category && product.category.toLowerCase().includes(productSearchTerm.toLowerCase()))
                                     )
-                                    .map((product: any) => (
-                                      <CommandItem
-                                        key={product.id}
-                                        value={product.id}
-                                        onSelect={() => {
-                                          field.onChange(product.id);
-                                          quickSaleItemForm.setValue("unitPrice", Number(product.price || 0));
-                                          setProductSearchOpen(false);
-                                          setProductSearchTerm("");
-                                        }}
-                                      >
-                                        <Check
-                                          className={`mr-2 h-4 w-4 ${
-                                            field.value === product.id ? "opacity-100" : "opacity-0"
-                                          }`}
-                                        />
-                                        <div className="flex flex-col">
-                                          <span className="font-medium">{product.name}</span>
-                                          <span className="text-sm text-gray-500">
-                                            {product.category || 'Product'} - ${Number(product.price || 0).toFixed(2)}
-                                          </span>
-                                        </div>
-                                      </CommandItem>
-                                    ))}
-                                </CommandGroup>
+                                    .map((product: any) => {
+                                      const stockQuantity = getProductStock(product.id);
+                                      const isOutOfStock = stockQuantity === 0;
+                                      
+                                      return (
+                                        <CommandItem
+                                          key={product.id}
+                                          value={product.id}
+                                          disabled={isOutOfStock}
+                                          onSelect={() => {
+                                            if (!isOutOfStock) {
+                                              field.onChange(product.id);
+                                              quickSaleItemForm.setValue("unitPrice", Number(product.price || 0));
+                                              setProductSearchOpen(false);
+                                              setProductSearchTerm("");
+                                            }
+                                          }}
+                                          className={isOutOfStock ? "opacity-50 cursor-not-allowed" : ""}
+                                        >
+                                          <Check
+                                            className={`mr-2 h-4 w-4 ${
+                                              field.value === product.id ? "opacity-100" : "opacity-0"
+                                            }`}
+                                          />
+                                          <div className="flex items-center space-x-3 flex-1">
+                                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                              <span className="text-blue-600 text-sm font-medium">
+                                                {product.name?.charAt(0).toUpperCase() || 'P'}
+                                              </span>
+                                            </div>
+                                            <div className="flex-1">
+                                              <div className="font-medium">{product.name}</div>
+                                              <div className="text-xs text-slate-500 flex items-center justify-between">
+                                                <span>{product.category || 'Product'} - ${Number(product.price || 0).toFixed(2)}</span>
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                                  isOutOfStock 
+                                                    ? 'bg-red-100 text-red-600' 
+                                                    : stockQuantity <= 5 
+                                                      ? 'bg-yellow-100 text-yellow-600' 
+                                                      : 'bg-green-100 text-green-600'
+                                                }`}>
+                                                  {isOutOfStock ? 'Out of Stock' : `${stockQuantity} in stock`}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </CommandItem>
+                                      );
+                                    })}
+                                  </CommandGroup>
+                                </ScrollArea>
                               </Command>
                             </PopoverContent>
                           </Popover>
