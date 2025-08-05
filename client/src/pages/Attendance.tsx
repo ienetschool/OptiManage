@@ -22,7 +22,8 @@ import {
   Users,
   TrendingUp,
   Edit,
-  Save
+  Save,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format, isToday } from "date-fns";
@@ -149,15 +150,7 @@ export default function Attendance() {
           <p className="text-slate-600">Track staff attendance, working hours, and generate reports</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" onClick={() => {
-            // Mock QR scan with real staff data for demonstration
-            const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
-            console.log('QR Scanner clicked - staffData:', staffData.length, 'realStaffCode:', realStaffCode);
-            console.log('todayAttendance:', todayAttendance);
-            const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
-            console.log('Scanning QR with data:', sampleQRData);
-            handleQRScan(sampleQRData);
-          }}>
+          <Button variant="outline" onClick={() => setQrScannerOpen(true)}>
             <QrCode className="h-4 w-4 mr-2" />
             QR Scanner
           </Button>
@@ -492,6 +485,54 @@ export default function Attendance() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* QR Scanner Modal */}
+      {qrScannerOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">QR Code Scanner</h3>
+              <Button variant="ghost" size="sm" onClick={() => setQrScannerOpen(false)}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-gray-100 rounded-lg p-8 text-center">
+                <QrCode className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-gray-600 mb-4">Position the QR code within the frame</p>
+                
+                {/* Mock scanner for demonstration */}
+                <div className="space-y-2">
+                  <Button 
+                    onClick={() => {
+                      const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
+                      const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
+                      handleQRScan(sampleQRData);
+                      setQrScannerOpen(false);
+                    }}
+                    className="w-full"
+                  >
+                    Simulate Scan: {staffData.length > 0 ? staffData[0].firstName + " " + staffData[0].lastName : "Dr. Smita Ghosh"}
+                  </Button>
+                  <p className="text-xs text-gray-500">
+                    Click above to simulate scanning Dr. Smita's QR code
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2">
+                <Button variant="outline" className="flex-1" onClick={() => setQrScannerOpen(false)}>
+                  Cancel
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  Manual Entry
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
