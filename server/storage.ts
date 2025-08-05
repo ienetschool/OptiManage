@@ -151,10 +151,22 @@ export interface IStorage {
   // Payments operations - Combine invoices and medical invoices as payment records
   getPayments(): Promise<any[]>;
   updatePaymentStatus(paymentId: string, status: string): Promise<any>;
+  addExpenditure(expenditure: {
+    invoiceId: string;
+    supplierName: string;
+    amount: number;
+    paymentMethod: string;
+    description: string;
+    category: string;
+    storeId: string;
+  }): Promise<void>;
 }
 
 // Global in-memory storage for created invoices (persists across requests)
 const globalCreatedInvoices: any[] = [];
+
+// Global in-memory storage for expenditures (persists across requests)
+const globalExpenditures: any[] = [];
 
 export class DatabaseStorage implements IStorage {
   // Reference to global storage
@@ -1160,11 +1172,28 @@ export class DatabaseStorage implements IStorage {
         source: 'quick_sale'
       }));
       
+      // Convert expenditures to payment records
+      const expenditurePayments = globalExpenditures.map(expenditure => ({
+        id: `exp-${expenditure.invoiceId}`,
+        invoiceId: expenditure.invoiceId,
+        customerId: null,
+        customerName: expenditure.supplierName,
+        amount: expenditure.amount,
+        paymentMethod: expenditure.paymentMethod,
+        status: 'completed',
+        paymentDate: expenditure.createdAt || new Date().toISOString(),
+        transactionId: `TXN-EXP-${expenditure.invoiceId}`,
+        notes: expenditure.description,
+        source: 'expenditure',
+        type: 'expenditure', // Mark as expenditure for accounting
+        category: expenditure.category
+      }));
+      
       // Combine all payments and sort by date
-      const allPayments = [...regularPayments, ...medicalPayments, ...salesPayments]
+      const allPayments = [...regularPayments, ...medicalPayments, ...salesPayments, ...expenditurePayments]
         .sort((a, b) => new Date(b.paymentDate || new Date()).getTime() - new Date(a.paymentDate || new Date()).getTime());
       
-      console.log(`🚨 RETURNING ${allPayments.length} TOTAL PAYMENTS (${regularPayments.length} regular + ${medicalPayments.length} medical + ${salesPayments.length} sales)`);
+      console.log(`🚨 RETURNING ${allPayments.length} TOTAL PAYMENTS (${regularPayments.length} regular + ${medicalPayments.length} medical + ${salesPayments.length} sales + ${expenditurePayments.length} expenditures)`);
       
       return allPayments;
       
@@ -1419,6 +1448,28 @@ export class DatabaseStorage implements IStorage {
         await db.insert(chartOfAccounts).values(account).onConflictDoNothing();
       }
     }
+  }
+
+  // Add expenditure method
+  async addExpenditure(expenditure: {
+    invoiceId: string;
+    supplierName: string;
+    amount: number;
+    paymentMethod: string;
+    description: string;
+    category: string;
+    storeId: string;
+  }): Promise<void> {
+    const expenditureRecord = {
+      id: `exp-${Date.now()}`,
+      ...expenditure,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      transactionId: `TXN-EXP-${expenditure.invoiceId}`
+    };
+    
+    globalExpenditures.push(expenditureRecord);
+    console.log(`✅ EXPENDITURE ADDED: ${expenditure.supplierName} - $${expenditure.amount} for ${expenditure.description}`);
   }
 }
 

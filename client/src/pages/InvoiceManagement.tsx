@@ -286,16 +286,23 @@ export default function InvoiceManagement() {
     });
   }, [invoices, customers]);
 
-  const { data: products = [], refetch: refetchProducts } = useQuery<Product[]>({
+  const { data: products = [], refetch: refetchProducts, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
-    staleTime: 30000, // 30 seconds
-    refetchInterval: 60000, // Auto-refresh every minute
+    staleTime: 0, // Force fresh data
+    cacheTime: 0, // Don't cache
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchOnWindowFocus: true, // Refresh when window gains focus
+    refetchOnMount: true, // Always refetch on mount
   });
 
   // Fetch inventory data to show stock levels
-  const { data: inventory = [] } = useQuery({
+  const { data: inventory = [], refetch: refetchInventory } = useQuery({
     queryKey: ["/api/store-inventory"],
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Force fresh data
+    cacheTime: 0, // Don't cache
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    refetchOnWindowFocus: true, // Refresh when window gains focus
+    refetchOnMount: true, // Always refetch on mount
   });
 
   const { data: stores = [] } = useQuery<{id: string; name: string}[]>({
@@ -1259,10 +1266,10 @@ export default function InvoiceManagement() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={async () => {
-                                      await refetchProducts();
+                                      await Promise.all([refetchProducts(), refetchInventory()]);
                                       toast({
                                         title: "Products Refreshed",
-                                        description: "Product list has been updated with latest items.",
+                                        description: "Product list and inventory updated with latest items.",
                                       });
                                     }}
                                     className="h-6 px-2 text-xs"

@@ -1493,6 +1493,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Store the invoice
       await storage.createInvoice(invoice, invoice.items);
       
+      // Add expenditure to payments system
+      await storage.addExpenditure({
+        invoiceId: invoice.invoiceNumber,
+        supplierName: supplierName,
+        amount: parseFloat(invoice.total.toString()),
+        paymentMethod: paymentMethod || "bank_transfer",
+        description: `Product restock - ${product.name} (${quantity} units)`,
+        category: "inventory_purchase",
+        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638"
+      });
+      
       res.json({
         success: true,
         invoice,
@@ -1589,6 +1600,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Store the invoice
       await storage.createInvoice(invoice, invoice.items);
+      
+      // Add expenditure to payments system
+      await storage.addExpenditure({
+        invoiceId: invoice.invoiceNumber,
+        supplierName: "Bulk Supplier Purchase",
+        amount: parseFloat(total.toString()),
+        paymentMethod: "bank_transfer",
+        description: `Bulk restock order for ${selectedProducts.length} products`,
+        category: "inventory_purchase",
+        storeId: "5ff902af-3849-4ea6-945b-4d49175d6638"
+      });
       
       res.json({
         success: true,
