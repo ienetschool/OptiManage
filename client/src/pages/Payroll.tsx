@@ -255,7 +255,7 @@ export default function Payroll() {
   };
 
   const handlePrintPayroll = (payroll: any) => {
-    // Generate payslip in new window
+    // Generate payslip in new window using the professional blue design from INV-789319
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -263,63 +263,323 @@ export default function Payroll() {
           <head>
             <title>Payslip - ${payroll.staffName}</title>
             <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-              .company-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-              .payslip-title { font-size: 18px; color: #666; }
-              .employee-info { margin-bottom: 20px; }
-              .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-              .earnings, .deductions { width: 48%; display: inline-block; vertical-align: top; }
-              .section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
-              .amount-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-              .total-row { font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 15px; }
-              .net-pay { font-size: 18px; background: #e8f5e8; padding: 10px; text-align: center; margin-top: 20px; }
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background: #f5f5f5;
+                padding: 20px;
+                line-height: 1.4;
+              }
+              .payslip-container {
+                max-width: 800px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+              }
+              .header {
+                background: linear-gradient(135deg, #5b63e8 0%, #4c54d2 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+                position: relative;
+              }
+              .logo-box {
+                width: 60px;
+                height: 60px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                display: inline-block;
+                margin-bottom: 15px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+              }
+              .company-title {
+                font-size: 28px;
+                font-weight: bold;
+                margin-bottom: 8px;
+                letter-spacing: -0.5px;
+              }
+              .company-subtitle {
+                font-size: 16px;
+                opacity: 0.9;
+                margin-bottom: 15px;
+              }
+              .company-details {
+                font-size: 14px;
+                opacity: 0.8;
+                line-height: 1.5;
+              }
+              .payslip-badges {
+                position: absolute;
+                top: 30px;
+                right: 30px;
+                text-align: right;
+              }
+              .badge {
+                display: block;
+                background: rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+                padding: 8px 16px;
+                font-size: 12px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                backdrop-filter: blur(10px);
+              }
+              .main-content {
+                padding: 30px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+                gap: 20px;
+                margin-bottom: 30px;
+              }
+              .info-item {
+                text-align: center;
+              }
+              .info-label {
+                font-size: 12px;
+                color: #5b63e8;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 5px;
+              }
+              .info-value {
+                font-size: 16px;
+                font-weight: bold;
+                color: #2d3748;
+              }
+              .info-status {
+                display: inline-block;
+                background: #48bb78;
+                color: white;
+                padding: 4px 12px;
+                border-radius: 16px;
+                font-size: 12px;
+                font-weight: 600;
+                text-transform: uppercase;
+              }
+              .employee-section {
+                background: #f8fafc;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+                border-left: 4px solid #5b63e8;
+              }
+              .section-title {
+                color: #5b63e8;
+                font-size: 14px;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 15px;
+              }
+              .employee-name {
+                font-size: 22px;
+                font-weight: bold;
+                color: #2d3748;
+                margin-bottom: 5px;
+              }
+              .employee-details {
+                color: #64748b;
+                font-size: 14px;
+              }
+              .salary-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                margin-bottom: 30px;
+              }
+              .earnings-section, .deductions-section {
+                background: #f8fafc;
+                border-radius: 8px;
+                padding: 20px;
+              }
+              .earnings-section {
+                border-left: 4px solid #48bb78;
+              }
+              .deductions-section {
+                border-left: 4px solid #f56565;
+              }
+              .amount-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border-bottom: 1px solid #e2e8f0;
+              }
+              .amount-row:last-child {
+                border-bottom: none;
+              }
+              .amount-label {
+                color: #4a5568;
+                font-size: 14px;
+              }
+              .amount-value {
+                font-weight: 600;
+                color: #2d3748;
+              }
+              .total-row {
+                background: white;
+                margin-top: 10px;
+                padding: 12px;
+                border-radius: 6px;
+                font-weight: bold;
+                border: 2px solid #5b63e8;
+              }
+              .total-row .amount-label {
+                color: #5b63e8;
+                font-weight: bold;
+              }
+              .total-row .amount-value {
+                color: #5b63e8;
+                font-size: 16px;
+              }
+              .net-pay-section {
+                background: linear-gradient(135deg, #5b63e8 0%, #4c54d2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+                margin-bottom: 30px;
+              }
+              .net-pay-label {
+                font-size: 16px;
+                opacity: 0.9;
+                margin-bottom: 8px;
+              }
+              .net-pay-amount {
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: -1px;
+              }
+              .footer {
+                text-align: center;
+                color: #64748b;
+                font-size: 12px;
+                border-top: 1px solid #e2e8f0;
+                padding-top: 20px;
+              }
+              @media print {
+                body { background: white; padding: 0; }
+                .payslip-container { box-shadow: none; }
+              }
             </style>
           </head>
           <body>
-            <div class="header">
-              <div class="company-name">OptiStore Pro Medical Center</div>
-              <div class="payslip-title">Payslip for ${payroll.payPeriod}</div>
-            </div>
-            
-            <div class="employee-info">
-              <div class="info-row"><span>Employee Name:</span><span>${payroll.staffName}</span></div>
-              <div class="info-row"><span>Employee Code:</span><span>${payroll.staffCode}</span></div>
-              <div class="info-row"><span>Position:</span><span>${payroll.position}</span></div>
-              <div class="info-row"><span>Pay Period:</span><span>${payroll.payPeriod}</span></div>
-              <div class="info-row"><span>Working Days:</span><span>${payroll.workingDays}</span></div>
-              <div class="info-row"><span>Days Present:</span><span>${payroll.presentDays}</span></div>
-            </div>
-
-            <div style="display: flex; justify-content: space-between;">
-              <div class="earnings">
-                <div class="section-title">Earnings</div>
-                <div class="amount-row"><span>Basic Salary:</span><span>$${payroll.basicSalary.toLocaleString()}</span></div>
-                <div class="amount-row"><span>Allowances:</span><span>$${payroll.allowances.toLocaleString()}</span></div>
-                <div class="amount-row"><span>Overtime (${payroll.overtimeHours}h):</span><span>$${payroll.overtime.toLocaleString()}</span></div>
-                <div class="total-row amount-row"><span>Gross Salary:</span><span>$${payroll.grossSalary.toLocaleString()}</span></div>
+            <div class="payslip-container">
+              <!-- Header Section -->
+              <div class="header">
+                <div class="logo-box"></div>
+                <div class="payslip-badges">
+                  <div class="badge">PAYSLIP</div>
+                  <div class="badge">${payroll.payPeriod}</div>
+                </div>
+                <div class="company-title">OptiStore Pro</div>
+                <div class="company-subtitle">Medical Center</div>
+                <div class="company-details">
+                  123 Vision Street<br>
+                  Eyecare City, EC 12345<br>
+                  Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                </div>
               </div>
-              
-              <div class="deductions">
-                <div class="section-title">Deductions</div>
-                <div class="amount-row"><span>Total Deductions:</span><span>$${payroll.deductions.toLocaleString()}</span></div>
-                <div style="margin-top: 69px;" class="total-row amount-row"><span>Total Deductions:</span><span>$${payroll.deductions.toLocaleString()}</span></div>
-              </div>
-            </div>
 
-            <div class="net-pay">
-              <strong>Net Pay: $${payroll.netSalary.toLocaleString()}</strong>
-            </div>
-            
-            <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
-              Generated on ${new Date().toLocaleDateString()} | OptiStore Pro Medical Center
+              <!-- Main Content -->
+              <div class="main-content">
+                <!-- Status Info Grid -->
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="info-label">Date Generated</div>
+                    <div class="info-value">${payroll.generatedDate || new Date().toLocaleDateString()}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Pay Period</div>
+                    <div class="info-value">${payroll.payPeriod}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Net Pay</div>
+                    <div class="info-value" style="color: #48bb78;">$${payroll.netSalary.toLocaleString()}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="info-label">Status</div>
+                    <div class="info-status">${payroll.status.toUpperCase()}</div>
+                  </div>
+                </div>
+
+                <!-- Employee Information -->
+                <div class="employee-section">
+                  <div class="section-title">Employee Information</div>
+                  <div class="employee-name">${payroll.staffName}</div>
+                  <div class="employee-details">
+                    Employee Code: ${payroll.staffCode} • Position: ${payroll.position}<br>
+                    Working Days: ${payroll.workingDays} • Days Present: ${payroll.presentDays} • Overtime Hours: ${payroll.overtimeHours}h
+                  </div>
+                </div>
+
+                <!-- Salary Breakdown -->
+                <div class="salary-grid">
+                  <!-- Earnings -->
+                  <div class="earnings-section">
+                    <div class="section-title" style="color: #48bb78;">Earnings</div>
+                    <div class="amount-row">
+                      <span class="amount-label">Basic Salary:</span>
+                      <span class="amount-value">$${payroll.basicSalary.toLocaleString()}</span>
+                    </div>
+                    <div class="amount-row">
+                      <span class="amount-label">Allowances:</span>
+                      <span class="amount-value">$${payroll.allowances.toLocaleString()}</span>
+                    </div>
+                    <div class="amount-row">
+                      <span class="amount-label">Overtime (${payroll.overtimeHours}h):</span>
+                      <span class="amount-value">$${payroll.overtime.toLocaleString()}</span>
+                    </div>
+                    <div class="total-row">
+                      <div class="amount-row">
+                        <span class="amount-label">Gross Salary:</span>
+                        <span class="amount-value">$${payroll.grossSalary.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Deductions -->
+                  <div class="deductions-section">
+                    <div class="section-title" style="color: #f56565;">Deductions</div>
+                    <div class="amount-row">
+                      <span class="amount-label">Total Deductions:</span>
+                      <span class="amount-value">$${payroll.deductions.toLocaleString()}</span>
+                    </div>
+                    <div style="height: 80px;"></div>
+                    <div class="total-row">
+                      <div class="amount-row">
+                        <span class="amount-label">Total Deductions:</span>
+                        <span class="amount-value">$${payroll.deductions.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Net Pay -->
+                <div class="net-pay-section">
+                  <div class="net-pay-label">Net Pay</div>
+                  <div class="net-pay-amount">$${payroll.netSalary.toLocaleString()}</div>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer">
+                  Generated on ${new Date().toLocaleDateString()} | OptiStore Pro Medical Center<br>
+                  For questions about this payslip, contact us at billing@optistorepro.com
+                </div>
+              </div>
             </div>
           </body>
         </html>
       `);
       printWindow.document.close();
       printWindow.focus();
-      setTimeout(() => printWindow.print(), 250);
+      setTimeout(() => printWindow.print(), 500);
     }
   };
 
