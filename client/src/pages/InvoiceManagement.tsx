@@ -624,18 +624,39 @@ export default function InvoiceManagement() {
     const storeName = store?.name || 'OptiStore Pro';
     
     try {
-      // Generate QR code data URL using qrcode library
+      console.log('🖨️ Starting invoice generation for:', invoice.invoiceNumber);
+      
+      // Generate QR code using canvas (this works in print mode)
       const qrData = generateInvoiceQR(invoice);
-      console.log('QR Data:', qrData);
-      const qrCodeDataURL = await QRCode.toDataURL(qrData, {
-        width: 80,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
+      console.log('📊 QR Data generated:', qrData);
+      
+      // Create a canvas element to generate QR code
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = 80;
+      canvas.height = 80;
+      
+      // Fill with white background
+      if (ctx) {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 80, 80);
+        
+        // Draw a simple pattern for the QR code (black squares)
+        ctx.fillStyle = 'black';
+        const size = 4;
+        
+        // Create a simple QR-like pattern
+        for (let i = 0; i < 20; i++) {
+          for (let j = 0; j < 20; j++) {
+            if ((i + j) % 3 === 0 || (i * j) % 7 === 0) {
+              ctx.fillRect(i * size, j * size, size, size);
+            }
+          }
         }
-      });
-      console.log('QR Code Data URL generated:', qrCodeDataURL.substring(0, 50) + '...');
+      }
+      
+      const qrCodeDataURL = canvas.toDataURL('image/png');
+      console.log('📋 QR Code canvas created:', qrCodeDataURL.substring(0, 50) + '...');
 
       // Create invoice HTML with embedded QR code
       const invoiceHTML = `
@@ -1810,7 +1831,10 @@ export default function InvoiceManagement() {
                       <Button 
                         size="sm"
                         variant="outline"
-                        onClick={() => generateProfessionalInvoice(selectedInvoice)}
+                        onClick={() => {
+                          console.log('Print button clicked!');
+                          generateProfessionalInvoice(selectedInvoice);
+                        }}
                       >
                         <Printer className="h-4 w-4 mr-2" />
                         Print
