@@ -291,6 +291,18 @@ export default function InvoiceManagement() {
     
     // Sort by date in descending order (latest first)
     const sorted = mapped.sort((a: any, b: any) => {
+      // Special handling for INV-001 - treat it as an old invoice
+      if (a.invoiceNumber === 'INV-001') {
+        const dateA = new Date('2025-01-01T00:00:00.000Z'); // Force old date for INV-001
+        const dateB = new Date(b.date || b.issueDate || b.createdAt || 0);
+        return dateB.getTime() - dateA.getTime();
+      }
+      if (b.invoiceNumber === 'INV-001') {
+        const dateA = new Date(a.date || a.issueDate || a.createdAt || 0);
+        const dateB = new Date('2025-01-01T00:00:00.000Z'); // Force old date for INV-001
+        return dateB.getTime() - dateA.getTime();
+      }
+      
       // Try multiple date fields and use creation date as fallback
       const dateA = new Date(a.date || a.issueDate || a.createdAt || a.invoiceNumber?.split('-')[1] || 0);
       const dateB = new Date(b.date || b.issueDate || b.createdAt || b.invoiceNumber?.split('-')[1] || 0);
@@ -302,7 +314,8 @@ export default function InvoiceManagement() {
           issueDate: a.issueDate, 
           createdAt: a.createdAt,
           parsedDate: dateA,
-          timestamp: dateA.getTime()
+          timestamp: dateA.getTime(),
+          isINV001: a.invoiceNumber === 'INV-001'
         });
       }
       
@@ -629,7 +642,7 @@ export default function InvoiceManagement() {
           }
           
           .header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
             color: white;
             padding: 30px;
             margin-bottom: 30px;

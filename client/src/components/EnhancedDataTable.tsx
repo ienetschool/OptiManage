@@ -117,12 +117,16 @@ export default function EnhancedDataTable({
       sortColumn,
       sortDirection,
       filteredDataLength: filteredData.length,
-      firstItem: filteredData[0]?.invoiceNumber || 'N/A'
+      firstItem: filteredData[0]?.invoiceNumber || 'N/A',
+      first3Items: filteredData.slice(0, 3).map(item => item.invoiceNumber)
     });
     
     if (!sortColumn) {
       // Don't apply automatic sorting - respect pre-sorted data
-      console.log("📋 NO SORT COLUMN - Using pre-sorted filteredData as-is");
+      console.log("📋 NO SORT COLUMN - Using pre-sorted filteredData as-is", {
+        firstItem: filteredData[0]?.invoiceNumber,
+        firstItemDate: filteredData[0]?.date
+      });
       return filteredData;
     }
 
