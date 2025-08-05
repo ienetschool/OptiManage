@@ -1069,8 +1069,20 @@ export class DatabaseStorage implements IStorage {
       const medicalInvoiceRecords = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
       console.log(`📊 FOUND ${medicalInvoiceRecords.length} MEDICAL INVOICES`);
       
-      // Get sales records from database
-      const salesRecords = await db.select().from(sales).orderBy(desc(sales.createdAt));
+      // Get sales records from database - select only existing columns
+      const salesRecords = await db.select({
+        id: sales.id,
+        storeId: sales.storeId,
+        customerId: sales.customerId,
+        staffId: sales.staffId,
+        subtotal: sales.subtotal,
+        taxAmount: sales.taxAmount,
+        total: sales.total,
+        paymentMethod: sales.paymentMethod,
+        paymentStatus: sales.paymentStatus,
+        notes: sales.notes,
+        createdAt: sales.createdAt
+      }).from(sales).orderBy(desc(sales.createdAt));
       console.log(`📊 FOUND ${salesRecords.length} SALES RECORDS`);
       
       // Get customers and patients for name resolution
