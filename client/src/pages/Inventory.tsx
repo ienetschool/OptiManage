@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,11 @@ export default function Inventory() {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   // Stock operation states removed
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  // Pagination and sorting states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [sortBy, setSortBy] = useState<'name' | 'createdAt' | 'price' | 'stock'>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc'); // desc to show newest first
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -98,6 +103,73 @@ export default function Inventory() {
                   (inventory?.quantity || 0) <= (product.reorderLevel || 0) ? 'low_stock' : 'in_stock',
     };
   });
+
+  // Filter and sort products
+  const filteredAndSortedProducts = enrichedProducts
+    .filter(product => {
+      const matchesSearch = 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.categoryName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.supplierName.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesType = typeFilter === "all" || product.productType === typeFilter;
+      
+      const matchesStock = stockFilter === "all" || 
+        (stockFilter === "in_stock" && product.stockStatus === "in_stock") ||
+        (stockFilter === "low_stock" && product.stockStatus === "low_stock") ||
+        (stockFilter === "out_of_stock" && product.stockStatus === "out_of_stock");
+      
+      return matchesSearch && matchesType && matchesStock;
+    })
+    .sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'price':
+          aValue = parseFloat(a.price);
+          bValue = parseFloat(b.price);
+          break;
+        case 'stock':
+          aValue = a.currentStock;
+          bValue = b.currentStock;
+          break;
+        case 'createdAt':
+        default:
+          aValue = new Date(a.createdAt || 0).getTime();
+          bValue = new Date(b.createdAt || 0).getTime();
+          break;
+      }
+      
+      if (sortOrder === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+  // Pagination logic
+  const totalItems = filteredAndSortedProducts.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProducts = filteredAndSortedProducts.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  const resetPagination = () => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  };
+
+  // Auto-reset pagination when filters change
+  React.useEffect(() => {
+    resetPagination();
+  }, [searchTerm, typeFilter, stockFilter, totalPages]);
 
   // Enhanced Product Form with Purchase Order Integration
   const productForm = useForm<InsertProduct & { 
@@ -1231,14 +1303,109 @@ export default function Inventory() {
             </div>
           </div>
 
+          {/* Pagination and Sorting Controls */}
+          <Card className="mb-4">
+            <CardContent className="p-4">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                {/* Left side: Sort controls and item count */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Sort by:</Label>
+                    <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="createdAt">Latest First</SelectItem>
+                        <SelectItem value="name">Name</SelectItem>
+                        <SelectItem value="price">Price</SelectItem>
+                        <SelectItem value="stock">Stock Level</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    >
+                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    </Button>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} products
+                  </div>
+                </div>
+
+                {/* Right side: Items per page and pagination */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm font-medium">Items per page:</Label>
+                    <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                      setItemsPerPage(parseInt(value));
+                      setCurrentPage(1);
+                    }}>
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Pagination Controls */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                    >
+                      First
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm font-medium px-2">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Last
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Enhanced Products Table */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
                 <div>
-                  <CardTitle>Product Catalog ({filteredProducts.length} items)</CardTitle>
+                  <CardTitle>Product Catalog ({totalItems} items)</CardTitle>
                   <p className="text-sm text-slate-600 mt-1">
-                    Showing {filteredProducts.length} of {totalProducts} products
+                    Showing {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems} products
                   </p>
                 </div>
                 {selectedProducts.length > 0 && (
@@ -1262,12 +1429,12 @@ export default function Inventory() {
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox 
-                          checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                          checked={selectedProducts.length === paginatedProducts.length && paginatedProducts.length > 0}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              setSelectedProducts(filteredProducts.map(p => p.id));
+                              setSelectedProducts([...selectedProducts, ...paginatedProducts.map(p => p.id).filter(id => !selectedProducts.includes(id))]);
                             } else {
-                              setSelectedProducts([]);
+                              setSelectedProducts(selectedProducts.filter(id => !paginatedProducts.map(p => p.id).includes(id)));
                             }
                           }}
                         />
@@ -1282,7 +1449,7 @@ export default function Inventory() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                       <TableRow key={product.id} className="hover:bg-slate-50">
                         <TableCell>
                           <Checkbox 
