@@ -627,13 +627,123 @@ export default function InvoiceManagement() {
       const QRCode = await import('qrcode');
       const qrData = generateInvoiceQR(invoice);
       const qrCodeDataURL = await QRCode.toDataURL(qrData, {
-        width: 60,
-        margin: 1,
+        width: 80,
+        margin: 2,
         color: {
           dark: '#000000',
           light: '#FFFFFF'
         }
       });
+
+      // Create invoice HTML with embedded QR code
+      const invoiceHTML = `
+        <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
+          <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
+              <img src="${qrCodeDataURL}" alt="Invoice QR Code" style="width: 76px; height: 76px;" />
+            </div>
+            <div class="company-info" style="text-align: center; flex-grow: 1;">
+              <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
+              <div class="company-tagline" style="font-size: 11pt; opacity: 0.9; margin-bottom: 10px;">Optical Retail Management</div>
+              <div class="company-address" style="font-size: 9pt; opacity: 0.8; line-height: 1.3;">
+                123 Vision Street<br>
+                Eyecare City, EC 12345<br>
+                Phone: (555) 123-4567 | Email: billing@optistorepro.com
+              </div>
+            </div>
+            <div class="invoice-info" style="text-align: right;">
+              <div class="invoice-type" style="background: #4F46E5; border: 2px solid white; color: white; padding: 8px 16px; font-weight: 600; margin-bottom: 8px; border-radius: 4px;">SALE INVOICE</div>
+              <div class="invoice-number" style="background: #4F46E5; border: 2px solid white; color: white; padding: 8px 16px; font-weight: 600; border-radius: 4px; font-size: 14px;">${invoice.invoiceNumber}</div>
+            </div>
+          </div>
+
+          <div style="padding: 30px;">
+            <!-- Invoice Details -->
+            <div class="invoice-info-section" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 25px; display: flex; justify-content: space-between;">
+              <div>
+                <div style="color: #4F46E5; font-weight: 600; font-size: 12px; margin-bottom: 8px;">DATE:</div>
+                <div style="font-size: 14px; font-weight: 500;">${new Date(invoice.date).toLocaleDateString()}</div>
+              </div>
+              <div>
+                <div style="color: #4F46E5; font-weight: 600; font-size: 12px; margin-bottom: 8px;">DUE DATE:</div>
+                <div style="font-size: 14px; font-weight: 500;">${new Date(invoice.dueDate).toLocaleDateString()}</div>
+              </div>
+              <div>
+                <div style="color: #4F46E5; font-weight: 600; font-size: 12px; margin-bottom: 8px;">TOTAL:</div>
+                <div style="font-size: 18px; font-weight: 700; color: #059669;">$${invoice.total.toFixed(2)}</div>
+              </div>
+              <div>
+                <div style="color: #4F46E5; font-weight: 600; font-size: 12px; margin-bottom: 8px;">STATUS:</div>
+                <div class="status-badge" style="background: ${invoice.status === 'paid' ? '#10B981' : '#F59E0B'}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase;">${invoice.status === 'paid' ? 'PAID' : 'PENDING'}</div>
+              </div>
+            </div>
+
+            <!-- Bill To Section -->
+            <div style="margin-bottom: 25px;">
+              <div class="section-title" style="color: #4F46E5; font-weight: 700; font-size: 14px; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">BILL TO</div>
+              <div style="font-size: 16px; font-weight: 600; color: #1f2937;">${invoice.customerName}</div>
+            </div>
+
+            <!-- Items Table -->
+            <table class="items-table" style="width: 100%; border-collapse: collapse; margin-bottom: 25px; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+              <thead>
+                <tr style="background: #4F46E5; color: white;">
+                  <th style="padding: 12px; text-align: left; font-weight: 600; font-size: 12px;">DESCRIPTION</th>
+                  <th style="padding: 12px; text-align: center; font-weight: 600; font-size: 12px; width: 80px;">QTY</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600; font-size: 12px; width: 100px;">UNIT PRICE</th>
+                  <th style="padding: 12px; text-align: right; font-weight: 600; font-size: 12px; width: 100px;">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoice.items.map(item => `
+                  <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 12px; font-size: 14px;">${item.productName}</td>
+                    <td style="padding: 12px; text-align: center; font-size: 14px;">${item.quantity}</td>
+                    <td style="padding: 12px; text-align: right; font-size: 14px;">$${item.unitPrice.toFixed(2)}</td>
+                    <td style="padding: 12px; text-align: right; font-size: 14px; font-weight: 600;">$${item.total.toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <!-- Totals Table -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 25px;">
+              <table class="totals-table" style="width: 300px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 8px 12px; font-size: 14px; text-align: right;">Subtotal:</td>
+                  <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 600;">$${invoice.subtotal.toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 8px 12px; font-size: 14px; text-align: right;">Discount:</td>
+                  <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 600;">-$${invoice.discountAmount.toFixed(2)}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                  <td style="padding: 8px 12px; font-size: 14px; text-align: right;">Tax (${invoice.taxRate}%):</td>
+                  <td style="padding: 8px 12px; font-size: 14px; text-align: right; font-weight: 600;">$${invoice.taxAmount.toFixed(2)}</td>
+                </tr>
+                <tr style="background: #4F46E5; color: white;">
+                  <td style="padding: 12px; font-size: 16px; font-weight: 700; text-align: right;">TOTAL:</td>
+                  <td style="padding: 12px; font-size: 16px; font-weight: 700; text-align: right;">$${invoice.total.toFixed(2)}</td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Notes Section -->
+            ${invoice.notes ? `
+              <div class="notes-section" style="border-left: 4px solid #4F46E5; padding-left: 15px; margin-bottom: 25px;">
+                <div class="notes-title" style="color: #4F46E5; font-weight: 600; font-size: 12px; margin-bottom: 8px;">NOTES</div>
+                <div style="font-size: 14px; color: #6b7280; line-height: 1.5;">${invoice.notes}</div>
+              </div>
+            ` : ''}
+
+            <!-- Footer -->
+            <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280; font-size: 12px;">
+              <p>Thank you for your business!</p>
+              <p>For questions about this invoice, contact us at billing@optistorepro.com</p>
+            </div>
+          </div>
+        </div>
+      `;
 
       // Create style for print with color preservation
       const style = document.createElement('style');
@@ -648,7 +758,6 @@ export default function InvoiceManagement() {
         }
         @media screen, print {
           .header { background: #4F46E5 !important; color: white !important; }
-          .qr-section { background: white !important; border-radius: 8px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
           .qr-section img { display: block !important; }
           .invoice-type { background: #4F46E5 !important; color: white !important; }
           .invoice-number { background: #4F46E5 !important; color: white !important; }
@@ -666,14 +775,8 @@ export default function InvoiceManagement() {
       const printContent = document.createElement('div');
       printContent.className = 'print-content';
       printContent.style.display = 'none';
-      printContent.innerHTML = generateInvoiceHTML(invoice, customer, storeName);
+      printContent.innerHTML = invoiceHTML;
       document.body.appendChild(printContent);
-      
-      // Inject real QR code as image
-      const qrPlaceholder = printContent.querySelector(`#qr-placeholder-${invoice.id}`);
-      if (qrPlaceholder) {
-        qrPlaceholder.innerHTML = `<img src="${qrCodeDataURL}" alt="Invoice QR Code" style="width: 60px; height: 60px;" />`;
-      }
       
       // Print and clean up
       window.print();
@@ -683,8 +786,8 @@ export default function InvoiceManagement() {
       }, 1000);
     } catch (error) {
       console.error('Error generating QR code:', error);
-      // Fallback: use the existing CSS grid QR code
-      generateProfessionalInvoiceFallback(invoice);
+      // Simple fallback without QR code
+      window.print();
     }
   };
 
