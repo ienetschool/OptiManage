@@ -278,15 +278,15 @@ function generateInvoiceHTML(invoiceId: string) {
                 </tr>
             </thead>
             <tbody>
-                ${invoiceData.items.map(item => `
+                ${invoiceData.items.map((item: any) => `
                     <tr>
                         <td>
-                            <strong>${item.name}</strong>
+                            <strong>${item.productName || item.name}</strong>
                             <br><small>${item.description}</small>
                         </td>
-                        <td>${item.sku}</td>
+                        <td>${item.productId || item.sku}</td>
                         <td>${item.quantity}</td>
-                        <td>$${item.unitCost}</td>
+                        <td>$${item.unitPrice || item.unitCost}</td>
                         <td>$${item.total}</td>
                     </tr>
                 `).join('')}
@@ -536,7 +536,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
-      res.status(400).json({ message: "Failed to create product", error: error.message });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(400).json({ message: "Failed to create product", error: errorMessage });
     }
   });
 
@@ -930,7 +931,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(inventory);
     } catch (error) {
       console.error("Error creating inventory:", error);
-      res.status(500).json({ message: "Failed to create inventory", error: error.message });
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      res.status(500).json({ message: "Failed to create inventory", error: errorMessage });
     }
   });
 
@@ -1366,12 +1368,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
       
-      // Update product stock
+      // Update product cost price (stock is managed separately via inventory table)
       const updatedProduct = {
         ...product,
-        currentStock: (product.currentStock || 0) + quantity,
         costPrice: unitCost ? unitCost.toString() : product.costPrice,
-        lastRestockedAt: new Date().toISOString()
+        barcode: product.barcode || undefined // Fix null to undefined for schema compatibility
       };
       
       await storage.updateProduct(productId, updatedProduct);
@@ -1414,7 +1415,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Store the invoice
-      await storage.createInvoice(invoice);
+      await storage.createInvoice(invoice, invoice.items);
       
       res.json({
         success: true,
@@ -1445,12 +1446,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const data = productData[productId];
         
         if (product && data) {
-          // Update stock
+          // Update product cost price (stock is managed separately via inventory table)
           const updatedProduct = {
             ...product,
-            currentStock: (product.currentStock || 0) + data.quantity,
             costPrice: data.unitCost ? data.unitCost.toString() : product.costPrice,
-            lastRestockedAt: new Date().toISOString()
+            barcode: product.barcode || undefined // Fix null to undefined for schema compatibility
           };
           
           await storage.updateProduct(productId, updatedProduct);
@@ -1497,7 +1497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
       
       // Store the invoice
-      await storage.createInvoice(invoice);
+      await storage.createInvoice(invoice, invoice.items);
       
       res.json({
         success: true,
