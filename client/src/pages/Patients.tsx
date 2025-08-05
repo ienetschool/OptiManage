@@ -64,6 +64,9 @@ import { format } from "date-fns";
 import QRCode from "react-qr-code";
 import { generateMultiPagePatientPDF } from "@/components/PatientProfilePDF";
 import { generateA4Invoice } from "@/components/ImprovedA4Invoice";
+import InsuranceCouponsManager from "@/components/InsuranceCouponsManager";
+import ProfessionalInvoiceTemplate from "@/components/ProfessionalInvoiceTemplate";
+import AppointmentInvoiceTemplate from "@/components/AppointmentInvoiceTemplate";
 
 export default function Patients() {
   const [open, setOpen] = useState(false);
@@ -73,6 +76,11 @@ export default function Patients() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+  const [showProfessionalInvoice, setShowProfessionalInvoice] = useState(false);
+  const [showAppointmentInvoice, setShowAppointmentInvoice] = useState(false);
+  const [selectedCouponCode, setSelectedCouponCode] = useState("");
+  const [selectedCouponAmount, setSelectedCouponAmount] = useState(0);
   const [viewPatientOpen, setViewPatientOpen] = useState(false);
   const [viewAppointmentOpen, setViewAppointmentOpen] = useState(false);
   const [editAppointmentOpen, setEditAppointmentOpen] = useState(false);
@@ -262,7 +270,9 @@ export default function Patients() {
     status: "scheduled",
     appointmentFee: "",
     paymentStatus: "pending",
-    paymentMethod: ""
+    paymentMethod: "",
+    appliedCouponCode: "",
+    couponDiscount: 0
   });
 
   // Service fee mapping
@@ -363,12 +373,16 @@ export default function Patients() {
       if (appointmentForm.paymentStatus === 'paid') {
         try {
           // Use the actual appointment ID from the created appointment
-          const appointmentId = appointmentData?.id || appointmentData;
+          const appointmentId = appointmentData && typeof appointmentData === 'object' && 'id' in appointmentData 
+            ? appointmentData.id 
+            : appointmentData;
             
-          // Proper calculation with number handling
+          // Proper calculation with coupon discounts
           const feeAmount = parseFloat(appointmentForm.appointmentFee) || 0;
-          const calculatedTax = feeAmount * 0.08; // 8% tax
-          const calculatedTotal = feeAmount + calculatedTax;
+          const couponDiscount = appointmentForm.couponDiscount || 0;
+          const subtotal = feeAmount - couponDiscount;
+          const calculatedTax = subtotal * 0.08; // 8% tax on discounted amount
+          const calculatedTotal = subtotal + calculatedTax;
           
           const invoiceData = {
             invoiceNumber: `INV-${Date.now()}`,
@@ -377,14 +391,18 @@ export default function Patients() {
             storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
             invoiceDate: new Date(),
             dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-            subtotal: feeAmount,
+            subtotal: subtotal,
             taxAmount: calculatedTax,
-            discountAmount: 0,
+            discountAmount: couponDiscount,
             total: calculatedTotal,
             paymentStatus: 'paid',
             paymentMethod: appointmentForm.paymentMethod,
             paymentDate: new Date(),
-            notes: `Payment for ${appointmentForm.serviceType} appointment`
+            notes: `Payment for ${appointmentForm.serviceType} appointment`,
+            appliedCouponCode: appointmentForm.appliedCouponCode || null,
+            couponDiscount: couponDiscount,
+            couponType: appointmentForm.appliedCouponCode ? 'insurance' : null,
+            couponDescription: appointmentForm.appliedCouponCode ? `Insurance coupon ${appointmentForm.appliedCouponCode} applied` : null
           };
           
           await apiRequest("POST", "/api/medical-invoices", invoiceData);
@@ -420,7 +438,9 @@ export default function Patients() {
         status: "scheduled",
         appointmentFee: "",
         paymentStatus: "pending",
-        paymentMethod: ""
+        paymentMethod: "",
+        appliedCouponCode: "",
+        couponDiscount: 0
       });
     },
     onError: () => {
@@ -2503,6 +2523,49 @@ export default function Patients() {
                         />
                       </div>
 
+                      {/* Insurance Coupon Redemption */}
+                      {appointmentForm.patientId && (
+                        <div className="space-y-2">
+                          <Label>Insurance Coupon</Label>
+                          <Select 
+                            value={appointmentForm.appliedCouponCode} 
+                            onValueChange={(value) => {
+                              const patient = (patients as Patient[]).find(p => p.id === appointmentForm.patientId);
+                              const coupon = patient?.insuranceCoupons?.find(c => c.couponCode === value && c.status === 'active');
+                              setAppointmentForm(prev => ({ 
+                                ...prev, 
+                                appliedCouponCode: value,
+                                couponDiscount: coupon?.amount || 0
+                              }));
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select coupon (optional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {(() => {
+                                const patient = (patients as Patient[]).find(p => p.id === appointmentForm.patientId);
+                                const activeCoupons = patient?.insuranceCoupons?.filter(c => c.status === 'active') || [];
+                                return activeCoupons.length > 0 ? (
+                                  activeCoupons.map((coupon) => (
+                                    <SelectItem key={coupon.couponCode} value={coupon.couponCode}>
+                                      {coupon.couponCode} - {coupon.serviceType} (${coupon.amount.toFixed(2)})
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="" disabled>No active coupons available</SelectItem>
+                                );
+                              })()}
+                            </SelectContent>
+                          </Select>
+                          {appointmentForm.couponDiscount > 0 && (
+                            <p className="text-sm text-green-600 font-medium">
+                              Coupon discount: ${appointmentForm.couponDiscount.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <Label>Payment Status</Label>
                         <Select 
@@ -2552,6 +2615,37 @@ export default function Patients() {
                         />
                       </div>
                     </div>
+
+                    {/* Payment Summary */}
+                    {appointmentForm.appointmentFee && (
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Payment Summary</h4>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span>Service Fee:</span>
+                            <span>${parseFloat(appointmentForm.appointmentFee).toFixed(2)}</span>
+                          </div>
+                          {appointmentForm.couponDiscount > 0 && (
+                            <div className="flex justify-between text-green-600">
+                              <span>Coupon Discount ({appointmentForm.appliedCouponCode}):</span>
+                              <span>-${appointmentForm.couponDiscount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>${(parseFloat(appointmentForm.appointmentFee) - appointmentForm.couponDiscount).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Tax (8%):</span>
+                            <span>${((parseFloat(appointmentForm.appointmentFee) - appointmentForm.couponDiscount) * 0.08).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between font-bold text-lg border-t pt-1">
+                            <span>Total:</span>
+                            <span>${((parseFloat(appointmentForm.appointmentFee) - appointmentForm.couponDiscount) * 1.08).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     <div className="flex justify-end space-x-2 pt-4 border-t">
                       <Button type="button" variant="outline" onClick={() => setAppointmentOpen(false)}>
