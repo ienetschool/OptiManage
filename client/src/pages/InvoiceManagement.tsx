@@ -1993,7 +1993,7 @@ export default function InvoiceManagement() {
                       <Button 
                         size="sm"
                         variant="outline"
-                        onClick={() => window.print()}
+                        onClick={() => generateProfessionalInvoice(selectedInvoice)}
                       >
                         <Printer className="h-4 w-4 mr-2" />
                         Print
