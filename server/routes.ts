@@ -721,6 +721,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
   const createInvoiceSchema = z.object({
     customerId: z.string().min(1),
     storeId: z.string().min(1),

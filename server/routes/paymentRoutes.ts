@@ -211,8 +211,8 @@ export function registerPaymentRoutes(app: Express) {
           invoiceNumber: `INV-APT-${Date.now()}`
         });
 
-      } else if (type === 'inv') {
-        // Update invoice payment status
+      } else if (type === 'inv' || type === 'pay') {
+        // Update invoice payment status (handles both 'inv-' and 'pay-' prefixed IDs)
         const invoice = await storage.getInvoice(sourceId);
         if (!invoice) {
           return res.status(404).json({ message: "Invoice not found" });
@@ -225,8 +225,19 @@ export function registerPaymentRoutes(app: Express) {
           paymentDate: new Date()
         });
 
-        // Update the payment record status in the database
-        await storage.updatePaymentStatus(id, 'paid');
+        // Create a payment record
+        const paymentData = {
+          invoiceId: invoice.invoiceNumber,
+          customerName: invoice.customerName || 'Guest Customer',
+          amount: invoice.total,
+          paymentMethod: paymentMethod,
+          status: 'completed',
+          paymentDate: new Date().toISOString(),
+          transactionId: `TXN-${Date.now()}`,
+          createdAt: new Date().toISOString()
+        };
+
+        await storage.createPayment(paymentData);
 
         console.log(`✅ PAYMENT PROCESSED - Invoice: ${invoice.invoiceNumber}, Payment ID: ${id} status updated to 'paid'`);
 
@@ -234,7 +245,8 @@ export function registerPaymentRoutes(app: Express) {
           success: true,
           message: "Payment processed successfully",
           paymentId: id,
-          invoiceNumber: invoice.invoiceNumber
+          invoiceNumber: invoice.invoiceNumber,
+          payment: paymentData
         });
 
       } else {
