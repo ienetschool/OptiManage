@@ -1,5 +1,5 @@
 import type { Express } from "express";
-import { isAuthenticated } from "../simpleAuth";
+import { isAuthenticated } from "../oauthAuth";
 
 export function registerStoreSettingsRoutes(app: Express) {
   // Get store settings
