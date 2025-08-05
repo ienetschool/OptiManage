@@ -203,16 +203,26 @@ export default function Inventory() {
       
       console.log("Sending productData to API:", productData);
       
-      let product;
+      let product: Product;
       try {
         const response = await apiRequest("POST", "/api/products", productData);
         console.log("Raw API response:", response);
         
-        // Handle the response properly - apiRequest returns parsed JSON, not a Response object
-        if (response && typeof response === 'object' && (response as any).id) {
-          product = response as Product;
+        // apiRequest returns a Response object, we need to parse it
+        if (response instanceof Response) {
+          if (!response.ok) {
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+          }
+          product = await response.json() as Product;
         } else {
-          console.error("Invalid API response structure:", response);
+          // Fallback in case apiRequest already returns parsed JSON
+          product = response as Product;
+        }
+        
+        console.log("Parsed product data:", product);
+        
+        if (!product || !product.id) {
+          console.error("Invalid API response structure:", product);
           throw new Error("Invalid response from API - missing product ID");
         }
       } catch (error) {
@@ -220,14 +230,8 @@ export default function Inventory() {
         throw error;
       }
       
-      console.log("API response:", product);
       const productId = product.id;
       console.log("Product created with ID:", productId);
-      
-      if (!productId || typeof productId !== 'string') {
-        console.error("Product ID validation failed:", { productId, product });
-        throw new Error("Product ID not returned from API");
-      }
       
       // Create initial inventory record if stock is provided
       if (initialStock && initialStock > 0) {
