@@ -258,14 +258,14 @@ export default function StoreSettings() {
                 <div className="space-y-2">
                   <Label>Website Title</Label>
                   <Input 
-                    value={storeSettings?.websiteTitle || ""} 
+                    value={formData?.websiteTitle ?? storeSettings?.websiteTitle ?? ""} 
                     onChange={(e) => setFormData({...formData, websiteTitle: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Website Description</Label>
                   <Textarea
-                    value={storeSettings?.websiteDescription || ""} 
+                    value={formData?.websiteDescription ?? storeSettings?.websiteDescription ?? ""} 
                     onChange={(e) => setFormData({...formData, websiteDescription: e.target.value})}
                     rows={3}
                   />
@@ -274,20 +274,20 @@ export default function StoreSettings() {
                   <div className="space-y-2">
                     <Label>Logo URL</Label>
                     <Input 
-                      value={storeSettings?.logo || ""} 
+                      value={formData?.logo ?? storeSettings?.logo ?? ""} 
                       onChange={(e) => setFormData({...formData, logo: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Favicon URL</Label>
                     <Input 
-                      value={storeSettings?.favicon || ""} 
+                      value={formData?.favicon ?? storeSettings?.favicon ?? ""} 
                       onChange={(e) => setFormData({...formData, favicon: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Theme</Label>
-                    <Select value={storeSettings?.theme || "modern"} onValueChange={(value) => setFormData({...formData, theme: value})}>
+                    <Select value={formData?.theme ?? storeSettings?.theme ?? "modern"} onValueChange={(value) => setFormData({...formData, theme: value})}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -326,16 +326,16 @@ export default function StoreSettings() {
                       <p className="text-sm text-slate-600">Process credit card payments</p>
                     </div>
                     <Switch 
-                      checked={storeSettings?.stripeEnabled || false}
+                      checked={formData?.stripeEnabled ?? storeSettings?.stripeEnabled ?? false}
                       onCheckedChange={(checked) => setFormData({...formData, stripeEnabled: checked})}
                     />
                   </div>
-                  {(storeSettings?.stripeEnabled || formData.stripeEnabled) && (
+                  {(formData?.stripeEnabled ?? storeSettings?.stripeEnabled) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-slate-200">
                       <div className="space-y-2">
                         <Label>Stripe Public Key</Label>
                         <Input 
-                          value={storeSettings?.stripePublicKey || ""} 
+                          value={formData?.stripePublicKey ?? storeSettings?.stripePublicKey ?? ""} 
                           onChange={(e) => setFormData({...formData, stripePublicKey: e.target.value})}
                           placeholder="pk_..."
                         />
@@ -344,7 +344,7 @@ export default function StoreSettings() {
                         <Label>Stripe Secret Key</Label>
                         <Input 
                           type="password"
-                          value={storeSettings?.stripeSecretKey || ""} 
+                          value={formData?.stripeSecretKey ?? storeSettings?.stripeSecretKey ?? ""} 
                           onChange={(e) => setFormData({...formData, stripeSecretKey: e.target.value})}
                           placeholder="sk_..."
                         />
@@ -361,16 +361,16 @@ export default function StoreSettings() {
                       <p className="text-sm text-slate-600">Accept PayPal payments</p>
                     </div>
                     <Switch 
-                      checked={storeSettings?.paypalEnabled || false}
+                      checked={formData?.paypalEnabled ?? storeSettings?.paypalEnabled ?? false}
                       onCheckedChange={(checked) => setFormData({...formData, paypalEnabled: checked})}
                     />
                   </div>
-                  {(storeSettings?.paypalEnabled || formData.paypalEnabled) && (
+                  {(formData?.paypalEnabled ?? storeSettings?.paypalEnabled) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-slate-200">
                       <div className="space-y-2">
                         <Label>PayPal Client ID</Label>
                         <Input 
-                          value={storeSettings?.paypalClientId || ""} 
+                          value={formData?.paypalClientId ?? storeSettings?.paypalClientId ?? ""} 
                           onChange={(e) => setFormData({...formData, paypalClientId: e.target.value})}
                         />
                       </div>
@@ -378,7 +378,7 @@ export default function StoreSettings() {
                         <Label>PayPal Secret</Label>
                         <Input 
                           type="password"
-                          value={storeSettings?.paypalSecret || ""} 
+                          value={formData?.paypalSecret ?? storeSettings?.paypalSecret ?? ""} 
                           onChange={(e) => setFormData({...formData, paypalSecret: e.target.value})}
                         />
                       </div>
@@ -409,15 +409,15 @@ export default function StoreSettings() {
                     <p className="text-sm text-slate-600">Send appointment reminders and notifications via SMS</p>
                   </div>
                   <Switch 
-                    checked={storeSettings?.smsEnabled || false}
+                    checked={formData?.smsEnabled ?? storeSettings?.smsEnabled ?? false}
                     onCheckedChange={(checked) => setFormData({...formData, smsEnabled: checked})}
                   />
                 </div>
-                {(storeSettings?.smsEnabled || formData.smsEnabled) && (
+                {(formData?.smsEnabled ?? storeSettings?.smsEnabled) && (
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>SMS Provider</Label>
-                      <Select value={storeSettings?.smsProvider || "twilio"} onValueChange={(value) => setFormData({...formData, smsProvider: value})}>
+                      <Select value={formData?.smsProvider ?? storeSettings?.smsProvider ?? "twilio"} onValueChange={(value) => setFormData({...formData, smsProvider: value})}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -434,14 +434,14 @@ export default function StoreSettings() {
                         <Label>API Key</Label>
                         <Input 
                           type="password"
-                          value={storeSettings?.smsApiKey || ""} 
+                          value={formData?.smsApiKey ?? storeSettings?.smsApiKey ?? ""} 
                           onChange={(e) => setFormData({...formData, smsApiKey: e.target.value})}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label>From Number</Label>
                         <Input 
-                          value={storeSettings?.smsFrom || ""} 
+                          value={formData?.smsFrom ?? storeSettings?.smsFrom ?? ""} 
                           onChange={(e) => setFormData({...formData, smsFrom: e.target.value})}
                           placeholder="+1234567890"
                         />
@@ -473,17 +473,17 @@ export default function StoreSettings() {
                     <p className="text-sm text-slate-600">Send appointment confirmations and notifications via email</p>
                   </div>
                   <Switch 
-                    checked={storeSettings?.emailEnabled || false}
+                    checked={formData?.emailEnabled ?? storeSettings?.emailEnabled ?? false}
                     onCheckedChange={(checked) => setFormData({...formData, emailEnabled: checked})}
                   />
                 </div>
-                {(storeSettings?.emailEnabled || formData.emailEnabled) && (
+                {(formData?.emailEnabled ?? storeSettings?.emailEnabled) && (
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>SMTP Host</Label>
                         <Input 
-                          value={storeSettings?.smtpHost || ""} 
+                          value={formData?.smtpHost ?? storeSettings?.smtpHost ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpHost: e.target.value})}
                           placeholder="smtp.gmail.com"
                         />
@@ -492,14 +492,14 @@ export default function StoreSettings() {
                         <Label>SMTP Port</Label>
                         <Input 
                           type="number"
-                          value={storeSettings?.smtpPort || 587} 
+                          value={formData?.smtpPort ?? storeSettings?.smtpPort ?? 587} 
                           onChange={(e) => setFormData({...formData, smtpPort: parseInt(e.target.value)})}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label>SMTP Username</Label>
                         <Input 
-                          value={storeSettings?.smtpUsername || ""} 
+                          value={formData?.smtpUsername ?? storeSettings?.smtpUsername ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpUsername: e.target.value})}
                         />
                       </div>
@@ -507,14 +507,14 @@ export default function StoreSettings() {
                         <Label>SMTP Password</Label>
                         <Input 
                           type="password"
-                          value={storeSettings?.smtpPassword || ""} 
+                          value={formData?.smtpPassword ?? storeSettings?.smtpPassword ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpPassword: e.target.value})}
                         />
                       </div>
                       <div className="space-y-2">
                         <Label>From Email</Label>
                         <Input 
-                          value={storeSettings?.smtpFromEmail || ""} 
+                          value={formData?.smtpFromEmail ?? storeSettings?.smtpFromEmail ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpFromEmail: e.target.value})}
                           placeholder="noreply@yourstore.com"
                         />
@@ -522,7 +522,7 @@ export default function StoreSettings() {
                       <div className="space-y-2">
                         <Label>From Name</Label>
                         <Input 
-                          value={storeSettings?.smtpFromName || ""} 
+                          value={formData?.smtpFromName ?? storeSettings?.smtpFromName ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpFromName: e.target.value})}
                           placeholder="Your Store Name"
                         />
@@ -551,14 +551,14 @@ export default function StoreSettings() {
                 <div className="space-y-2">
                   <Label>Meta Title</Label>
                   <Input 
-                    value={storeSettings?.metaTitle || ""} 
+                    value={formData?.metaTitle ?? storeSettings?.metaTitle ?? ""} 
                     onChange={(e) => setFormData({...formData, metaTitle: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Meta Description</Label>
                   <Textarea
-                    value={storeSettings?.metaDescription || ""} 
+                    value={formData?.metaDescription ?? storeSettings?.metaDescription ?? ""} 
                     onChange={(e) => setFormData({...formData, metaDescription: e.target.value})}
                     rows={3}
                   />
@@ -566,7 +566,7 @@ export default function StoreSettings() {
                 <div className="space-y-2">
                   <Label>Meta Keywords</Label>
                   <Input 
-                    value={storeSettings?.metaKeywords || ""} 
+                    value={formData?.metaKeywords ?? storeSettings?.metaKeywords ?? ""} 
                     onChange={(e) => setFormData({...formData, metaKeywords: e.target.value})}
                     placeholder="keyword1, keyword2, keyword3"
                   />
@@ -575,7 +575,7 @@ export default function StoreSettings() {
                   <div className="space-y-2">
                     <Label>Google Analytics ID</Label>
                     <Input 
-                      value={storeSettings?.googleAnalyticsId || ""} 
+                      value={formData?.googleAnalyticsId ?? storeSettings?.googleAnalyticsId ?? ""} 
                       onChange={(e) => setFormData({...formData, googleAnalyticsId: e.target.value})}
                       placeholder="GA-XXXXXXXXX-X"
                     />
@@ -583,7 +583,7 @@ export default function StoreSettings() {
                   <div className="space-y-2">
                     <Label>Facebook Pixel ID</Label>
                     <Input 
-                      value={storeSettings?.facebookPixelId || ""} 
+                      value={formData?.facebookPixelId ?? storeSettings?.facebookPixelId ?? ""} 
                       onChange={(e) => setFormData({...formData, facebookPixelId: e.target.value})}
                       placeholder="123456789012345"
                     />
