@@ -377,7 +377,7 @@ export default function Payments() {
             {payment.status === "pending" && (
               <DropdownMenuItem onClick={handlePayNow} className="text-green-600">
                 <CreditCard className="h-4 w-4 mr-2" />
-                Pay Now
+                Pay
               </DropdownMenuItem>
             )}
             <DropdownMenuItem onClick={() => window.open(`mailto:${payment.customerName}?subject=Payment Receipt&body=Your payment of $${payment.amount.toFixed(2)} has been processed.`)}>
@@ -650,7 +650,7 @@ export default function Payments() {
                         size="sm"
                       >
                         <CreditCard className="h-4 w-4 mr-2" />
-                        Pay Now
+                        Pay
                       </Button>
                     )}
                     <PaymentActions payment={payment} />

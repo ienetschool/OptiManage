@@ -618,7 +618,7 @@ export default function InvoiceManagement() {
   };
 
   // Professional A4 Invoice Generation - Blue Design with Print Media CSS
-  const generateProfessionalInvoice = (invoice: Invoice) => {
+  const generateProfessionalInvoice = async (invoice: Invoice) => {
     console.log('🖨️ PRINT FUNCTION CALLED - Starting invoice generation for:', invoice.invoiceNumber);
     console.log('📋 PRINT FUNCTION - Invoice data:', invoice);
     
@@ -626,65 +626,59 @@ export default function InvoiceManagement() {
     const store = stores.find(s => s.id === invoice.storeId);
     const storeName = store?.name || 'OptiStore Pro';
     
-    // Create SVG-based QR pattern that works reliably in print mode
-    const createSVGQRPattern = () => {
-      console.log('🎨 SVG QR GENERATION - Creating SVG pattern');
+    // Use QR code library directly for better print compatibility
+    const generateQRCodeDataURL = async () => {
+      console.log('🔄 QR CODE GENERATION - Creating actual QR code for print');
       
-      // QR-like pattern data
-      const pattern = [
-        [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
-        [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
-        [1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1],
-        [1,0,1,1,1,0,1,0,0,1,1,0,1,1,1,0,1],
-        [1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1],
-        [1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1],
-        [0,1,0,1,1,0,0,1,0,1,0,1,1,0,0,1,0],
-        [1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1],
-        [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
-        [1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1],
-        [0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0],
-        [1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1],
-        [1,0,1,1,1,0,1,0,0,1,1,1,1,0,1,0,1]
-      ];
-      
-      let svgRects = '';
-      for (let i = 0; i < pattern.length; i++) {
-        for (let j = 0; j < pattern[i].length; j++) {
-          if (pattern[i][j] === 1) {
-            svgRects += `<rect x="${4 + j * 4}" y="${4 + i * 4}" width="4" height="4" fill="black"/>`;
+      try {
+        // Import QR code generation library
+        const QRCode = await import('qrcode');
+        const qrData = generateInvoiceQR(invoice);
+        
+        // Generate QR code as data URL
+        const qrCodeDataURL = await QRCode.toDataURL(qrData, {
+          width: 80,
+          margin: 2,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
           }
-        }
+        });
+        
+        console.log('✅ QR CODE GENERATION - Successfully generated QR data URL');
+        return qrCodeDataURL;
+      } catch (error) {
+        console.error('❌ QR CODE GENERATION - Error:', error);
+        // Fallback: return a simple QR pattern
+        const qrData = generateInvoiceQR(invoice);
+        return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+          <svg width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+            <rect width="80" height="80" fill="white" stroke="black" stroke-width="2"/>
+            <rect x="10" y="10" width="10" height="10" fill="black"/>
+            <rect x="60" y="10" width="10" height="10" fill="black"/>
+            <rect x="10" y="60" width="10" height="10" fill="black"/>
+            <rect x="30" y="30" width="20" height="20" fill="black"/>
+            <text x="40" y="90" text-anchor="middle" font-family="Arial" font-size="6" fill="black">
+              ${invoice.invoiceNumber}
+            </text>
+          </svg>
+        `)}`;
       }
-      
-      const svgQR = `
-        <svg width="76" height="76" xmlns="http://www.w3.org/2000/svg">
-          <rect width="76" height="76" fill="white"/>
-          <rect x="0" y="0" width="76" height="4" fill="black"/>
-          <rect x="0" y="0" width="4" height="76" fill="black"/>
-          <rect x="72" y="0" width="4" height="76" fill="black"/>
-          <rect x="0" y="72" width="76" height="4" fill="black"/>
-          ${svgRects}
-        </svg>
-      `;
-      
-      return 'data:image/svg+xml;base64,' + btoa(svgQR);
     };
     
-    const qrCodeDataURL = createSVGQRPattern();
-    console.log('📋 SVG QR GENERATION - SVG pattern created successfully');
-    console.log('📋 SVG QR GENERATION - Data URL length:', qrCodeDataURL.length);
+    const qrCodeDataURL = generateQRCodeDataURL();
+    console.log('📋 QR CODE GENERATION - Starting invoice generation');
 
-    try {
+    // Get the QR code data URL (this will be a promise but we'll handle it)
+    qrCodeDataURL.then((dataURL: string) => {
+      console.log('✅ QR CODE GENERATION - QR code ready, length:', dataURL.length);
+      
       // Create invoice HTML with embedded QR code
       const invoiceHTML = `
         <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
           <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
             <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
-              <img src="${qrCodeDataURL}" alt="Invoice QR Code" style="width: 76px; height: 76px;" />
+              <img src="${dataURL}" alt="Invoice QR Code" style="width: 76px; height: 76px;" />
             </div>
             <div class="company-info" style="text-align: center; flex-grow: 1;">
               <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
@@ -826,7 +820,7 @@ export default function InvoiceManagement() {
       // Print and clean up
       console.log('🖨️ PRINT PROCESS - About to call window.print()');
       console.log('🖨️ PRINT PROCESS - Print content element created and added to DOM');
-      console.log('🖨️ PRINT PROCESS - QR image src in DOM:', printContent.innerHTML.includes('data:image/png;base64') ? 'CONTAINS DATA URL' : 'NO DATA URL FOUND');
+      console.log('🖨️ PRINT PROCESS - QR image src in DOM:', printContent.innerHTML.includes('data:image') ? 'CONTAINS DATA URL' : 'NO DATA URL FOUND');
       
       window.print();
       
@@ -836,11 +830,11 @@ export default function InvoiceManagement() {
         document.head.removeChild(style);
         console.log('🖨️ PRINT PROCESS - Cleanup completed');
       }, 1000);
-    } catch (error) {
+    }).catch((error: any) => {
       console.error('Error generating QR code:', error);
       // Simple fallback without QR code
       window.print();
-    }
+    });
   };
 
   // Fallback function with CSS grid QR code (original implementation)
@@ -1845,10 +1839,10 @@ export default function InvoiceManagement() {
                       <Button 
                         size="sm"
                         variant="outline"
-                        onClick={() => {
+                        onClick={async () => {
                           console.log('🖨️ PRINT BUTTON CLICKED - Starting print process');
                           console.log('📋 Selected invoice:', selectedInvoice);
-                          generateProfessionalInvoice(selectedInvoice);
+                          await generateProfessionalInvoice(selectedInvoice);
                         }}
                       >
                         <Printer className="h-4 w-4 mr-2" />
