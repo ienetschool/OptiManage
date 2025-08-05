@@ -198,8 +198,8 @@ export default function Inventory() {
       }
       
       const response = await apiRequest("POST", "/api/products", productData);
-      console.log("API response:", response);
-      const product = response as Product;
+      const product = await response.json();
+      console.log("API response:", product);
       const productId = product.id;
       console.log("Product created with ID:", productId);
       
@@ -260,7 +260,7 @@ export default function Inventory() {
         }
       }
       
-      return response;
+      return product;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
