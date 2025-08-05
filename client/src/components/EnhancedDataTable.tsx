@@ -113,21 +113,16 @@ export default function EnhancedDataTable({
 
   // Sort data
   const sortedData = useMemo(() => {
-
+    console.log("🔧 EnhancedDataTable sortedData:", {
+      sortColumn,
+      sortDirection,
+      filteredDataLength: filteredData.length,
+      firstItem: filteredData[0]?.invoiceNumber || 'N/A'
+    });
     
     if (!sortColumn) {
-      // Default sort by creation date (newest first) if available
-      const hasCreatedAt = data.length > 0 && 'createdAt' in data[0];
-      const hasDate = data.length > 0 && 'date' in data[0];
-      const hasInvoiceDate = data.length > 0 && 'invoiceDate' in data[0];
-      
-      if (hasCreatedAt) {
-        return [...filteredData].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      } else if (hasInvoiceDate) {
-        return [...filteredData].sort((a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime());
-      } else if (hasDate) {
-        return [...filteredData].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      }
+      // Don't apply automatic sorting - respect pre-sorted data
+      console.log("📋 NO SORT COLUMN - Using pre-sorted filteredData as-is");
       return filteredData;
     }
 
