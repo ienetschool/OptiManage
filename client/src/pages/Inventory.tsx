@@ -30,17 +30,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 // Inventory Purchases Card Component - Live Data
 function InventoryPurchasesCard() {
-  const { data: accountingSummary, isLoading } = useQuery({
-    queryKey: ["/api/accounting/summary"],
+  const { data: profitLossData, isLoading } = useQuery({
+    queryKey: ["/api/accounting/profit-loss"],
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
-  // Use totalExpenditures from the API response
-  const inventoryExpenditures = (accountingSummary as any)?.totalExpenditures || 0;
-  
-  // Debug logging to check the value
-  console.log('💰 Debug - Raw totalExpenditures:', (accountingSummary as any)?.totalExpenditures);
-  console.log('💰 Debug - Final inventoryExpenditures:', inventoryExpenditures);
+  // Extract inventory expenditures from the breakdown  
+  const inventoryExpenditures = (profitLossData as any)?.expenditures?.categories?.inventory_purchases || 0;
 
   return (
     <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
