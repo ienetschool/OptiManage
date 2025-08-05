@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -109,6 +109,13 @@ export default function StoreSettings() {
 
   const [formData, setFormData] = useState<Partial<StoreSettings>>({});
 
+  // Initialize formData when storeSettings loads
+  useEffect(() => {
+    if (storeSettings) {
+      setFormData(storeSettings);
+    }
+  }, [storeSettings]);
+
   const handleSave = (tabData: Partial<StoreSettings>) => {
     updateSettingsMutation.mutate(tabData);
   };
@@ -201,14 +208,14 @@ export default function StoreSettings() {
                   <div className="space-y-2">
                     <Label>Store Name</Label>
                     <Input 
-                      value={storeSettings?.name || ""} 
+                      value={formData?.name || storeSettings?.name || ""} 
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Domain</Label>
                     <Input 
-                      value={storeSettings?.domain || ""} 
+                      value={formData?.domain || storeSettings?.domain || ""} 
                       onChange={(e) => setFormData({...formData, domain: e.target.value})}
                       placeholder="example.com"
                     />
@@ -217,7 +224,7 @@ export default function StoreSettings() {
                     <Label>Primary Color</Label>
                     <Input 
                       type="color"
-                      value={storeSettings?.primaryColor || "#3b82f6"} 
+                      value={formData?.primaryColor || storeSettings?.primaryColor || "#3b82f6"} 
                       onChange={(e) => setFormData({...formData, primaryColor: e.target.value})}
                     />
                   </div>
@@ -225,7 +232,7 @@ export default function StoreSettings() {
                     <Label>Secondary Color</Label>
                     <Input 
                       type="color"
-                      value={storeSettings?.secondaryColor || "#64748b"} 
+                      value={formData?.secondaryColor || storeSettings?.secondaryColor || "#64748b"} 
                       onChange={(e) => setFormData({...formData, secondaryColor: e.target.value})}
                     />
                   </div>
