@@ -616,11 +616,10 @@ export default function InvoiceManagement() {
     return JSON.stringify(qrData);
   };
 
-  // Professional A4 Invoice Generation
+  // Professional A4 Invoice Generation - Blue Design
   const generateProfessionalInvoice = (invoice: Invoice) => {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
-    const storeName = store?.name || 'OptiStore Pro';
     
     const printWindow = window.open('', '_blank', 'width=900,height=1200');
     if (!printWindow) return;
@@ -638,18 +637,14 @@ export default function InvoiceManagement() {
             font-family: 'Inter', 'Segoe UI', sans-serif; 
             font-size: 12pt; 
             color: #1a202c; 
-            background: #f8fafc;
+            background: white;
             line-height: 1.6;
-            padding: 20px;
           }
           
           .invoice-container {
             max-width: 800px;
             margin: 0 auto;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
           }
           
           .header {
@@ -657,87 +652,58 @@ export default function InvoiceManagement() {
             color: white;
             padding: 30px;
             text-align: center;
-            position: relative;
-          }
-          
-          .header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -20%;
-            width: 200px;
-            height: 200px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 50%;
           }
           
           .company-name {
-            font-size: 36pt;
+            font-size: 24pt;
             font-weight: 700;
             margin-bottom: 5px;
-            position: relative;
-            z-index: 2;
           }
           
           .company-tagline {
-            font-size: 14pt;
+            font-size: 11pt;
             opacity: 0.9;
-            margin-bottom: 12px;
-            position: relative;
-            z-index: 2;
+            margin-bottom: 10px;
           }
           
           .company-address {
-            font-size: 12pt;
+            font-size: 10pt;
             opacity: 0.8;
-            position: relative;
-            z-index: 2;
           }
           
           .content {
-            padding: 40px;
-          }
-          
-          .invoice-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 40px;
-            gap: 40px;
+            padding: 30px;
           }
           
           .invoice-type {
             background: #4F46E5;
             color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16pt;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14pt;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
             text-align: center;
             margin-bottom: 20px;
-          }
-          
-          .invoice-details {
-            text-align: right;
+            display: inline-block;
           }
           
           .invoice-number {
             background: #4F46E5;
             color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-size: 14pt;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12pt;
             font-weight: 700;
             display: inline-block;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
           }
           
           .billing-section {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 40px;
-            gap: 40px;
+            margin: 30px 0;
+            gap: 30px;
           }
           
           .bill-to, .ship-to {
@@ -745,131 +711,37 @@ export default function InvoiceManagement() {
           }
           
           .section-title {
-            font-size: 14pt;
-            font-weight: 700;
-            color: #4F46E5;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          
-          .payment-status {
-            background: #10b981;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-weight: 700;
-            font-size: 10pt;
-            text-align: center;
-            margin-top: 8px;
-          }
-          
-          .details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-bottom: 30px;
-          }
-          
-          .detail-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 4px solid #3b82f6;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          }
-          
-          .detail-card h3 {
-            color: #1e40af;
             font-size: 11pt;
             font-weight: 700;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          
-          .detail-row {
-            display: flex;
-            justify-content: space-between;
+            color: #4F46E5;
             margin-bottom: 8px;
-            padding-bottom: 4px;
-            border-bottom: 1px solid #f1f5f9;
-          }
-          
-          .detail-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-          }
-          
-          .detail-label {
-            font-weight: 600;
-            color: #475569;
-            font-size: 9pt;
-          }
-          
-          .detail-value {
-            color: #1e293b;
-            font-weight: 500;
-            font-size: 9pt;
-          }
-          
-          .items-section {
-            margin: 30px 0;
-          }
-          
-          .section-title {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-            color: white;
-            padding: 16px 24px;
-            border-radius: 8px 8px 0 0;
-            font-size: 12pt;
-            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
           }
           
           .items-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-top: none;
-            border-radius: 0 0 8px 8px;
-            overflow: hidden;
+            margin: 20px 0;
           }
           
           .items-table th {
             background: #4F46E5;
             color: white;
-            padding: 12px;
+            padding: 10px;
             text-align: left;
             font-weight: 700;
-            font-size: 9pt;
+            font-size: 10pt;
             text-transform: uppercase;
-            border-bottom: 2px solid #4F46E5;
           }
           
           .items-table td {
-            padding: 12px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 9pt;
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 10pt;
           }
           
           .items-table tr:nth-child(even) {
-            background: #fafbfc;
-          }
-          
-          .item-name {
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 2px;
-          }
-          
-          .item-description {
-            font-size: 8pt;
-            color: #64748b;
-            font-style: italic;
+            background: #f8fafc;
           }
           
           .text-right {
@@ -889,37 +761,25 @@ export default function InvoiceManagement() {
           .totals-table {
             width: 300px;
             border-collapse: collapse;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-          }
-          
-          .totals-table tr:nth-child(odd) {
-            background: #f8fafc;
           }
           
           .totals-table td {
-            padding: 10px 15px;
+            padding: 8px 12px;
             border-bottom: 1px solid #e2e8f0;
-            font-size: 11pt;
+            font-size: 10pt;
           }
           
           .totals-table tr:last-child {
             background: #4F46E5;
             color: white;
             font-weight: 700;
-            font-size: 12pt;
-          }
-          
-          .totals-table tr:last-child td {
-            border-bottom: none;
           }
           
           .notes-section {
             margin-top: 30px;
-            padding: 20px;
+            padding: 15px;
             background: #f8fafc;
-            border-radius: 8px;
+            border-radius: 5px;
             border-left: 4px solid #4F46E5;
           }
           
@@ -929,18 +789,6 @@ export default function InvoiceManagement() {
             margin-bottom: 8px;
             font-size: 11pt;
           }
-          
-          .notes-content {
-            color: #64748b;
-            font-size: 10pt;
-            line-height: 1.5;
-          }
-          }
-          
-          .totals-section {
-            display: flex;
-            gap: 25px;
-            margin-top: 30px;
           }
           
           .payment-info {
