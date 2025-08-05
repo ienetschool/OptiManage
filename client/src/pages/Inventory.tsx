@@ -182,6 +182,7 @@ export default function Inventory() {
       shippingCost: number;
       handlingCost: number;
     }) => {
+      console.log("Starting product creation with data:", data);
       const { initialStock, purchasePrice, createPurchaseOrder, purchaseNotes, taxRate, discountAmount, shippingCost, handlingCost, ...productData } = data;
       
       // Auto-generate barcode if not provided or empty
@@ -200,8 +201,24 @@ export default function Inventory() {
         productData.sku = `${typePrefix}-${timestamp}${random}`;
       }
       
-      const response = await apiRequest("POST", "/api/products", productData);
-      const product = await response.json();
+      console.log("Sending productData to API:", productData);
+      
+      let product;
+      try {
+        const response = await apiRequest("POST", "/api/products", productData);
+        console.log("Raw API response:", response);
+        
+        // Handle the response properly - apiRequest returns parsed JSON, not a Response object
+        if (response && typeof response === 'object') {
+          product = response;
+        } else {
+          throw new Error("Invalid response from API");
+        }
+      } catch (error) {
+        console.error("API request failed:", error);
+        throw error;
+      }
+      
       console.log("API response:", product);
       const productId = product.id;
       console.log("Product created with ID:", productId);
@@ -276,10 +293,11 @@ export default function Inventory() {
       setOpenProduct(false);
       productForm.reset();
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error("Create product error:", error);
       toast({
         title: "Error",
-        description: "Failed to create product.",
+        description: error?.message || "Failed to create product. Please check all required fields.",
         variant: "destructive",
       });
     },
