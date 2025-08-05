@@ -1882,14 +1882,7 @@ export default function InvoiceManagement() {
                     <Send className="h-4 w-4 mr-2" />
                     Send to Customer
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
-                    <Printer className="h-4 w-4 mr-2" />
-                    Print A4 Invoice
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => generateProfessionalInvoice(invoice)}>
-                    <FileText className="h-4 w-4 mr-2" />
-                    Export A4 PDF
-                  </DropdownMenuItem>
+
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600">
                     <Trash2 className="h-4 w-4 mr-2" />
