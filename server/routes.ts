@@ -1745,13 +1745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 </head>
 <body class="bg-gray-100 p-4">
     <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-lg overflow-hidden">
-        <!-- Preview Controls -->
-        <div class="flex justify-between items-center p-4 border-b bg-gray-50">
-            <h2 class="text-lg font-semibold text-gray-900">Purchase Invoice - Live Generated</h2>
-            <div class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                REAL DATA ✓
-            </div>
-        </div>
+
 
         <!-- Invoice Content -->
         <div class="p-8">
@@ -1826,7 +1820,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <thead>
                         <tr class="bg-blue-600 text-white">
                             <th class="border border-gray-300 px-4 py-3 text-left">Item Description</th>
-                            <th class="border border-gray-300 px-4 py-3 text-left">Product ID</th>
                             <th class="border border-gray-300 px-4 py-3 text-center">Quantity</th>
                             <th class="border border-gray-300 px-4 py-3 text-right">Unit Cost</th>
                             <th class="border border-gray-300 px-4 py-3 text-right">Total</th>
@@ -1838,9 +1831,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
                             <td class="border border-gray-300 px-4 py-3">
                                 <div class="font-medium">${item.productName}</div>
                                 <div class="text-sm text-gray-600">${item.description}</div>
-                            </td>
-                            <td class="border border-gray-300 px-4 py-3 text-sm text-gray-600">
-                                ${item.productId}
                             </td>
                             <td class="border border-gray-300 px-4 py-3 text-center font-medium">
                                 ${item.quantity}
