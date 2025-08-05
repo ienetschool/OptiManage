@@ -1692,11 +1692,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { invoiceNumber } = req.params;
       
-      // Sample invoice data for the generated invoice
+      // Fetch real invoice data from database using storage layer
+      const allInvoices = await storage.getInvoices();
+      const invoice = allInvoices.find(inv => inv.invoiceNumber === invoiceNumber);
+
+      if (!invoice) {
+        return res.status(404).send('Invoice not found');
+      }
+
+
+
       const invoiceData = {
-        invoiceNumber: invoiceNumber,
-        date: "08/05/2025",
-        dueDate: "09/04/2025",
+        invoiceNumber: invoice.invoiceNumber,
+        date: new Date(invoice.date || '').toLocaleDateString('en-US'),
+        dueDate: invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('en-US') : 'N/A',
         supplier: {
           name: "Vision Supply Corp",
           address: "456 Supplier Boulevard",
@@ -1706,21 +1715,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           phone: "(555) 789-0123",
           email: "orders@visionsupply.com"
         },
-        items: [{
-          productName: "Ray-Ban@23225",
-          description: "Restock - 25 units",
-          productId: "TF-X1-001",
-          quantity: 25,
-          unitPrice: 120.00,
-          total: 3000.00
-        }],
-        subtotal: 3000.00,
-        taxRate: 8.5,
-        tax: 255.00,
-        shipping: 25.00,
-        total: 3280.00,
-        status: "PAID",
-        notes: "Restock order for Ray-Ban@23225 - Premium optical frames"
+        items: invoice.items?.map(item => ({
+          productName: item.productName || 'Unknown Product',
+          description: item.description || '',
+          productId: "N/A",
+          quantity: item.quantity || 0,
+          unitPrice: item.unitPrice || 0,
+          total: item.total || 0
+        })) || [],
+        subtotal: invoice.subtotal || 0,
+        taxRate: invoice.taxRate || 0,
+        tax: invoice.taxAmount || 0,
+        shipping: 0, // Not stored in current schema
+        total: invoice.total || 0,
+        status: invoice.status?.toUpperCase() || 'PENDING',
+        notes: invoice.notes || ''
       };
 
       const invoiceHtml = `
