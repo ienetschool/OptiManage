@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -31,6 +32,12 @@ export default function Payroll() {
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
   const [open, setOpen] = useState(false);
   const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
+  const [selectedPayroll, setSelectedPayroll] = useState<any>(null);
+  const [editPayroll, setEditPayroll] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
+  const [sortField, setSortField] = useState<string>('id');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -74,43 +81,45 @@ export default function Payroll() {
     },
   });
 
-  // Mock payroll data
+  // Mock payroll data - Latest entries first by default
   const mockPayroll = [
     {
-      id: "1",
-      staffId: "staff-1",
-      staffName: "Dr. Sarah Johnson",
-      staffCode: "EMP001",
-      position: "Senior Optometrist",
-      payPeriod: "January 2025",
-      basicSalary: 75000,
-      allowances: 15000,
-      overtime: 2500,
-      grossSalary: 92500,
-      deductions: 18500,
-      netSalary: 74000,
+      id: "5",
+      staffId: "staff-5",
+      staffName: "Dr. Smita Ghosh",
+      staffCode: "STF-304783",
+      position: "Doctor",
+      payPeriod: "August 2025",
+      basicSalary: 85000,
+      allowances: 18000,
+      overtime: 3200,
+      grossSalary: 106200,
+      deductions: 21240,
+      netSalary: 84960,
       workingDays: 22,
       presentDays: 22,
-      overtimeHours: 10,
-      status: "approved"
+      overtimeHours: 12,
+      status: "approved",
+      generatedDate: "2025-08-05"
     },
     {
-      id: "2",
-      staffId: "staff-2", 
-      staffName: "Michael Chen",
-      staffCode: "EMP002",
-      position: "Store Manager",
-      payPeriod: "January 2025",
-      basicSalary: 60000,
-      allowances: 12000,
-      overtime: 1800,
-      grossSalary: 73800,
-      deductions: 14760,
-      netSalary: 59040,
+      id: "4",
+      staffId: "staff-4",
+      staffName: "Robert Taylor",
+      staffCode: "EMP004",
+      position: "Optician",
+      payPeriod: "July 2025",
+      basicSalary: 45000,
+      allowances: 8000,
+      overtime: 1200,
+      grossSalary: 54200,
+      deductions: 10840,
+      netSalary: 43360,
       workingDays: 22,
       presentDays: 21,
-      overtimeHours: 6,
-      status: "pending"
+      overtimeHours: 4,
+      status: "paid",
+      generatedDate: "2025-07-31"
     },
     {
       id: "3",
@@ -118,7 +127,7 @@ export default function Payroll() {
       staffName: "Emma Wilson", 
       staffCode: "EMP003",
       position: "Sales Associate",
-      payPeriod: "January 2025",
+      payPeriod: "June 2025",
       basicSalary: 35000,
       allowances: 5000,
       overtime: 0,
@@ -128,7 +137,46 @@ export default function Payroll() {
       workingDays: 22,
       presentDays: 20,
       overtimeHours: 0,
-      status: "draft"
+      status: "paid",
+      generatedDate: "2025-06-30"
+    },
+    {
+      id: "2",
+      staffId: "staff-2", 
+      staffName: "Michael Chen",
+      staffCode: "EMP002",
+      position: "Store Manager",
+      payPeriod: "May 2025",
+      basicSalary: 60000,
+      allowances: 12000,
+      overtime: 1800,
+      grossSalary: 73800,
+      deductions: 14760,
+      netSalary: 59040,
+      workingDays: 22,
+      presentDays: 21,
+      overtimeHours: 6,
+      status: "paid",
+      generatedDate: "2025-05-31"
+    },
+    {
+      id: "1",
+      staffId: "staff-1",
+      staffName: "Dr. Sarah Johnson",
+      staffCode: "EMP001",
+      position: "Senior Optometrist",
+      payPeriod: "April 2025",
+      basicSalary: 75000,
+      allowances: 15000,
+      overtime: 2500,
+      grossSalary: 92500,
+      deductions: 18500,
+      netSalary: 74000,
+      workingDays: 22,
+      presentDays: 22,
+      overtimeHours: 10,
+      status: "paid",
+      generatedDate: "2025-04-30"
     }
   ];
 
@@ -172,6 +220,116 @@ export default function Payroll() {
       presentDays,
       overtimeHours
     };
+  };
+
+  // Filter and sort payroll data
+  const filteredPayroll = mockPayroll.filter(payroll => 
+    payroll.staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    payroll.staffCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    payroll.position.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const sortedPayroll = [...filteredPayroll].sort((a, b) => {
+    const aValue = a[sortField as keyof typeof a];
+    const bValue = b[sortField as keyof typeof b];
+    
+    if (sortDirection === 'asc') {
+      return aValue > bValue ? 1 : -1;
+    } else {
+      return aValue < bValue ? 1 : -1;
+    }
+  });
+
+  // Pagination
+  const totalPages = Math.ceil(sortedPayroll.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPayroll = sortedPayroll.slice(startIndex, startIndex + itemsPerPage);
+
+  // Action handlers
+  const handleViewPayroll = (payroll: any) => {
+    setSelectedPayroll(payroll);
+  };
+
+  const handleEditPayroll = (payroll: any) => {
+    setEditPayroll(payroll);
+  };
+
+  const handlePrintPayroll = (payroll: any) => {
+    // Generate payslip in new window
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Payslip - ${payroll.staffName}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+              .company-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+              .payslip-title { font-size: 18px; color: #666; }
+              .employee-info { margin-bottom: 20px; }
+              .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+              .earnings, .deductions { width: 48%; display: inline-block; vertical-align: top; }
+              .section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+              .amount-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+              .total-row { font-weight: bold; border-top: 2px solid #333; padding-top: 10px; margin-top: 15px; }
+              .net-pay { font-size: 18px; background: #e8f5e8; padding: 10px; text-align: center; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div class="company-name">OptiStore Pro Medical Center</div>
+              <div class="payslip-title">Payslip for ${payroll.payPeriod}</div>
+            </div>
+            
+            <div class="employee-info">
+              <div class="info-row"><span>Employee Name:</span><span>${payroll.staffName}</span></div>
+              <div class="info-row"><span>Employee Code:</span><span>${payroll.staffCode}</span></div>
+              <div class="info-row"><span>Position:</span><span>${payroll.position}</span></div>
+              <div class="info-row"><span>Pay Period:</span><span>${payroll.payPeriod}</span></div>
+              <div class="info-row"><span>Working Days:</span><span>${payroll.workingDays}</span></div>
+              <div class="info-row"><span>Days Present:</span><span>${payroll.presentDays}</span></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+              <div class="earnings">
+                <div class="section-title">Earnings</div>
+                <div class="amount-row"><span>Basic Salary:</span><span>$${payroll.basicSalary.toLocaleString()}</span></div>
+                <div class="amount-row"><span>Allowances:</span><span>$${payroll.allowances.toLocaleString()}</span></div>
+                <div class="amount-row"><span>Overtime (${payroll.overtimeHours}h):</span><span>$${payroll.overtime.toLocaleString()}</span></div>
+                <div class="total-row amount-row"><span>Gross Salary:</span><span>$${payroll.grossSalary.toLocaleString()}</span></div>
+              </div>
+              
+              <div class="deductions">
+                <div class="section-title">Deductions</div>
+                <div class="amount-row"><span>Total Deductions:</span><span>$${payroll.deductions.toLocaleString()}</span></div>
+                <div style="margin-top: 69px;" class="total-row amount-row"><span>Total Deductions:</span><span>$${payroll.deductions.toLocaleString()}</span></div>
+              </div>
+            </div>
+
+            <div class="net-pay">
+              <strong>Net Pay: $${payroll.netSalary.toLocaleString()}</strong>
+            </div>
+            
+            <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px;">
+              Generated on ${new Date().toLocaleDateString()} | OptiStore Pro Medical Center
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => printWindow.print(), 250);
+    }
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('desc');
+    }
   };
 
   return (
@@ -419,8 +577,46 @@ export default function Payroll() {
               </CardTitle>
             </CardHeader>
             <CardContent>
+              {/* Sorting Controls */}
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-slate-600">Sort by:</span>
+                <Button 
+                  variant={sortField === 'staffName' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleSort('staffName')}
+                >
+                  Name {sortField === 'staffName' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </Button>
+                <Button 
+                  variant={sortField === 'netSalary' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleSort('netSalary')}
+                >
+                  Salary {sortField === 'netSalary' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </Button>
+                <Button 
+                  variant={sortField === 'generatedDate' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleSort('generatedDate')}
+                >
+                  Date {sortField === 'generatedDate' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </Button>
+                <Button 
+                  variant={sortField === 'status' ? 'default' : 'outline'} 
+                  size="sm"
+                  onClick={() => handleSort('status')}
+                >
+                  Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
+                </Button>
+              </div>
+
               <div className="space-y-4">
-                {mockPayroll.map((payroll) => (
+                {paginatedPayroll.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-slate-600">No payroll records found matching your search.</p>
+                  </div>
+                ) : (
+                  paginatedPayroll.map((payroll) => (
                   <div key={payroll.id} className="border rounded-lg p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
@@ -457,13 +653,28 @@ export default function Payroll() {
                         </div>
                         
                         <div className="flex space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleViewPayroll(payroll)}
+                            data-testid={`button-view-${payroll.id}`}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditPayroll(payroll)}
+                            data-testid={`button-edit-${payroll.id}`}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handlePrintPayroll(payroll)}
+                            data-testid={`button-print-${payroll.id}`}
+                          >
                             <Printer className="h-4 w-4" />
                           </Button>
                         </div>
@@ -498,8 +709,49 @@ export default function Payroll() {
                       </div>
                     </div>
                   </div>
-                ))}
+                ))
+                )}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-slate-600">
+                    Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, sortedPayroll.length)} of {sortedPayroll.length} entries
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -551,6 +803,176 @@ export default function Payroll() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* View Payroll Modal */}
+      {selectedPayroll && (
+        <Dialog open={!!selectedPayroll} onOpenChange={() => setSelectedPayroll(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Payroll Details - {selectedPayroll.staffName}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-600">Employee</Label>
+                  <p className="font-medium">{selectedPayroll.staffName}</p>
+                  <p className="text-sm text-slate-600">{selectedPayroll.staffCode} • {selectedPayroll.position}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-slate-600">Pay Period</Label>
+                  <p className="font-medium">{selectedPayroll.payPeriod}</p>
+                  <p className="text-sm text-slate-600">Status: {getStatusBadge(selectedPayroll.status)}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg">
+                <div className="text-center">
+                  <p className="text-sm text-slate-600">Working Days</p>
+                  <p className="text-xl font-bold">{selectedPayroll.workingDays}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-slate-600">Present Days</p>
+                  <p className="text-xl font-bold">{selectedPayroll.presentDays}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-slate-600">Overtime Hours</p>
+                  <p className="text-xl font-bold">{selectedPayroll.overtimeHours}h</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-3 text-green-700">Earnings</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Basic Salary:</span>
+                      <span className="font-medium">${selectedPayroll.basicSalary.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Allowances:</span>
+                      <span className="font-medium">${selectedPayroll.allowances.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Overtime:</span>
+                      <span className="font-medium">${selectedPayroll.overtime.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 font-bold text-green-700">
+                      <span>Gross Salary:</span>
+                      <span>${selectedPayroll.grossSalary.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-3 text-red-700">Deductions</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Total Deductions:</span>
+                      <span className="font-medium">${selectedPayroll.deductions.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 font-bold text-blue-700 text-lg">
+                      <span>Net Pay:</span>
+                      <span>${selectedPayroll.netSalary.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Payroll Modal */}
+      {editPayroll && (
+        <Dialog open={!!editPayroll} onOpenChange={() => setEditPayroll(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Payroll - {editPayroll.staffName}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Employee</Label>
+                  <Input value={`${editPayroll.staffName} (${editPayroll.staffCode})`} disabled />
+                </div>
+                <div>
+                  <Label>Pay Period</Label>
+                  <Input value={editPayroll.payPeriod} disabled />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label>Working Days</Label>
+                  <Input type="number" defaultValue={editPayroll.workingDays} />
+                </div>
+                <div>
+                  <Label>Present Days</Label>
+                  <Input type="number" defaultValue={editPayroll.presentDays} />
+                </div>
+                <div>
+                  <Label>Overtime Hours</Label>
+                  <Input type="number" defaultValue={editPayroll.overtimeHours} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-3">Earnings</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Basic Salary</Label>
+                      <Input type="number" defaultValue={editPayroll.basicSalary} />
+                    </div>
+                    <div>
+                      <Label>Allowances</Label>
+                      <Input type="number" defaultValue={editPayroll.allowances} />
+                    </div>
+                    <div>
+                      <Label>Overtime Amount</Label>
+                      <Input type="number" defaultValue={editPayroll.overtime} />
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-3">Deductions</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Total Deductions</Label>
+                      <Input type="number" defaultValue={editPayroll.deductions} />
+                    </div>
+                    <div>
+                      <Label>Status</Label>
+                      <select className="w-full p-2 border rounded-md" defaultValue={editPayroll.status}>
+                        <option value="draft">Draft</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="paid">Paid</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setEditPayroll(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => {
+                  toast({
+                    title: "Payroll Updated",
+                    description: "Payroll record has been updated successfully.",
+                  });
+                  setEditPayroll(null);
+                }}>
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
