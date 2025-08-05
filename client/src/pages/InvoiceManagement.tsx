@@ -668,42 +668,89 @@ export default function InvoiceManagement() {
   const generateInvoiceHTML = (invoice: Invoice, customer: any, storeName: string) => {
     return `
       <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
-        <div class="header" style="background: #4F46E5; color: white; padding: 30px; text-align: center;">
-          <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
-          <div class="company-tagline" style="font-size: 11pt; opacity: 0.9; margin-bottom: 10px;">Optical Retail Management</div>
-          <div class="company-address" style="font-size: 10pt; opacity: 0.8;">123 Vision Street<br/>Eyecare City, EC 12345<br/>Phone: (555) 123-4567 | Email: billing@optistorepro.com</div>
+        <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
+          <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+            <svg width="60" height="60" viewBox="0 0 100 100" style="fill: #4F46E5;">
+              <rect x="0" y="0" width="20" height="20"/>
+              <rect x="25" y="0" width="15" height="15"/>
+              <rect x="45" y="0" width="10" height="10"/>
+              <rect x="60" y="0" width="20" height="20"/>
+              <rect x="85" y="0" width="15" height="15"/>
+              <rect x="0" y="25" width="15" height="15"/>
+              <rect x="20" y="25" width="10" height="10"/>
+              <rect x="35" y="25" width="15" height="15"/>
+              <rect x="55" y="25" width="10" height="10"/>
+              <rect x="70" y="25" width="15" height="15"/>
+              <rect x="90" y="25" width="10" height="10"/>
+              <rect x="0" y="45" width="10" height="10"/>
+              <rect x="15" y="45" width="20" height="20"/>
+              <rect x="40" y="45" width="15" height="15"/>
+              <rect x="60" y="45" width="10" height="10"/>
+              <rect x="75" y="45" width="25" height="25"/>
+              <rect x="0" y="70" width="15" height="15"/>
+              <rect x="20" y="70" width="10" height="10"/>
+              <rect x="35" y="70" width="20" height="20"/>
+              <rect x="60" y="70" width="15" height="15"/>
+              <rect x="80" y="70" width="10" height="10"/>
+              <rect x="95" y="70" width="5" height="5"/>
+            </svg>
+          </div>
+          <div class="company-info" style="text-align: center; flex-grow: 1;">
+            <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
+            <div class="company-tagline" style="font-size: 11pt; opacity: 0.9; margin-bottom: 10px;">Optical Retail Management</div>
+            <div class="company-address" style="font-size: 10pt; opacity: 0.8;">123 Vision Street<br/>Eyecare City, EC 12345<br/>Phone: (555) 123-4567 | Email: billing@optistorepro.com</div>
+          </div>
+          <div style="width: 80px;"></div>
         </div>
         
         <div class="content" style="padding: 30px;">
-          <div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin: 30px 0; gap: 30px;">
-            <div>
-              <div class="invoice-type" style="background: #4F46E5; color: white; padding: 10px 20px; border-radius: 5px; font-size: 14pt; font-weight: 700; text-transform: uppercase; text-align: center; margin-bottom: 15px; display: inline-block;">SALE INVOICE</div>
-              <div class="invoice-number" style="background: #4F46E5; color: white; padding: 6px 12px; border-radius: 4px; font-size: 12pt; font-weight: 700; display: inline-block; margin-bottom: 10px;">${invoice.invoiceNumber}</div>
-              <div style="font-size: 10pt; color: #64748b; margin-top: 4px;">
-                Date: ${invoice.date ? new Date(invoice.date).toLocaleDateString() : new Date().toLocaleDateString()}<br/>
-                Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
+          <!-- Invoice Info Section -->
+          <div class="invoice-info-section" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 30px;">
+              <!-- Left Section -->
+              <div style="display: flex; gap: 15px; align-items: flex-start;">
+                <div class="invoice-type" style="background: #4F46E5; color: white; padding: 12px 20px; border-radius: 5px; font-size: 14pt; font-weight: 700; text-transform: uppercase; text-align: center;">SALE INVOICE</div>
+                <div class="invoice-number" style="background: #4F46E5; color: white; padding: 12px 16px; border-radius: 4px; font-size: 12pt; font-weight: 700;">${invoice.invoiceNumber}</div>
+              </div>
+              
+              <!-- Center Section - Dates -->
+              <div style="text-align: left;">
+                <div style="font-size: 10pt; color: #64748b; line-height: 1.6;">
+                  <div><strong>Date:</strong> ${invoice.date ? new Date(invoice.date).toLocaleDateString() : new Date().toLocaleDateString()}</div>
+                  <div><strong>Due Date:</strong> ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}</div>
+                </div>
+              </div>
+              
+              <!-- Right Section - Payment Status -->
+              <div style="text-align: right;">
+                <div style="margin-bottom: 8px;">
+                  <span style="background: #10b981; color: white; padding: 8px 16px; border-radius: 4px; font-weight: 700; font-size: 11pt;">PAID</span>
+                </div>
+                <div style="font-size: 12pt; font-weight: 700; color: #1f2937;">
+                  Total: $${invoice.total.toFixed(2)}
+                </div>
               </div>
             </div>
-            <div style="background: #10b981; color: white; padding: 6px 12px; border-radius: 4px; font-weight: 700; height: fit-content;">PAID</div>
           </div>
           
-          <div class="billing-section" style="display: flex; justify-content: space-between; margin: 30px 0; gap: 30px;">
+          <!-- Billing Section -->
+          <div class="billing-section" style="display: flex; justify-content: space-between; margin: 30px 0; gap: 40px;">
             <div class="bill-to" style="flex: 1;">
-              <div class="section-title" style="font-size: 11pt; font-weight: 700; color: #4F46E5; margin-bottom: 8px; text-transform: uppercase;">Bill To:</div>
-              <div style="font-size: 11pt; line-height: 1.5;">
-                <strong>${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'Guest Customer'}</strong><br/>
-                ${customer?.email || 'No email provided'}<br/>
-                ${customer?.phone || 'No phone provided'}
+              <div class="section-title" style="font-size: 12pt; font-weight: 700; color: #4F46E5; margin-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid #4F46E5; padding-bottom: 4px;">BILL TO:</div>
+              <div style="font-size: 11pt; line-height: 1.6; color: #374151;">
+                <div style="font-weight: 700; margin-bottom: 4px;">${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'Guest Customer'}</div>
+                <div>${customer?.email || 'No email provided'}</div>
+                <div>${customer?.phone || 'No phone provided'}</div>
               </div>
             </div>
             
             <div class="ship-to" style="flex: 1;">
-              <div class="section-title" style="font-size: 11pt; font-weight: 700; color: #4F46E5; margin-bottom: 8px; text-transform: uppercase;">Ship To:</div>
-              <div style="font-size: 11pt; line-height: 1.5;">
-                <strong>${storeName} - Main Location</strong><br/>
-                455 Inventory Avenue<br/>
-                Stock City, SC 67890<br/>
-                Phone: (555) 987-6543
+              <div class="section-title" style="font-size: 12pt; font-weight: 700; color: #4F46E5; margin-bottom: 12px; text-transform: uppercase; border-bottom: 2px solid #4F46E5; padding-bottom: 4px;">SHIP TO:</div>
+              <div style="font-size: 11pt; line-height: 1.6; color: #374151;">
+                <div style="font-weight: 700; margin-bottom: 4px;">${storeName} - Main Location</div>
+                <div>455 Inventory Avenue</div>
+                <div>Stock City, SC 67890</div>
+                <div>Phone: (555) 987-6543</div>
               </div>
             </div>
           </div>
