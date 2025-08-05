@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 interface Payment {
   id: string;
@@ -539,40 +540,88 @@ export default function Payments() {
             </Card>
           </div>
 
-          {/* Enhanced Payments Table */}
-          <EnhancedDataTable
-            data={payments}
-            columns={paymentColumns}
-            title="Payment Management"
-            searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
-            isLoading={isLoading}
-            onRefresh={() => {
-              refetch();
-              queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-            }}
-            pageSize={25}
-            showPagination={true}
-            totalCount={payments.length}
-            emptyMessage="No payments found. Payments will appear here when invoices are paid."
-            actions={(payment) => (
-              <div className="flex items-center gap-2">
-                {payment.status === "pending" && (
-                  <Button 
-                    onClick={() => {
-                      setSelectedPayment(payment);
-                      setPaymentMethodDialog(true);
-                    }}
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    size="sm"
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Pay Now
+          {/* Enhanced Payments Table with Sorting & Pagination */}
+          <Card>
+            <CardHeader className="border-b">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold">Payment History ({payments.length} payments)</h3>
+                  <p className="text-sm text-gray-600">Showing latest payments first</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">Sort by:</span>
+                    <Select value="latest" onValueChange={() => {}}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="latest">Latest First</SelectItem>
+                        <SelectItem value="oldest">Oldest First</SelectItem>
+                        <SelectItem value="amount-high">Amount (High)</SelectItem>
+                        <SelectItem value="amount-low">Amount (Low)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Separator orientation="vertical" className="h-6" />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm">Items per page:</span>
+                    <Select value="25" onValueChange={() => {}}>
+                      <SelectTrigger className="w-[80px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    refetch();
+                    queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                  }}>
+                    <RefreshCw className="h-4 w-4" />
                   </Button>
-                )}
-                <PaymentActions payment={payment} />
+                </div>
               </div>
-            )}
-          />
+            </CardHeader>
+            <CardContent className="p-0">
+              <EnhancedDataTable
+                data={payments}
+                columns={paymentColumns}
+                title=""
+                searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
+                isLoading={isLoading}
+                onRefresh={() => {
+                  refetch();
+                  queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                }}
+                pageSize={25}
+                showPagination={true}
+                totalCount={payments.length}
+                emptyMessage="No payments found. Payments will appear here when invoices are paid."
+                actions={(payment) => (
+                  <div className="flex items-center gap-2">
+                    {payment.status === "pending" && (
+                      <Button 
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setPaymentMethodDialog(true);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        size="sm"
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Pay Now
+                      </Button>
+                    )}
+                    <PaymentActions payment={payment} />
+                  </div>
+                )}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">

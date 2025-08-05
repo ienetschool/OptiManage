@@ -1138,9 +1138,65 @@ export class DatabaseStorage implements IStorage {
         paymentDate: invoice.paymentDate || invoice.createdAt,
         transactionId: `TXN-${invoice.invoiceNumber}`,
         notes: invoice.notes,
-        // Categorize based on source: expenditures vs regular income
-        source: (invoice as any).source === 'expenditure' ? 'expenditure' : 'regular_invoice',
-        type: (invoice as any).source === 'expenditure' ? 'expenditure' : 'income'
+        // Categorize based on source and content: expenditures vs regular income
+        source: (() => {
+          // Check if this is an expenditure based on various indicators
+          if ((invoice as any).source === 'expenditure') return 'expenditure';
+          if ((invoice as any).source === 'reorder') return 'expenditure';
+          if ((invoice as any).source === 'bulk_reorder') return 'expenditure';
+          
+          // Check notes for expenditure keywords
+          const notes = invoice.notes?.toLowerCase() || '';
+          if (notes.includes('expenditure') || 
+              notes.includes('purchase') || 
+              notes.includes('restock') || 
+              notes.includes('supplier') ||
+              notes.includes('reorder') ||
+              notes.includes('inventory purchase')) {
+            return 'expenditure';
+          }
+          
+          // Check if customer name suggests supplier transaction
+          const customerName = (() => {
+            if (!invoice.customerId) return '';
+            const customer = customersData.find(c => c.id === invoice.customerId);
+            return customer ? `${customer.firstName} ${customer.lastName}`.toLowerCase() : '';
+          })();
+          
+          if (customerName.includes('supplier') || customerName.includes('vendor')) {
+            return 'expenditure';
+          }
+          
+          return 'regular_invoice';
+        })(),
+        type: (() => {
+          // Use same logic as source to determine type
+          if ((invoice as any).source === 'expenditure') return 'expenditure';
+          if ((invoice as any).source === 'reorder') return 'expenditure';
+          if ((invoice as any).source === 'bulk_reorder') return 'expenditure';
+          
+          const notes = invoice.notes?.toLowerCase() || '';
+          if (notes.includes('expenditure') || 
+              notes.includes('purchase') || 
+              notes.includes('restock') || 
+              notes.includes('supplier') ||
+              notes.includes('reorder') ||
+              notes.includes('inventory purchase')) {
+            return 'expenditure';
+          }
+          
+          const customerName = (() => {
+            if (!invoice.customerId) return '';
+            const customer = customersData.find(c => c.id === invoice.customerId);
+            return customer ? `${customer.firstName} ${customer.lastName}`.toLowerCase() : '';
+          })();
+          
+          if (customerName.includes('supplier') || customerName.includes('vendor')) {
+            return 'expenditure';
+          }
+          
+          return 'income';
+        })()
       }));
       
       // Convert medical invoices to payment records
