@@ -53,6 +53,7 @@ import QRCodeReact from "react-qr-code";
 import A4InvoiceTemplate from "@/components/A4InvoiceTemplate";
 import ModernA4InvoiceTemplate from "@/components/ModernA4InvoiceTemplate";
 import PurchaseInvoiceTemplate from "@/components/PurchaseInvoiceTemplate";
+import ProfessionalInvoiceTemplate from "@/components/ProfessionalInvoiceTemplate";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -1879,7 +1880,7 @@ export default function InvoiceManagement() {
                       onClick={() => setShowInvoicePreview(true)}
                     >
                       <Printer className="h-4 w-4 mr-2" />
-                      Modern Invoice Preview
+                      Professional Invoice Preview
                     </Button>
                     <Button 
                       variant="outline"
@@ -1917,10 +1918,19 @@ export default function InvoiceManagement() {
             </Dialog>
           )}
 
-          {/* Purchase Invoice Template Preview - Same as Inventory Purchase */}
+          {/* Professional Invoice Template Preview */}
           {showInvoicePreview && selectedInvoice && (
-            <PurchaseInvoiceTemplate
-              invoice={selectedInvoice}
+            <ProfessionalInvoiceTemplate
+              invoice={{
+                ...selectedInvoice,
+                discountAmount: selectedInvoice?.discountAmount || 0,
+                appliedCouponCode: (selectedInvoice as any)?.appliedCouponCode,
+                couponDiscount: (selectedInvoice as any)?.couponDiscount || 0
+              }}
+              storeName={stores?.find(s => s.id === selectedInvoice?.storeId)?.name || 'OptiStore Pro'}
+              storeAddress="123 Vision Street, Eyecare City, EC 12345"
+              storePhone="(555) 123-4567"
+              storeEmail="billing@optistorepro.com"
               onClose={() => setShowInvoicePreview(false)}
             />
           )}
