@@ -40,7 +40,7 @@ export default function Attendance() {
 
   const { data: staffData = [], isLoading } = useQuery({
     queryKey: ["/api/staff"],
-  });
+  }) as { data: any[], isLoading: boolean };
 
   const { data: attendanceData = [] } = useQuery({
     queryKey: ["/api/attendance", selectedDate],
@@ -113,6 +113,7 @@ export default function Attendance() {
   // Camera and QR scanner initialization
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let qrScanner: any = null;
     
     const startCamera = async () => {
       if (qrScannerOpen && videoRef.current) {
@@ -122,15 +123,15 @@ export default function Attendance() {
             video: { facingMode: 'environment' } // Try back camera first
           });
           videoRef.current.srcObject = stream;
-          videoRef.current.play();
+          await videoRef.current.play();
           
           // Initialize QR scanner
           const QrScanner = await import('qr-scanner');
-          const qrScanner = new QrScanner.default(
+          qrScanner = new QrScanner.default(
             videoRef.current,
             (result) => {
               handleQRScan(result.data);
-              qrScanner.destroy();
+              cleanup();
               setQrScannerOpen(false);
             },
             {
@@ -139,27 +140,35 @@ export default function Attendance() {
             }
           );
           
-          qrScanner.start();
-          
-          return () => {
-            qrScanner.destroy();
-          };
+          await qrScanner.start();
         } catch (error) {
           console.error('Camera error:', error);
           setCameraError('Unable to access camera. Please check permissions.');
         }
       }
     };
+
+    const cleanup = () => {
+      if (qrScanner) {
+        qrScanner.destroy();
+        qrScanner = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    };
     
     if (qrScannerOpen) {
       startCamera();
+    } else {
+      cleanup();
     }
     
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
+    return cleanup;
   }, [qrScannerOpen]);
 
   // QR Code scanner handler with enhanced validation
@@ -689,8 +698,14 @@ export default function Attendance() {
                 <Button 
                   className="flex-1" 
                   onClick={() => {
-                    setQrScannerOpen(false);
-                    setManualEntryOpen(true);
+                    try {
+                      setQrScannerOpen(false);
+                      setTimeout(() => setManualEntryOpen(true), 100);
+                    } catch (error) {
+                      console.error('Error opening manual entry:', error);
+                      setQrScannerOpen(false);
+                      setManualEntryOpen(true);
+                    }
                   }}
                 >
                   Manual Entry
@@ -721,18 +736,25 @@ export default function Attendance() {
               <div className="space-y-3">
                 <Label>Select Staff Member</Label>
                 <div className="max-h-64 overflow-y-auto border rounded-lg">
-                  {staffData.map((staff) => (
+                  {staffData && staffData.length > 0 ? staffData.map((staff: any) => (
                     <div key={staff.id} className="border-b last:border-b-0">
                       <div className="p-3 hover:bg-gray-50 cursor-pointer" onClick={() => {
-                        const attendanceRecord = todayAttendance.find(a => a.staffId === staff.id);
-                        if (attendanceRecord) {
-                          const action = attendanceRecord.clockIn && !attendanceRecord.clockOut ? 'out' : 'in';
+                        try {
+                          const attendanceRecord = todayAttendance.find((a: any) => a.staffId === staff.id);
+                          const action = (attendanceRecord?.clockIn && !attendanceRecord?.clockOut) ? 'out' : 'in';
                           handleClockAction(staff.id, action);
                           toast({
                             title: `Clock ${action === 'in' ? 'In' : 'Out'} Successful`,
                             description: `${staff.firstName} ${staff.lastName} has been clocked ${action}`,
                           });
                           setManualEntryOpen(false);
+                        } catch (error) {
+                          console.error('Error processing attendance:', error);
+                          toast({
+                            title: "Error",
+                            description: "Failed to process attendance. Please try again.",
+                            variant: "destructive"
+                          });
                         }
                       }}>
                         <div className="flex items-center justify-between">
@@ -742,7 +764,7 @@ export default function Attendance() {
                           </div>
                           <div className="text-right">
                             {(() => {
-                              const attendanceRecord = todayAttendance.find(a => a.staffId === staff.id);
+                              const attendanceRecord = todayAttendance.find((a: any) => a.staffId === staff.id);
                               if (!attendanceRecord?.clockIn) {
                                 return <Badge variant="outline">Clock In</Badge>;
                               } else if (attendanceRecord.clockIn && !attendanceRecord.clockOut) {
@@ -755,7 +777,11 @@ export default function Attendance() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="p-8 text-center text-gray-500">
+                      <p>No staff members found</p>
+                    </div>
+                  )}
                 </div>
               </div>
               
