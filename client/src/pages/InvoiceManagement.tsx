@@ -675,89 +675,110 @@ export default function InvoiceManagement() {
       <div class="invoice-container" style="max-width: 800px; margin: 0 auto; background: white; font-family: Arial, sans-serif;">
         <div class="header" style="background: #4F46E5; color: white; padding: 30px; display: flex; justify-content: space-between; align-items: center;">
           <div class="qr-section" style="width: 80px; height: 80px; background: white; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px solid #e2e8f0;">
-            <svg width="64" height="64" viewBox="0 0 25 25" style="shape-rendering: crispEdges;">
-              <!-- QR Code Pattern with Black modules -->
+            <svg width="64" height="64" viewBox="0 0 21 21" style="shape-rendering: crispEdges;">
+              <!-- White background -->
+              <rect x="0" y="0" width="21" height="21" fill="white"/>
+              
               <!-- Top-left finder pattern -->
               <rect x="0" y="0" width="7" height="7" fill="black"/>
               <rect x="1" y="1" width="5" height="5" fill="white"/>
               <rect x="2" y="2" width="3" height="3" fill="black"/>
               
               <!-- Top-right finder pattern -->
-              <rect x="18" y="0" width="7" height="7" fill="black"/>
-              <rect x="19" y="1" width="5" height="5" fill="white"/>
-              <rect x="20" y="2" width="3" height="3" fill="black"/>
+              <rect x="14" y="0" width="7" height="7" fill="black"/>
+              <rect x="15" y="1" width="5" height="5" fill="white"/>
+              <rect x="16" y="2" width="3" height="3" fill="black"/>
               
               <!-- Bottom-left finder pattern -->
-              <rect x="0" y="18" width="7" height="7" fill="black"/>
-              <rect x="1" y="19" width="5" height="5" fill="white"/>
-              <rect x="2" y="20" width="3" height="3" fill="black"/>
+              <rect x="0" y="14" width="7" height="7" fill="black"/>
+              <rect x="1" y="15" width="5" height="5" fill="white"/>
+              <rect x="2" y="16" width="3" height="3" fill="black"/>
               
-              <!-- Separators around finder patterns -->
-              <rect x="7" y="0" width="1" height="8" fill="white"/>
-              <rect x="0" y="7" width="8" height="1" fill="white"/>
-              <rect x="17" y="0" width="1" height="8" fill="white"/>
-              <rect x="18" y="7" width="7" height="1" fill="white"/>
-              <rect x="7" y="17" width="1" height="8" fill="white"/>
-              <rect x="0" y="17" width="8" height="1" fill="white"/>
-              
-              <!-- Timing patterns -->
+              <!-- Timing patterns (horizontal) -->
               <rect x="8" y="6" width="1" height="1" fill="black"/>
               <rect x="10" y="6" width="1" height="1" fill="black"/>
               <rect x="12" y="6" width="1" height="1" fill="black"/>
-              <rect x="14" y="6" width="1" height="1" fill="black"/>
-              <rect x="16" y="6" width="1" height="1" fill="black"/>
+              
+              <!-- Timing patterns (vertical) -->
               <rect x="6" y="8" width="1" height="1" fill="black"/>
               <rect x="6" y="10" width="1" height="1" fill="black"/>
               <rect x="6" y="12" width="1" height="1" fill="black"/>
-              <rect x="6" y="14" width="1" height="1" fill="black"/>
-              <rect x="6" y="16" width="1" height="1" fill="black"/>
               
-              <!-- Data modules pattern -->
+              <!-- Data modules - scattered pattern for authentic look -->
               <rect x="9" y="0" width="1" height="1" fill="black"/>
               <rect x="11" y="0" width="1" height="1" fill="black"/>
               <rect x="13" y="0" width="1" height="1" fill="black"/>
-              <rect x="15" y="0" width="1" height="1" fill="black"/>
+              
               <rect x="8" y="1" width="1" height="1" fill="black"/>
+              <rect x="10" y="1" width="1" height="1" fill="black"/>
               <rect x="12" y="1" width="1" height="1" fill="black"/>
-              <rect x="16" y="1" width="1" height="1" fill="black"/>
+              
               <rect x="9" y="2" width="1" height="1" fill="black"/>
               <rect x="11" y="2" width="1" height="1" fill="black"/>
-              <rect x="15" y="2" width="1" height="1" fill="black"/>
+              <rect x="13" y="2" width="1" height="1" fill="black"/>
+              
               <rect x="8" y="3" width="1" height="1" fill="black"/>
-              <rect x="10" y="3" width="1" height="1" fill="black"/>
-              <rect x="14" y="3" width="1" height="1" fill="black"/>
-              <rect x="16" y="3" width="1" height="1" fill="black"/>
+              <rect x="12" y="3" width="1" height="1" fill="black"/>
+              
               <rect x="9" y="4" width="1" height="1" fill="black"/>
+              <rect x="11" y="4" width="1" height="1" fill="black"/>
               <rect x="13" y="4" width="1" height="1" fill="black"/>
-              <rect x="15" y="4" width="1" height="1" fill="black"/>
               
-              <!-- Additional data modules -->
+              <!-- Center data area -->
               <rect x="8" y="8" width="1" height="1" fill="black"/>
-              <rect x="9" y="8" width="1" height="1" fill="black"/>
-              <rect x="11" y="8" width="1" height="1" fill="black"/>
-              <rect x="13" y="8" width="1" height="1" fill="black"/>
-              <rect x="15" y="8" width="1" height="1" fill="black"/>
-              <rect x="8" y="9" width="1" height="1" fill="black"/>
-              <rect x="10" y="9" width="1" height="1" fill="black"/>
-              <rect x="12" y="9" width="1" height="1" fill="black"/>
-              <rect x="14" y="9" width="1" height="1" fill="black"/>
-              <rect x="16" y="9" width="1" height="1" fill="black"/>
-              <rect x="9" y="10" width="1" height="1" fill="black"/>
-              <rect x="11" y="10" width="1" height="1" fill="black"/>
-              <rect x="13" y="10" width="1" height="1" fill="black"/>
-              <rect x="15" y="10" width="1" height="1" fill="black"/>
+              <rect x="10" y="8" width="1" height="1" fill="black"/>
+              <rect x="12" y="8" width="1" height="1" fill="black"/>
               
-              <!-- Bottom section data -->
+              <rect x="9" y="9" width="1" height="1" fill="black"/>
+              <rect x="11" y="9" width="1" height="1" fill="black"/>
+              
+              <rect x="8" y="10" width="1" height="1" fill="black"/>
+              <rect x="12" y="10" width="1" height="1" fill="black"/>
+              
+              <rect x="9" y="11" width="1" height="1" fill="black"/>
+              <rect x="11" y="11" width="1" height="1" fill="black"/>
+              
+              <rect x="10" y="12" width="1" height="1" fill="black"/>
+              <rect x="12" y="12" width="1" height="1" fill="black"/>
+              
+              <!-- Bottom right data -->
+              <rect x="14" y="8" width="1" height="1" fill="black"/>
+              <rect x="16" y="8" width="1" height="1" fill="black"/>
+              <rect x="18" y="8" width="1" height="1" fill="black"/>
+              <rect x="20" y="8" width="1" height="1" fill="black"/>
+              
+              <rect x="15" y="9" width="1" height="1" fill="black"/>
+              <rect x="17" y="9" width="1" height="1" fill="black"/>
+              <rect x="19" y="9" width="1" height="1" fill="black"/>
+              
+              <rect x="14" y="10" width="1" height="1" fill="black"/>
+              <rect x="16" y="10" width="1" height="1" fill="black"/>
+              <rect x="18" y="10" width="1" height="1" fill="black"/>
+              <rect x="20" y="10" width="1" height="1" fill="black"/>
+              
+              <!-- Bottom area -->
+              <rect x="8" y="14" width="1" height="1" fill="black"/>
+              <rect x="10" y="14" width="1" height="1" fill="black"/>
+              <rect x="12" y="14" width="1" height="1" fill="black"/>
+              
+              <rect x="9" y="15" width="1" height="1" fill="black"/>
+              <rect x="11" y="15" width="1" height="1" fill="black"/>
+              
               <rect x="8" y="16" width="1" height="1" fill="black"/>
-              <rect x="9" y="16" width="1" height="1" fill="black"/>
               <rect x="10" y="16" width="1" height="1" fill="black"/>
               <rect x="12" y="16" width="1" height="1" fill="black"/>
-              <rect x="14" y="16" width="1" height="1" fill="black"/>
-              <rect x="16" y="16" width="1" height="1" fill="black"/>
-              <rect x="8" y="17" width="1" height="1" fill="black"/>
-              <rect x="10" y="17" width="1" height="1" fill="black"/>
-              <rect x="13" y="17" width="1" height="1" fill="black"/>
-              <rect x="15" y="17" width="1" height="1" fill="black"/>
+              
+              <rect x="9" y="17" width="1" height="1" fill="black"/>
+              <rect x="11" y="17" width="1" height="1" fill="black"/>
+              
+              <rect x="8" y="18" width="1" height="1" fill="black"/>
+              <rect x="10" y="18" width="1" height="1" fill="black"/>
+              <rect x="12" y="18" width="1" height="1" fill="black"/>
+              
+              <rect x="9" y="19" width="1" height="1" fill="black"/>
+              <rect x="11" y="19" width="1" height="1" fill="black"/>
+              
+              <rect x="10" y="20" width="1" height="1" fill="black"/>
             </svg>
           </div>
           <div class="company-info" style="text-align: center; flex-grow: 1;">
