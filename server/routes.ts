@@ -1987,6 +1987,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inventory Invoices Total API
+  app.get('/api/inventory/invoice-totals', isAuthenticated, async (req, res) => {
+    try {
+      const payments = await storage.getPayments();
+      
+      // Filter for inventory-related payments (expenditures)
+      const inventoryInvoices = payments.filter(payment => {
+        const notes = payment.notes?.toLowerCase() || '';
+        const source = payment.source?.toLowerCase() || '';
+        
+        return payment.type === 'expenditure' || 
+               source.includes('expenditure') ||
+               source.includes('reorder') ||
+               source.includes('bulk_reorder') ||
+               notes.includes('expenditure') ||
+               notes.includes('purchase') ||
+               notes.includes('restock') ||
+               notes.includes('supplier') ||
+               notes.includes('reorder') ||
+               notes.includes('inventory purchase');
+      });
+      
+      const totalAmount = inventoryInvoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+      const totalCount = inventoryInvoices.length;
+      
+      // Group by payment method
+      const byPaymentMethod = inventoryInvoices.reduce((acc, invoice) => {
+        const method = invoice.paymentMethod || 'unknown';
+        acc[method] = (acc[method] || 0) + (invoice.amount || 0);
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Recent inventory invoices (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const recentInvoices = inventoryInvoices.filter(invoice => {
+        const paymentDate = new Date(invoice.paymentDate);
+        return paymentDate >= sevenDaysAgo;
+      });
+      
+      const recentTotal = recentInvoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
+      
+      res.json({
+        totalAmount,
+        totalCount,
+        recentTotal: recentTotal,
+        recentCount: recentInvoices.length,
+        byPaymentMethod,
+        lastUpdated: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Error fetching inventory invoice totals:', error);
+      res.status(500).json({ 
+        totalAmount: 0, 
+        totalCount: 0, 
+        recentTotal: 0, 
+        recentCount: 0, 
+        byPaymentMethod: {}, 
+        error: 'Failed to fetch data' 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
