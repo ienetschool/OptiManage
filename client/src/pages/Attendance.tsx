@@ -152,7 +152,10 @@ export default function Attendance() {
           <Button variant="outline" onClick={() => {
             // Mock QR scan with real staff data for demonstration
             const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
+            console.log('QR Scanner clicked - staffData:', staffData.length, 'realStaffCode:', realStaffCode);
+            console.log('todayAttendance:', todayAttendance);
             const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
+            console.log('Scanning QR with data:', sampleQRData);
             handleQRScan(sampleQRData);
           }}>
             <QrCode className="h-4 w-4 mr-2" />
