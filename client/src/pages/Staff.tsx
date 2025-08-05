@@ -2254,7 +2254,40 @@ export default function StaffPage() {
                           <p className="text-sm text-green-600">NID_DrSmitaGhosh.pdf</p>
                           <p className="text-xs text-green-500">Uploaded: Jan 15, 2024</p>
                         </div>
-                        <Button size="sm" variant="outline" className="text-green-600 border-green-300 hover:bg-green-100">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-green-600 border-green-300 hover:bg-green-100"
+                          onClick={() => {
+                            // Simulate opening a document viewer
+                            const documentWindow = window.open('', '_blank');
+                            if (documentWindow) {
+                              documentWindow.document.write(`
+                                <html>
+                                  <head><title>NID Document - Dr. Smita Ghosh</title></head>
+                                  <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+                                    <div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                      <h2 style="color: #2563eb; margin-bottom: 20px;">📄 Photo ID Document</h2>
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                                        <h3>National ID Card</h3>
+                                        <p><strong>Name:</strong> Dr. Smita Ghosh</p>
+                                        <p><strong>NID Number:</strong> 1234567890123</p>
+                                        <p><strong>Date of Birth:</strong> January 15, 1985</p>
+                                        <p><strong>Issue Date:</strong> March 10, 2020</p>
+                                        <p><strong>Expiry Date:</strong> March 10, 2030</p>
+                                      </div>
+                                      <div style="text-align: center; padding: 20px; background: #ecfdf5; border-radius: 6px;">
+                                        <p style="color: #059669; font-weight: bold;">✓ Document Verified</p>
+                                        <p style="color: #6b7280; font-size: 14px;">Uploaded: January 15, 2024</p>
+                                      </div>
+                                    </div>
+                                  </body>
+                                </html>
+                              `);
+                              documentWindow.document.close();
+                            }
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -2272,7 +2305,49 @@ export default function StaffPage() {
                           <p className="text-sm text-blue-600">MD_Ophthalmology.pdf</p>
                           <p className="text-xs text-blue-500">2 files • Latest: Dec 8, 2023</p>
                         </div>
-                        <Button size="sm" variant="outline" className="text-blue-600 border-blue-300 hover:bg-blue-100">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                          onClick={() => {
+                            // Simulate opening qualification documents viewer
+                            const documentWindow = window.open('', '_blank');
+                            if (documentWindow) {
+                              documentWindow.document.write(`
+                                <html>
+                                  <head><title>Qualification Certificates - Dr. Smita Ghosh</title></head>
+                                  <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+                                    <div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                      <h2 style="color: #2563eb; margin-bottom: 20px;">🎓 Qualification Certificates</h2>
+                                      
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
+                                        <h3>MBBS Certificate</h3>
+                                        <p><strong>Institution:</strong> All India Institute of Medical Sciences (AIIMS)</p>
+                                        <p><strong>Year of Graduation:</strong> 2008</p>
+                                        <p><strong>Specialization:</strong> Bachelor of Medicine, Bachelor of Surgery</p>
+                                        <p><strong>Grade:</strong> First Class with Distinction</p>
+                                      </div>
+                                      
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                                        <h3>MD Ophthalmology Certificate</h3>
+                                        <p><strong>Institution:</strong> Post Graduate Institute of Medical Education and Research</p>
+                                        <p><strong>Year of Completion:</strong> 2011</p>
+                                        <p><strong>Specialization:</strong> Doctor of Medicine in Ophthalmology</p>
+                                        <p><strong>Thesis:</strong> "Advanced Retinal Surgery Techniques"</p>
+                                      </div>
+                                      
+                                      <div style="text-align: center; padding: 20px; background: #ecfdf5; border-radius: 6px;">
+                                        <p style="color: #059669; font-weight: bold;">✓ All Certificates Verified</p>
+                                        <p style="color: #6b7280; font-size: 14px;">Latest Upload: December 8, 2023</p>
+                                      </div>
+                                    </div>
+                                  </body>
+                                </html>
+                              `);
+                              documentWindow.document.close();
+                            }
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -2289,7 +2364,52 @@ export default function StaffPage() {
                           <p className="text-sm text-purple-600">Employment_Contract_2024.pdf</p>
                           <p className="text-xs text-purple-500">Updated: March 12, 2024</p>
                         </div>
-                        <Button size="sm" variant="outline" className="text-purple-600 border-purple-300 hover:bg-purple-100">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-purple-600 border-purple-300 hover:bg-purple-100"
+                          onClick={() => {
+                            // Simulate opening appointment letter viewer
+                            const documentWindow = window.open('', '_blank');
+                            if (documentWindow) {
+                              documentWindow.document.write(`
+                                <html>
+                                  <head><title>Employment Contract - Dr. Smita Ghosh</title></head>
+                                  <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+                                    <div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                      <h2 style="color: #2563eb; margin-bottom: 20px;">📋 Employment Contract</h2>
+                                      
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
+                                        <h3>OptiStore Pro Medical Center</h3>
+                                        <p><strong>Employee:</strong> Dr. Smita Ghosh</p>
+                                        <p><strong>Position:</strong> Senior Ophthalmologist</p>
+                                        <p><strong>Department:</strong> Eye Care</p>
+                                        <p><strong>Contract Start Date:</strong> March 12, 2024</p>
+                                        <p><strong>Employment Type:</strong> Full-time Permanent</p>
+                                        <p><strong>Reporting Manager:</strong> Dr. Sarah Johnson (Medical Director)</p>
+                                      </div>
+                                      
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                                        <h3>Terms & Conditions</h3>
+                                        <p><strong>Salary:</strong> ₹85,000 per month</p>
+                                        <p><strong>Working Hours:</strong> 40 hours per week</p>
+                                        <p><strong>Annual Leave:</strong> 24 days</p>
+                                        <p><strong>Medical Benefits:</strong> Comprehensive health insurance</p>
+                                        <p><strong>Notice Period:</strong> 90 days</p>
+                                      </div>
+                                      
+                                      <div style="text-align: center; padding: 20px; background: #ecfdf5; border-radius: 6px;">
+                                        <p style="color: #059669; font-weight: bold;">✓ Contract Active</p>
+                                        <p style="color: #6b7280; font-size: 14px;">Last Updated: March 12, 2024</p>
+                                      </div>
+                                    </div>
+                                  </body>
+                                </html>
+                              `);
+                              documentWindow.document.close();
+                            }
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -2306,7 +2426,52 @@ export default function StaffPage() {
                           <p className="text-sm text-orange-600">Health_Checkup_2024.pdf</p>
                           <p className="text-xs text-orange-500">Updated: Feb 20, 2024</p>
                         </div>
-                        <Button size="sm" variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-100">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="text-orange-600 border-orange-300 hover:bg-orange-100"
+                          onClick={() => {
+                            // Simulate opening medical records viewer
+                            const documentWindow = window.open('', '_blank');
+                            if (documentWindow) {
+                              documentWindow.document.write(`
+                                <html>
+                                  <head><title>Medical Records - Dr. Smita Ghosh</title></head>
+                                  <body style="font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5;">
+                                    <div style="max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                                      <h2 style="color: #2563eb; margin-bottom: 20px;">🏥 Medical Health Records</h2>
+                                      
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
+                                        <h3>Annual Health Checkup 2024</h3>
+                                        <p><strong>Date:</strong> February 20, 2024</p>
+                                        <p><strong>Medical Officer:</strong> Dr. Robert Smith</p>
+                                        <p><strong>Blood Group:</strong> O+</p>
+                                        <p><strong>Height:</strong> 165 cm</p>
+                                        <p><strong>Weight:</strong> 58 kg</p>
+                                        <p><strong>Blood Pressure:</strong> 120/80 mmHg</p>
+                                        <p><strong>Overall Health:</strong> Excellent</p>
+                                      </div>
+                                      
+                                      <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 20px;">
+                                        <h3>Vaccination Records</h3>
+                                        <p><strong>COVID-19:</strong> Fully Vaccinated (Booster: Dec 2023)</p>
+                                        <p><strong>Hepatitis B:</strong> Up to date</p>
+                                        <p><strong>Influenza:</strong> Annual vaccination current</p>
+                                        <p><strong>Next Due:</strong> Annual checkup - February 2025</p>
+                                      </div>
+                                      
+                                      <div style="text-align: center; padding: 20px; background: #ecfdf5; border-radius: 6px;">
+                                        <p style="color: #059669; font-weight: bold;">✓ Medical Clearance Valid</p>
+                                        <p style="color: #6b7280; font-size: 14px;">Last Updated: February 20, 2024</p>
+                                      </div>
+                                    </div>
+                                  </body>
+                                </html>
+                              `);
+                              documentWindow.document.close();
+                            }
+                          }}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </div>
@@ -2750,8 +2915,21 @@ export default function StaffPage() {
                             <Label>Staff Photo</Label>
                             <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
                                  onClick={() => document.getElementById('edit-photo-upload')?.click()}>
-                              <User className="mx-auto h-12 w-12 text-gray-400" />
-                              <p className="mt-2 text-sm text-gray-500">Click to upload photo</p>
+                              {editingStaff?.photoUrl ? (
+                                <div className="space-y-2">
+                                  <img 
+                                    src={editingStaff.photoUrl} 
+                                    alt="Staff photo"
+                                    className="w-16 h-16 rounded-full mx-auto object-cover border-2 border-blue-200"
+                                  />
+                                  <p className="text-sm text-green-600">Photo uploaded - click to change</p>
+                                </div>
+                              ) : (
+                                <>
+                                  <User className="mx-auto h-12 w-12 text-gray-400" />
+                                  <p className="mt-2 text-sm text-gray-500">Click to upload photo</p>
+                                </>
+                              )}
                               <input 
                                 id="edit-photo-upload"
                                 type="file" 
@@ -2760,6 +2938,14 @@ export default function StaffPage() {
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
+                                    // Create a URL for the uploaded file to display it immediately
+                                    const photoUrl = URL.createObjectURL(file);
+                                    
+                                    // Update the form with the new photo URL
+                                    if (editingStaff) {
+                                      setEditingStaff({ ...editingStaff, photoUrl });
+                                    }
+                                    
                                     toast({
                                       title: "Photo uploaded",
                                       description: `Selected: ${file.name}`,
