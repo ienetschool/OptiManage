@@ -209,10 +209,11 @@ export default function Inventory() {
         console.log("Raw API response:", response);
         
         // Handle the response properly - apiRequest returns parsed JSON, not a Response object
-        if (response && typeof response === 'object') {
-          product = response;
+        if (response && typeof response === 'object' && (response as any).id) {
+          product = response as Product;
         } else {
-          throw new Error("Invalid response from API");
+          console.error("Invalid API response structure:", response);
+          throw new Error("Invalid response from API - missing product ID");
         }
       } catch (error) {
         console.error("API request failed:", error);
@@ -223,7 +224,8 @@ export default function Inventory() {
       const productId = product.id;
       console.log("Product created with ID:", productId);
       
-      if (!productId) {
+      if (!productId || typeof productId !== 'string') {
+        console.error("Product ID validation failed:", { productId, product });
         throw new Error("Product ID not returned from API");
       }
       
@@ -246,37 +248,50 @@ export default function Inventory() {
 
         // Auto-generate purchase invoice if requested
         if (createPurchaseOrder && productData.supplierId && purchasePrice) {
-          const unitCost = parseFloat(purchasePrice);
-          const subtotal = initialStock * unitCost;
-          const discountApplied = discountAmount || 0;
-          const subtotalAfterDiscount = subtotal - discountApplied;
-          const taxAmount = subtotalAfterDiscount * ((taxRate || 8.5) / 100);
-          const shipping = shippingCost || 0;
-          const handling = handlingCost || 0;
-          const total = subtotalAfterDiscount + taxAmount + shipping + handling;
+          try {
+            console.log("Creating purchase order with product ID:", productId);
+            const unitCost = parseFloat(purchasePrice);
+            
+            if (isNaN(unitCost) || unitCost <= 0) {
+              throw new Error("Invalid purchase price for purchase order");
+            }
+            
+            const subtotal = initialStock * unitCost;
+            const discountApplied = discountAmount || 0;
+            const subtotalAfterDiscount = subtotal - discountApplied;
+            const taxAmount = subtotalAfterDiscount * ((taxRate || 8.5) / 100);
+            const shipping = shippingCost || 0;
+            const handling = handlingCost || 0;
+            const total = subtotalAfterDiscount + taxAmount + shipping + handling;
 
-          const invoiceData = {
-            customerId: productData.supplierId,
-            storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
-            invoiceNumber: `PO-${Date.now().toString().slice(-6)}`,
-            date: new Date().toISOString(),
-            status: "pending",
-            subtotal: subtotal,
-            taxAmount: taxAmount,
-            total: total,
-            discountAmount: discountApplied,
-            taxRate: taxRate || 8.5,
-            paymentMethod: "credit",
-            notes: `Initial Stock Purchase - ${purchaseNotes} | Shipping: $${shipping} | Handling: $${handling}`,
-            items: [{
-              productId: productId,
-              quantity: initialStock,
-              unitPrice: unitCost,
-              total: subtotalAfterDiscount,
-            }]
-          };
-          
-          await apiRequest("POST", "/api/invoices", invoiceData);
+            const invoiceData = {
+              customerId: productData.supplierId,
+              storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
+              invoiceNumber: `PO-${Date.now().toString().slice(-6)}`,
+              date: new Date().toISOString(),
+              status: "pending",
+              subtotal: subtotal,
+              taxAmount: taxAmount,
+              total: total,
+              discountAmount: discountApplied,
+              taxRate: taxRate || 8.5,
+              paymentMethod: "credit",
+              notes: `Initial Stock Purchase - ${purchaseNotes} | Shipping: $${shipping} | Handling: $${handling}`,
+              items: [{
+                productId: productId,
+                quantity: initialStock,
+                unitPrice: unitCost,
+                total: subtotalAfterDiscount,
+              }]
+            };
+            
+            console.log("Creating invoice with data:", invoiceData);
+            const invoiceResponse = await apiRequest("POST", "/api/invoices", invoiceData);
+            console.log("Purchase order created successfully:", invoiceResponse);
+          } catch (invoiceError) {
+            console.error("Failed to create purchase order (continuing with product creation):", invoiceError);
+            // Don't throw error here - product was created successfully, just log the invoice error
+          }
         }
       }
       
