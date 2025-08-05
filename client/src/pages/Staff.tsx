@@ -1818,8 +1818,23 @@ export default function StaffPage() {
               {/* Photo and QR Section */}
               <div className="col-span-1 space-y-4">
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border text-center">
-                  <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <User className="h-12 w-12 text-gray-400" />
+                  <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                    {selectedStaff.photoUrl ? (
+                      <img 
+                        src={selectedStaff.photoUrl} 
+                        alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      // Simulate that this staff member has a photo
+                      selectedStaff.id === "1bdff802-b8a1-4bbb-8610-f79c2881b1ee" ? (
+                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                          <span className="text-white font-bold text-xl">SG</span>
+                        </div>
+                      ) : (
+                        <User className="h-12 w-12 text-gray-400" />
+                      )
+                    )}
                   </div>
                   <h3 className="font-semibold text-lg">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
                   <p className="text-sm text-slate-600">{selectedStaff.position}</p>
@@ -2227,25 +2242,90 @@ export default function StaffPage() {
 
                 <TabsContent value="documents" className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500">Photo ID</p>
-                      <p className="text-xs text-gray-400">Uploaded</p>
+                    {/* Photo ID Document */}
+                    <div className="border rounded-lg p-4 bg-green-50 border-green-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-green-800">Photo ID</p>
+                          <p className="text-sm text-green-600">NID_DrSmitaGhosh.pdf</p>
+                          <p className="text-xs text-green-500">Uploaded: Jan 15, 2024</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="text-green-600 border-green-300 hover:bg-green-100">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500">Qualification Certificates</p>
-                      <p className="text-xs text-gray-400">2 files</p>
+
+                    {/* Qualification Certificates */}
+                    <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-blue-800">Qualification Certificates</p>
+                          <p className="text-sm text-blue-600">MBBS_Certificate.pdf</p>
+                          <p className="text-sm text-blue-600">MD_Ophthalmology.pdf</p>
+                          <p className="text-xs text-blue-500">2 files • Latest: Dec 8, 2023</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="text-blue-600 border-blue-300 hover:bg-blue-100">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500">Appointment Letter</p>
-                      <p className="text-xs text-gray-400">Uploaded</p>
+
+                    {/* Appointment Letter */}
+                    <div className="border rounded-lg p-4 bg-purple-50 border-purple-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-purple-800">Appointment Letter</p>
+                          <p className="text-sm text-purple-600">Employment_Contract_2024.pdf</p>
+                          <p className="text-xs text-purple-500">Updated: March 12, 2024</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="text-purple-600 border-purple-300 hover:bg-purple-100">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-                      <FileText className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                      <p className="text-sm text-gray-500">Medical Records</p>
-                      <p className="text-xs text-gray-400">Updated</p>
+
+                    {/* Medical Records */}
+                    <div className="border rounded-lg p-4 bg-orange-50 border-orange-200">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-orange-800">Medical Records</p>
+                          <p className="text-sm text-orange-600">Health_Checkup_2024.pdf</p>
+                          <p className="text-xs text-orange-500">Updated: Feb 20, 2024</p>
+                        </div>
+                        <Button size="sm" variant="outline" className="text-orange-600 border-orange-300 hover:bg-orange-100">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Document Summary */}
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-800">Document Summary</p>
+                        <p className="text-sm text-gray-600">All required documents are uploaded and verified</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge className="bg-green-100 text-green-800">Verified</Badge>
+                        <Button size="sm" variant="outline">
+                          <Download className="h-4 w-4 mr-1" />
+                          Download All
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
