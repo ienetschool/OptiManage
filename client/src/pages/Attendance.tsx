@@ -109,17 +109,24 @@ export default function Attendance() {
   // QR Code scanner handler
   const handleQRScan = (qrData: string) => {
     try {
-      const staffData = JSON.parse(qrData);
-      if (staffData.staffCode) {
-        // Find staff member by QR code data
-        const staff = todayAttendance.find(s => s.staffCode === staffData.staffCode);
+      const qrStaffData = JSON.parse(qrData);
+      if (qrStaffData.staffCode) {
+        // Find staff member by QR code data in both staffCode and employeeId
+        const staff = todayAttendance.find(s => 
+          s.staffCode === qrStaffData.staffCode || 
+          s.staffCode === qrStaffData.employeeId
+        );
         if (staff) {
           const action = staff.clockIn && !staff.clockOut ? 'out' : 'in';
           handleClockAction(staff.staffId, action);
+          toast({
+            title: `Clock ${action === 'in' ? 'In' : 'Out'} Successful`,
+            description: `${staff.staffName} has been clocked ${action}`,
+          });
         } else {
           toast({
             title: "Staff Not Found",
-            description: "Could not find staff member with this QR code",
+            description: `Could not find staff member with code: ${qrStaffData.staffCode}`,
             variant: "destructive"
           });
         }
@@ -143,8 +150,9 @@ export default function Attendance() {
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" onClick={() => {
-            // Mock QR scan with sample data for demonstration
-            const sampleQRData = JSON.stringify({ staffCode: "STF001" });
+            // Mock QR scan with real staff data for demonstration
+            const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
+            const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
             handleQRScan(sampleQRData);
           }}>
             <QrCode className="h-4 w-4 mr-2" />
