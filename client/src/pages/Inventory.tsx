@@ -2614,6 +2614,7 @@ function ReorderForm({ product, currentStock, suppliers, onSubmit, onCancel }: R
   const [shipping, setShipping] = useState(0);
   const [handling, setHandling] = useState(0);
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
 
   const subtotal = quantity * unitCost;
   const taxAmount = subtotal * (taxRate / 100);
@@ -2638,7 +2639,8 @@ function ReorderForm({ product, currentStock, suppliers, onSubmit, onCancel }: R
           handling,
           subtotal,
           taxAmount,
-          total
+          total,
+          paymentMethod
         }),
       });
 
@@ -2777,15 +2779,32 @@ function ReorderForm({ product, currentStock, suppliers, onSubmit, onCancel }: R
         </div>
       </div>
 
-      <div>
-        <Label htmlFor="notes">Purchase Notes</Label>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Additional notes for this purchase order..."
-          className="min-h-[60px]"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="paymentMethod">Payment Method</Label>
+          <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select payment method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+              <SelectItem value="cash">Cash</SelectItem>
+              <SelectItem value="check">Check</SelectItem>
+              <SelectItem value="credit_card">Credit Card</SelectItem>
+              <SelectItem value="digital_wallet">Digital Wallet</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="notes">Purchase Notes</Label>
+          <Textarea
+            id="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Additional notes for this purchase order..."
+            className="min-h-[60px]"
+          />
+        </div>
       </div>
 
       {/* Cost Summary */}
@@ -2849,6 +2868,7 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
   const [discountAmount, setDiscountAmount] = useState(0);
   const [shippingCost, setShippingCost] = useState(50);
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
 
   const filteredProducts = products.filter(p => 
     p.supplierId === selectedSupplierId && 
@@ -3145,6 +3165,21 @@ function BulkReorderForm({ suppliers, products, onSubmit, onCancel }: BulkReorde
                   onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
                   className="mt-1"
                 />
+              </div>
+              <div>
+                <Label htmlFor="paymentMethod">Payment Method</Label>
+                <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select payment method" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="check">Check</SelectItem>
+                    <SelectItem value="credit_card">Credit Card</SelectItem>
+                    <SelectItem value="digital_wallet">Digital Wallet</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="notes">Notes</Label>

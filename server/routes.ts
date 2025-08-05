@@ -1389,7 +1389,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         handling,
         subtotal,
         taxAmount,
-        total
+        total,
+        paymentMethod
       } = req.body;
       
       // Get current product
@@ -1448,9 +1449,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shippingAmount: shipping || 0,
         handlingAmount: handling || 0,
         total: total || ((subtotal || (quantity * unitCost)) + (taxAmount || 0) - (discount || 0) + (shipping || 0) + (handling || 0)),
-        status: "pending" as const,
-        paymentMethod: "bank_transfer" as const,
-        paymentDate: null,
+        status: "paid" as const,
+        paymentMethod: (paymentMethod || "bank_transfer"),
+        paymentDate: new Date().toISOString(),
         notes: notes || `Purchase order for ${product.name} from ${supplierName}`,
         items: [{
           id: `item-${Date.now()}`,
