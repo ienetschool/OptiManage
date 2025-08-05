@@ -12,21 +12,29 @@ export function setupAccountingRoutes(app: any) {
         return res.status(400).json({ message: "Start date and end date are required" });
       }
 
-      // For now, calculate P&L from payment data
+      // For now, calculate P&L from payment data including expenditures
       const payments = await storage.getPayments();
       const filteredPayments = payments.filter(payment => {
         const paymentDate = new Date(payment.paymentDate);
         const start = new Date(startDate as string);
         const end = new Date(endDate as string);
-        return paymentDate >= start && paymentDate <= end && payment.status === 'completed';
+        return paymentDate >= start && paymentDate <= end;
       });
 
-      // Calculate revenue
-      const revenue = filteredPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+      // Separate revenue and expenditures
+      const revenuePayments = filteredPayments.filter(payment => 
+        payment.status === 'completed' && payment.type !== 'expenditure'
+      );
+      const expenditurePayments = filteredPayments.filter(payment => 
+        payment.type === 'expenditure'
+      );
+
+      // Calculate revenue (excluding expenditures)
+      const revenue = revenuePayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
       
-      // Calculate expenses (mock data for demonstration)
-      const expenses = revenue * 0.3; // Assume 30% operating expenses
-      const cogs = revenue * 0.4; // Assume 40% cost of goods sold
+      // Calculate actual expenses from expenditures
+      const expenses = expenditurePayments.reduce((sum, expenditure) => sum + parseFloat(expenditure.amount), 0);
+      const cogs = expenses * 0.7; // Assume 70% of expenditures are COGS
       
       const grossProfit = revenue - cogs;
       const netProfit = grossProfit - expenses;
@@ -40,13 +48,23 @@ export function setupAccountingRoutes(app: any) {
         netProfit,
         grossMargin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
         netMargin: revenue > 0 ? (netProfit / revenue) * 100 : 0,
-        entries: filteredPayments.map(payment => ({
-          date: payment.paymentDate,
-          description: `Payment from ${payment.customerName}`,
-          amount: parseFloat(payment.amount),
-          type: 'revenue',
-          source: payment.source
-        }))
+        entries: [
+          ...revenuePayments.map(payment => ({
+            date: payment.paymentDate,
+            description: `Payment from ${payment.customerName}`,
+            amount: parseFloat(payment.amount),
+            type: 'revenue',
+            source: payment.source
+          })),
+          ...expenditurePayments.map(expenditure => ({
+            date: expenditure.paymentDate,
+            description: expenditure.notes || `Expenditure - ${expenditure.customerName}`,
+            amount: -parseFloat(expenditure.amount), // Negative for expenses
+            type: 'expense',
+            source: expenditure.source,
+            category: expenditure.category
+          }))
+        ]
       };
 
       res.json(report);
@@ -61,9 +79,14 @@ export function setupAccountingRoutes(app: any) {
     try {
       const payments = await storage.getPayments();
       
-      const totalRevenue = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + parseFloat(p.amount), 0);
-      const productSales = payments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + parseFloat(p.amount), 0);
-      const serviceSales = payments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      // Separate revenue and expenditures for analytics
+      const revenuePayments = payments.filter(p => p.status === 'completed' && p.type !== 'expenditure');
+      const expenditurePayments = payments.filter(p => p.type === 'expenditure');
+      
+      const totalRevenue = revenuePayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      const totalExpenses = expenditurePayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      const productSales = revenuePayments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + parseFloat(p.amount), 0);
+      const serviceSales = revenuePayments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + parseFloat(p.amount), 0);
       
       // Payment method breakdown
       const paymentMethodBreakdown = payments.reduce((acc, payment) => {
@@ -92,14 +115,25 @@ export function setupAccountingRoutes(app: any) {
         });
       }
 
+      // Expenditure breakdown by category
+      const expenditureByCategory = expenditurePayments.reduce((acc, exp) => {
+        const category = exp.category || 'other';
+        acc[category] = (acc[category] || 0) + parseFloat(exp.amount);
+        return acc;
+      }, {} as Record<string, number>);
+
       res.json({
         totalRevenue,
+        totalExpenses,
+        netIncome: totalRevenue - totalExpenses,
         productSales,
         serviceSales,
         paymentMethodBreakdown,
+        expenditureByCategory,
         monthlyTrends,
-        completionRate: payments.length > 0 ? (payments.filter(p => p.status === 'completed').length / payments.length) * 100 : 0,
-        averageTransaction: payments.length > 0 ? totalRevenue / payments.length : 0
+        completionRate: payments.length > 0 ? (revenuePayments.length / payments.length) * 100 : 0,
+        averageTransaction: revenuePayments.length > 0 ? totalRevenue / revenuePayments.length : 0,
+        averageExpenditure: expenditurePayments.length > 0 ? totalExpenses / expenditurePayments.length : 0
       });
     } catch (error) {
       console.error("Error generating analytics:", error);

@@ -50,6 +50,9 @@ interface Payment {
   createdAt: string;
   source?: string;
   productType?: string;
+  type?: string;
+  category?: string;
+  notes?: string;
 }
 
 interface ProfitLossReport {
@@ -401,18 +404,26 @@ export default function Payments() {
     );
   };
 
-  // Analytics calculations
+  // Enhanced analytics calculations including expenditures
   const calculatePaymentAnalytics = () => {
-    const totalRevenue = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const productSales = payments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const serviceSales = payments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const revenuePayments = payments.filter(p => p.status === 'completed' && p.type !== 'expenditure');
+    const expenditurePayments = payments.filter(p => p.type === 'expenditure');
+    
+    const totalRevenue = revenuePayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const totalExpenses = expenditurePayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const productSales = revenuePayments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const serviceSales = revenuePayments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     
     return {
       totalRevenue,
+      totalExpenses,
+      netIncome: totalRevenue - totalExpenses,
       productSales,
       serviceSales,
-      avgTransaction: payments.length > 0 ? totalRevenue / payments.length : 0,
-      completionRate: payments.length > 0 ? (payments.filter(p => p.status === 'completed').length / payments.length) * 100 : 0
+      avgTransaction: revenuePayments.length > 0 ? totalRevenue / revenuePayments.length : 0,
+      avgExpenditure: expenditurePayments.length > 0 ? totalExpenses / expenditurePayments.length : 0,
+      completionRate: payments.length > 0 ? (revenuePayments.length / payments.length) * 100 : 0,
+      expenditureCount: expenditurePayments.length
     };
   };
 
@@ -547,16 +558,45 @@ export default function Payments() {
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-          {/* Analytics Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* Enhanced Analytics Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Total Revenue</p>
-                    <p className="text-2xl font-bold text-slate-900">${analytics.totalRevenue.toFixed(2)}</p>
+                    <p className="text-sm font-medium text-slate-600">Revenue</p>
+                    <p className="text-2xl font-bold text-green-600">${analytics.totalRevenue.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500">Income from sales</p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Expenses</p>
+                    <p className="text-2xl font-bold text-red-600">${analytics.totalExpenses.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500">{analytics.expenditureCount} transactions</p>
+                  </div>
+                  <TrendingDown className="h-8 w-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Net Income</p>
+                    <p className={`text-2xl font-bold ${analytics.netIncome >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      ${analytics.netIncome.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-slate-500">Revenue - Expenses</p>
+                  </div>
+                  <Calculator className="h-8 w-8 text-blue-600" />
                 </div>
               </CardContent>
             </Card>
@@ -664,6 +704,7 @@ export default function Payments() {
                           <div className="text-center">
                             <p className="text-sm text-gray-600">Expenses</p>
                             <p className="text-xl font-bold text-red-600">${profitLossReport.expenses?.toFixed(2) || '0.00'}</p>
+                            <p className="text-xs text-gray-500">Actual expenditures</p>
                           </div>
                         </CardContent>
                       </Card>
