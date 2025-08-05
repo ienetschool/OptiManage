@@ -275,6 +275,28 @@ export default function Patients() {
     couponDiscount: 0
   });
 
+  // Tab navigation state
+  const [currentTab, setCurrentTab] = useState("basic");
+  const [appointmentCurrentTab, setAppointmentCurrentTab] = useState("appointment");
+  
+  const patientTabs = ["basic", "contact", "medical", "insurance", "loyalty"];
+  const appointmentTabs = ["appointment", "payment", "coupon"];
+  
+  const getTabIndex = (tabId: string, tabs: string[]) => tabs.indexOf(tabId);
+  
+  const navigateTab = (direction: "next" | "prev", tabs: string[], currentTab: string, setTab: (tab: string) => void) => {
+    const currentIndex = getTabIndex(currentTab, tabs);
+    let newIndex;
+    
+    if (direction === "next") {
+      newIndex = Math.min(currentIndex + 1, tabs.length - 1);
+    } else {
+      newIndex = Math.max(currentIndex - 1, 0);
+    }
+    
+    setTab(tabs[newIndex]);
+  };
+
   // Service fee mapping
   const serviceFees = {
     "eye-exam": "150.00",
@@ -1749,10 +1771,16 @@ export default function Patients() {
                     </DialogDescription>
                   </DialogHeader>
                   
-                  <Tabs defaultValue="basic" className="w-full">
+                  <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
                     <TabsList className="grid w-full grid-cols-5">
-                      <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                      <TabsTrigger value="contact">Contact</TabsTrigger>
+                      <TabsTrigger value="basic" className="relative">
+                        Basic Info
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" title="Required fields"></span>
+                      </TabsTrigger>
+                      <TabsTrigger value="contact" className="relative">
+                        Contact
+                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" title="Required fields"></span>
+                      </TabsTrigger>
                       <TabsTrigger value="medical">Medical</TabsTrigger>
                       <TabsTrigger value="insurance">Insurance</TabsTrigger>
                       <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
@@ -1768,9 +1796,9 @@ export default function Patients() {
                               name="firstName"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>First Name *</FormLabel>
+                                  <FormLabel className="text-red-600 font-semibold">First Name *</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter first name" />
+                                    <Input {...field} placeholder="Enter first name" className="border-red-300 focus:border-red-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1782,9 +1810,9 @@ export default function Patients() {
                               name="lastName"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Last Name *</FormLabel>
+                                  <FormLabel className="text-red-600 font-semibold">Last Name *</FormLabel>
                                   <FormControl>
-                                    <Input {...field} placeholder="Enter last name" />
+                                    <Input {...field} placeholder="Enter last name" className="border-red-300 focus:border-red-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1796,9 +1824,9 @@ export default function Patients() {
                               name="dateOfBirth"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Date of Birth *</FormLabel>
+                                  <FormLabel className="text-red-600 font-semibold">Date of Birth *</FormLabel>
                                   <FormControl>
-                                    <Input type="date" {...field} value={field.value || ""} />
+                                    <Input type="date" {...field} value={field.value || ""} className="border-red-300 focus:border-red-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1810,10 +1838,10 @@ export default function Patients() {
                               name="gender"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Gender *</FormLabel>
+                                  <FormLabel className="text-red-600 font-semibold">Gender *</FormLabel>
                                   <Select onValueChange={field.onChange} value={field.value || ""}>
                                     <FormControl>
-                                      <SelectTrigger>
+                                      <SelectTrigger className="border-red-300 focus:border-red-500">
                                         <SelectValue placeholder="Select gender" />
                                       </SelectTrigger>
                                     </FormControl>
@@ -1858,6 +1886,19 @@ export default function Patients() {
 
 
                           </div>
+                          
+                          {/* Navigation Buttons for Basic Tab */}
+                          <div className="flex justify-between pt-4">
+                            <div></div>
+                            <Button 
+                              type="button" 
+                              onClick={() => navigateTab("next", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === patientTabs.length - 1}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Next: Contact Info →
+                            </Button>
+                          </div>
                         </TabsContent>
 
                         {/* Contact Information Tab */}
@@ -1868,9 +1909,9 @@ export default function Patients() {
                               name="phone"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Phone Number *</FormLabel>
+                                  <FormLabel className="text-red-600 font-semibold">Phone Number *</FormLabel>
                                   <FormControl>
-                                    <Input {...field} value={field.value || ""} placeholder="Enter phone number" />
+                                    <Input {...field} value={field.value || ""} placeholder="Enter phone number" className="border-red-300 focus:border-red-500" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -2002,6 +2043,26 @@ export default function Patients() {
                               />
                             </div>
                           </div>
+                          
+                          {/* Navigation Buttons for Contact Tab */}
+                          <div className="flex justify-between pt-4">
+                            <Button 
+                              type="button" 
+                              variant="outline"
+                              onClick={() => navigateTab("prev", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === 0}
+                            >
+                              ← Back: Basic Info
+                            </Button>
+                            <Button 
+                              type="button" 
+                              onClick={() => navigateTab("next", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === patientTabs.length - 1}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Next: Medical Info →
+                            </Button>
+                          </div>
                         </TabsContent>
 
                         {/* Medical Information Tab */}
@@ -2033,6 +2094,26 @@ export default function Patients() {
                               </FormItem>
                             )}
                           />
+                          
+                          {/* Navigation Buttons for Medical Tab */}
+                          <div className="flex justify-between pt-4">
+                            <Button 
+                              type="button" 
+                              variant="outline"
+                              onClick={() => navigateTab("prev", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === 0}
+                            >
+                              ← Back: Contact
+                            </Button>
+                            <Button 
+                              type="button" 
+                              onClick={() => navigateTab("next", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === patientTabs.length - 1}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Next: Insurance →
+                            </Button>
+                          </div>
                         </TabsContent>
 
                         {/* Insurance Information Tab */}
@@ -2191,6 +2272,26 @@ export default function Patients() {
                               </div>
                             </div>
                           </div>
+                          
+                          {/* Navigation Buttons for Insurance Tab */}
+                          <div className="flex justify-between pt-4">
+                            <Button 
+                              type="button" 
+                              variant="outline"
+                              onClick={() => navigateTab("prev", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === 0}
+                            >
+                              ← Back: Medical
+                            </Button>
+                            <Button 
+                              type="button" 
+                              onClick={() => navigateTab("next", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === patientTabs.length - 1}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              Next: Loyalty →
+                            </Button>
+                          </div>
                         </TabsContent>
 
                         {/* Loyalty Information Tab */}
@@ -2239,6 +2340,25 @@ export default function Patients() {
                                 </FormItem>
                               )}
                             />
+                          </div>
+                          
+                          {/* Navigation Buttons for Loyalty Tab */}
+                          <div className="flex justify-between pt-4">
+                            <Button 
+                              type="button" 
+                              variant="outline"
+                              onClick={() => navigateTab("prev", patientTabs, currentTab, setCurrentTab)}
+                              disabled={getTabIndex(currentTab, patientTabs) === 0}
+                            >
+                              ← Back: Insurance
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              disabled={createPatientMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              {createPatientMutation.isPending ? "Registering..." : "Complete Registration"}
+                            </Button>
                           </div>
                         </TabsContent>
 
