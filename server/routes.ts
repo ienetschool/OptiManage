@@ -1716,7 +1716,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         items: invoice.items?.map(item => ({
           productName: item.productName || 'Unknown Product',
           description: item.description || '',
-          productId: "N/A",
+          productId: item.productId || 'N/A',
           quantity: item.quantity || 0,
           unitPrice: item.unitPrice || 0,
           total: item.total || 0
