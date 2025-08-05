@@ -2477,6 +2477,7 @@ export default function Inventory() {
             <ReorderForm 
               product={selectedProductForReorder}
               currentStock={enrichedProducts.find(p => p.id === selectedProductForReorder.id)?.currentStock || 0}
+              suppliers={suppliers}
               onSubmit={(data) => {
                 console.log('Reorder submitted:', data);
                 
@@ -2585,11 +2586,13 @@ export default function Inventory() {
 interface ReorderFormProps {
   product: Product;
   currentStock: number;
+  suppliers: Supplier[];
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }
 
-function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormProps) {
+function ReorderForm({ product, currentStock, suppliers, onSubmit, onCancel }: ReorderFormProps) {
+  const [selectedSupplierId, setSelectedSupplierId] = useState(product.supplierId || "");
   const [quantity, setQuantity] = useState((product.reorderLevel || 10) * 2);
   const [unitCost, setUnitCost] = useState(parseFloat(product.costPrice || "0"));
   const [taxRate, setTaxRate] = useState(8.5);
@@ -2611,6 +2614,7 @@ function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormP
         },
         body: JSON.stringify({
           productId: product.id,
+          supplierId: selectedSupplierId,
           quantity,
           unitCost,
           notes,
@@ -2645,6 +2649,8 @@ function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormP
     }
   };
 
+  const selectedSupplier = suppliers.find(s => s.id === selectedSupplierId);
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -2656,6 +2662,33 @@ function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormP
           <Label>Reorder Level</Label>
           <p className="text-sm text-slate-600">{product.reorderLevel || 10} units</p>
         </div>
+      </div>
+
+      {/* Supplier Selection */}
+      <div>
+        <Label htmlFor="supplier">Select Supplier</Label>
+        <Select value={selectedSupplierId} onValueChange={setSelectedSupplierId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Choose a supplier for this purchase order" />
+          </SelectTrigger>
+          <SelectContent>
+            {suppliers.map((supplier) => (
+              <SelectItem key={supplier.id} value={supplier.id}>
+                <div className="flex flex-col">
+                  <span className="font-medium">{supplier.name}</span>
+                  {supplier.email && (
+                    <span className="text-xs text-slate-500">{supplier.email}</span>
+                  )}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedSupplier && (
+          <p className="text-xs text-slate-600 mt-1">
+            Purchase order will be created for: <span className="font-medium">{selectedSupplier.name}</span>
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -2769,7 +2802,11 @@ function ReorderForm({ product, currentStock, onSubmit, onCancel }: ReorderFormP
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} className="bg-orange-600 hover:bg-orange-700">
+        <Button 
+          onClick={handleSubmit} 
+          disabled={!selectedSupplierId}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
           <Calculator className="mr-2 h-4 w-4" />
           Create Purchase Order & Invoice
         </Button>

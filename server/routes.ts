@@ -1358,7 +1358,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Product Reorder API
   app.post('/api/products/reorder', isAuthenticated, async (req, res) => {
     try {
-      const { productId, quantity, unitCost, notes, supplierId } = req.body;
+      const { 
+        productId, 
+        quantity, 
+        unitCost, 
+        notes, 
+        supplierId,
+        taxRate,
+        discount,
+        shipping,
+        handling,
+        subtotal,
+        taxAmount,
+        total
+      } = req.body;
       
       // Get current product
       const products = await storage.getProducts();
@@ -1377,41 +1390,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.updateProduct(productId, updatedProduct);
       
+      // Get supplier information
+      const suppliers = await storage.getSuppliers();
+      const supplier = suppliers.find(s => s.id === supplierId);
+      const supplierName = supplier?.name || "Unknown Supplier";
+      
       // Create purchase invoice
       const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
-      const subtotal = quantity * unitCost;
-      const taxAmount = subtotal * 0.085; // 8.5% tax
-      const total = subtotal + taxAmount;
       
       const invoice = {
         id: `reorder-${Date.now()}`,
         invoiceNumber,
-        customerId: null,
-        customerName: "Supplier Purchase",
+        customerId: supplierId, // Use supplier as customer for purchase orders
+        customerName: supplierName,
         storeId: "5ff902af-3849-4ea6-945b-4d49175d6638",
         storeName: "OptiStore Pro",
         date: new Date().toISOString(),
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-        subtotal,
-        taxRate: 8.5,
-        taxAmount,
-        discountAmount: 0,
-        total,
-        status: "paid" as const,
+        subtotal: subtotal || (quantity * unitCost),
+        taxRate: taxRate || 8.5,
+        taxAmount: taxAmount || ((subtotal || (quantity * unitCost)) * ((taxRate || 8.5) / 100)),
+        discountAmount: discount || 0,
+        shippingAmount: shipping || 0,
+        handlingAmount: handling || 0,
+        total: total || ((subtotal || (quantity * unitCost)) + (taxAmount || 0) - (discount || 0) + (shipping || 0) + (handling || 0)),
+        status: "pending" as const,
         paymentMethod: "bank_transfer" as const,
-        paymentDate: new Date().toISOString(),
-        notes: notes || `Restock order for ${product.name}`,
+        paymentDate: null,
+        notes: notes || `Purchase order for ${product.name} from ${supplierName}`,
         items: [{
           id: `item-${Date.now()}`,
           productId: product.id,
           productName: product.name,
-          description: `Restock - ${quantity} units`,
+          description: `Purchase order - ${quantity} units from ${supplierName}`,
           quantity,
           unitPrice: unitCost,
           discount: 0,
-          total: subtotal
+          total: quantity * unitCost
         }],
-        source: "reorder"
+        source: "reorder",
+        supplierId
       };
       
       // Store the invoice
