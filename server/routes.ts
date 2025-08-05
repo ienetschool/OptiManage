@@ -1707,7 +1707,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: "orders@visionsupply.com"
         },
         items: [{
-          productName: "Test Frame Model-X1",
+          productName: "Ray-Ban@23225",
           description: "Restock - 25 units",
           productId: "TF-X1-001",
           quantity: 25,
@@ -1720,7 +1720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shipping: 25.00,
         total: 3280.00,
         status: "PAID",
-        notes: "Restock order for Test Frame Model-X1 - Premium optical frames"
+        notes: "Restock order for Ray-Ban@23225 - Premium optical frames"
       };
 
       const invoiceHtml = `
