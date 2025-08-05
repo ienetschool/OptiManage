@@ -15,7 +15,7 @@ import {
   Plus, Package, AlertTriangle, Search, Edit, Trash2, TrendingDown, TrendingUp, 
   Package2, Warehouse, MoreVertical, Eye, ShoppingCart, BarChart3,
   QrCode, Download, Share, Printer, FileText, Copy, ExternalLink,
-  CheckCircle2, Clock, AlertCircle, XCircle, Share2, Calculator, RefreshCw
+  CheckCircle2, Clock, AlertCircle, XCircle, Share2, Calculator, RefreshCw, CreditCard
 } from "lucide-react";
 import QRCode from 'react-qr-code';
 import { useForm } from "react-hook-form";
@@ -106,6 +106,10 @@ export default function Inventory() {
     discountAmount: number;
     shippingCost: number;
     handlingCost: number;
+    // Coupon redemption fields
+    appliedCouponCode: string;
+    serviceType: string;
+    couponDiscountAmount: number;
   }>({
     resolver: zodResolver(insertProductSchema.extend({
       initialStock: z.number().min(0).default(0),
@@ -116,6 +120,10 @@ export default function Inventory() {
       discountAmount: z.number().min(0).default(0),
       shippingCost: z.number().min(0).default(0),
       handlingCost: z.number().min(0).default(0),
+      // Coupon redemption validation
+      appliedCouponCode: z.string().optional(),
+      serviceType: z.enum(['eye_exam', 'glasses', 'contact_lenses', 'surgery', 'treatment', 'consultation', 'diagnostic', 'other']).optional(),
+      couponDiscountAmount: z.number().min(0).default(0),
     })),
     defaultValues: {
       name: "",
@@ -137,6 +145,10 @@ export default function Inventory() {
       discountAmount: 0,
       shippingCost: 0,
       handlingCost: 0,
+      // Coupon redemption defaults
+      appliedCouponCode: "",
+      serviceType: "",
+      couponDiscountAmount: 0,
     },
   });
 
@@ -170,8 +182,11 @@ export default function Inventory() {
       discountAmount: number;
       shippingCost: number;
       handlingCost: number;
+      appliedCouponCode: string;
+      serviceType: string;
+      couponDiscountAmount: number;
     }) => {
-      const { initialStock, purchasePrice, createPurchaseOrder, purchaseNotes, taxRate, discountAmount, shippingCost, handlingCost, ...productData } = data;
+      const { initialStock, purchasePrice, createPurchaseOrder, purchaseNotes, taxRate, discountAmount, shippingCost, handlingCost, appliedCouponCode, serviceType, couponDiscountAmount, ...productData } = data;
       
       // Auto-generate barcode if not provided or empty
       if (!productData.barcode || productData.barcode.trim() === '') {
@@ -221,7 +236,9 @@ export default function Inventory() {
           const unitCost = parseFloat(purchasePrice);
           const subtotal = initialStock * unitCost;
           const discountApplied = discountAmount || 0;
-          const subtotalAfterDiscount = subtotal - discountApplied;
+          const couponDiscount = couponDiscountAmount || 0;
+          const totalDiscounts = discountApplied + couponDiscount;
+          const subtotalAfterDiscount = subtotal - totalDiscounts;
           const taxAmount = subtotalAfterDiscount * ((taxRate || 8.5) / 100);
           const shipping = shippingCost || 0;
           const handling = handlingCost || 0;
@@ -236,10 +253,13 @@ export default function Inventory() {
             subtotal: subtotal,
             taxAmount: taxAmount,
             total: total,
-            discountAmount: discountApplied,
+            discountAmount: totalDiscounts,
+            appliedCouponCode: appliedCouponCode || null,
+            serviceType: serviceType || null,
+            couponDiscountAmount: couponDiscount,
             taxRate: taxRate || 8.5,
             paymentMethod: "credit",
-            notes: `Initial Stock Purchase - ${purchaseNotes} | Shipping: $${shipping} | Handling: $${handling}`,
+            notes: `Initial Stock Purchase - ${purchaseNotes} | Shipping: $${shipping} | Handling: $${handling}${appliedCouponCode ? ` | Coupon: ${appliedCouponCode} (${serviceType})` : ''}`,
             items: [{
               productId: productId,
               quantity: initialStock,
@@ -1078,6 +1098,78 @@ export default function Inventory() {
                             />
                           </div>
 
+                          {/* Coupon Redemption Section */}
+                          <div className="border rounded-lg p-4 bg-green-50">
+                            <h4 className="text-lg font-medium text-green-800 mb-4 flex items-center">
+                              <CreditCard className="h-5 w-5 mr-2" />
+                              Coupon Redemption
+                            </h4>
+                            <div className="grid grid-cols-3 gap-4">
+                              <FormField
+                                control={productForm.control}
+                                name="appliedCouponCode"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Coupon Code</FormLabel>
+                                    <FormControl>
+                                      <Input {...field} placeholder="Enter coupon code" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={productForm.control}
+                                name="serviceType"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Service Type</FormLabel>
+                                    <Select onValueChange={field.onChange} value={field.value}>
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select service type" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        <SelectItem value="eye_exam">Eye Exam</SelectItem>
+                                        <SelectItem value="glasses">Glasses</SelectItem>
+                                        <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                                        <SelectItem value="surgery">Surgery</SelectItem>
+                                        <SelectItem value="treatment">Treatment</SelectItem>
+                                        <SelectItem value="consultation">Consultation</SelectItem>
+                                        <SelectItem value="diagnostic">Diagnostic Tests</SelectItem>
+                                        <SelectItem value="other">Other</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={productForm.control}
+                                name="couponDiscountAmount"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Coupon Amount ($)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="0.01"
+                                        {...field}
+                                        value={field.value || ""}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        placeholder="0.00"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </div>
+
                           <div className="p-4 bg-slate-50 rounded-lg space-y-2">
                             <h4 className="font-medium text-slate-900">Purchase Order Summary</h4>
                             <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1094,6 +1186,14 @@ export default function Inventory() {
                                   -${(productForm.watch("discountAmount") || 0).toFixed(2)}
                                 </span>
                               </div>
+                              {(productForm.watch("couponDiscountAmount") || 0) > 0 && (
+                                <div>
+                                  <span className="text-slate-600">Coupon Discount:</span>
+                                  <span className="ml-2 font-medium text-green-600">
+                                    -${(productForm.watch("couponDiscountAmount") || 0).toFixed(2)}
+                                  </span>
+                                </div>
+                              )}
                               <div>
                                 <span className="text-slate-600">Tax ({(productForm.watch("taxRate") || 8.5)}%):</span>
                                 <span className="ml-2 font-medium">
@@ -1116,12 +1216,14 @@ export default function Inventory() {
                                     const qty = productForm.watch("initialStock") || 0;
                                     const price = parseFloat(productForm.watch("purchasePrice")) || 0;
                                     const discount = productForm.watch("discountAmount") || 0;
+                                    const couponDiscount = productForm.watch("couponDiscountAmount") || 0;
                                     const taxRate = (productForm.watch("taxRate") || 8.5) / 100;
                                     const shipping = productForm.watch("shippingCost") || 0;
                                     const handling = productForm.watch("handlingCost") || 0;
                                     
                                     const subtotal = qty * price;
-                                    const afterDiscount = subtotal - discount;
+                                    const totalDiscounts = discount + couponDiscount;
+                                    const afterDiscount = subtotal - totalDiscounts;
                                     const tax = afterDiscount * taxRate;
                                     const total = afterDiscount + tax + shipping + handling;
                                     
