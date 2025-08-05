@@ -2236,152 +2236,13 @@ export default function Inventory() {
                 </Button>
               </div>
 
-              {/* Purchase History List */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg bg-blue-50/30">
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="secondary" className="text-xs">Last Purchase</Badge>
-                    <div>
-                      <p className="font-medium text-sm">25 units</p>
-                      <p className="text-xs text-slate-600">Jan 15, 2024</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs text-slate-500 font-mono">INV-2024-001</span>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 px-3"
-                        onClick={() => window.open(`/api/invoice/pdf/INV-2024-001`, '_blank')}
-                      >
-                        <FileText className="mr-1 h-3 w-3" />
-                        PDF
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 px-3"
-                        onClick={() => {
-                          if (!selectedProduct) return;
-                          const invoiceData = {
-                            invoiceNumber: 'INV-2024-001',
-                            product: selectedProduct.name,
-                            quantity: 25,
-                            unitCost: selectedProduct.costPrice || '45.00',
-                            total: (25 * parseFloat(selectedProduct.costPrice || '45.00')).toFixed(2),
-                            date: 'Jan 15, 2024'
-                          };
-                          navigator.clipboard.writeText(`Invoice: ${invoiceData.invoiceNumber}\nProduct: ${invoiceData.product}\nQuantity: ${invoiceData.quantity}\nTotal: $${invoiceData.total}`);
-                          toast({
-                            title: "Invoice Info Copied",
-                            description: "Invoice details copied to clipboard",
-                          });
-                        }}
-                      >
-                        <Share2 className="mr-1 h-3 w-3" />
-                        Share
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-green-200 rounded-lg bg-green-50/30">
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="secondary" className="text-xs">Previous Order</Badge>
-                    <div>
-                      <p className="font-medium text-sm">50 units</p>
-                      <p className="text-xs text-slate-600">Dec 10, 2023</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs text-slate-500 font-mono">INV-2023-089</span>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 px-3"
-                        onClick={() => window.open(`/api/invoice/pdf/INV-2023-089`, '_blank')}
-                      >
-                        <FileText className="mr-1 h-3 w-3" />
-                        PDF
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 px-3"
-                        onClick={() => {
-                          if (!selectedProduct) return;
-                          const invoiceData = {
-                            invoiceNumber: 'INV-2023-089',
-                            product: selectedProduct.name,
-                            quantity: 50,
-                            unitCost: selectedProduct.costPrice || '45.00',
-                            total: (50 * parseFloat(selectedProduct.costPrice || '45.00')).toFixed(2),
-                            date: 'Dec 10, 2023'
-                          };
-                          navigator.clipboard.writeText(`Invoice: ${invoiceData.invoiceNumber}\nProduct: ${invoiceData.product}\nQuantity: ${invoiceData.quantity}\nTotal: $${invoiceData.total}`);
-                          toast({
-                            title: "Invoice Info Copied",
-                            description: "Invoice details copied to clipboard",
-                          });
-                        }}
-                      >
-                        <Share2 className="mr-1 h-3 w-3" />
-                        Share
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-purple-200 rounded-lg bg-purple-50/30">
-                  <div className="flex items-center space-x-4">
-                    <Badge variant="secondary" className="text-xs">Initial Stock</Badge>
-                    <div>
-                      <p className="font-medium text-sm">100 units</p>
-                      <p className="text-xs text-slate-600">Oct 5, 2023</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs text-slate-500 font-mono">INV-2023-045</span>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 px-3"
-                        onClick={() => window.open(`/api/invoice/pdf/INV-2023-045`, '_blank')}
-                      >
-                        <FileText className="mr-1 h-3 w-3" />
-                        PDF
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 px-3"
-                        onClick={() => {
-                          if (!selectedProduct) return;
-                          const invoiceData = {
-                            invoiceNumber: 'INV-2023-045',
-                            product: selectedProduct.name,
-                            quantity: 100,
-                            unitCost: selectedProduct.costPrice || '45.00',
-                            total: (100 * parseFloat(selectedProduct.costPrice || '45.00')).toFixed(2),
-                            date: 'Oct 5, 2023'
-                          };
-                          navigator.clipboard.writeText(`Invoice: ${invoiceData.invoiceNumber}\nProduct: ${invoiceData.product}\nQuantity: ${invoiceData.quantity}\nTotal: $${invoiceData.total}`);
-                          toast({
-                            title: "Invoice Info Copied",
-                            description: "Invoice details copied to clipboard",
-                          });
-                        }}
-                      >
-                        <Share2 className="mr-1 h-3 w-3" />
-                        Share
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ProductPurchaseHistory 
+                productId={selectedProduct.id} 
+                onReorder={() => {
+                  setSelectedProductForReorder(selectedProduct);
+                  setOpenReorderModal(true);
+                }}
+              />
             </div>
             </>
           )}
@@ -2579,6 +2440,159 @@ export default function Inventory() {
         />
       )}
     </main>
+  );
+}
+
+// Product Purchase History Component
+interface ProductPurchaseHistoryProps {
+  productId: string;
+  onReorder: () => void;
+}
+
+function ProductPurchaseHistory({ productId, onReorder }: ProductPurchaseHistoryProps) {
+  const { toast } = useToast();
+  
+  // Query to get invoices for this specific product
+  const { data: productInvoices = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/invoices/product", productId],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-sm text-slate-500">Loading purchase history...</div>
+      </div>
+    );
+  }
+
+  if (productInvoices.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="space-y-2">
+          <p className="text-sm text-slate-500">No purchase history found</p>
+          <p className="text-xs text-slate-400">Create your first purchase order for this product</p>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="mt-4"
+          onClick={onReorder}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create First Purchase Order
+        </Button>
+      </div>
+    );
+  }
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
+  const getInvoiceItems = (invoice: any) => {
+    return invoice.items?.filter((item: any) => item.productId === productId) || [];
+  };
+
+  return (
+    <div className="space-y-3">
+      {productInvoices.map((invoice, index) => {
+        const items = getInvoiceItems(invoice);
+        const totalQuantity = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+        const badgeColor = index === 0 ? "blue" : index === 1 ? "green" : "purple";
+        const badgeText = index === 0 ? "Latest Purchase" : index === 1 ? "Previous Order" : "Earlier Order";
+        
+        return (
+          <div 
+            key={invoice.id}
+            className={`flex items-center justify-between p-4 border rounded-lg ${
+              index === 0 ? 'border-blue-200 bg-blue-50/30' : 
+              index === 1 ? 'border-green-200 bg-green-50/30' : 
+              'border-purple-200 bg-purple-50/30'
+            }`}
+          >
+            <div className="flex items-center space-x-4">
+              <Badge 
+                variant="secondary" 
+                className={`text-xs ${
+                  index === 0 ? 'bg-blue-100 text-blue-700' : 
+                  index === 1 ? 'bg-green-100 text-green-700' : 
+                  'bg-purple-100 text-purple-700'
+                }`}
+              >
+                {badgeText}
+              </Badge>
+              <div>
+                <p className="font-medium text-sm">{totalQuantity} units</p>
+                <p className="text-xs text-slate-600">{formatDate(invoice.date)}</p>
+                {invoice.customerName && (
+                  <p className="text-xs text-slate-500">From: {invoice.customerName}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="text-right">
+                <span className="text-xs text-slate-500 font-mono block">{invoice.invoiceNumber}</span>
+                <span className="text-xs text-slate-600">${invoice.total?.toFixed(2) || '0.00'}</span>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-3"
+                  onClick={() => window.open(`/invoice/${invoice.invoiceNumber}`, '_blank')}
+                >
+                  <FileText className="mr-1 h-3 w-3" />
+                  View
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 px-3"
+                  onClick={() => {
+                    const invoiceData = {
+                      invoiceNumber: invoice.invoiceNumber,
+                      supplier: invoice.customerName,
+                      quantity: totalQuantity,
+                      total: invoice.total?.toFixed(2) || '0.00',
+                      date: formatDate(invoice.date)
+                    };
+                    navigator.clipboard.writeText(
+                      `Invoice: ${invoiceData.invoiceNumber}\nSupplier: ${invoiceData.supplier}\nQuantity: ${invoiceData.quantity} units\nTotal: $${invoiceData.total}\nDate: ${invoiceData.date}`
+                    );
+                    toast({
+                      title: "Invoice Info Copied",
+                      description: "Purchase order details copied to clipboard",
+                    });
+                  }}
+                >
+                  <Share2 className="mr-1 h-3 w-3" />
+                  Share
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+      
+      <div className="text-center py-4 border-t">
+        <p className="text-sm text-slate-500 mb-2">
+          {productInvoices.length} purchase order{productInvoices.length !== 1 ? 's' : ''} found
+        </p>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={onReorder}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Create New Purchase Order
+        </Button>
+      </div>
+    </div>
   );
 }
 

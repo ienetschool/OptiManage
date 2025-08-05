@@ -666,6 +666,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get invoices for a specific product
+  app.get('/api/invoices/product/:productId', isAuthenticated, async (req, res) => {
+    try {
+      const { productId } = req.params;
+      const invoices = await storage.getInvoices();
+      
+      // Filter invoices that contain the specific product and are from reorders/purchases
+      const productInvoices = invoices.filter(invoice => 
+        invoice.items?.some((item: any) => item.productId === productId) &&
+        (invoice.source === 'reorder' || invoice.source === 'bulk-reorder')
+      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      res.json(productInvoices);
+    } catch (error) {
+      console.error("Error fetching product invoices:", error);
+      res.status(500).json({ message: "Failed to fetch product invoices" });
+    }
+  });
+
   // Payments route - combines invoices and medical invoices as payment records
   app.get('/api/payments', isAuthenticated, async (req, res) => {
     try {
@@ -1390,6 +1409,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.updateProduct(productId, updatedProduct);
       
+      // Update inventory stock - add the quantity to current stock
+      const storeId = "5ff902af-3849-4ea6-945b-4d49175d6638"; // Default store ID
+      try {
+        const currentInventory = await storage.getStoreInventory(storeId);
+        const existingInventory = currentInventory.find(inv => inv.productId === productId);
+        const currentStock = existingInventory ? existingInventory.quantity : 0;
+        const newStock = currentStock + quantity;
+        
+        await storage.updateInventory(storeId, productId, newStock);
+        console.log(`Updated inventory: ${product.name} from ${currentStock} to ${newStock} units`);
+      } catch (inventoryError) {
+        console.error("Error updating inventory:", inventoryError);
+        // Continue with invoice creation even if inventory update fails
+      }
+      
       // Get supplier information
       const suppliers = await storage.getSuppliers();
       const supplier = suppliers.find(s => s.id === supplierId);
@@ -1473,6 +1507,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           await storage.updateProduct(productId, updatedProduct);
           updatedProducts.push(updatedProduct);
+          
+          // Update inventory stock for bulk reorder
+          const storeId = "5ff902af-3849-4ea6-945b-4d49175d6638"; // Default store ID
+          try {
+            const currentInventory = await storage.getStoreInventory(storeId);
+            const existingInventory = currentInventory.find(inv => inv.productId === productId);
+            const currentStock = existingInventory ? existingInventory.quantity : 0;
+            const newStock = currentStock + data.quantity;
+            
+            await storage.updateInventory(storeId, productId, newStock);
+            console.log(`Bulk reorder: Updated inventory for ${product.name} from ${currentStock} to ${newStock} units`);
+          } catch (inventoryError) {
+            console.error(`Error updating inventory for product ${productId}:`, inventoryError);
+            // Continue with other products even if one fails
+          }
           
           // Add to invoice items
           invoiceItems.push({
