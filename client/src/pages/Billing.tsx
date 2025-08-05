@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { 
   Plus, 
   Search, 
@@ -43,9 +49,31 @@ interface Invoice {
   pdfUrl?: string;
 }
 
+// Invoice creation schema with coupon redemption
+const createInvoiceSchema = z.object({
+  customerId: z.string().min(1, "Customer is required"),
+  serviceType: z.string().optional(),
+  items: z.array(z.object({
+    productId: z.string().optional(),
+    productName: z.string().min(1, "Product name is required"),
+    quantity: z.number().min(1, "Quantity must be at least 1"),
+    unitPrice: z.number().min(0, "Price must be non-negative"),
+  })).min(1, "At least one item is required"),
+  discountAmount: z.number().min(0).default(0),
+  taxRate: z.number().min(0).default(0),
+  // Coupon redemption fields
+  appliedCouponCode: z.string().optional(),
+  couponServiceType: z.enum(['eye_exam', 'glasses', 'contact_lenses', 'surgery', 'treatment', 'consultation', 'diagnostic', 'other']).optional(),
+  couponDiscountAmount: z.number().min(0).default(0),
+  notes: z.string().optional(),
+});
+
+type CreateInvoiceData = z.infer<typeof createInvoiceSchema>;
+
 export default function BillingPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -75,6 +103,69 @@ export default function BillingPage() {
         pdfUrl: `/invoices/${invoice.invoiceNumber}.pdf`
       }));
     }
+  });
+
+  // Fetch customers and products for invoice creation
+  const { data: customers = [] } = useQuery({
+    queryKey: ["/api/customers"],
+    queryFn: async () => {
+      const response = await fetch("/api/customers");
+      if (!response.ok) throw new Error("Failed to fetch customers");
+      return response.json();
+    }
+  });
+
+  const { data: products = [] } = useQuery({
+    queryKey: ["/api/products"],
+    queryFn: async () => {
+      const response = await fetch("/api/products");
+      if (!response.ok) throw new Error("Failed to fetch products");
+      return response.json();
+    }
+  });
+
+  // Invoice creation form
+  const form = useForm<CreateInvoiceData>({
+    resolver: zodResolver(createInvoiceSchema),
+    defaultValues: {
+      customerId: "",
+      serviceType: "",
+      items: [{ productName: "", quantity: 1, unitPrice: 0 }],
+      discountAmount: 0,
+      taxRate: 8.5,
+      appliedCouponCode: "",
+      couponDiscountAmount: 0,
+      notes: "",
+    },
+  });
+
+  // Create invoice mutation
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: CreateInvoiceData) => {
+      const response = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create invoice");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setShowCreateInvoice(false);
+      form.reset();
+      toast({
+        title: "Success",
+        description: "Invoice created successfully with coupon redemption applied.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create invoice. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Fetch medical invoices as well
@@ -278,10 +369,301 @@ export default function BillingPage() {
               </select>
             </div>
             
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus className="mr-2 h-4 w-4" />
-              New Invoice
-            </Button>
+            <Dialog open={showCreateInvoice} onOpenChange={setShowCreateInvoice}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Invoice
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Create New Invoice with Coupon Redemption</DialogTitle>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit((data) => createInvoiceMutation.mutate(data))} className="space-y-6">
+                    {/* Customer Selection */}
+                    <FormField
+                      control={form.control}
+                      name="customerId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Customer *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a customer" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {customers.map((customer: any) => (
+                                <SelectItem key={customer.id} value={customer.id}>
+                                  {customer.firstName} {customer.lastName} - {customer.email}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Service Type */}
+                    <FormField
+                      control={form.control}
+                      name="serviceType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Service Type</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select service type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="eye_exam">Eye Exam</SelectItem>
+                              <SelectItem value="glasses">Glasses</SelectItem>
+                              <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                              <SelectItem value="surgery">Surgery</SelectItem>
+                              <SelectItem value="treatment">Treatment</SelectItem>
+                              <SelectItem value="consultation">Consultation</SelectItem>
+                              <SelectItem value="diagnostic">Diagnostic Tests</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Coupon Redemption Section */}
+                    <div className="border rounded-lg p-4 bg-green-50">
+                      <h3 className="font-medium text-green-800 mb-3 flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Coupon Redemption
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="appliedCouponCode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coupon Code</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Enter coupon code" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="couponServiceType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coupon Service Type</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select service type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="eye_exam">Eye Exam</SelectItem>
+                                  <SelectItem value="glasses">Glasses</SelectItem>
+                                  <SelectItem value="contact_lenses">Contact Lenses</SelectItem>
+                                  <SelectItem value="surgery">Surgery</SelectItem>
+                                  <SelectItem value="treatment">Treatment</SelectItem>
+                                  <SelectItem value="consultation">Consultation</SelectItem>
+                                  <SelectItem value="diagnostic">Diagnostic Tests</SelectItem>
+                                  <SelectItem value="other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="couponDiscountAmount"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Coupon Amount ($)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  {...field}
+                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                  placeholder="0.00"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Invoice Items */}
+                    <div className="space-y-4">
+                      <h3 className="font-medium">Invoice Items</h3>
+                      {form.watch('items').map((_, index) => (
+                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.productName`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Product/Service *</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Product name" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.quantity`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Quantity *</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                    min="1"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`items.${index}.unitPrice`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Unit Price ($) *</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    min="0"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <div className="flex items-end">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                const items = form.getValues('items');
+                                if (items.length > 1) {
+                                  items.splice(index, 1);
+                                  form.setValue('items', items);
+                                }
+                              }}
+                              disabled={form.watch('items').length === 1}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const items = form.getValues('items');
+                          items.push({ productName: "", quantity: 1, unitPrice: 0 });
+                          form.setValue('items', items);
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Item
+                      </Button>
+                    </div>
+
+                    {/* Additional Fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="discountAmount"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Additional Discount ($)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                min="0"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="taxRate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Tax Rate (%)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                {...field}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                min="0"
+                                max="100"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Notes</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} placeholder="Additional notes for this invoice..." />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex justify-end space-x-2">
+                      <Button type="button" variant="outline" onClick={() => setShowCreateInvoice(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit" disabled={createInvoiceMutation.isPending}>
+                        {createInvoiceMutation.isPending ? "Creating..." : "Create Invoice with Coupon"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Invoices Table */}
@@ -310,7 +692,7 @@ export default function BillingPage() {
                     {searchTerm ? "Try adjusting your search criteria." : "Create your first invoice to get started."}
                   </p>
                   {!searchTerm && (
-                    <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => setShowCreateInvoice(true)}>
                       <Plus className="mr-2 h-4 w-4" />
                       Create Invoice
                     </Button>
