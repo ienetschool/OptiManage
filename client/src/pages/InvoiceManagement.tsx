@@ -317,8 +317,8 @@ export default function InvoiceManagement() {
     console.log("  - Products loading:", productsLoading);
     console.log("  - First 3 products:", products.slice(0, 3));
     console.log("  - All product names:", products.map(p => p.name));
-    console.log("  - Inventory length:", inventory.length);
-    console.log("  - Product types:", [...new Set(products.map(p => typeof p))]);
+    console.log("  - Inventory length:", Array.isArray(inventory) ? inventory.length : 0);
+    console.log("  - Product types:", Array.from(new Set(products.map(p => typeof p))));
     if (products.length === 0 && !productsLoading) {
       console.warn("⚠️ NO PRODUCTS LOADED - Check API endpoint");
     }
@@ -1873,45 +1873,67 @@ export default function InvoiceManagement() {
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex justify-end space-x-2">
-                    <Button 
-                      variant="outline"
-                      onClick={() => setShowInvoicePreview(true)}
-                    >
-                      <Printer className="h-4 w-4 mr-2" />
-                      Professional Invoice Preview
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => setShowInvoicePreview(true)}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Export Modern PDF
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      onClick={() => {
-                        toast({
-                          title: "Email Sent",
-                          description: "Invoice sent to customer email",
-                        });
-                      }}
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      Send to Customer
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        toast({
-                          title: "Status Updated",
-                          description: "Invoice marked as paid",
-                        });
-                      }}
-                    >
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Mark as Paid
-                    </Button>
+                  {/* Quick Actions */}
+                  <div className="flex justify-between items-center">
+                    <div className="flex space-x-2">
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => window.print()}
+                      >
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowInvoicePreview(true)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        PDF
+                      </Button>
+                      <Button 
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          navigator.share?.({
+                            title: `Invoice ${selectedInvoice.invoiceNumber}`,
+                            text: `Invoice ${selectedInvoice.invoiceNumber} - $${selectedInvoice.total.toFixed(2)}`,
+                            url: window.location.href
+                          }) || navigator.clipboard.writeText(window.location.href);
+                          toast({
+                            title: "Share Link Copied",
+                            description: "Invoice link copied to clipboard",
+                          });
+                        }}
+                      >
+                        <Share className="h-4 w-4 mr-2" />
+                        Share
+                      </Button>
+                    </div>
+                    
+                    {/* Payment Status Action */}
+                    {selectedInvoice.status !== 'paid' && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          toast({
+                            title: "Status Updated",
+                            description: "Invoice marked as paid",
+                          });
+                        }}
+                      >
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Mark as Paid
+                      </Button>
+                    )}
+                    
+                    {selectedInvoice.status === 'paid' && (
+                      <Badge variant="default" className="bg-green-100 text-green-800">
+                        <Check className="h-3 w-3 mr-1" />
+                        Paid
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </DialogContent>
@@ -1923,7 +1945,7 @@ export default function InvoiceManagement() {
             <ProfessionalInvoiceTemplate
               invoice={{
                 ...selectedInvoice,
-                discountAmount: selectedInvoice?.discountAmount || 0,
+                discount: selectedInvoice?.discountAmount || 0,
                 appliedCouponCode: (selectedInvoice as any)?.appliedCouponCode,
                 couponDiscount: (selectedInvoice as any)?.couponDiscount || 0
               }}

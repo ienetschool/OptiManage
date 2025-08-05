@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { X, Download, Printer } from "lucide-react";
+import { X, Download, Printer, Share } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import QRCodeReact from "react-qr-code";
@@ -92,17 +92,31 @@ export default function ProfessionalInvoiceTemplate({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] overflow-hidden">
-        {/* Action Buttons */}
+        {/* Quick Action Header */}
         <div className="flex justify-between items-center p-4 border-b bg-gray-50 print:hidden">
-          <h2 className="text-lg font-semibold text-gray-900">Professional Invoice</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Invoice {invoice.invoiceNumber}</h2>
           <div className="flex gap-2">
-            <Button onClick={downloadPDF} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Download PDF
-            </Button>
             <Button onClick={printInvoice} variant="outline" size="sm">
               <Printer className="w-4 h-4 mr-2" />
               Print
+            </Button>
+            <Button onClick={downloadPDF} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              PDF
+            </Button>
+            <Button 
+              onClick={() => {
+                navigator.share?.({
+                  title: `Invoice ${invoice.invoiceNumber}`,
+                  text: `Invoice ${invoice.invoiceNumber} - $${invoice.total.toFixed(2)}`,
+                  url: window.location.href
+                }) || navigator.clipboard.writeText(`Invoice ${invoice.invoiceNumber} - $${invoice.total.toFixed(2)}`);
+              }} 
+              variant="outline" 
+              size="sm"
+            >
+              <Share className="w-4 h-4 mr-2" />
+              Share
             </Button>
             {onClose && (
               <Button onClick={onClose} variant="outline" size="sm">
