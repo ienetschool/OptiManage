@@ -276,7 +276,7 @@ export default function InvoiceManagement() {
     }))
   ];
 
-  // Enhance invoice data with customer names
+  // Enhance invoice data with customer names and sort by latest date first
   const enrichedInvoices = React.useMemo(() => {
     if (!Array.isArray(invoices)) return [];
     return invoices.map((invoice: any) => {
@@ -286,6 +286,11 @@ export default function InvoiceManagement() {
         customerName: customer ? `${customer.firstName} ${customer.lastName}` : 
                     invoice.customerName || 'Guest Customer'
       };
+    }).sort((a: any, b: any) => {
+      // Sort by date in descending order (latest first)
+      const dateA = new Date(a.date || a.issueDate || a.createdAt || 0);
+      const dateB = new Date(b.date || b.issueDate || b.createdAt || 0);
+      return dateB.getTime() - dateA.getTime();
     });
   }, [invoices, customers]);
 
