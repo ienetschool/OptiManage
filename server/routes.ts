@@ -672,13 +672,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { productId } = req.params;
       const invoices = await storage.getInvoices();
       
-      // Filter invoices that contain the specific product and are from reorders/purchases
-      const productInvoices = invoices.filter(invoice => 
-        invoice.items?.some((item: any) => item.productId === productId) &&
-        (invoice.source === 'reorder' || invoice.source === 'bulk-reorder')
-      ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      console.log(`🔍 Looking for product ID: ${productId}`);
+      console.log(`📋 Total invoices to check: ${invoices.length}`);
       
-      res.json(productInvoices);
+      // Filter invoices that contain the specific product
+      const productInvoices = invoices.filter(invoice => {
+        const hasProduct = invoice.items?.some((item: any) => item.productId === productId);
+        const isReorderSource = invoice.source === 'reorder' || invoice.source === 'bulk-reorder';
+        
+        if (hasProduct) {
+          console.log(`✅ Found invoice ${invoice.invoiceNumber} with product, source: ${invoice.source}`);
+        }
+        
+        return hasProduct && isReorderSource;
+      }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      console.log(`📊 Filtered invoices count: ${productInvoices.length}`);
+      
+      // If no reorder invoices found, let's also include any invoices that have this product
+      if (productInvoices.length === 0) {
+        const anyInvoicesWithProduct = invoices.filter(invoice => 
+          invoice.items?.some((item: any) => item.productId === productId)
+        ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        console.log(`🔄 No reorder invoices found, showing any invoices with product: ${anyInvoicesWithProduct.length}`);
+        res.json(anyInvoicesWithProduct);
+      } else {
+        res.json(productInvoices);
+      }
     } catch (error) {
       console.error("Error fetching product invoices:", error);
       res.status(500).json({ message: "Failed to fetch product invoices" });

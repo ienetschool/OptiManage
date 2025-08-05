@@ -763,6 +763,7 @@ export class DatabaseStorage implements IStorage {
         paymentMethod: invoice.paymentMethod,
         paymentDate: invoice.paymentDate?.toISOString(),
         notes: invoice.notes || "",
+        source: (invoice as any).source || null,
         items: dbInvoiceItems.filter(item => item.invoiceId === invoice.id).map(item => ({
           id: item.id,
           productId: item.productId,
@@ -903,6 +904,7 @@ export class DatabaseStorage implements IStorage {
         status: invoice.paymentMethod === 'cash' ? 'paid' : (invoice.status || 'draft'),
         paymentMethod: invoice.paymentMethod || null,
         notes: patientId ? `PATIENT_ID:${patientId}|${invoice.notes || ''}` : (invoice.notes || null),
+        source: invoice.source || null,
       };
       
       console.log(`📤 INSERT DATA:`, JSON.stringify(insertData, null, 2));
