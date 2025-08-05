@@ -18,6 +18,7 @@ import {
   CheckCircle2, Clock, AlertCircle, XCircle, Share2, Calculator, RefreshCw, CreditCard
 } from "lucide-react";
 import QRCode from 'react-qr-code';
+import PurchaseInvoiceTemplate from '@/components/PurchaseInvoiceTemplate';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -50,6 +51,8 @@ export default function Inventory() {
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [selectedProductsForBulkReorder, setSelectedProductsForBulkReorder] = useState<string[]>([]);
   const [bulkReorderData, setBulkReorderData] = useState<Record<string, { quantity: number; unitCost: number }>>({});
+  const [showPurchaseInvoice, setShowPurchaseInvoice] = useState(false);
+  const [purchaseInvoiceData, setPurchaseInvoiceData] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
@@ -2279,6 +2282,12 @@ export default function Inventory() {
                     description: data.message || `Reorder has been processed and invoice ${data.invoice?.invoiceNumber} created.`,
                   });
                   
+                  // Show purchase invoice if available
+                  if (data.invoice) {
+                    setPurchaseInvoiceData(data.invoice);
+                    setShowPurchaseInvoice(true);
+                  }
+                  
                   // Refresh data
                   queryClient.invalidateQueries({ queryKey: ["/api/products"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
@@ -2321,6 +2330,12 @@ export default function Inventory() {
                   description: data.message || `Bulk reorder has been processed and invoice ${data.invoice?.invoiceNumber} created.`,
                 });
                 
+                // Show purchase invoice if available
+                if (data.invoice) {
+                  setPurchaseInvoiceData(data.invoice);
+                  setShowPurchaseInvoice(true);
+                }
+                
                 // Refresh data
                 queryClient.invalidateQueries({ queryKey: ["/api/products"] });
                 queryClient.invalidateQueries({ queryKey: ["/api/store-inventory"] });
@@ -2347,6 +2362,17 @@ export default function Inventory() {
           />
         </DialogContent>
       </Dialog>
+
+      {/* Purchase Invoice Preview Modal */}
+      {showPurchaseInvoice && purchaseInvoiceData && (
+        <PurchaseInvoiceTemplate
+          invoice={purchaseInvoiceData}
+          onClose={() => {
+            setShowPurchaseInvoice(false);
+            setPurchaseInvoiceData(null);
+          }}
+        />
+      )}
     </main>
   );
 }
