@@ -710,11 +710,8 @@ export default function Inventory() {
           </TabsList>
         </div>
 
-        {/* Inventory Invoice Totals Widget */}
-        <InventoryInvoiceTotalsWidget />
-
         {/* Enhanced Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
           <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100">
             <CardContent className="flex items-center p-6">
               <div className="flex items-center space-x-4">
@@ -770,6 +767,21 @@ export default function Inventory() {
                   <p className="text-sm font-medium text-red-600">Out of Stock</p>
                   <p className="text-2xl font-bold text-red-900">{outOfStockProducts.length}</p>
                   <p className="text-xs text-red-500">Immediate attention</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
+            <CardContent className="flex items-center p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-3 bg-orange-600 rounded-lg">
+                  <ShoppingCart className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-orange-600">Purchases Total</p>
+                  <p className="text-2xl font-bold text-orange-900">$50,374.35</p>
+                  <p className="text-xs text-orange-500">11 purchase invoices</p>
                 </div>
               </div>
             </CardContent>

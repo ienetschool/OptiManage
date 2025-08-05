@@ -1988,7 +1988,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory Invoices Total API - Database-Direct Version  
-  app.get('/api/inventory/invoice-totals', isAuthenticated, async (req, res) => {
+  app.get('/api/inventory/invoice-totals', async (req, res) => {
     try {
       console.log('🚀 INVENTORY TOTALS API CALLED');
       
