@@ -620,6 +620,7 @@ export default function InvoiceManagement() {
   const generateProfessionalInvoice = (invoice: Invoice) => {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
+    const storeName = store?.name || 'OptiStore Pro';
     
     const printWindow = window.open('', '_blank', 'width=900,height=1200');
     if (!printWindow) return;
