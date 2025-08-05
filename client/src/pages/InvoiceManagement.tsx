@@ -1379,7 +1379,6 @@ export default function InvoiceManagement() {
                                               <CommandItem
                                                 key={product.id}
                                                 value={`${product.name} ${product.sku || ''} ${product.category || ''}`}
-                                                keywords={[product.name, product.sku, product.category, product.id]}
                                                 onSelect={() => {
                                                   field.onChange(product.id);
                                                   itemForm.setValue("unitPrice", Number(product.price));
