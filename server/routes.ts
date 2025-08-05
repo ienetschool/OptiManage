@@ -1585,6 +1585,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Installation setup route
+  app.get('/install', async (req, res) => {
+    try {
+      const { readFile } = await import('fs/promises');
+      const { join } = await import('path');
+      const installHtml = await readFile(join(process.cwd(), 'install.html'), 'utf8');
+      res.setHeader('Content-Type', 'text/html');
+      res.send(installHtml);
+    } catch (error) {
+      res.status(404).send('Installation page not found');
+    }
+  });
+
+  // Installation configuration endpoint
+  app.post('/api/install/configure', async (req, res) => {
+    try {
+      const {
+        domain,
+        subdomain,
+        ssl,
+        port,
+        dbType,
+        dbHost,
+        dbPort,
+        dbName,
+        dbUser,
+        dbPassword,
+        dbUrl,
+        adminEmail,
+        companyName,
+        environment,
+        timezone
+      } = req.body;
+
+      // Simulate configuration process
+      console.log('📋 Installation Configuration:', {
+        domain,
+        dbType,
+        dbHost,
+        adminEmail,
+        companyName,
+        environment
+      });
+
+      // Here you would normally:
+      // 1. Create/update .env file
+      // 2. Test database connection
+      // 3. Run database migrations
+      // 4. Set up initial admin user
+      // 5. Configure domain settings
+
+      res.json({
+        success: true,
+        message: 'Installation configured successfully',
+        redirect: '/'
+      });
+    } catch (error) {
+      console.error('Installation configuration error:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to configure installation'
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

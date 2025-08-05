@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiStore Pro - Installation Setup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="bg-white rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center shadow-lg">
+                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">OptiStore Pro Installation</h1>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Configure your domain and database settings to set up your optical retail management system</p>
+        </div>
+
+        <!-- Installation Form -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+                <!-- Progress Bar -->
+                <div class="bg-blue-600 h-2">
+                    <div class="bg-blue-800 h-full w-1/3 transition-all duration-500"></div>
+                </div>
+
+                <!-- Form Header -->
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-2">System Configuration</h2>
+                    <p class="text-gray-600">Enter your domain and database details to configure the application</p>
+                </div>
+
+                <!-- Form Content -->
+                <form id="installForm" class="p-6 space-y-8">
+                    <!-- Domain Configuration Section -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-6 h-6 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-800">Domain Configuration</h3>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="domain" class="block text-sm font-medium text-gray-700 mb-2">Primary Domain</label>
+                                <input type="url" id="domain" name="domain" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="https://your-domain.com" required>
+                                <p class="text-sm text-gray-500 mt-1">The main domain where your application will be accessible</p>
+                            </div>
+                            
+                            <div>
+                                <label for="subdomain" class="block text-sm font-medium text-gray-700 mb-2">Subdomain (Optional)</label>
+                                <input type="text" id="subdomain" name="subdomain" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="app">
+                                <p class="text-sm text-gray-500 mt-1">Optional subdomain for the application</p>
+                            </div>
+                            
+                            <div>
+                                <label for="ssl" class="flex items-center">
+                                    <input type="checkbox" id="ssl" name="ssl" class="mr-3 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">Enable SSL/HTTPS</span>
+                                </label>
+                                <p class="text-sm text-gray-500 mt-1 ml-7">Recommended for production environments</p>
+                            </div>
+                            
+                            <div>
+                                <label for="port" class="block text-sm font-medium text-gray-700 mb-2">Port</label>
+                                <input type="number" id="port" name="port" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="5000" value="5000">
+                                <p class="text-sm text-gray-500 mt-1">Application port number</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Configuration Section -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"></path>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-800">Database Configuration</h3>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Database Type</label>
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="dbType" value="postgresql" class="mr-2 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" checked>
+                                    <span class="text-sm font-medium text-gray-700">PostgreSQL</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="dbType" value="mysql" class="mr-2 w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                                    <span class="text-sm font-medium text-gray-700">MySQL</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="dbHost" class="block text-sm font-medium text-gray-700 mb-2">Database Host</label>
+                                <input type="text" id="dbHost" name="dbHost" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="localhost" required>
+                            </div>
+                            
+                            <div>
+                                <label for="dbPort" class="block text-sm font-medium text-gray-700 mb-2">Database Port</label>
+                                <input type="number" id="dbPort" name="dbPort" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="5432" value="5432">
+                            </div>
+                            
+                            <div>
+                                <label for="dbName" class="block text-sm font-medium text-gray-700 mb-2">Database Name</label>
+                                <input type="text" id="dbName" name="dbName" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="optistorepro" required>
+                            </div>
+                            
+                            <div>
+                                <label for="dbUser" class="block text-sm font-medium text-gray-700 mb-2">Database Username</label>
+                                <input type="text" id="dbUser" name="dbUser" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="postgres" required>
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label for="dbPassword" class="block text-sm font-medium text-gray-700 mb-2">Database Password</label>
+                                <input type="password" id="dbPassword" name="dbPassword" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="Enter database password" required>
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label for="dbUrl" class="block text-sm font-medium text-gray-700 mb-2">Database URL (Optional)</label>
+                                <input type="text" id="dbUrl" name="dbUrl" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="postgresql://user:password@host:port/database">
+                                <p class="text-sm text-gray-500 mt-1">If provided, this will override individual database fields</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Configuration Section -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-6 h-6 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-800">Additional Settings</h3>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
+                                <input type="email" id="adminEmail" name="adminEmail" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="admin@optistorepro.com" required>
+                            </div>
+                            
+                            <div>
+                                <label for="companyName" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
+                                <input type="text" id="companyName" name="companyName" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                       placeholder="OptiStore Pro" required>
+                            </div>
+                            
+                            <div>
+                                <label for="environment" class="block text-sm font-medium text-gray-700 mb-2">Environment</label>
+                                <select id="environment" name="environment" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                    <option value="development">Development</option>
+                                    <option value="staging">Staging</option>
+                                    <option value="production">Production</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="timezone" class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
+                                <select id="timezone" name="timezone" 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                                    <option value="UTC">UTC</option>
+                                    <option value="America/New_York">Eastern Time</option>
+                                    <option value="America/Chicago">Central Time</option>
+                                    <option value="America/Denver">Mountain Time</option>
+                                    <option value="America/Los_Angeles">Pacific Time</option>
+                                    <option value="Europe/London">London</option>
+                                    <option value="Asia/Tokyo">Tokyo</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                        <button type="button" id="testConnection" 
+                                class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Test Connection
+                        </button>
+                        
+                        <div class="space-x-4">
+                            <button type="button" 
+                                    class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                Install OptiStore Pro
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessages" class="max-w-4xl mx-auto mt-6 space-y-4"></div>
+    </div>
+
+    <script>
+        // Auto-update database port based on database type
+        document.querySelectorAll('input[name="dbType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const dbPortInput = document.getElementById('dbPort');
+                if (this.value === 'postgresql') {
+                    dbPortInput.value = '5432';
+                } else if (this.value === 'mysql') {
+                    dbPortInput.value = '3306';
+                }
+            });
+        });
+
+        // Test database connection
+        document.getElementById('testConnection').addEventListener('click', async function() {
+            const button = this;
+            const originalText = button.textContent;
+            button.textContent = 'Testing...';
+            button.disabled = true;
+
+            // Simulate connection test
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            showStatusMessage('Database connection successful!', 'success');
+            
+            button.textContent = originalText;
+            button.disabled = false;
+        });
+
+        // Form submission
+        document.getElementById('installForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Installing...';
+            submitButton.disabled = true;
+
+            // Simulate installation process
+            showStatusMessage('Creating configuration files...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            showStatusMessage('Setting up database...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            showStatusMessage('Configuring domain settings...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            showStatusMessage('Installation completed successfully!', 'success');
+            
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        });
+
+        function showStatusMessage(message, type) {
+            const container = document.getElementById('statusMessages');
+            const messageEl = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-100 border-green-400 text-green-700' :
+                           type === 'error' ? 'bg-red-100 border-red-400 text-red-700' :
+                           'bg-blue-100 border-blue-400 text-blue-700';
+            
+            messageEl.className = `border-l-4 p-4 ${bgColor} rounded-r`;
+            messageEl.innerHTML = `
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        ${type === 'success' ? 
+                            '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>' :
+                            '<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>'
+                        }
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(messageEl);
+            
+            // Auto-remove success messages after 5 seconds
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    messageEl.remove();
+                }, 5000);
+            }
+        }
+    </script>
+</body>
+</html>
