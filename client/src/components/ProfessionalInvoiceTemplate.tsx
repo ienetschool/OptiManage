@@ -140,185 +140,129 @@ export default function ProfessionalInvoiceTemplate({
               margin: '0 auto'
             }}
           >
-            {/* Professional Header */}
-            <div style={{ 
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-              margin: '-32px -32px 30px -32px',
-              padding: '40px',
-              color: 'white',
-              position: 'relative'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <h1 style={{ 
-                    fontSize: '32pt', 
-                    fontWeight: 'bold', 
-                    margin: '0 0 8px 0',
-                    letterSpacing: '1px'
-                  }}>
-                    {storeName}
-                  </h1>
-                  <p style={{ 
-                    fontSize: '11pt', 
-                    opacity: '0.9',
-                    margin: '0 0 16px 0'
-                  }}>
-                    Professional Medical & Optical Center
-                  </p>
-                  <div style={{ fontSize: '10pt', opacity: '0.8', lineHeight: '1.3' }}>
-                    <div>{storeAddress}</div>
-                    <div>Phone: {storePhone} | Email: {storeEmail}</div>
-                  </div>
-                </div>
-                
-                {/* Invoice Number & QR */}
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ 
-                    background: 'rgba(255,255,255,0.15)',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    border: '1px solid rgba(255,255,255,0.2)'
-                  }}>
-                    <h2 style={{ 
-                      fontSize: '24pt', 
-                      fontWeight: 'bold', 
-                      margin: '0 0 8px 0'
-                    }}>
-                      INVOICE
-                    </h2>
-                    <div style={{ 
-                      fontSize: '18pt', 
-                      fontWeight: 'bold',
-                      background: 'rgba(255,255,255,0.2)',
-                      padding: '8px 16px',
-                      borderRadius: '6px',
-                      margin: '8px 0'
-                    }}>
-                      {invoice.invoiceNumber}
-                    </div>
-                    <div style={{ 
-                      background: 'white',
-                      padding: '8px',
-                      borderRadius: '6px',
-                      marginTop: '12px'
-                    }}>
-                      <QRCodeReact 
-                        value={`Invoice: ${invoice.invoiceNumber}, Total: $${invoice.total.toFixed(2)}, Customer: ${invoice.customerName}`}
-                        size={80}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Invoice Details Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '30px', marginBottom: '30px' }}>
-              {/* Bill To */}
-              <div>
-                <h3 style={{ 
-                  fontSize: '12pt', 
-                  fontWeight: 'bold', 
-                  color: '#2563eb', 
-                  marginBottom: '12px',
-                  borderBottom: '2px solid #2563eb',
-                  paddingBottom: '6px'
-                }}>
-                  BILL TO
-                </h3>
-                <div style={{ fontSize: '10pt', lineHeight: '1.4' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{invoice.customerName || 'Walk-in Customer'}</div>
-                  {invoice.customerEmail && <div>Email: {invoice.customerEmail}</div>}
-                  {invoice.customerPhone && <div>Phone: {invoice.customerPhone}</div>}
-                  {invoice.customerAddress && <div style={{ marginTop: '6px' }}>{invoice.customerAddress}</div>}
-                </div>
-              </div>
-
-              {/* Invoice Details */}
-              <div>
-                <h3 style={{ 
-                  fontSize: '12pt', 
-                  fontWeight: 'bold', 
-                  color: '#2563eb', 
-                  marginBottom: '12px',
-                  borderBottom: '2px solid #2563eb',
-                  paddingBottom: '6px'
-                }}>
-                  INVOICE DETAILS
-                </h3>
-                <div style={{ fontSize: '10pt', lineHeight: '1.6' }}>
-                  <div><strong>Issue Date:</strong> {new Date(invoice.issueDate || invoice.date || new Date()).toLocaleDateString()}</div>
-                  {invoice.dueDate && <div><strong>Due Date:</strong> {new Date(invoice.dueDate).toLocaleDateString()}</div>}
-                  <div><strong>Payment Method:</strong> {invoice.paymentMethod || 'Not specified'}</div>
-                  <div>
-                    <strong>Status:</strong> 
-                    <span style={{ 
-                      color: paymentStatusColor,
-                      fontWeight: 'bold',
-                      textTransform: 'uppercase',
-                      marginLeft: '8px'
-                    }}>
-                      {invoice.status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Coupon Information */}
-              {(couponDiscount > 0 || invoice.appliedCouponCode) && (
-                <div>
-                  <h3 style={{ 
-                    fontSize: '12pt', 
-                    fontWeight: 'bold', 
-                    color: '#059669', 
-                    marginBottom: '12px',
-                    borderBottom: '2px solid #059669',
-                    paddingBottom: '6px'
-                  }}>
-                    COUPON APPLIED
-                  </h3>
-                  <div style={{ fontSize: '10pt', lineHeight: '1.6' }}>
-                    {invoice.appliedCouponCode && <div><strong>Coupon Code:</strong> {invoice.appliedCouponCode}</div>}
-                    <div><strong>Discount Amount:</strong> ${couponDiscount.toFixed(2)}</div>
-                    <div style={{ color: '#059669', fontWeight: 'bold' }}>✓ Successfully Applied</div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Items Table */}
-            <div style={{ marginBottom: '30px' }}>
-              <h3 style={{ 
-                fontSize: '12pt', 
+            {/* Professional Header - Matching Purchase Invoice Style */}
+            <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+              <h1 style={{ 
+                fontSize: '36pt', 
                 fontWeight: 'bold', 
-                color: '#2563eb', 
-                marginBottom: '16px',
-                borderBottom: '2px solid #2563eb',
-                paddingBottom: '6px'
+                color: '#2563eb',
+                margin: '0 0 8px 0',
+                letterSpacing: '1px'
               }}>
-                ITEMS & SERVICES
-              </h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10pt' }}>
+                {storeName}
+              </h1>
+              <p style={{ 
+                fontSize: '12pt', 
+                color: '#6b7280',
+                margin: '0 0 8px 0'
+              }}>
+                Optical Retail Management
+              </p>
+              <div style={{ fontSize: '10pt', color: '#6b7280', lineHeight: '1.4' }}>
+                <div>{storeAddress}</div>
+                <div>Phone: {storePhone} | Email: {storeEmail}</div>
+              </div>
+            </div>
+
+            {/* Invoice Header Box */}
+            <div style={{ 
+              border: '2px solid #e2e8f0',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '30px',
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr 1fr 1fr',
+              gap: '20px',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{ 
+                  fontSize: '18pt', 
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  margin: '0 0 8px 0'
+                }}>
+                  PURCHASE<br/>INVOICE
+                </h2>
+                <div style={{ 
+                  background: '#2563eb',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  fontSize: '12pt',
+                  fontWeight: 'bold',
+                  textAlign: 'center'
+                }}>
+                  {invoice.invoiceNumber}
+                </div>
+                <div style={{ fontSize: '10pt', color: '#6b7280', marginTop: '8px' }}>
+                  <div>Date: {new Date(invoice.issueDate || invoice.date || new Date()).toLocaleDateString()}</div>
+                  <div>Due Date: {new Date(invoice.dueDate || Date.now() + 30*24*60*60*1000).toLocaleDateString()}</div>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '12pt', fontWeight: 'bold', color: '#1f2937', margin: '0 0 8px 0' }}>Bill To:</h3>
+                <div style={{ fontSize: '10pt', lineHeight: '1.4' }}>
+                  <div style={{ fontWeight: 'bold' }}>{invoice.customerName || 'Walk-in Customer'}</div>
+                  {invoice.customerEmail && <div>{invoice.customerEmail}</div>}
+                  {invoice.customerPhone && <div>{invoice.customerPhone}</div>}
+                  {invoice.customerAddress && <div>{invoice.customerAddress}</div>}
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '12pt', fontWeight: 'bold', color: '#1f2937', margin: '0 0 8px 0' }}>Ship To:</h3>
+                <div style={{ fontSize: '10pt', lineHeight: '1.4' }}>
+                  <div style={{ fontWeight: 'bold' }}>{storeName} - Main Location</div>
+                  <div>{storeAddress}</div>
+                  <div>Phone: {storePhone}</div>
+                </div>
+              </div>
+
+              <div>
+                <h3 style={{ fontSize: '12pt', fontWeight: 'bold', color: '#1f2937', margin: '0 0 8px 0' }}>Payment Status</h3>
+                <div style={{ 
+                  background: paymentStatusColor === '#10b981' ? '#10b981' : '#f59e0b',
+                  color: 'white',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '11pt',
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                  textTransform: 'uppercase'
+                }}>
+                  {invoice.status}
+                </div>
+                <div style={{ fontSize: '11pt', fontWeight: 'bold', color: '#1f2937', marginTop: '8px' }}>
+                  Total: ${invoice.total.toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            {/* Items Table with Blue Header */}
+            <div style={{ marginBottom: '30px' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11pt' }}>
                 <thead>
-                  <tr style={{ backgroundColor: '#f8fafc' }}>
-                    <th style={{ padding: '12px 8px', textAlign: 'left', borderBottom: '2px solid #e2e8f0', fontWeight: 'bold' }}>Description</th>
-                    <th style={{ padding: '12px 8px', textAlign: 'center', borderBottom: '2px solid #e2e8f0', fontWeight: 'bold' }}>Qty</th>
-                    <th style={{ padding: '12px 8px', textAlign: 'right', borderBottom: '2px solid #e2e8f0', fontWeight: 'bold' }}>Unit Price</th>
-                    <th style={{ padding: '12px 8px', textAlign: 'right', borderBottom: '2px solid #e2e8f0', fontWeight: 'bold' }}>Total</th>
+                  <tr style={{ backgroundColor: '#2563eb', color: 'white' }}>
+                    <th style={{ padding: '16px 12px', textAlign: 'left', fontWeight: 'bold', fontSize: '12pt' }}>Item Description</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'center', fontWeight: 'bold', fontSize: '12pt' }}>Quantity</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'right', fontWeight: 'bold', fontSize: '12pt' }}>Unit Cost</th>
+                    <th style={{ padding: '16px 12px', textAlign: 'right', fontWeight: 'bold', fontSize: '12pt' }}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {invoice.items.map((item, index) => (
                     <tr key={item.id || index} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                      <td style={{ padding: '12px 8px' }}>
+                      <td style={{ padding: '16px 12px' }}>
                         <div style={{ fontWeight: 'bold' }}>{item.productName || item.description}</div>
                         {item.productName && item.description && (
-                          <div style={{ fontSize: '9pt', color: '#6b7280', marginTop: '2px' }}>{item.description}</div>
+                          <div style={{ fontSize: '10pt', color: '#6b7280', marginTop: '4px' }}>{item.description}</div>
                         )}
                       </td>
-                      <td style={{ padding: '12px 8px', textAlign: 'center' }}>{item.quantity}</td>
-                      <td style={{ padding: '12px 8px', textAlign: 'right' }}>${item.unitPrice.toFixed(2)}</td>
-                      <td style={{ padding: '12px 8px', textAlign: 'right', fontWeight: 'bold' }}>${item.total.toFixed(2)}</td>
+                      <td style={{ padding: '16px 12px', textAlign: 'center' }}>{item.quantity}</td>
+                      <td style={{ padding: '16px 12px', textAlign: 'right' }}>${item.unitPrice.toFixed(2)}</td>
+                      <td style={{ padding: '16px 12px', textAlign: 'right', fontWeight: 'bold' }}>${item.total.toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -327,34 +271,38 @@ export default function ProfessionalInvoiceTemplate({
 
             {/* Totals Section */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '30px' }}>
-              <div style={{ width: '300px' }}>
-                <table style={{ width: '100%', fontSize: '11pt' }}>
+              <div style={{ minWidth: '300px' }}>
+                <table style={{ width: '100%', fontSize: '12pt' }}>
                   <tbody>
                     <tr>
-                      <td style={{ padding: '8px 16px 8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Subtotal:</td>
-                      <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0', fontWeight: 'bold' }}>${invoice.subtotal.toFixed(2)}</td>
+                      <td style={{ padding: '8px 16px 8px 0', textAlign: 'right' }}>Subtotal:</td>
+                      <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold' }}>${invoice.subtotal.toFixed(2)}</td>
                     </tr>
                     {discountAmount > 0 && (
                       <tr>
-                        <td style={{ padding: '8px 16px 8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0', color: '#dc2626' }}>Discount:</td>
-                        <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0', fontWeight: 'bold', color: '#dc2626' }}>-${discountAmount.toFixed(2)}</td>
+                        <td style={{ padding: '8px 16px 8px 0', textAlign: 'right', color: '#dc2626' }}>Discount:</td>
+                        <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold', color: '#dc2626' }}>-${discountAmount.toFixed(2)}</td>
                       </tr>
                     )}
                     {couponDiscount > 0 && (
                       <tr>
-                        <td style={{ padding: '8px 16px 8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0', color: '#059669' }}>Coupon Discount:</td>
-                        <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0', fontWeight: 'bold', color: '#059669' }}>-${couponDiscount.toFixed(2)}</td>
+                        <td style={{ padding: '8px 16px 8px 0', textAlign: 'right', color: '#059669' }}>Coupon Discount:</td>
+                        <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold', color: '#059669' }}>-${couponDiscount.toFixed(2)}</td>
                       </tr>
                     )}
-                    {taxAmount > 0 && (
+                    <tr>
+                      <td style={{ padding: '8px 16px 8px 0', textAlign: 'right' }}>Tax ({((taxAmount / invoice.subtotal) * 100).toFixed(0)}%):</td>
+                      <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold' }}>${taxAmount.toFixed(2)}</td>
+                    </tr>
+                    {invoice.shippingCost && (
                       <tr>
-                        <td style={{ padding: '8px 16px 8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0' }}>Tax ({((taxAmount / (invoice.subtotal - discountAmount - couponDiscount)) * 100).toFixed(1)}%):</td>
-                        <td style={{ padding: '8px 0', textAlign: 'right', borderBottom: '1px solid #e2e8f0', fontWeight: 'bold' }}>${taxAmount.toFixed(2)}</td>
+                        <td style={{ padding: '8px 16px 8px 0', textAlign: 'right' }}>Shipping:</td>
+                        <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold' }}>${invoice.shippingCost.toFixed(2)}</td>
                       </tr>
                     )}
-                    <tr style={{ backgroundColor: '#f8fafc' }}>
-                      <td style={{ padding: '12px 16px 12px 0', textAlign: 'right', fontSize: '14pt', fontWeight: 'bold', color: '#2563eb' }}>TOTAL:</td>
-                      <td style={{ padding: '12px 0', textAlign: 'right', fontSize: '16pt', fontWeight: 'bold', color: '#2563eb' }}>${invoice.total.toFixed(2)}</td>
+                    <tr style={{ borderTop: '2px solid #1f2937' }}>
+                      <td style={{ padding: '12px 16px 12px 0', textAlign: 'right', fontSize: '16pt', fontWeight: 'bold' }}>TOTAL:</td>
+                      <td style={{ padding: '12px 0', textAlign: 'right', fontSize: '18pt', fontWeight: 'bold' }}>${invoice.total.toFixed(2)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -367,9 +315,9 @@ export default function ProfessionalInvoiceTemplate({
                 <h3 style={{ 
                   fontSize: '12pt', 
                   fontWeight: 'bold', 
-                  color: '#2563eb', 
+                  color: '#1f2937', 
                   marginBottom: '12px',
-                  borderBottom: '2px solid #2563eb',
+                  borderBottom: '2px solid #e2e8f0',
                   paddingBottom: '6px'
                 }}>
                   NOTES
