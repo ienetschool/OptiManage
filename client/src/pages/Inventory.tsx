@@ -28,43 +28,38 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-// Inventory Purchase Totals Widget Component - Compact Style
-function InventoryInvoiceTotalsWidget() {
-  const { data: inventoryTotals, isLoading: isLoadingInventory } = useQuery({
-    queryKey: ["/api/inventory/invoice-totals"],
-    queryFn: async () => {
-      const response = await fetch("/api/inventory/invoice-totals");
-      if (!response.ok) {
-        return { totalAmount: 0, totalCount: 0, recentTotal: 0, recentCount: 0, byPaymentMethod: {} };
-      }
-      return response.json();
-    },
+// Inventory Purchases Card Component - Live Data
+function InventoryPurchasesCard() {
+  const { data: accountingSummary, isLoading } = useQuery({
+    queryKey: ["/api/accounting/summary"],
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
+  const inventoryExpenditures = (accountingSummary as any)?.expenditureBreakdown?.inventory || 0;
+
   return (
-    <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg border border-orange-200">
-      <div className="flex items-center space-x-3">
-        <div className="bg-orange-500 p-2 rounded">
-          <CreditCard className="h-5 w-5 text-white" />
+    <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
+      <CardContent className="flex items-center p-6">
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-orange-600 rounded-lg">
+            <ShoppingCart className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-orange-600">Purchases Total</p>
+            {isLoading ? (
+              <RefreshCw className="h-5 w-5 animate-spin text-orange-600" />
+            ) : (
+              <>
+                <p className="text-2xl font-bold text-orange-900">
+                  ${inventoryExpenditures.toLocaleString()}
+                </p>
+                <p className="text-xs text-orange-500">Inventory expenditures</p>
+              </>
+            )}
+          </div>
         </div>
-        <div>
-          <div className="text-sm font-medium text-orange-700">Purchases Total</div>
-          {isLoadingInventory ? (
-            <RefreshCw className="h-4 w-4 animate-spin text-orange-600" />
-          ) : (
-            <>
-              <div className="text-2xl font-bold text-orange-900">
-                ${inventoryTotals?.totalAmount?.toFixed(2) || '0.00'}
-              </div>
-              <div className="text-xs text-orange-600">
-                {inventoryTotals?.totalCount || 0} purchase invoices
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -772,20 +767,7 @@ export default function Inventory() {
             </CardContent>
           </Card>
 
-          <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100">
-            <CardContent className="flex items-center p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-orange-600 rounded-lg">
-                  <ShoppingCart className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-orange-600">Purchases Total</p>
-                  <p className="text-2xl font-bold text-orange-900">$50,374.35</p>
-                  <p className="text-xs text-orange-500">11 purchase invoices</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <InventoryPurchasesCard />
         </div>
 
         {/* Products Tab */}
