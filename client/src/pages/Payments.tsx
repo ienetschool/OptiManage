@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   CreditCard, 
   Search, 
@@ -24,7 +25,15 @@ import {
   Share2,
   MoreVertical,
   Send,
-  Receipt
+  Receipt,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  PieChart,
+  Calculator,
+  FileText,
+  Building2,
+  Wallet
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -39,6 +48,23 @@ interface Payment {
   transactionId?: string;
   paymentDate: string;
   createdAt: string;
+  source?: string;
+  productType?: string;
+}
+
+interface ProfitLossReport {
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  revenue: number;
+  cogs: number;
+  grossProfit: number;
+  expenses: number;
+  netProfit: number;
+  grossMargin: number;
+  netMargin: number;
+  entries: any[];
 }
 
 export default function Payments() {
@@ -47,6 +73,11 @@ export default function Payments() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [paymentMethodDialog, setPaymentMethodDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [activeTab, setActiveTab] = useState("payments");
+  const [reportDateRange, setReportDateRange] = useState({ 
+    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
+    end: new Date().toISOString().split('T')[0] 
+  });
 
   // Define columns for EnhancedDataTable
   const paymentColumns: Column[] = [
@@ -144,6 +175,19 @@ export default function Payments() {
     retry: 2,
     staleTime: 10000, // 10 seconds
     refetchInterval: 30000, // Auto-refresh every 30 seconds
+  });
+
+  // Fetch profit & loss report
+  const { data: profitLossReport, isLoading: isLoadingReport } = useQuery({
+    queryKey: ["/api/accounting/profit-loss", reportDateRange.start, reportDateRange.end],
+    queryFn: async () => {
+      const response = await fetch(`/api/accounting/profit-loss?startDate=${reportDateRange.start}&endDate=${reportDateRange.end}`);
+      if (!response.ok) {
+        return { revenue: 0, cogs: 0, grossProfit: 0, expenses: 0, netProfit: 0, grossMargin: 0, netMargin: 0, entries: [] };
+      }
+      return response.json();
+    },
+    enabled: activeTab === "analytics"
   });
 
   // Payment processing mutation
@@ -357,13 +401,30 @@ export default function Payments() {
     );
   };
 
+  // Analytics calculations
+  const calculatePaymentAnalytics = () => {
+    const totalRevenue = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const productSales = payments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const serviceSales = payments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    
+    return {
+      totalRevenue,
+      productSales,
+      serviceSales,
+      avgTransaction: payments.length > 0 ? totalRevenue / payments.length : 0,
+      completionRate: payments.length > 0 ? (payments.filter(p => p.status === 'completed').length / payments.length) * 100 : 0
+    };
+  };
+
+  const analytics = calculatePaymentAnalytics();
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Payments</h1>
-          <p className="text-slate-600">Track and manage all payment transactions</p>
+          <h1 className="text-3xl font-bold text-slate-900">Payment & Accounting Management</h1>
+          <p className="text-slate-600">Comprehensive financial tracking and reporting</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/payments"] })}>
@@ -377,91 +438,284 @@ export default function Payments() {
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Total Payments</p>
-                <p className="text-2xl font-bold text-slate-900">{payments.length}</p>
-              </div>
-              <CreditCard className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="payments" className="flex items-center space-x-2">
+            <CreditCard className="h-4 w-4" />
+            <span>Payment History</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center space-x-2">
+            <BarChart3 className="h-4 w-4" />
+            <span>Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="profit-loss" className="flex items-center space-x-2">
+            <Calculator className="h-4 w-4" />
+            <span>P&L Report</span>
+          </TabsTrigger>
+          <TabsTrigger value="accounting" className="flex items-center space-x-2">
+            <FileText className="h-4 w-4" />
+            <span>Accounting</span>
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Total Amount</p>
-                <p className="text-2xl font-bold text-slate-900">${totalAmount.toFixed(2)}</p>
-              </div>
-              <DollarSign className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="payments" className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Payments</p>
+                    <p className="text-2xl font-bold text-slate-900">{payments.length}</p>
+                  </div>
+                  <CreditCard className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Completed</p>
-                <p className="text-2xl font-bold text-slate-900">{completedPayments.length}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Amount</p>
+                    <p className="text-2xl font-bold text-slate-900">${totalAmount.toFixed(2)}</p>
+                  </div>
+                  <DollarSign className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-600">Pending</p>
-                <p className="text-2xl font-bold text-slate-900">{pendingPayments.length}</p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Completed</p>
+                    <p className="text-2xl font-bold text-slate-900">{completedPayments.length}</p>
+                  </div>
+                  <CheckCircle className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
 
-      {/* Enhanced Payments Table with Pagination, Filtering, and Sorting */}
-      <EnhancedDataTable
-        data={payments}
-        columns={paymentColumns}
-        title="Payment Management"
-        searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
-        isLoading={isLoading}
-        onRefresh={() => {
-          refetch();
-          queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-        }}
-        pageSize={25}
-        showPagination={true}
-        totalCount={payments.length}
-        emptyMessage="No payments found. Payments will appear here when invoices are paid."
-        actions={(payment) => (
-          <div className="flex items-center gap-2">
-            {payment.status === "pending" && (
-              <Button 
-                onClick={() => {
-                  setSelectedPayment(payment);
-                  setPaymentMethodDialog(true);
-                }}
-                className="bg-green-600 hover:bg-green-700 text-white"
-                size="sm"
-              >
-                <CreditCard className="h-4 w-4 mr-2" />
-                Pay Now
-              </Button>
-            )}
-            <PaymentActions payment={payment} />
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Pending</p>
+                    <p className="text-2xl font-bold text-slate-900">{pendingPayments.length}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-yellow-600" />
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        )}
-      />
+
+          {/* Enhanced Payments Table */}
+          <EnhancedDataTable
+            data={payments}
+            columns={paymentColumns}
+            title="Payment Management"
+            searchPlaceholder="Search payments by customer, invoice, or transaction ID..."
+            isLoading={isLoading}
+            onRefresh={() => {
+              refetch();
+              queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+            }}
+            pageSize={25}
+            showPagination={true}
+            totalCount={payments.length}
+            emptyMessage="No payments found. Payments will appear here when invoices are paid."
+            actions={(payment) => (
+              <div className="flex items-center gap-2">
+                {payment.status === "pending" && (
+                  <Button 
+                    onClick={() => {
+                      setSelectedPayment(payment);
+                      setPaymentMethodDialog(true);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                    size="sm"
+                  >
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Pay Now
+                  </Button>
+                )}
+                <PaymentActions payment={payment} />
+              </div>
+            )}
+          />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="space-y-6">
+          {/* Analytics Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Total Revenue</p>
+                    <p className="text-2xl font-bold text-slate-900">${analytics.totalRevenue.toFixed(2)}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Product Sales</p>
+                    <p className="text-2xl font-bold text-slate-900">${analytics.productSales.toFixed(2)}</p>
+                  </div>
+                  <Building2 className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Service Sales</p>
+                    <p className="text-2xl font-bold text-slate-900">${analytics.serviceSales.toFixed(2)}</p>
+                  </div>
+                  <Wallet className="h-8 w-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Completion Rate</p>
+                    <p className="text-2xl font-bold text-slate-900">{analytics.completionRate.toFixed(1)}%</p>
+                  </div>
+                  <PieChart className="h-8 w-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" />
+                <span>Payment Analytics Overview</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-center text-gray-500">
+                  Advanced analytics charts coming soon...
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="profit-loss" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Calculator className="h-5 w-5" />
+                <span>Profit & Loss Report</span>
+              </CardTitle>
+              <CardDescription>
+                Generate comprehensive profit and loss reports for specified date ranges
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Start Date</label>
+                    <Input 
+                      type="date" 
+                      value={reportDateRange.start}
+                      onChange={(e) => setReportDateRange({...reportDateRange, start: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">End Date</label>
+                    <Input 
+                      type="date" 
+                      value={reportDateRange.end}
+                      onChange={(e) => setReportDateRange({...reportDateRange, end: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                {profitLossReport && (
+                  <div className="mt-6 space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600">Revenue</p>
+                            <p className="text-xl font-bold text-green-600">${profitLossReport.revenue?.toFixed(2) || '0.00'}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600">Expenses</p>
+                            <p className="text-xl font-bold text-red-600">${profitLossReport.expenses?.toFixed(2) || '0.00'}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600">Gross Profit</p>
+                            <p className="text-xl font-bold text-blue-600">${profitLossReport.grossProfit?.toFixed(2) || '0.00'}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardContent className="p-4">
+                          <div className="text-center">
+                            <p className="text-sm text-gray-600">Net Profit</p>
+                            <p className="text-xl font-bold text-purple-600">${profitLossReport.netProfit?.toFixed(2) || '0.00'}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="accounting" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5" />
+                <span>Accounting Management</span>
+              </CardTitle>
+              <CardDescription>
+                Comprehensive accounting features and transaction management
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-center text-gray-500 py-8">
+                  <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
+                  <p className="text-lg font-medium">Accounting Module</p>
+                  <p>Advanced accounting features coming soon...</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Payment Method Selection Dialog */}
       <Dialog open={paymentMethodDialog} onOpenChange={setPaymentMethodDialog}>

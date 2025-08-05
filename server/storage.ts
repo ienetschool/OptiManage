@@ -48,6 +48,12 @@ import {
   type InsertPurchaseOrderItem,
   type StockMovement,
   type InsertStockMovement,
+  accountCategories,
+  chartOfAccounts,
+  generalLedgerEntries,
+  paymentTransactions,
+  productCosts,
+  profitLossEntries,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, and, or } from "drizzle-orm";
@@ -1210,6 +1216,196 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error(`❌ Error updating payment status:`, error);
       throw error;
+    }
+  }
+
+  // Accounting Methods
+
+  async createPaymentTransaction(transactionData: any): Promise<any> {
+    const transactionNumber = `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+    
+    const transaction = await db.insert(paymentTransactions).values({
+      ...transactionData,
+      transactionNumber,
+      netAmount: parseFloat(transactionData.amount) - parseFloat(transactionData.feeAmount || 0),
+      fiscalYear: new Date().getFullYear(),
+      fiscalPeriod: new Date().getMonth() + 1,
+    }).returning();
+
+    // Create corresponding accounting entries
+    await this.createAccountingEntries({
+      transactionId: transaction[0].id,
+      transactionType: transactionData.transactionType,
+      amount: transactionData.amount,
+      description: transactionData.description,
+      sourceType: transactionData.sourceType,
+      sourceId: transactionData.sourceId,
+      createdBy: transactionData.createdBy
+    });
+
+    return transaction[0];
+  }
+
+  async createAccountingEntries(entryData: any): Promise<void> {
+    const { transactionId, transactionType, amount, description, sourceType, sourceId, createdBy } = entryData;
+    const fiscalYear = new Date().getFullYear();
+    const fiscalPeriod = new Date().getMonth() + 1;
+
+    // Determine accounts based on transaction type
+    let debitAccount: string;
+    let creditAccount: string;
+
+    switch (transactionType) {
+      case 'income':
+        if (sourceType === 'invoice' || sourceType === 'sale') {
+          debitAccount = '1001'; // Cash/Bank Account
+          creditAccount = '4001'; // Sales Revenue
+        } else if (sourceType === 'appointment') {
+          debitAccount = '1001'; // Cash/Bank Account  
+          creditAccount = '4002'; // Service Revenue
+        }
+        break;
+      case 'expense':
+        debitAccount = '5001'; // Operating Expenses
+        creditAccount = '1001'; // Cash/Bank Account
+        break;
+      default:
+        return; // Skip if type not recognized
+    }
+
+    if (!debitAccount || !creditAccount) return;
+
+    // Create debit entry
+    await db.insert(generalLedgerEntries).values({
+      transactionId,
+      accountId: debitAccount,
+      transactionDate: new Date(),
+      description,
+      referenceType: sourceType,
+      referenceId: sourceId,
+      debitAmount: amount,
+      creditAmount: '0',
+      fiscalYear,
+      fiscalPeriod,
+      createdBy
+    });
+
+    // Create credit entry
+    await db.insert(generalLedgerEntries).values({
+      transactionId,
+      accountId: creditAccount,
+      transactionDate: new Date(),
+      description,
+      referenceType: sourceType,
+      referenceId: sourceId,
+      debitAmount: '0',
+      creditAmount: amount,
+      fiscalYear,
+      fiscalPeriod,
+      createdBy
+    });
+  }
+
+  async createProfitLossEntry(entryData: any): Promise<any> {
+    const entry = await db.insert(profitLossEntries).values({
+      ...entryData,
+      fiscalYear: new Date().getFullYear(),
+      fiscalPeriod: new Date().getMonth() + 1,
+    }).returning();
+
+    return entry[0];
+  }
+
+  async getProfitLossReport(startDate: string, endDate: string, storeId?: string): Promise<any> {
+    const where = [
+      sql`entry_date >= ${startDate}`,
+      sql`entry_date <= ${endDate}`
+    ];
+    
+    if (storeId) {
+      where.push(sql`store_id = ${storeId}`);
+    }
+
+    const entries = await db.select().from(profitLossEntries)
+      .where(and(...where))
+      .orderBy(profitLossEntries.entryDate);
+
+    // Group entries by type and calculate totals
+    const revenue = entries.filter(e => e.entryType === 'revenue').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const cogs = entries.filter(e => e.entryType === 'cogs').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+    const expenses = entries.filter(e => e.entryType === 'expense').reduce((sum, e) => sum + parseFloat(e.amount), 0);
+
+    const grossProfit = revenue - cogs;
+    const netProfit = grossProfit - expenses;
+
+    return {
+      period: { startDate, endDate },
+      revenue,
+      cogs,
+      grossProfit,
+      expenses,
+      netProfit,
+      grossMargin: revenue > 0 ? (grossProfit / revenue) * 100 : 0,
+      netMargin: revenue > 0 ? (netProfit / revenue) * 100 : 0,
+      entries
+    };
+  }
+
+  async getAccountingEntries(accountId?: string, startDate?: string, endDate?: string): Promise<any[]> {
+    const where = [];
+    
+    if (accountId) {
+      where.push(sql`account_id = ${accountId}`);
+    }
+    
+    if (startDate) {
+      where.push(sql`transaction_date >= ${startDate}`);
+    }
+    
+    if (endDate) {
+      where.push(sql`transaction_date <= ${endDate}`);
+    }
+
+    return await db.select().from(generalLedgerEntries)
+      .where(where.length > 0 ? and(...where) : undefined)
+      .orderBy(desc(generalLedgerEntries.transactionDate));
+  }
+
+  async initializeChartOfAccounts(): Promise<void> {
+    // Create default account categories
+    const categories = [
+      { name: 'Assets', code: 'A', description: 'Resources owned by the business' },
+      { name: 'Liabilities', code: 'L', description: 'Debts and obligations' },
+      { name: 'Equity', code: 'E', description: 'Owner\'s equity and retained earnings' },
+      { name: 'Revenue', code: 'R', description: 'Income from business operations' },
+      { name: 'Expenses', code: 'X', description: 'Business operating expenses' }
+    ];
+
+    for (const category of categories) {
+      await db.insert(accountCategories).values(category).onConflictDoNothing();
+    }
+
+    // Get category IDs
+    const categoryRecords = await db.select().from(accountCategories);
+    const assetCat = categoryRecords.find(c => c.code === 'A')?.id;
+    const revenueCat = categoryRecords.find(c => c.code === 'R')?.id;
+    const expenseCat = categoryRecords.find(c => c.code === 'X')?.id;
+
+    // Create default accounts
+    const accounts = [
+      { accountNumber: '1001', accountName: 'Cash', categoryId: assetCat, accountType: 'asset', normalBalance: 'debit' },
+      { accountNumber: '1200', accountName: 'Accounts Receivable', categoryId: assetCat, accountType: 'asset', normalBalance: 'debit' },
+      { accountNumber: '1300', accountName: 'Inventory', categoryId: assetCat, accountType: 'asset', normalBalance: 'debit' },
+      { accountNumber: '4001', accountName: 'Product Sales', categoryId: revenueCat, accountType: 'revenue', normalBalance: 'credit' },
+      { accountNumber: '4002', accountName: 'Service Revenue', categoryId: revenueCat, accountType: 'revenue', normalBalance: 'credit' },
+      { accountNumber: '5001', accountName: 'Operating Expenses', categoryId: expenseCat, accountType: 'expense', normalBalance: 'debit' },
+      { accountNumber: '5010', accountName: 'Cost of Goods Sold', categoryId: expenseCat, accountType: 'expense', normalBalance: 'debit' }
+    ];
+
+    for (const account of accounts) {
+      if (account.categoryId) {
+        await db.insert(chartOfAccounts).values(account).onConflictDoNothing();
+      }
     }
   }
 }

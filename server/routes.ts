@@ -9,6 +9,7 @@ import { registerDashboardRoutes } from "./routes/dashboardRoutes";
 import { registerProfileRoutes } from "./routes/profileRoutes";
 import { registerMedicalRecordsRoutes } from "./routes/medicalRoutes";
 import { registerPaymentRoutes } from "./routes/paymentRoutes";
+import { setupAccountingRoutes } from "./routes/accountingRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
 import { 
@@ -373,6 +374,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register payment routes
   registerPaymentRoutes(app);
+  setupAccountingRoutes(app);
   
   // Register store settings routes
   registerStoreSettingsRoutes(app);

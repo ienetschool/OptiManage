@@ -835,6 +835,126 @@ export const patientHistory = pgTable("patient_history", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Accounting & Financial Tracking Tables
+
+// Account categories for chart of accounts
+export const accountCategories = pgTable("account_categories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(), // Assets, Liabilities, Equity, Revenue, Expenses
+  code: varchar("code").unique().notNull(), // A, L, E, R, X
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Chart of Accounts
+export const chartOfAccounts = pgTable("chart_of_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  accountNumber: varchar("account_number").unique().notNull(),
+  accountName: varchar("account_name").notNull(),
+  categoryId: varchar("category_id").references(() => accountCategories.id).notNull(),
+  parentAccountId: varchar("parent_account_id").references(() => chartOfAccounts.id),
+  accountType: varchar("account_type").notNull(), // asset, liability, equity, revenue, expense
+  subType: varchar("sub_type"), // current_asset, fixed_asset, current_liability, etc.
+  normalBalance: varchar("normal_balance").notNull(), // debit, credit
+  isActive: boolean("is_active").default(true),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// General Ledger Entries
+export const generalLedgerEntries = pgTable("general_ledger_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  transactionId: varchar("transaction_id").notNull(), // Links related debits/credits
+  accountId: varchar("account_id").references(() => chartOfAccounts.id).notNull(),
+  transactionDate: timestamp("transaction_date").notNull(),
+  postingDate: timestamp("posting_date").defaultNow(),
+  description: text("description").notNull(),
+  referenceType: varchar("reference_type").notNull(), // invoice, payment, sale, purchase, adjustment
+  referenceId: varchar("reference_id").notNull(), // ID of the source record
+  debitAmount: decimal("debit_amount", { precision: 15, scale: 2 }).default('0'),
+  creditAmount: decimal("credit_amount", { precision: 15, scale: 2 }).default('0'),
+  runningBalance: decimal("running_balance", { precision: 15, scale: 2 }).default('0'),
+  fiscalYear: integer("fiscal_year").notNull(),
+  fiscalPeriod: integer("fiscal_period").notNull(), // 1-12 for months
+  isReversed: boolean("is_reversed").default(false),
+  reversalTransactionId: varchar("reversal_transaction_id"),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Payment Transactions (Enhanced)
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  transactionNumber: varchar("transaction_number").unique().notNull(),
+  transactionType: varchar("transaction_type").notNull(), // income, expense, transfer
+  sourceType: varchar("source_type").notNull(), // invoice, sale, purchase, appointment, manual
+  sourceId: varchar("source_id").notNull(),
+  customerId: varchar("customer_id").references(() => customers.id),
+  payerId: varchar("payer_id"), // Can be customer, supplier, or internal
+  payerName: varchar("payer_name").notNull(),
+  payerType: varchar("payer_type").notNull(), // customer, supplier, employee, other
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  currency: varchar("currency").default('USD'),
+  paymentMethod: varchar("payment_method").notNull(), // cash, card, check, bank_transfer, digital
+  paymentProcessor: varchar("payment_processor"), // stripe, square, paypal, etc.
+  processorTransactionId: varchar("processor_transaction_id"),
+  bankAccount: varchar("bank_account"), // Account used for transaction
+  checkNumber: varchar("check_number"),
+  status: varchar("status").default('completed'), // pending, completed, failed, cancelled, refunded
+  description: text("description"),
+  notes: text("notes"),
+  feeAmount: decimal("fee_amount", { precision: 10, scale: 2 }).default('0'),
+  netAmount: decimal("net_amount", { precision: 15, scale: 2 }).notNull(), // amount - fees
+  transactionDate: timestamp("transaction_date").notNull(),
+  processedDate: timestamp("processed_date"),
+  reconciledDate: timestamp("reconciled_date"),
+  isReconciled: boolean("is_reconciled").default(false),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Product Cost Tracking
+export const productCosts = pgTable("product_costs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  productId: varchar("product_id").references(() => products.id).notNull(),
+  storeId: varchar("store_id").references(() => stores.id).notNull(),
+  costType: varchar("cost_type").notNull(), // purchase, landed, average, fifo, lifo
+  unitCost: decimal("unit_cost", { precision: 10, scale: 4 }).notNull(),
+  quantity: integer("quantity").notNull(),
+  totalCost: decimal("total_cost", { precision: 15, scale: 2 }).notNull(),
+  purchaseOrderId: varchar("purchase_order_id").references(() => purchaseOrders.id),
+  supplierId: varchar("supplier_id").references(() => suppliers.id),
+  effectiveDate: timestamp("effective_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Profit & Loss Tracking
+export const profitLossEntries = pgTable("profit_loss_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  entryDate: timestamp("entry_date").notNull(),
+  entryType: varchar("entry_type").notNull(), // revenue, cogs, expense
+  category: varchar("category").notNull(), // sales, services, inventory, operating, other
+  subCategory: varchar("sub_category"), // product_sales, appointment_fees, advertising, etc.
+  sourceType: varchar("source_type").notNull(), // sale, invoice, purchase, appointment, manual
+  sourceId: varchar("source_id").notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 15, scale: 2 }).notNull(),
+  quantity: integer("quantity").default(1),
+  unitAmount: decimal("unit_amount", { precision: 10, scale: 2 }),
+  storeId: varchar("store_id").references(() => stores.id),
+  customerId: varchar("customer_id").references(() => customers.id),
+  productId: varchar("product_id").references(() => products.id),
+  staffId: varchar("staff_id").references(() => users.id),
+  fiscalYear: integer("fiscal_year").notNull(),
+  fiscalPeriod: integer("fiscal_period").notNull(),
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Additional type definitions
 export type SaleItem = typeof saleItems.$inferSelect;
 export type StoreInventory = typeof storeInventory.$inferSelect;
@@ -860,6 +980,57 @@ export type PrescriptionItem = typeof prescriptionItems.$inferSelect;
 export type MedicalIntervention = typeof medicalInterventions.$inferSelect;
 export type MedicalInvoice = typeof medicalInvoices.$inferSelect;
 export type MedicalInvoiceItem = typeof medicalInvoiceItems.$inferSelect;
+
+// Accounting Types
+export type AccountCategory = typeof accountCategories.$inferSelect;
+export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
+export type GeneralLedgerEntry = typeof generalLedgerEntries.$inferSelect;
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type ProductCost = typeof productCosts.$inferSelect;
+export type ProfitLossEntry = typeof profitLossEntries.$inferSelect;
+
+// Insert schemas for accounting
+export const insertAccountCategorySchema = createInsertSchema(accountCategories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertChartOfAccountSchema = createInsertSchema(chartOfAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGeneralLedgerEntrySchema = createInsertSchema(generalLedgerEntries).omit({
+  id: true,
+  postingDate: true,
+  createdAt: true,
+});
+
+export const insertPaymentTransactionSchema = createInsertSchema(paymentTransactions).omit({
+  id: true,
+  transactionNumber: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertProductCostSchema = createInsertSchema(productCosts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertProfitLossEntrySchema = createInsertSchema(profitLossEntries).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Insert types for accounting
+export type InsertAccountCategory = z.infer<typeof insertAccountCategorySchema>;
+export type InsertChartOfAccount = z.infer<typeof insertChartOfAccountSchema>;
+export type InsertGeneralLedgerEntry = z.infer<typeof insertGeneralLedgerEntrySchema>;
+export type InsertPaymentTransaction = z.infer<typeof insertPaymentTransactionSchema>;
+export type InsertProductCost = z.infer<typeof insertProductCostSchema>;
+export type InsertProfitLossEntry = z.infer<typeof insertProfitLossEntrySchema>;
 export type PatientHistory = typeof patientHistory.$inferSelect;
 
 // Medical practice insert schemas
