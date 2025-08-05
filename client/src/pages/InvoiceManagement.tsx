@@ -1743,21 +1743,6 @@ export default function InvoiceManagement() {
                     <Eye className="h-4 w-4 mr-2" />
                     View Details
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Invoice
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Show QR Code
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send to Customer
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-red-600">
                     <Trash2 className="h-4 w-4 mr-2" />
                     Delete
