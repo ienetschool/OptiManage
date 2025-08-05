@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,8 @@ export default function Attendance() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -106,6 +108,58 @@ export default function Attendance() {
       description: `Staff member marked as ${status}`,
     });
   };
+
+  // Camera and QR scanner initialization
+  useEffect(() => {
+    let stream: MediaStream | null = null;
+    
+    const startCamera = async () => {
+      if (qrScannerOpen && videoRef.current) {
+        try {
+          setCameraError(null);
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { facingMode: 'environment' } // Try back camera first
+          });
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          
+          // Initialize QR scanner
+          const QrScanner = await import('qr-scanner');
+          const qrScanner = new QrScanner.default(
+            videoRef.current,
+            (result) => {
+              handleQRScan(result.data);
+              qrScanner.destroy();
+              setQrScannerOpen(false);
+            },
+            {
+              highlightScanRegion: true,
+              highlightCodeOutline: true,
+            }
+          );
+          
+          qrScanner.start();
+          
+          return () => {
+            qrScanner.destroy();
+          };
+        } catch (error) {
+          console.error('Camera error:', error);
+          setCameraError('Unable to access camera. Please check permissions.');
+        }
+      }
+    };
+    
+    if (qrScannerOpen) {
+      startCamera();
+    }
+    
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [qrScannerOpen]);
 
   // QR Code scanner handler
   const handleQRScan = (qrData: string) => {
@@ -498,27 +552,43 @@ export default function Attendance() {
             </div>
             
             <div className="space-y-4">
-              <div className="bg-gray-100 rounded-lg p-8 text-center">
-                <QrCode className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 mb-4">Position the QR code within the frame</p>
-                
-                {/* Mock scanner for demonstration */}
-                <div className="space-y-2">
-                  <Button 
-                    onClick={() => {
-                      const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
-                      const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
-                      handleQRScan(sampleQRData);
-                      setQrScannerOpen(false);
-                    }}
-                    className="w-full"
-                  >
-                    Simulate Scan: {staffData.length > 0 ? staffData[0].firstName + " " + staffData[0].lastName : "Dr. Smita Ghosh"}
-                  </Button>
-                  <p className="text-xs text-gray-500">
-                    Click above to simulate scanning Dr. Smita's QR code
-                  </p>
-                </div>
+              <div className="bg-gray-900 rounded-lg overflow-hidden">
+                {cameraError ? (
+                  <div className="p-8 text-center">
+                    <QrCode className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                    <p className="text-red-600 mb-4">{cameraError}</p>
+                    <Button 
+                      onClick={() => {
+                        const realStaffCode = staffData.length > 0 ? staffData[0].staffCode : "STF-304783";
+                        const sampleQRData = JSON.stringify({ staffCode: realStaffCode });
+                        handleQRScan(sampleQRData);
+                        setQrScannerOpen(false);
+                      }}
+                      className="w-full"
+                    >
+                      Simulate Scan: {staffData.length > 0 ? staffData[0].firstName + " " + staffData[0].lastName : "Dr. Smita Ghosh"}
+                    </Button>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Click above for demo mode
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <video 
+                      ref={videoRef}
+                      className="w-full h-64 object-cover"
+                      autoPlay
+                      playsInline
+                      muted
+                    />
+                    <div className="absolute inset-0 border-2 border-white border-dashed rounded-lg m-8 flex items-center justify-center">
+                      <div className="text-white text-center">
+                        <QrCode className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">Scan QR Code</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="flex space-x-2">
