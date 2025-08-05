@@ -635,78 +635,134 @@ export default function InvoiceManagement() {
           * { box-sizing: border-box; margin: 0; padding: 0; }
           body { 
             font-family: 'Inter', 'Segoe UI', sans-serif; 
-            font-size: 11pt; 
+            font-size: 12pt; 
             color: #1a202c; 
-            background: white; 
-            line-height: 1.5;
+            background: #f8fafc;
+            line-height: 1.6;
+            padding: 20px;
+          }
+          
+          .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
           }
           
           .header {
             background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
             color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
             position: relative;
-            overflow: hidden;
           }
           
           .header::before {
             content: '';
             position: absolute;
             top: -50%;
-            right: -10%;
-            width: 300px;
-            height: 300px;
-            background: rgba(255,255,255,0.08);
+            right: -20%;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
             border-radius: 50%;
           }
           
-          .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: relative;
-            z-index: 1;
-          }
-          
-          .company h1 {
-            font-size: 28pt;
-            font-weight: 800;
+          .company-name {
+            font-size: 32pt;
+            font-weight: 900;
             margin-bottom: 8px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 2;
           }
           
           .company-tagline {
-            font-size: 12pt;
+            font-size: 14pt;
             opacity: 0.9;
             margin-bottom: 12px;
+            position: relative;
+            z-index: 2;
           }
           
           .company-address {
-            font-size: 10pt;
+            font-size: 12pt;
             opacity: 0.8;
+            position: relative;
+            z-index: 2;
           }
           
-          .invoice-info {
+          .content {
+            padding: 40px;
+          }
+          
+          .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            gap: 40px;
+          }
+          
+          .invoice-type {
+            background: #1e3a8a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          
+          .invoice-details {
             text-align: right;
           }
           
-          .invoice-title {
-            font-size: 24pt;
-            font-weight: 900;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-          }
-          
           .invoice-number {
-            background: rgba(255,255,255,0.15);
+            background: #1e3a8a;
+            color: white;
             padding: 8px 16px;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 14pt;
             font-weight: 700;
             display: inline-block;
+            margin-bottom: 8px;
+          }
+          
+          .billing-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            gap: 40px;
+          }
+          
+          .bill-to, .ship-to {
+            flex: 1;
+          }
+          
+          .section-title {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 11pt;
+            text-transform: uppercase;
+          }
+          
+          .payment-status {
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 10pt;
+            text-align: center;
+            margin-top: 8px;
           }
           
           .details-grid {
@@ -826,6 +882,63 @@ export default function InvoiceManagement() {
           }
           
           .totals-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: flex-end;
+          }
+          
+          .totals-table {
+            width: 300px;
+            border-collapse: collapse;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          
+          .totals-table tr:nth-child(odd) {
+            background: #f8fafc;
+          }
+          
+          .totals-table td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 11pt;
+          }
+          
+          .totals-table tr:last-child {
+            background: #1e3a8a;
+            color: white;
+            font-weight: 700;
+            font-size: 12pt;
+          }
+          
+          .totals-table tr:last-child td {
+            border-bottom: none;
+          }
+          
+          .notes-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+          }
+          
+          .notes-title {
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 8px;
+            font-size: 11pt;
+          }
+          
+          .notes-content {
+            color: #64748b;
+            font-size: 10pt;
+            line-height: 1.5;
+          }
+          }
+          
+          .totals-section {
             display: flex;
             gap: 25px;
             margin-top: 30px;
@@ -916,164 +1029,120 @@ export default function InvoiceManagement() {
             margin-bottom: 6px;
             font-size: 10pt;
           }
-          
-          .notes-content {
-            color: #78350f;
-            font-size: 9pt;
-          }
-          
-          @media print {
-            body { font-size: 10pt; }
-            .header { padding: 20px; }
-            .detail-card { padding: 16px; }
-            .totals-card { padding: 16px; }
-          }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div class="header-content">
-            <div class="company">
-              <h1>OptiStore Pro</h1>
-              <div class="company-tagline">Professional Medical & Optical Center</div>
-              <div class="company-address">
-                123 Healthcare Blvd, Medical District<br>
-                New York, NY 10001 | (555) 123-4567<br>
-                info@optistorepro.com | www.optistorepro.com
+        <div class="invoice-container">
+          <div class="header">
+            <div class="company-name">${storeName}</div>
+            <div class="company-tagline">Optical Retail Management</div>
+            <div class="company-address">
+              123 Vision Street<br/>
+              Eyecare City, EC 12345<br/>
+              Phone: (555) 123-4567 | Email: billing@optistorepro.com
+            </div>
+          </div>
+          
+          <div class="content">
+            <div class="invoice-type">PURCHASE INVOICE</div>
+            
+            <div class="invoice-header">
+              <div>
+                <div class="invoice-number">${invoice.invoiceNumber}</div>
+                <div style="font-size: 10pt; color: #64748b; margin-top: 4px;">
+                  Date: ${invoice.date ? new Date(invoice.date).toLocaleDateString() : new Date().toLocaleDateString()}<br/>
+                  Due Date: ${invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString() : 'N/A'}
+                </div>
               </div>
-            </div>
-            <div class="invoice-info">
-              <div class="invoice-title">Invoice</div>
-              <div class="invoice-number">${invoice.invoiceNumber}</div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="details-grid">
-          <div class="detail-card">
-            <h3>Bill To</h3>
-            <div class="detail-row">
-              <span class="detail-label">Customer:</span>
-              <span class="detail-value">${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'N/A'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Customer ID:</span>
-              <span class="detail-value">${invoice.customerId ? invoice.customerId.substring(0, 8) + '...' : 'N/A'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Phone:</span>
-              <span class="detail-value">${customer?.phone || 'N/A'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Email:</span>
-              <span class="detail-value">${customer?.email || 'N/A'}</span>
-            </div>
-          </div>
-          
-          <div class="detail-card">
-            <h3>Invoice Details</h3>
-            <div class="detail-row">
-              <span class="detail-label">Issue Date:</span>
-              <span class="detail-value">${new Date(invoice.date).toLocaleDateString()}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Due Date:</span>
-              <span class="detail-value">${new Date(invoice.dueDate).toLocaleDateString()}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Store:</span>
-              <span class="detail-value">${store?.name || 'Store1'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Status:</span>
-              <span class="detail-value" style="padding: 3px 8px; background: ${invoice.status === 'paid' ? '#dcfce7' : '#fef3c7'}; color: ${invoice.status === 'paid' ? '#15803d' : '#a16207'}; border-radius: 12px; font-weight: 700; text-transform: uppercase; font-size: 8pt;">${invoice.status}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div class="items-section">
-          <div class="section-title">Services & Products</div>
-          <table class="items-table">
-            <thead>
-              <tr>
-                <th style="width: 45%">Description</th>
-                <th style="width: 10%" class="text-center">Qty</th>
-                <th style="width: 15%" class="text-right">Unit Price</th>
-                <th style="width: 10%" class="text-right">Discount</th>
-                <th style="width: 20%" class="text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${invoice.items && invoice.items.length > 0 ? invoice.items.map(item => `
-                <tr>
-                  <td>
-                    <div class="item-name">${item.productName}</div>
-                    ${item.description ? `<div class="item-description">${item.description}</div>` : ''}
-                  </td>
-                  <td class="text-center">${item.quantity}</td>
-                  <td class="text-right">$${item.unitPrice.toFixed(2)}</td>
-                  <td class="text-right">${item.discount}%</td>
-                  <td class="text-right">$${item.total.toFixed(2)}</td>
-                </tr>
-              `).join('') : `
-                <tr>
-                  <td colspan="5" style="text-align: center; padding: 25px; color: #64748b; font-style: italic;">
-                    No items available for this invoice
-                  </td>
-                </tr>
-              `}
-            </tbody>
-          </table>
-        </div>
-        
-        <div class="totals-section">
-          <div class="payment-info">
-            <h4>Payment Information</h4>
-            <div class="detail-row">
-              <span class="detail-label">Payment Method:</span>
-              <span class="detail-value" style="text-transform: capitalize;">${invoice.paymentMethod || 'cash'}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Tax Rate:</span>
-              <span class="detail-value">${invoice.taxRate}%</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Currency:</span>
-              <span class="detail-value">USD ($)</span>
-            </div>
-          </div>
-          
-          <div class="totals-card">
-            <div class="total-row">
-              <span class="total-label">Subtotal:</span>
-              <span class="total-value">$${invoice.subtotal.toFixed(2)}</span>
-            </div>
-            <div class="total-row">
-              <span class="total-label">Discount:</span>
-              <span class="total-value">-$${(invoice.discountAmount || 0).toFixed(2)}</span>
-            </div>
-            <div class="total-row">
-              <span class="total-label">Tax (${invoice.taxRate}%):</span>
-              <span class="total-value">$${invoice.taxAmount.toFixed(2)}</span>
+              <div class="payment-status">PAID</div>
             </div>
             
-            <div class="grand-total">
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="total-label">Total Amount</span>
-                <span class="total-value">$${invoice.total.toFixed(2)}</span>
+            <div class="billing-section">
+              <div class="bill-to">
+                <div class="section-title">Bill To:</div>
+                <div style="font-size: 11pt; line-height: 1.5;">
+                  <strong>${customer ? `${customer.firstName} ${customer.lastName}` : invoice.customerName || 'Guest Customer'}</strong><br/>
+                  ${customer?.email || 'No email provided'}<br/>
+                  ${customer?.phone || 'No phone provided'}
+                </div>
+              </div>
+              
+              <div class="ship-to">
+                <div class="section-title">Ship To:</div>
+                <div style="font-size: 11pt; line-height: 1.5;">
+                  <strong>${storeName} - Main Location</strong><br/>
+                  455 Inventory Avenue<br/>
+                  Stock City, SC 67890<br/>
+                  Phone: (555) 987-6543
+                </div>
               </div>
             </div>
+            
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Item Description</th>
+                  <th class="text-center">Quantity</th>
+                  <th class="text-right">Unit Cost</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${invoice.items && invoice.items.length > 0 
+                  ? invoice.items.map(item => `
+                    <tr>
+                      <td>${item.productName || item.description || 'Item'}</td>
+                      <td class="text-center">${item.quantity || 1}</td>
+                      <td class="text-right">$${(item.unitPrice || 0).toFixed(2)}</td>
+                      <td class="text-right">$${(item.total || 0).toFixed(2)}</td>
+                    </tr>
+                  `).join('')
+                  : '<tr><td colspan="4" style="text-align: center; color: #64748b;">No items available</td></tr>'
+                }
+              </tbody>
+            </table>
+            
+            <div class="totals-section">
+              <table class="totals-table">
+                <tr>
+                  <td>Subtotal:</td>
+                  <td class="text-right">$${(invoice.subtotal || 0).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Tax (${invoice.taxRate || 0}%):</td>
+                  <td class="text-right">$${(invoice.taxAmount || 0).toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td>Shipping:</td>
+                  <td class="text-right">$0.00</td>
+                </tr>
+                <tr>
+                  <td><strong>TOTAL:</strong></td>
+                  <td class="text-right"><strong>$${(invoice.total || 0).toFixed(2)}</strong></td>
+                </tr>
+              </table>
+            </div>
+            
+            ${invoice.notes ? `
+              <div class="notes-section">
+                <div class="notes-title">Notes:</div>
+                <div class="notes-content">${invoice.notes}</div>
+              </div>
+            ` : ''}
           </div>
         </div>
-        
-        ${invoice.notes ? `
-          <div class="notes">
-            <div class="notes-title">Additional Notes:</div>
-            <div class="notes-content">${invoice.notes}</div>
-          </div>
-        ` : ''}
       </body>
-      </html>
+      <script>
+        window.addEventListener('load', function() {
+          setTimeout(function() {
+            window.print();
+            setTimeout(function() {
+              window.close();
+            }, 500);
+          }, 1000);
+        });
+      </script>
+    </html>
     `);
     
     printWindow.document.close();
