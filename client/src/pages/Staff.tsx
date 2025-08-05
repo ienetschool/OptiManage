@@ -29,6 +29,7 @@ import {
   Download,
   CalendarDays
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -273,7 +274,17 @@ export default function StaffPage() {
               </div>
               
               <div class="photo-section">
-                <div class="photo-placeholder">👤</div>
+                ${staff.staffPhoto ? 
+                  `<img src="${staff.staffPhoto}" alt="${staff.firstName} ${staff.lastName}" 
+                   style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.3);" 
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                   <div class="photo-placeholder" style="display: none;">
+                     ${staff.firstName?.charAt(0) || ''}${staff.lastName?.charAt(0) || ''}
+                   </div>` : 
+                  `<div class="photo-placeholder">
+                     ${staff.firstName?.charAt(0) || ''}${staff.lastName?.charAt(0) || ''}
+                   </div>`
+                }
                 <div class="qr-section">
                   <canvas id="qr-canvas" width="80" height="80"></canvas>
                 </div>
@@ -1688,7 +1699,12 @@ export default function StaffPage() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center space-x-2">
-                              <User className="h-4 w-4 text-slate-400" />
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={staff.staffPhoto} alt={`${staff.firstName} ${staff.lastName}`} />
+                                <AvatarFallback className="text-xs">
+                                  {staff.firstName?.charAt(0)}{staff.lastName?.charAt(0)}
+                                </AvatarFallback>
+                              </Avatar>
                               <span className="font-medium">{staff.firstName} {staff.lastName}</span>
                             </div>
                           </TableCell>
@@ -1820,22 +1836,27 @@ export default function StaffPage() {
               <div className="col-span-1 space-y-4">
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border text-center">
                   <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                    {selectedStaff.photoUrl ? (
+                    {selectedStaff.staffPhoto ? (
                       <img 
-                        src={selectedStaff.photoUrl} 
+                        src={selectedStaff.staffPhoto} 
                         alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Hide broken image and show fallback
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          const fallback = (e.target as HTMLImageElement).nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
                       />
-                    ) : (
-                      // Simulate that this staff member has a photo
-                      selectedStaff.id === "1bdff802-b8a1-4bbb-8610-f79c2881b1ee" ? (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                          <span className="text-white font-bold text-xl">SG</span>
-                        </div>
-                      ) : (
-                        <User className="h-12 w-12 text-gray-400" />
-                      )
-                    )}
+                    ) : null}
+                    <div 
+                      className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center"
+                      style={{ display: selectedStaff.staffPhoto ? 'none' : 'flex' }}
+                    >
+                      <span className="text-white font-bold text-xl">
+                        {selectedStaff.firstName?.charAt(0) || ''}{selectedStaff.lastName?.charAt(0) || ''}
+                      </span>
+                    </div>
                   </div>
                   <h3 className="font-semibold text-lg">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
                   <p className="text-sm text-slate-600">{selectedStaff.position}</p>
