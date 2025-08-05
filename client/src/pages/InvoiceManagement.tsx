@@ -706,7 +706,7 @@ export default function InvoiceManagement() {
           }
           
           .invoice-type {
-            background: #1e3a8a;
+            background: #4F46E5;
             color: white;
             padding: 12px 24px;
             border-radius: 8px;
@@ -723,7 +723,7 @@ export default function InvoiceManagement() {
           }
           
           .invoice-number {
-            background: #1e3a8a;
+            background: #4F46E5;
             color: white;
             padding: 8px 16px;
             border-radius: 6px;
@@ -745,14 +745,12 @@ export default function InvoiceManagement() {
           }
           
           .section-title {
-            background: #3b82f6;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 6px;
+            font-size: 14pt;
             font-weight: 700;
+            color: #4F46E5;
             margin-bottom: 12px;
-            font-size: 11pt;
             text-transform: uppercase;
+            letter-spacing: 1px;
           }
           
           .payment-status {
@@ -842,14 +840,14 @@ export default function InvoiceManagement() {
           }
           
           .items-table th {
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            color: #1e40af;
+            background: #4F46E5;
+            color: white;
             padding: 12px;
             text-align: left;
             font-weight: 700;
             font-size: 9pt;
             text-transform: uppercase;
-            border-bottom: 2px solid #cbd5e1;
+            border-bottom: 2px solid #4F46E5;
           }
           
           .items-table td {
@@ -907,7 +905,7 @@ export default function InvoiceManagement() {
           }
           
           .totals-table tr:last-child {
-            background: #1e3a8a;
+            background: #4F46E5;
             color: white;
             font-weight: 700;
             font-size: 12pt;
@@ -922,12 +920,12 @@ export default function InvoiceManagement() {
             padding: 20px;
             background: #f8fafc;
             border-radius: 8px;
-            border-left: 4px solid #3b82f6;
+            border-left: 4px solid #4F46E5;
           }
           
           .notes-title {
             font-weight: 700;
-            color: #1e3a8a;
+            color: #4F46E5;
             margin-bottom: 8px;
             font-size: 11pt;
           }
