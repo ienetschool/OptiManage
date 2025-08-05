@@ -1316,7 +1316,7 @@ export default function InvoiceManagement() {
                                       </Button>
                                     </FormControl>
                                   </PopoverTrigger>
-                                  <PopoverContent className="w-full p-0">
+                                  <PopoverContent className="w-full p-0 max-h-[400px]">
                                     <Command>
                                       <CommandInput 
                                         placeholder="Search products..." 
@@ -1326,7 +1326,8 @@ export default function InvoiceManagement() {
                                       <CommandEmpty>
                                         {productsLoading ? "Loading products..." : `No products found. (Total available: ${products.length})`}
                                       </CommandEmpty>
-                                      <CommandGroup className="max-h-48 overflow-y-auto">
+                                      <div className="max-h-[300px] overflow-y-auto">
+                                        <CommandGroup>
                                         <CommandItem
                                           value="custom"
                                           onSelect={() => {
@@ -1410,7 +1411,8 @@ export default function InvoiceManagement() {
                                               </CommandItem>
                                             );
                                           })}
-                                      </CommandGroup>
+                                        </CommandGroup>
+                                      </div>
                                     </Command>
                                   </PopoverContent>
                                 </Popover>
