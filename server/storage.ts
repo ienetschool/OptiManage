@@ -1114,6 +1114,19 @@ export class DatabaseStorage implements IStorage {
         invoiceId: invoice.invoiceNumber,
         customerId: invoice.customerId,
         customerName: (() => {
+          // First, check if patient ID is in notes field (PATIENT_ID:xxx format)
+          if (invoice.notes && invoice.notes.startsWith('PATIENT_ID:')) {
+            const patientIdMatch = invoice.notes.match(/^PATIENT_ID:([^|]+)/);
+            if (patientIdMatch) {
+              const patientId = patientIdMatch[1];
+              const patient = patientsData.find(p => p.id === patientId);
+              if (patient) {
+                return `${patient.firstName} ${patient.lastName}`.trim();
+              }
+            }
+          }
+          
+          // If no customerId, return Guest Customer
           if (!invoice.customerId) return 'Guest Customer';
           
           // Try customers first
