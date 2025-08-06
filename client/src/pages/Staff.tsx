@@ -189,7 +189,7 @@ export default function StaffPage() {
             }
             .employee-info {
               text-align: center;
-              padding: 20px;
+              padding: 10px 20px 5px 20px;
               position: relative;
               z-index: 2;
             }
@@ -204,13 +204,13 @@ export default function StaffPage() {
               opacity: 0.9;
               text-transform: uppercase;
               letter-spacing: 1px;
-              margin-bottom: 20px;
+              margin-bottom: 5px;
             }
             .employee-details {
               background: rgba(255,255,255,0.1);
               border-radius: 15px;
-              padding: 20px;
-              margin: 20px;
+              padding: 15px;
+              margin: 10px 20px 20px 20px;
               backdrop-filter: blur(10px);
             }
             .detail-row {
