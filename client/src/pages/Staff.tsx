@@ -354,6 +354,153 @@ export default function StaffPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* View Staff Dialog */}
+      {selectedStaff && (
+        <Dialog open={!!selectedStaff} onOpenChange={() => setSelectedStaff(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Staff Details</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex flex-col items-center">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={selectedStaff.staffPhoto || ''} alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`} />
+                    <AvatarFallback className="text-xl">{selectedStaff.firstName.charAt(0)}{selectedStaff.lastName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <h3 className="mt-4 text-xl font-semibold">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
+                  <p className="text-gray-600">{selectedStaff.position}</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="font-semibold">Staff Code</Label>
+                  <p>{selectedStaff.staffCode}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Department</Label>
+                  <p>{selectedStaff.department || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Email</Label>
+                  <p>{selectedStaff.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Phone</Label>
+                  <p>{selectedStaff.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label className="font-semibold">Blood Group</Label>
+                  <p>{selectedStaff.bloodGroup || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Add Staff Dialog */}
+      {open && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+            </DialogHeader>
+            <Form {...useForm()}>
+              <form className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>First Name</Label>
+                    <Input placeholder="Enter first name" />
+                  </div>
+                  <div>
+                    <Label>Last Name</Label>
+                    <Input placeholder="Enter last name" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Position</Label>
+                  <Input placeholder="Enter position" />
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <Input placeholder="Enter department" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Email</Label>
+                    <Input type="email" placeholder="Enter email" />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input placeholder="Enter phone number" />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    Add Staff
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Staff Dialog */}
+      {editOpen && editingStaff && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Staff Member</DialogTitle>
+            </DialogHeader>
+            <Form {...useForm()}>
+              <form className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>First Name</Label>
+                    <Input defaultValue={editingStaff.firstName} placeholder="Enter first name" />
+                  </div>
+                  <div>
+                    <Label>Last Name</Label>
+                    <Input defaultValue={editingStaff.lastName} placeholder="Enter last name" />
+                  </div>
+                </div>
+                <div>
+                  <Label>Position</Label>
+                  <Input defaultValue={editingStaff.position} placeholder="Enter position" />
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <Input defaultValue={editingStaff.department || ''} placeholder="Enter department" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Email</Label>
+                    <Input defaultValue={editingStaff.email || ''} type="email" placeholder="Enter email" />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input defaultValue={editingStaff.phone || ''} placeholder="Enter phone number" />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    Update Staff
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
