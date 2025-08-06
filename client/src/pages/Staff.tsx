@@ -270,7 +270,7 @@ export default function StaffPage() {
               box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             }
             .signature-area {
-              margin-top: 30px;
+              margin-top: 50px;
               text-align: center;
             }
             .signature-line {
