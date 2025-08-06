@@ -174,8 +174,8 @@ export default function StaffPage() {
               z-index: 2;
             }
             .photo-circle {
-              width: 120px;
-              height: 120px;
+              width: 160px;
+              height: 160px;
               border-radius: 50%;
               background: white;
               border: 5px solid rgba(255,255,255,0.3);
@@ -330,7 +330,7 @@ export default function StaffPage() {
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Blood:</span>
-                    <span class="detail-value">${staff.bloodType || 'N/A'}</span>
+                    <span class="detail-value">${staff.bloodGroup || 'N/A'}</span>
                   </div>
                   <div class="detail-row">
                     <span class="detail-label">Email:</span>
@@ -358,9 +358,9 @@ export default function StaffPage() {
                 
                 <div class="qr-section">
                   <div class="qr-code-wrapper">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=STAFF-${staff.staffCode}-${staff.firstName}-${staff.lastName}-ATTENDANCE" 
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=STAFF-${staff.staffCode}-${staff.firstName}-${staff.lastName}-ATTENDANCE" 
                          alt="Staff QR Code" 
-                         style="width: 80px; height: 80px;" />
+                         style="width: 120px; height: 120px;" />
                   </div>
                 </div>
                 
