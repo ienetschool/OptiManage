@@ -509,10 +509,18 @@ export default function StaffPage() {
                 </div>
               </div>
             </div>
-            </div>
-            
-            <!-- Duplicate cards for A4 printing (Cards 2, 3, 4) -->
-            ${Array(3).fill().map(() => `
+          </div>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(idCardHTML);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
+  };
             <div class="id-card-container">
               <!-- Front of ID Card -->
               <div class="id-card">
