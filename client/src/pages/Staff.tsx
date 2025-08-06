@@ -85,15 +85,15 @@ export default function StaffPage() {
               font-size: 12px; opacity: 0.9; text-transform: uppercase; 
               color: rgba(218,165,32,0.9);
             }
-            .photo-section { display: flex; justify-content: center; margin: 10px 0; }
+            .photo-section { display: flex; justify-content: center; margin: 15px 0; }
             .photo-circle {
-              width: 140px; height: 140px; border-radius: 50%; background: white;
+              width: 120px; height: 120px; border-radius: 50%; background: white;
               border: 4px solid rgba(218,165,32,0.8); display: flex; align-items: center;
-              justify-content: center; font-size: 36px; color: #2a5298; font-weight: bold;
+              justify-content: center; font-size: 32px; color: #2a5298; font-weight: bold;
               overflow: hidden; box-shadow: 0 4px 15px rgba(218,165,32,0.3);
             }
             .photo-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-            .employee-info { text-align: center; margin-bottom: 35px; }
+            .employee-info { text-align: center; margin-bottom: 25px; }
             .employee-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
             .employee-position { font-size: 14px; opacity: 0.9; margin-bottom: 15px; }
             .employee-details {
@@ -112,16 +112,10 @@ export default function StaffPage() {
             .terms-list li { margin-bottom: 8px; padding-left: 15px; position: relative; }
             .terms-list li:before { content: '•'; position: absolute; left: 0; }
             .qr-section { text-align: center; margin: 20px 0; }
-            .qr-code {
-              width: 100px; height: 100px; background: white; margin: 0 auto;
-              border-radius: 8px; padding: 8px; display: grid; grid-template-columns: repeat(15, 1fr);
-              grid-template-rows: repeat(15, 1fr); gap: 1px;
-            }
-            .qr-dot {
-              background: black; border-radius: 1px;
-            }
-            .qr-empty {
-              background: transparent;
+            .qr-placeholder {
+              width: 80px; height: 80px; background: white; margin: 0 auto;
+              border-radius: 8px; display: flex; align-items: center; justify-content: center;
+              color: black; font-size: 10px; font-weight: bold;
             }
             .address-section {
               background: rgba(255,255,255,0.15); border-radius: 10px; padding: 15px;
@@ -186,32 +180,7 @@ export default function StaffPage() {
                     <li>Access permissions subject to role</li>
                   </ul>
                   <div class="qr-section">
-                    <div class="qr-code">
-                      ${(() => {
-                        const qrPattern = [
-                          '111111101011111',
-                          '100000100100001',
-                          '101110101010101',
-                          '101110100010101',
-                          '101110100110101',
-                          '100000101100001',
-                          '111111101111111',
-                          '000000001000000',
-                          '101011101110110',
-                          '110101011010101',
-                          '010110100111010',
-                          '101010110101101',
-                          '011101001010110',
-                          '000000001101011',
-                          '111111101010101'
-                        ];
-                        return qrPattern.map(row => 
-                          row.split('').map(dot => 
-                            dot === '1' ? '<div class="qr-dot"></div>' : '<div class="qr-empty"></div>'
-                          ).join('')
-                        ).join('');
-                      })()}
-                    </div>
+                    <div class="qr-placeholder">QR CODE</div>
                   </div>
                   <div class="address-section">
                     <strong>OptiStore Pro Medical Center</strong><br>
@@ -354,264 +323,6 @@ export default function StaffPage() {
           </TableBody>
         </Table>
       </div>
-
-      {/* View Staff Dialog */}
-      {selectedStaff && (
-        <Dialog open={!!selectedStaff} onOpenChange={() => setSelectedStaff(null)}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">Staff Information</DialogTitle>
-            </DialogHeader>
-            
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Left Side - Photo and Basic Info */}
-              <div className="flex flex-col items-center space-y-4 lg:w-1/3">
-                <Avatar className="h-32 w-32">
-                  <AvatarImage src={selectedStaff.staffPhoto || ''} alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`} />
-                  <AvatarFallback className="text-3xl">{selectedStaff.firstName.charAt(0)}{selectedStaff.lastName.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="text-center">
-                  <h3 className="text-2xl font-bold">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
-                  <p className="text-lg text-blue-600 font-medium">{selectedStaff.position}</p>
-                  <Badge variant="outline" className="mt-2">{selectedStaff.department || 'General'}</Badge>
-                </div>
-              </div>
-
-              {/* Right Side - Details */}
-              <div className="lg:w-2/3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5" />
-                        Personal Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Staff Code</Label>
-                        <p className="text-base font-medium">{selectedStaff.staffCode}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Blood Group</Label>
-                        <p className="text-base font-medium">{selectedStaff.bloodGroup || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Date of Birth</Label>
-                        <p className="text-base font-medium">{selectedStaff.dateOfBirth ? new Date(selectedStaff.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Address</Label>
-                        <p className="text-base font-medium">{selectedStaff.address || 'N/A'}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5" />
-                        Contact Information
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Email</Label>
-                        <p className="text-base font-medium">{selectedStaff.email || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Phone</Label>
-                        <p className="text-base font-medium">{selectedStaff.phone || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Emergency Contact</Label>
-                        <p className="text-base font-medium">{selectedStaff.emergencyContact || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Emergency Phone</Label>
-                        <p className="text-base font-medium">{selectedStaff.emergencyPhone || 'N/A'}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Shield className="h-5 w-5" />
-                        Employment Details
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Role</Label>
-                        <p className="text-base font-medium">{selectedStaff.role || 'Staff'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Date of Joining</Label>
-                        <p className="text-base font-medium">{selectedStaff.dateOfJoining ? new Date(selectedStaff.dateOfJoining).toLocaleDateString() : 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Employee ID</Label>
-                        <p className="text-base font-medium">{selectedStaff.employeeId || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Status</Label>
-                        <Badge variant={selectedStaff.isActive ? "default" : "secondary"}>
-                          {selectedStaff.isActive ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5" />
-                        Salary & Benefits
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Basic Salary</Label>
-                        <p className="text-base font-medium">${selectedStaff.basicSalary ? selectedStaff.basicSalary.toLocaleString() : 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">House Allowance</Label>
-                        <p className="text-base font-medium">${selectedStaff.houseAllowance ? selectedStaff.houseAllowance.toLocaleString() : 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Transport Allowance</Label>
-                        <p className="text-base font-medium">${selectedStaff.transportAllowance ? selectedStaff.transportAllowance.toLocaleString() : 'N/A'}</p>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium text-gray-500">Medical Allowance</Label>
-                        <p className="text-base font-medium">${selectedStaff.medicalAllowance ? selectedStaff.medicalAllowance.toLocaleString() : 'N/A'}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="mt-6 flex justify-end space-x-3">
-                  <Button variant="outline" onClick={() => printIDCard(selectedStaff)}>
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Print ID Card
-                  </Button>
-                  <Button onClick={() => {
-                    setEditingStaff(selectedStaff);
-                    setSelectedStaff(null);
-                    setEditOpen(true);
-                  }}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Staff
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Add Staff Dialog */}
-      {open && (
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New Staff Member</DialogTitle>
-            </DialogHeader>
-            <Form {...useForm()}>
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>First Name</Label>
-                    <Input placeholder="Enter first name" />
-                  </div>
-                  <div>
-                    <Label>Last Name</Label>
-                    <Input placeholder="Enter last name" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Position</Label>
-                  <Input placeholder="Enter position" />
-                </div>
-                <div>
-                  <Label>Department</Label>
-                  <Input placeholder="Enter department" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Email</Label>
-                    <Input type="email" placeholder="Enter email" />
-                  </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <Input placeholder="Enter phone number" />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Add Staff
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      )}
-
-      {/* Edit Staff Dialog */}
-      {editOpen && editingStaff && (
-        <Dialog open={editOpen} onOpenChange={setEditOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Staff Member</DialogTitle>
-            </DialogHeader>
-            <Form {...useForm()}>
-              <form className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>First Name</Label>
-                    <Input defaultValue={editingStaff.firstName} placeholder="Enter first name" />
-                  </div>
-                  <div>
-                    <Label>Last Name</Label>
-                    <Input defaultValue={editingStaff.lastName} placeholder="Enter last name" />
-                  </div>
-                </div>
-                <div>
-                  <Label>Position</Label>
-                  <Input defaultValue={editingStaff.position} placeholder="Enter position" />
-                </div>
-                <div>
-                  <Label>Department</Label>
-                  <Input defaultValue={editingStaff.department || ''} placeholder="Enter department" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Email</Label>
-                    <Input defaultValue={editingStaff.email || ''} type="email" placeholder="Enter email" />
-                  </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <Input defaultValue={editingStaff.phone || ''} placeholder="Enter phone number" />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="submit">
-                    Update Staff
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }
