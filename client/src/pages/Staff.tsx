@@ -311,7 +311,10 @@ export default function StaffPage() {
                 
                 <div class="photo-section">
                   <div class="photo-circle">
-                    ${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}
+                    ${staff.staffPhoto ? 
+                      `<img src="${staff.staffPhoto}" alt="${staff.firstName} ${staff.lastName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />` :
+                      `<span style="font-size: 48px; color: #2a5298; font-weight: bold;">${staff.firstName.charAt(0)}${staff.lastName.charAt(0)}</span>`
+                    }
                   </div>
                 </div>
                 
@@ -355,57 +358,9 @@ export default function StaffPage() {
                 
                 <div class="qr-section">
                   <div class="qr-code-wrapper">
-                    <svg viewBox="0 0 21 21" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-                      <rect width="21" height="21" fill="white"/>
-                      <g fill="black">
-                        <rect x="0" y="0" width="7" height="7"/>
-                        <rect x="1" y="1" width="5" height="5" fill="white"/>
-                        <rect x="2" y="2" width="3" height="3"/>
-                        <rect x="14" y="0" width="7" height="7"/>
-                        <rect x="15" y="1" width="5" height="5" fill="white"/>
-                        <rect x="16" y="2" width="3" height="3"/>
-                        <rect x="0" y="14" width="7" height="7"/>
-                        <rect x="1" y="15" width="5" height="5" fill="white"/>
-                        <rect x="2" y="16" width="3" height="3"/>
-                        <rect x="8" y="6" width="1" height="1"/>
-                        <rect x="10" y="6" width="1" height="1"/>
-                        <rect x="12" y="6" width="1" height="1"/>
-                        <rect x="6" y="8" width="1" height="1"/>
-                        <rect x="6" y="10" width="1" height="1"/>
-                        <rect x="6" y="12" width="1" height="1"/>
-                        <rect x="8" y="8" width="1" height="1"/>
-                        <rect x="9" y="8" width="1" height="1"/>
-                        <rect x="11" y="8" width="1" height="1"/>
-                        <rect x="12" y="8" width="1" height="1"/>
-                        <rect x="8" y="9" width="1" height="1"/>
-                        <rect x="10" y="9" width="1" height="1"/>
-                        <rect x="12" y="9" width="1" height="1"/>
-                        <rect x="8" y="10" width="1" height="1"/>
-                        <rect x="9" y="10" width="1" height="1"/>
-                        <rect x="11" y="10" width="1" height="1"/>
-                        <rect x="8" y="11" width="1" height="1"/>
-                        <rect x="10" y="11" width="1" height="1"/>
-                        <rect x="12" y="11" width="1" height="1"/>
-                        <rect x="9" y="12" width="1" height="1"/>
-                        <rect x="11" y="12" width="1" height="1"/>
-                        <rect x="14" y="8" width="1" height="1"/>
-                        <rect x="15" y="8" width="1" height="1"/>
-                        <rect x="17" y="8" width="1" height="1"/>
-                        <rect x="14" y="9" width="1" height="1"/>
-                        <rect x="16" y="9" width="1" height="1"/>
-                        <rect x="14" y="10" width="1" height="1"/>
-                        <rect x="15" y="10" width="1" height="1"/>
-                        <rect x="17" y="10" width="1" height="1"/>
-                        <rect x="8" y="14" width="1" height="1"/>
-                        <rect x="9" y="14" width="1" height="1"/>
-                        <rect x="11" y="14" width="1" height="1"/>
-                        <rect x="8" y="15" width="1" height="1"/>
-                        <rect x="10" y="15" width="1" height="1"/>
-                        <rect x="8" y="16" width="1" height="1"/>
-                        <rect x="9" y="16" width="1" height="1"/>
-                        <rect x="11" y="16" width="1" height="1"/>
-                      </g>
-                    </svg>
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=STAFF-${staff.staffCode}-${staff.firstName}-${staff.lastName}-ATTENDANCE" 
+                         alt="Staff QR Code" 
+                         style="width: 80px; height: 80px;" />
                   </div>
                 </div>
                 
@@ -416,6 +371,11 @@ export default function StaffPage() {
                 
                 <div style="text-align: center; margin-top: 30px;">
                   <div class="company-name">OPTISTORE PRO</div>
+                  <div style="font-size: 10px; opacity: 0.8; margin-top: 5px;">
+                    123 Medical Plaza, Suite 400<br>
+                    Healthcare District, City 12345<br>
+                    Tel: (555) 123-4567
+                  </div>
                 </div>
               </div>
             </div>
