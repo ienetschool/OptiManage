@@ -9,7 +9,7 @@ import { registerDashboardRoutes } from "./routes/dashboardRoutes";
 import { registerProfileRoutes } from "./routes/profileRoutes";
 import { registerMedicalRecordsRoutes } from "./routes/medicalRoutes";
 import { registerPaymentRoutes } from "./routes/paymentRoutes";
-import { registerAccountingRoutes } from "./routes/accountingRoutes";
+import accountingRoutes from "./routes/accountingRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
 import { 
@@ -374,7 +374,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register payment routes
   registerPaymentRoutes(app);
-  registerAccountingRoutes(app);
   
   // Register store settings routes
   registerStoreSettingsRoutes(app);
@@ -2077,6 +2076,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Add accounting API routes
+  app.use('/api/accounting', accountingRoutes);
 
   const httpServer = createServer(app);
   return httpServer;

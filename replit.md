@@ -4,14 +4,18 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
-- **August 6, 2025**: Enhanced staff ID card system with improved layout and functionality
-  - Increased profile picture size (160px) and QR code size (120px) for better visibility
-  - Added blood group display using proper database field
-  - Added staff address field to front info section for complete contact details
-  - Restructured back of ID card: removed Terms & Conditions, moved QR code up with "Scan for Attendance" label
-  - Adjusted signature spacing: moved down 20px (100px margin), reduced space to branding (30px)
-  - Optimized spacing between sections for better content visibility
-  - Added live QR generation for attendance tracking with format: STAFF-{staffCode}-{firstName}-{lastName}-ATTENDANCE
+- **August 6, 2025**: Implemented comprehensive accounting system for Income/Expenditure tracking and Profit/Loss reporting
+  - Created complete Chart of Accounts with 25+ accounts covering Assets, Liabilities, Equity, Revenue, and Expenses
+  - Added General Ledger Entries table with double-entry bookkeeping functionality  
+  - Implemented Payment Transactions tracking for all income and expense flows
+  - Created Profit/Loss Entries table for detailed financial performance analysis
+  - Updated payroll system with realistic salary structures ($38K-$85K range) and detailed allowances/deductions
+  - Added comprehensive transaction data: $2,745 revenue, $586 COGS, $117,350 expenses for January 2025
+  - Financial Summary: Revenue from medical services and product sales, major expenses include payroll ($96,850), rent ($8,500), and operational costs
+- **August 6, 2025**: Enhanced staff ID card visual design with clean black text
+  - Removed background shading from detail fields for cleaner appearance
+  - Changed text color to solid black (#000000) for maximum readability
+  - Increased font weight (600) for better visibility against royal blue background
 - **August 5, 2025**: Successfully migrated from Replit Agent to standard Replit environment
 - Database backup imported from `db_backup0508250230am.sql`
 - Fixed TypeScript compilation errors in schema and storage files
@@ -40,12 +44,16 @@ OptiStore Pro is a comprehensive medical practice management system built with R
 - Customer relationship management
 - Staff role management and permissions
 
-### Financial Tracking
-- Complete accounting system with chart of accounts
-- General ledger entries
-- Payment transaction tracking
-- Profit/loss reporting
-- Expenditure management
+### Financial Tracking & Accounting
+- Complete Chart of Accounts (25+ accounts) with proper categorization
+- Double-entry bookkeeping via General Ledger Entries
+- Comprehensive Payment Transaction tracking with multiple payment methods
+- Real-time Profit/Loss analysis with detailed expense categorization
+- Cost of Goods Sold (COGS) tracking for inventory management  
+- Monthly financial performance reporting
+- Payroll expense integration with salary and benefit tracking
+- Operating expense management (rent, utilities, insurance, supplies, marketing)
+- Revenue tracking from medical services and product sales
 
 ## Database Schema
 ### Core Tables
@@ -60,11 +68,13 @@ OptiStore Pro is a comprehensive medical practice management system built with R
 - `invoices` - Business invoicing
 - `sales` - Point of sale transactions
 
-### Accounting Tables
-- `chart_of_accounts` - Accounting structure
-- `general_ledger_entries` - All financial transactions
-- `payment_transactions` - Payment processing
-- `account_categories` - Account organization
+### Accounting & Financial Tables
+- `account_categories` - Main account groupings (Assets, Liabilities, Equity, Revenue, Expenses)
+- `chart_of_accounts` - Complete accounting structure with 25+ accounts
+- `general_ledger_entries` - Double-entry bookkeeping transactions
+- `payment_transactions` - Detailed payment processing with multiple methods
+- `profit_loss_entries` - Comprehensive income/expense tracking for P&L reporting
+- `product_costs` - Inventory cost tracking for COGS calculation
 
 ## User Preferences
 - Use TypeScript for type safety
