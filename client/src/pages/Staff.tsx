@@ -73,32 +73,26 @@ export default function StaffPage() {
               box-shadow: 0 4px 12px rgba(0,0,0,0.2); overflow: hidden;
             }
             .card-front, .card-back {
-              background: linear-gradient(135deg, #1e3c72 0%, #2a5298 30%, #4169e1 60%, #daa520 100%);
+              background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #6fa8dc 100%);
               color: white; height: 100%; position: relative; padding: 20px;
             }
             .company-header { text-align: center; margin-bottom: 20px; }
-            .company-name { 
-              font-size: 20px; font-weight: bold; margin-bottom: 5px; 
-              text-shadow: 0 2px 4px rgba(218,165,32,0.3);
-            }
-            .company-slogan { 
-              font-size: 12px; opacity: 0.9; text-transform: uppercase; 
-              color: rgba(218,165,32,0.9);
-            }
-            .photo-section { display: flex; justify-content: center; margin: 15px 0; }
+            .company-name { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+            .company-slogan { font-size: 12px; opacity: 0.9; text-transform: uppercase; }
+            .photo-section { display: flex; justify-content: center; margin: 20px 0; }
             .photo-circle {
-              width: 120px; height: 120px; border-radius: 50%; background: white;
-              border: 4px solid rgba(218,165,32,0.8); display: flex; align-items: center;
-              justify-content: center; font-size: 32px; color: #2a5298; font-weight: bold;
-              overflow: hidden; box-shadow: 0 4px 15px rgba(218,165,32,0.3);
+              width: 100px; height: 100px; border-radius: 50%; background: white;
+              border: 3px solid rgba(255,255,255,0.3); display: flex; align-items: center;
+              justify-content: center; font-size: 28px; color: #2a5298; font-weight: bold;
+              overflow: hidden;
             }
             .photo-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-            .employee-info { text-align: center; margin-bottom: 25px; }
+            .employee-info { text-align: center; margin-bottom: 20px; }
             .employee-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
             .employee-position { font-size: 14px; opacity: 0.9; margin-bottom: 15px; }
             .employee-details {
-              background: rgba(255,255,255,0.15); border-radius: 15px;
-              padding: 15px; backdrop-filter: blur(10px); border: 1px solid rgba(218,165,32,0.3);
+              background: rgba(255,255,255,0.1); border-radius: 15px;
+              padding: 15px; backdrop-filter: blur(10px);
             }
             .detail-row {
               display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;
@@ -118,9 +112,8 @@ export default function StaffPage() {
               color: black; font-size: 10px; font-weight: bold;
             }
             .address-section {
-              background: rgba(255,255,255,0.15); border-radius: 10px; padding: 15px;
+              background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px;
               margin: 15px 0; font-size: 12px; text-align: center; backdrop-filter: blur(10px);
-              border: 1px solid rgba(218,165,32,0.3);
             }
           </style>
         </head>
