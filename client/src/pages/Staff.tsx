@@ -81,7 +81,7 @@ export default function StaffPage() {
             .company-slogan { font-size: 12px; opacity: 0.9; text-transform: uppercase; }
             .photo-section { display: flex; justify-content: center; margin: 20px 0; }
             .photo-circle {
-              width: 80px; height: 80px; border-radius: 50%; background: white;
+              width: 100px; height: 100px; border-radius: 50%; background: white;
               border: 3px solid rgba(255,255,255,0.3); display: flex; align-items: center;
               justify-content: center; font-size: 28px; color: #2a5298; font-weight: bold;
               overflow: hidden;
@@ -107,9 +107,13 @@ export default function StaffPage() {
             .terms-list li:before { content: '•'; position: absolute; left: 0; }
             .qr-section { text-align: center; margin: 20px 0; }
             .qr-placeholder {
-              width: 60px; height: 60px; background: white; margin: 0 auto;
+              width: 80px; height: 80px; background: white; margin: 0 auto;
               border-radius: 8px; display: flex; align-items: center; justify-content: center;
               color: black; font-size: 10px; font-weight: bold;
+            }
+            .address-section {
+              background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px;
+              margin: 15px 0; font-size: 12px; text-align: center; backdrop-filter: blur(10px);
             }
           </style>
         </head>
@@ -148,10 +152,9 @@ export default function StaffPage() {
                     <div class="detail-row">
                       <span>Dept:</span><span>${staff.department || 'N/A'}</span>
                     </div>
-                  </div>
-                  <div class="footer-section">
-                    123 Vision Street, Eyecare City, EC 12345<br>
-                    Phone: (555) 123-4567
+                    <div class="detail-row">
+                      <span>Blood:</span><span>${staff.bloodGroup || 'O+'}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -171,6 +174,12 @@ export default function StaffPage() {
                   </ul>
                   <div class="qr-section">
                     <div class="qr-placeholder">QR CODE</div>
+                  </div>
+                  <div class="address-section">
+                    <strong>OptiStore Pro Medical Center</strong><br>
+                    123 Vision Street, Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567<br>
+                    Email: info@optistorepro.com
                   </div>
                   <div style="position: absolute; bottom: 15px; left: 15px; right: 15px; text-align: center; font-size: 10px; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px;">
                     Authorized Signature
