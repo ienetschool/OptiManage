@@ -187,10 +187,30 @@ export default function StaffPage() {
                   </ul>
                   <div class="qr-section">
                     <div class="qr-code">
-                      ${Array.from({length: 225}, (_, i) => {
-                        const patterns = [0,1,2,3,4,5,6,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112,119,126,133,140,147,154,161,168,175,182,189,196,203,210,217,224];
-                        return patterns.includes(i) ? '<div class="qr-dot"></div>' : '<div class="qr-empty"></div>';
-                      }).join('')}
+                      ${(() => {
+                        const qrPattern = [
+                          '111111101011111',
+                          '100000100100001',
+                          '101110101010101',
+                          '101110100010101',
+                          '101110100110101',
+                          '100000101100001',
+                          '111111101111111',
+                          '000000001000000',
+                          '101011101110110',
+                          '110101011010101',
+                          '010110100111010',
+                          '101010110101101',
+                          '011101001010110',
+                          '000000001101011',
+                          '111111101010101'
+                        ];
+                        return qrPattern.map(row => 
+                          row.split('').map(dot => 
+                            dot === '1' ? '<div class="qr-dot"></div>' : '<div class="qr-empty"></div>'
+                          ).join('')
+                        ).join('');
+                      })()}
                     </div>
                   </div>
                   <div class="address-section">
