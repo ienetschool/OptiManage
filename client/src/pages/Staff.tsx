@@ -521,7 +521,73 @@ export default function StaffPage() {
       printWindow.print();
     }, 500);
   };
-            <div class="id-card-container">
+
+  const { data: staff = [] } = useQuery({
+    queryKey: ['/api/staff'],
+  });
+
+  const { data: stores = [] } = useQuery({
+    queryKey: ['/api/stores']
+  });
+
+  const createStaffMutation = useMutation({
+    mutationFn: (newStaff: z.infer<typeof insertStaffSchema>) =>
+      apiRequest('/api/staff', {
+        method: 'POST',
+        body: JSON.stringify(newStaff),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff'] });
+      setOpen(false);
+      toast({
+        title: "Success",
+        description: "Staff member created successfully",
+      });
+    },
+  });
+
+  return (
+    <div className="p-6 space-y-6" data-testid="staff-page">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold" data-testid="staff-page-title">Staff Management</h1>
+        <Button onClick={() => setOpen(true)} data-testid="button-add-staff">
+          <Plus className="mr-2 h-4 w-4" />
+          Add Staff
+        </Button>
+      </div>
+
+      <div className="mb-4">
+        <Input
+          placeholder="Search staff members..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-sm"
+          data-testid="input-search-staff"
+        />
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead data-testid="header-photo">Photo</TableHead>
+              <TableHead data-testid="header-name">Name</TableHead>
+              <TableHead data-testid="header-position">Position</TableHead>
+              <TableHead data-testid="header-department">Department</TableHead>
+              <TableHead data-testid="header-email">Email</TableHead>
+              <TableHead data-testid="header-phone">Phone</TableHead>
+              <TableHead data-testid="header-actions">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {staff
+              .filter((s) =>
+                `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                s.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (s.department && s.department.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                (s.email && s.email.toLowerCase().includes(searchTerm.toLowerCase()))
+              )
+              .map((s) => (
               <!-- Front of ID Card -->
               <div class="id-card">
                 <div class="card-front">
