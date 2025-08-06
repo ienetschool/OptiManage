@@ -243,8 +243,11 @@ export default function StaffPage() {
               max-width: 160px;
               word-break: break-word;
               hyphens: auto;
-              color: #ffffff;
-              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+              color: #f8f9fa;
+              text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+              background: rgba(0,0,0,0.1);
+              padding: 2px 6px;
+              border-radius: 4px;
             }
             .detail-label {
               font-weight: 600;
@@ -254,10 +257,13 @@ export default function StaffPage() {
             }
             .detail-value {
               font-weight: 500;
-              color: #ffffff;
+              color: #f8f9fa;
               text-align: right;
               flex: 1;
-              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+              text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+              background: rgba(0,0,0,0.1);
+              padding: 2px 6px;
+              border-radius: 4px;
             }
             .back-content {
               text-align: left;
