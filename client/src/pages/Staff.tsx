@@ -200,7 +200,7 @@ export default function StaffPage() {
     }, 500);
   };
 
-  const { data: staff = [] } = useQuery({
+  const { data: staff = [] } = useQuery<Staff[]>({
     queryKey: ['/api/staff'],
   });
 
@@ -210,16 +210,27 @@ export default function StaffPage() {
 
   const createStaffMutation = useMutation({
     mutationFn: (newStaff: z.infer<typeof insertStaffSchema>) =>
-      apiRequest('/api/staff', {
-        method: 'POST',
-        body: JSON.stringify(newStaff),
-      }),
+      apiRequest('/api/staff', 'POST', newStaff),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/staff'] });
       setOpen(false);
       toast({
         title: "Success",
         description: "Staff member created successfully",
+      });
+    },
+  });
+
+  const updateStaffMutation = useMutation({
+    mutationFn: ({ id, ...data }: Partial<Staff> & { id: string }) =>
+      apiRequest(`/api/staff/${id}`, 'PATCH', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/staff'] });
+      setEditOpen(false);
+      setEditingStaff(null);
+      toast({
+        title: "Success",
+        description: "Staff member updated successfully",
       });
     },
   });
@@ -316,6 +327,177 @@ export default function StaffPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Add Staff Dialog */}
+      {open && (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Add New Staff Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input id="firstName" placeholder="Enter first name" />
+                </div>
+                <div>
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input id="lastName" placeholder="Enter last name" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="position">Position</Label>
+                  <Input id="position" placeholder="Enter position" />
+                </div>
+                <div>
+                  <Label htmlFor="department">Department</Label>
+                  <Input id="department" placeholder="Enter department" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="Enter email" />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input id="phone" placeholder="Enter phone number" />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button>Add Staff</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* View Staff Dialog */}
+      {selectedStaff && (
+        <Dialog open={!!selectedStaff} onOpenChange={() => setSelectedStaff(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Staff Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={selectedStaff.staffPhoto || ''} alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`} />
+                  <AvatarFallback className="text-lg">
+                    {selectedStaff.firstName.charAt(0)}{selectedStaff.lastName.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-xl font-semibold">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
+                  <p className="text-gray-600">{selectedStaff.position}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Staff Code</Label>
+                  <p className="text-sm font-medium">{selectedStaff.staffCode}</p>
+                </div>
+                <div>
+                  <Label>Department</Label>
+                  <p className="text-sm font-medium">{selectedStaff.department || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <p className="text-sm font-medium">{selectedStaff.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <p className="text-sm font-medium">{selectedStaff.phone || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={() => setSelectedStaff(null)}>Close</Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Staff Dialog */}
+      {editOpen && editingStaff && (
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Staff Member</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="editFirstName">First Name</Label>
+                  <Input 
+                    id="editFirstName" 
+                    defaultValue={editingStaff.firstName}
+                    placeholder="Enter first name" 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editLastName">Last Name</Label>
+                  <Input 
+                    id="editLastName" 
+                    defaultValue={editingStaff.lastName}
+                    placeholder="Enter last name" 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="editPosition">Position</Label>
+                  <Input 
+                    id="editPosition" 
+                    defaultValue={editingStaff.position}
+                    placeholder="Enter position" 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editDepartment">Department</Label>
+                  <Input 
+                    id="editDepartment" 
+                    defaultValue={editingStaff.department || ''}
+                    placeholder="Enter department" 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="editEmail">Email</Label>
+                  <Input 
+                    id="editEmail" 
+                    type="email" 
+                    defaultValue={editingStaff.email || ''}
+                    placeholder="Enter email" 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editPhone">Phone</Label>
+                  <Input 
+                    id="editPhone" 
+                    defaultValue={editingStaff.phone || ''}
+                    placeholder="Enter phone number" 
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setEditOpen(false)}>
+                  Cancel
+                </Button>
+                <Button disabled={updateStaffMutation.isPending}>
+                  {updateStaffMutation.isPending ? "Updating..." : "Update Staff"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
