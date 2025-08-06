@@ -243,6 +243,8 @@ export default function StaffPage() {
               max-width: 160px;
               word-break: break-word;
               hyphens: auto;
+              color: #ffffff;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
             }
             .detail-label {
               font-weight: 600;
@@ -252,9 +254,10 @@ export default function StaffPage() {
             }
             .detail-value {
               font-weight: 500;
-              color: #fff8dc;
+              color: #ffffff;
               text-align: right;
               flex: 1;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
             }
             .back-content {
               text-align: left;
