@@ -347,29 +347,23 @@ export default function StaffPage() {
             <!-- Back of ID Card -->
             <div class="id-card">
               <div class="card-back">
-                <div class="section-title">Terms & Conditions</div>
-                <ul class="info-list">
-                  <li>This card is property of OptiStore Pro Medical Center</li>
-                  <li>Must be worn visibly during work hours</li>
-                  <li>Report immediately if lost or stolen</li>
-                  <li>Valid for current employment period only</li>
-                  <li>Access permissions subject to role assignments</li>
-                </ul>
-                
-                <div class="qr-section">
+                <div style="text-align: center; padding-top: 60px; margin-bottom: 40px;">
                   <div class="qr-code-wrapper">
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=STAFF-${staff.staffCode}-${staff.firstName}-${staff.lastName}-ATTENDANCE" 
                          alt="Staff QR Code" 
                          style="width: 120px; height: 120px;" />
                   </div>
+                  <div style="margin-top: 10px; font-size: 12px; opacity: 0.8;">
+                    Scan for Attendance
+                  </div>
                 </div>
                 
-                <div class="signature-area">
+                <div class="signature-area" style="margin-top: 80px;">
                   <div class="signature-line"></div>
                   <div class="signature-text">Authorized Signature</div>
                 </div>
                 
-                <div style="text-align: center; margin-top: 30px;">
+                <div style="text-align: center; margin-top: 60px;">
                   <div class="company-name">OPTISTORE PRO</div>
                   <div style="font-size: 10px; opacity: 0.8; margin-top: 5px;">
                     123 Medical Plaza, Suite 400<br>

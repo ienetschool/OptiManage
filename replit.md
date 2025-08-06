@@ -4,6 +4,12 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
+- **August 6, 2025**: Enhanced staff ID card system with improved layout and functionality
+  - Increased profile picture size (160px) and QR code size (120px) for better visibility
+  - Added blood group display using proper database field
+  - Restructured back of ID card: removed Terms & Conditions, moved QR code up with "Scan for Attendance" label
+  - Optimized spacing between sections for better content visibility
+  - Added live QR generation for attendance tracking with format: STAFF-{staffCode}-{firstName}-{lastName}-ATTENDANCE
 - **August 5, 2025**: Successfully migrated from Replit Agent to standard Replit environment
 - Database backup imported from `db_backup0508250230am.sql`
 - Fixed TypeScript compilation errors in schema and storage files
