@@ -121,18 +121,18 @@ export default function StaffPage() {
               height: 550px;
               background: white;
               border-radius: 20px;
-              box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+              box-shadow: 0 10px 30px rgba(30, 64, 175, 0.3);
               overflow: hidden;
               position: relative;
             }
             .card-front {
-              background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #6fa8dc 100%);
+              background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #93c5fd 100%);
               color: white;
               position: relative;
               height: 100%;
             }
             .card-back {
-              background: linear-gradient(135deg, #6fa8dc 0%, #2a5298 50%, #1e3c72 100%);
+              background: linear-gradient(135deg, #93c5fd 0%, #3b82f6 50%, #1e40af 100%);
               color: white;
               position: relative;
               height: 100%;
@@ -183,7 +183,7 @@ export default function StaffPage() {
               align-items: center;
               justify-content: center;
               font-size: 48px;
-              color: #2a5298;
+              color: #1e40af;
               font-weight: bold;
               box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             }
@@ -207,7 +207,8 @@ export default function StaffPage() {
               margin-bottom: 5px;
             }
             .employee-details {
-              background: rgba(255,255,255,0.1);
+              background: rgba(255,255,255,0.15);
+              border: 1px solid rgba(255,255,255,0.2);
               border-radius: 15px;
               padding: 15px;
               margin: 10px 20px 20px 20px;
