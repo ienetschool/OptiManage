@@ -358,41 +358,80 @@ export default function StaffPage() {
       {/* View Staff Dialog */}
       {selectedStaff && (
         <Dialog open={!!selectedStaff} onOpenChange={() => setSelectedStaff(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Staff Details</DialogTitle>
+              <DialogTitle className="text-2xl">Staff Information</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div className="flex flex-col items-center">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={selectedStaff.staffPhoto || ''} alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`} />
-                    <AvatarFallback className="text-xl">{selectedStaff.firstName.charAt(0)}{selectedStaff.lastName.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <h3 className="mt-4 text-xl font-semibold">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
-                  <p className="text-gray-600">{selectedStaff.position}</p>
+            
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Left Side - Photo and Basic Info */}
+              <div className="flex flex-col items-center space-y-4 lg:w-1/3">
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={selectedStaff.staffPhoto || ''} alt={`${selectedStaff.firstName} ${selectedStaff.lastName}`} />
+                  <AvatarFallback className="text-3xl">{selectedStaff.firstName.charAt(0)}{selectedStaff.lastName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold">{selectedStaff.firstName} {selectedStaff.lastName}</h3>
+                  <p className="text-lg text-blue-600 font-medium">{selectedStaff.position}</p>
+                  <Badge variant="outline" className="mt-2">{selectedStaff.department || 'General'}</Badge>
                 </div>
               </div>
-              <div className="space-y-4">
-                <div>
-                  <Label className="font-semibold">Staff Code</Label>
-                  <p>{selectedStaff.staffCode}</p>
+
+              {/* Right Side - Details */}
+              <div className="lg:w-2/3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <User className="h-5 w-5" />
+                        Personal Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Staff Code</Label>
+                        <p className="text-base font-medium">{selectedStaff.staffCode}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Blood Group</Label>
+                        <p className="text-base font-medium">{selectedStaff.bloodGroup || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                        Contact Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Email</Label>
+                        <p className="text-base font-medium">{selectedStaff.email || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Phone</Label>
+                        <p className="text-base font-medium">{selectedStaff.phone || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
-                <div>
-                  <Label className="font-semibold">Department</Label>
-                  <p>{selectedStaff.department || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="font-semibold">Email</Label>
-                  <p>{selectedStaff.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="font-semibold">Phone</Label>
-                  <p>{selectedStaff.phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="font-semibold">Blood Group</Label>
-                  <p>{selectedStaff.bloodGroup || 'N/A'}</p>
+
+                <div className="mt-6 flex justify-end space-x-3">
+                  <Button variant="outline" onClick={() => printIDCard(selectedStaff)}>
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Print ID Card
+                  </Button>
+                  <Button onClick={() => {
+                    setEditingStaff(selectedStaff);
+                    setSelectedStaff(null);
+                    setEditOpen(true);
+                  }}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Staff
+                  </Button>
                 </div>
               </div>
             </div>
