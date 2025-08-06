@@ -396,6 +396,14 @@ export default function StaffPage() {
                         <Label className="text-sm font-medium text-gray-500">Blood Group</Label>
                         <p className="text-base font-medium">{selectedStaff.bloodGroup || 'N/A'}</p>
                       </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Date of Birth</Label>
+                        <p className="text-base font-medium">{selectedStaff.dateOfBirth ? new Date(selectedStaff.dateOfBirth).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Address</Label>
+                        <p className="text-base font-medium">{selectedStaff.address || 'N/A'}</p>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -414,6 +422,70 @@ export default function StaffPage() {
                       <div>
                         <Label className="text-sm font-medium text-gray-500">Phone</Label>
                         <p className="text-base font-medium">{selectedStaff.phone || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Emergency Contact</Label>
+                        <p className="text-base font-medium">{selectedStaff.emergencyContact || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Emergency Phone</Label>
+                        <p className="text-base font-medium">{selectedStaff.emergencyPhone || 'N/A'}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" />
+                        Employment Details
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Role</Label>
+                        <p className="text-base font-medium">{selectedStaff.role || 'Staff'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Date of Joining</Label>
+                        <p className="text-base font-medium">{selectedStaff.dateOfJoining ? new Date(selectedStaff.dateOfJoining).toLocaleDateString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Employee ID</Label>
+                        <p className="text-base font-medium">{selectedStaff.employeeId || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Status</Label>
+                        <Badge variant={selectedStaff.isActive ? "default" : "secondary"}>
+                          {selectedStaff.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Salary & Benefits
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Basic Salary</Label>
+                        <p className="text-base font-medium">${selectedStaff.basicSalary ? selectedStaff.basicSalary.toLocaleString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">House Allowance</Label>
+                        <p className="text-base font-medium">${selectedStaff.houseAllowance ? selectedStaff.houseAllowance.toLocaleString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Transport Allowance</Label>
+                        <p className="text-base font-medium">${selectedStaff.transportAllowance ? selectedStaff.transportAllowance.toLocaleString() : 'N/A'}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-gray-500">Medical Allowance</Label>
+                        <p className="text-base font-medium">${selectedStaff.medicalAllowance ? selectedStaff.medicalAllowance.toLocaleString() : 'N/A'}</p>
                       </div>
                     </CardContent>
                   </Card>
