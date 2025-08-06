@@ -216,19 +216,36 @@ export default function StaffPage() {
             .detail-row {
               display: flex;
               justify-content: space-between;
-              align-items: center;
+              align-items: flex-start;
               margin-bottom: 12px;
               font-size: 14px;
             }
             .detail-row:last-child {
               margin-bottom: 0;
             }
+            .detail-row.address-row {
+              flex-direction: column;
+              align-items: flex-start;
+              margin-bottom: 15px;
+            }
+            .detail-row.address-row .detail-label {
+              margin-bottom: 4px;
+            }
+            .detail-row.address-row .detail-value {
+              font-size: 13px;
+              line-height: 1.4;
+              word-wrap: break-word;
+              max-width: 100%;
+            }
             .detail-label {
               font-weight: 600;
               opacity: 0.9;
+              min-width: 60px;
             }
             .detail-value {
               font-weight: 500;
+              text-align: right;
+              flex: 1;
             }
             .back-content {
               text-align: left;
@@ -340,7 +357,7 @@ export default function StaffPage() {
                     <span class="detail-label">Phone:</span>
                     <span class="detail-value">${staff.phone || 'N/A'}</span>
                   </div>
-                  <div class="detail-row">
+                  <div class="detail-row address-row">
                     <span class="detail-label">Address:</span>
                     <span class="detail-value">${staff.address || 'N/A'}</span>
                   </div>
