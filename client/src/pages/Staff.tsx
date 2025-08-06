@@ -224,18 +224,22 @@ export default function StaffPage() {
               margin-bottom: 0;
             }
             .detail-row.address-row {
-              flex-direction: column;
+              flex-direction: row;
               align-items: flex-start;
-              margin-bottom: 15px;
+              margin-bottom: 18px;
             }
             .detail-row.address-row .detail-label {
-              margin-bottom: 4px;
+              min-width: 70px;
+              margin-top: 2px;
             }
             .detail-row.address-row .detail-value {
               font-size: 13px;
-              line-height: 1.4;
-              word-wrap: break-word;
-              max-width: 100%;
+              line-height: 1.3;
+              text-align: right;
+              flex: 1;
+              max-width: 160px;
+              word-break: break-word;
+              hyphens: auto;
             }
             .detail-label {
               font-weight: 600;
