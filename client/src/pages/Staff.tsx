@@ -112,27 +112,26 @@ export default function StaffPage() {
             .page-container {
               width: 210mm;
               height: 297mm;
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              grid-template-rows: 1fr 1fr;
-              gap: 8mm;
-              padding: 15mm;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              padding: 20mm;
               margin: 0 auto;
               box-sizing: border-box;
             }
             .id-card-container {
               display: flex;
               flex-direction: row;
-              gap: 3mm;
+              gap: 10mm;
               justify-content: center;
               align-items: center;
             }
             .id-card {
-              width: 75mm;
-              height: 115mm;
+              width: 85mm;
+              height: 130mm;
               background: white;
-              border-radius: 6px;
-              box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+              border-radius: 10px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.2);
               overflow: hidden;
               position: relative;
             }
@@ -161,18 +160,18 @@ export default function StaffPage() {
             }
             .company-header {
               text-align: center;
-              padding: 15px 10px 10px;
+              padding: 20px 15px 15px;
               position: relative;
               z-index: 2;
             }
             .company-name {
-              font-size: 16px;
+              font-size: 20px;
               font-weight: bold;
-              margin-bottom: 3px;
+              margin-bottom: 5px;
               text-shadow: 0 2px 4px rgba(0,0,0,0.2);
             }
             .company-slogan {
-              font-size: 9px;
+              font-size: 12px;
               opacity: 0.9;
               text-transform: uppercase;
               letter-spacing: 1px;
@@ -180,20 +179,20 @@ export default function StaffPage() {
             .photo-section {
               display: flex;
               justify-content: center;
-              margin: 15px 0;
+              margin: 20px 0;
               position: relative;
               z-index: 2;
             }
             .photo-circle {
-              width: 60px;
-              height: 60px;
+              width: 80px;
+              height: 80px;
               border-radius: 50%;
               background: white;
-              border: 2px solid rgba(255,255,255,0.3);
+              border: 3px solid rgba(255,255,255,0.3);
               display: flex;
               align-items: center;
               justify-content: center;
-              font-size: 22px;
+              font-size: 28px;
               color: #2a5298;
               font-weight: bold;
               box-shadow: 0 3px 10px rgba(0,0,0,0.2);
@@ -207,36 +206,36 @@ export default function StaffPage() {
             }
             .employee-info {
               text-align: center;
-              padding: 12px;
+              padding: 20px;
               position: relative;
               z-index: 2;
             }
             .employee-name {
-              font-size: 14px;
+              font-size: 18px;
               font-weight: bold;
-              margin-bottom: 2px;
+              margin-bottom: 5px;
               text-shadow: 0 2px 4px rgba(0,0,0,0.2);
             }
             .employee-position {
-              font-size: 10px;
+              font-size: 14px;
               opacity: 0.9;
               text-transform: uppercase;
               letter-spacing: 1px;
-              margin-bottom: 10px;
+              margin-bottom: 15px;
             }
             .employee-details {
               background: rgba(255,255,255,0.1);
-              border-radius: 10px;
-              padding: 12px;
-              margin: 12px;
+              border-radius: 15px;
+              padding: 20px;
+              margin: 20px;
               backdrop-filter: blur(10px);
             }
             .detail-row {
               display: flex;
               justify-content: space-between;
               align-items: center;
-              margin-bottom: 5px;
-              font-size: 8px;
+              margin-bottom: 10px;
+              font-size: 12px;
             }
             .detail-row:last-child {
               margin-bottom: 0;
@@ -248,12 +247,12 @@ export default function StaffPage() {
               padding: 15px;
             }
             .qr-code {
-              width: 40px;
-              height: 40px;
+              width: 60px;
+              height: 60px;
               background: white;
-              border: 1px solid rgba(255,255,255,0.3);
-              border-radius: 6px;
-              padding: 2px;
+              border: 2px solid rgba(255,255,255,0.3);
+              border-radius: 8px;
+              padding: 4px;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -264,8 +263,8 @@ export default function StaffPage() {
             }
             .qr-block {
               display: inline-block;
-              width: 1px;
-              height: 1px;
+              width: 2px;
+              height: 2px;
               background: white;
             }
             .qr-block.filled {
@@ -273,18 +272,18 @@ export default function StaffPage() {
             }
             .footer-section {
               text-align: center;
-              padding: 6px 8px;
-              font-size: 6px;
+              padding: 10px 15px;
+              font-size: 10px;
               opacity: 0.8;
               border-top: 1px solid rgba(255,255,255,0.2);
               margin-top: auto;
             }
             .authorized-signature {
               text-align: center;
-              padding: 6px;
-              font-size: 7px;
+              padding: 10px;
+              font-size: 12px;
               border-top: 1px solid rgba(255,255,255,0.2);
-              margin-top: 6px;
+              margin-top: 10px;
             }
             .detail-label {
               font-weight: 600;
@@ -309,10 +308,10 @@ export default function StaffPage() {
               margin-bottom: 12px;
             }
             .info-list li {
-              font-size: 8px;
+              font-size: 12px;
               line-height: 1.4;
-              margin-bottom: 4px;
-              padding-left: 10px;
+              margin-bottom: 8px;
+              padding-left: 15px;
               position: relative;
             }
             .info-list li:before {
