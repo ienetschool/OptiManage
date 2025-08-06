@@ -196,6 +196,21 @@ export default function Payroll() {
     }
   };
 
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return "bg-green-100 text-green-800";
+      case 'pending':
+        return "bg-yellow-100 text-yellow-800";
+      case 'draft':
+        return "bg-gray-100 text-gray-800";
+      case 'paid':
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   const calculateAutoValues = (staffMember: any) => {
     // Auto-calculate based on staff data, attendance, and working hours
     const basicSalary = staffMember?.basicSalary || 50000;
@@ -1070,11 +1085,123 @@ export default function Payroll() {
 
         <TabsContent value="history" className="space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Payroll History</CardTitle>
+              <div className="flex gap-2">
+                <Input
+                  type="month"
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-40"
+                />
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-600">Payroll history and previous months will be displayed here.</p>
+              {sortedPayroll.length === 0 ? (
+                <div className="text-center py-12">
+                  <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No Payroll Records Found</h3>
+                  <p className="text-gray-600 mb-4">No payroll records exist for {selectedMonth}. Generate payroll to see history.</p>
+                  <Button onClick={() => setBulkPayrollOpen(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Generate Payroll
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex gap-4">
+                      <div className="text-sm text-gray-600">
+                        Total Records: <span className="font-semibold">{sortedPayroll.length}</span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        Total Payroll: <span className="font-semibold">₹{sortedPayroll.reduce((sum, p) => sum + p.netSalary, 0).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid gap-4">
+                    {paginatedPayroll.map((payroll) => (
+                      <Card key={payroll.id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center space-x-4">
+                              <Avatar className="h-12 w-12">
+                                <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                                  {payroll.staffName.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <h3 className="font-semibold text-gray-900">{payroll.staffName}</h3>
+                                <p className="text-sm text-gray-600">{payroll.staffCode} • {payroll.position}</p>
+                                <p className="text-xs text-gray-500">Generated: {format(new Date(payroll.generatedDate), 'MMM dd, yyyy')}</p>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center space-x-4">
+                              <div className="text-right">
+                                <p className="text-sm text-gray-600">Net Salary</p>
+                                <p className="text-lg font-bold text-green-600">₹{payroll.netSalary.toLocaleString()}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-gray-600">Status</p>
+                                <Badge className={getStatusBadgeColor(payroll.status)}>
+                                  {payroll.status}
+                                </Badge>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setSelectedPayroll(payroll)}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => printPayslip(payroll)}
+                                >
+                                  <Printer className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="flex justify-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                      >
+                        Previous
+                      </Button>
+                      <span className="flex items-center px-3 text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
