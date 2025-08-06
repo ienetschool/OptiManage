@@ -7,7 +7,9 @@ OptiStore Pro is a comprehensive medical practice management system built with R
 - **August 6, 2025**: Enhanced staff ID card system with improved layout and functionality
   - Increased profile picture size (160px) and QR code size (120px) for better visibility
   - Added blood group display using proper database field
+  - Added staff address field to front info section for complete contact details
   - Restructured back of ID card: removed Terms & Conditions, moved QR code up with "Scan for Attendance" label
+  - Adjusted signature spacing: moved down 20px (100px margin), reduced space to branding (30px)
   - Optimized spacing between sections for better content visibility
   - Added live QR generation for attendance tracking with format: STAFF-{staffCode}-{firstName}-{lastName}-ATTENDANCE
 - **August 5, 2025**: Successfully migrated from Replit Agent to standard Replit environment

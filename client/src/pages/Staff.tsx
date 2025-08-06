@@ -340,6 +340,10 @@ export default function StaffPage() {
                     <span class="detail-label">Phone:</span>
                     <span class="detail-value">${staff.phone || 'N/A'}</span>
                   </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Address:</span>
+                    <span class="detail-value">${staff.address || 'N/A'}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -358,12 +362,12 @@ export default function StaffPage() {
                   </div>
                 </div>
                 
-                <div class="signature-area" style="margin-top: 80px;">
+                <div class="signature-area" style="margin-top: 100px;">
                   <div class="signature-line"></div>
                   <div class="signature-text">Authorized Signature</div>
                 </div>
                 
-                <div style="text-align: center; margin-top: 60px;">
+                <div style="text-align: center; margin-top: 30px;">
                   <div class="company-name">OPTISTORE PRO</div>
                   <div style="font-size: 10px; opacity: 0.8; margin-top: 5px;">
                     123 Medical Plaza, Suite 400<br>
