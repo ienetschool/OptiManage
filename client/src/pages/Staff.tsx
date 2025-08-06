@@ -85,15 +85,15 @@ export default function StaffPage() {
               font-size: 12px; opacity: 0.9; text-transform: uppercase; 
               color: rgba(218,165,32,0.9);
             }
-            .photo-section { display: flex; justify-content: center; margin: 15px 0; }
+            .photo-section { display: flex; justify-content: center; margin: 10px 0; }
             .photo-circle {
-              width: 120px; height: 120px; border-radius: 50%; background: white;
+              width: 140px; height: 140px; border-radius: 50%; background: white;
               border: 4px solid rgba(218,165,32,0.8); display: flex; align-items: center;
-              justify-content: center; font-size: 32px; color: #2a5298; font-weight: bold;
+              justify-content: center; font-size: 36px; color: #2a5298; font-weight: bold;
               overflow: hidden; box-shadow: 0 4px 15px rgba(218,165,32,0.3);
             }
             .photo-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-            .employee-info { text-align: center; margin-bottom: 25px; }
+            .employee-info { text-align: center; margin-bottom: 35px; }
             .employee-name { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
             .employee-position { font-size: 14px; opacity: 0.9; margin-bottom: 15px; }
             .employee-details {
@@ -112,10 +112,16 @@ export default function StaffPage() {
             .terms-list li { margin-bottom: 8px; padding-left: 15px; position: relative; }
             .terms-list li:before { content: '•'; position: absolute; left: 0; }
             .qr-section { text-align: center; margin: 20px 0; }
-            .qr-placeholder {
-              width: 80px; height: 80px; background: white; margin: 0 auto;
-              border-radius: 8px; display: flex; align-items: center; justify-content: center;
-              color: black; font-size: 10px; font-weight: bold;
+            .qr-code {
+              width: 100px; height: 100px; background: white; margin: 0 auto;
+              border-radius: 8px; padding: 8px; display: grid; grid-template-columns: repeat(15, 1fr);
+              grid-template-rows: repeat(15, 1fr); gap: 1px;
+            }
+            .qr-dot {
+              background: black; border-radius: 1px;
+            }
+            .qr-empty {
+              background: transparent;
             }
             .address-section {
               background: rgba(255,255,255,0.15); border-radius: 10px; padding: 15px;
@@ -180,7 +186,12 @@ export default function StaffPage() {
                     <li>Access permissions subject to role</li>
                   </ul>
                   <div class="qr-section">
-                    <div class="qr-placeholder">QR CODE</div>
+                    <div class="qr-code">
+                      ${Array.from({length: 225}, (_, i) => {
+                        const patterns = [0,1,2,3,4,5,6,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112,119,126,133,140,147,154,161,168,175,182,189,196,203,210,217,224];
+                        return patterns.includes(i) ? '<div class="qr-dot"></div>' : '<div class="qr-empty"></div>';
+                      }).join('')}
+                    </div>
                   </div>
                   <div class="address-section">
                     <strong>OptiStore Pro Medical Center</strong><br>
