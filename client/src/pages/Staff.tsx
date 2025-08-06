@@ -127,13 +127,13 @@ export default function StaffPage() {
             }
             .card-front {
               background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #93c5fd 100%);
-              color: white;
+              color: #ffd700;
               position: relative;
               height: 100%;
             }
             .card-back {
               background: linear-gradient(135deg, #93c5fd 0%, #3b82f6 50%, #1e40af 100%);
-              color: white;
+              color: #ffd700;
               position: relative;
               height: 100%;
               padding: 30px;
@@ -158,11 +158,12 @@ export default function StaffPage() {
               font-size: 24px;
               font-weight: bold;
               margin-bottom: 5px;
-              text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              color: #ffd700;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             }
             .company-slogan {
               font-size: 12px;
-              opacity: 0.9;
+              color: #fff8dc;
               text-transform: uppercase;
               letter-spacing: 1px;
             }
@@ -197,11 +198,12 @@ export default function StaffPage() {
               font-size: 24px;
               font-weight: bold;
               margin-bottom: 5px;
-              text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              color: #ffd700;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             }
             .employee-position {
               font-size: 16px;
-              opacity: 0.9;
+              color: #fff8dc;
               text-transform: uppercase;
               letter-spacing: 1px;
               margin-bottom: 5px;
@@ -244,11 +246,13 @@ export default function StaffPage() {
             }
             .detail-label {
               font-weight: 600;
-              opacity: 0.9;
+              color: #ffd700;
               min-width: 60px;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.2);
             }
             .detail-value {
               font-weight: 500;
+              color: #fff8dc;
               text-align: right;
               flex: 1;
             }
@@ -259,9 +263,10 @@ export default function StaffPage() {
               font-size: 16px;
               font-weight: bold;
               margin-bottom: 15px;
-              color: #fff;
-              border-bottom: 2px solid rgba(255,255,255,0.3);
+              color: #ffd700;
+              border-bottom: 2px solid rgba(255, 215, 0, 0.4);
               padding-bottom: 5px;
+              text-shadow: 0 1px 3px rgba(0,0,0,0.3);
             }
             .info-list {
               list-style: none;
