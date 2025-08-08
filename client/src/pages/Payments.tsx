@@ -221,18 +221,35 @@ export default function Payments() {
     enabled: activeTab === "profit-loss" || activeTab === "accounting"
   });
 
-  // Fetch accounting summary
-  const { data: accountingSummary, isLoading: isLoadingAccounting } = useQuery({
-    queryKey: ["/api/accounting/summary", "30d"],
+  // Fetch accounting dashboard data (working endpoint with year-to-date data)
+  const { data: accountingDashboard, isLoading: isLoadingAccounting } = useQuery({
+    queryKey: ["/api/accounting/dashboard"],
     queryFn: async () => {
-      const response = await fetch("/api/accounting/summary?period=30d");
+      const response = await fetch("/api/accounting/dashboard");
       if (!response.ok) {
-        return { totalIncome: 0, totalExpenditures: 0, netProfit: 0, incomeTransactions: 0, expenditureTransactions: 0 };
+        throw new Error('Failed to fetch accounting dashboard');
       }
       return response.json();
     },
-    enabled: activeTab === "accounting"
+    retry: 2,
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000 // Auto-refresh every minute
   });
+
+  // Use year-to-date data since we have historical data from January 2025
+  const accountingSummary = accountingDashboard ? {
+    totalIncome: accountingDashboard.yearToDate?.revenue || 0,
+    totalExpenditures: accountingDashboard.yearToDate?.expenses || 0,
+    netProfit: accountingDashboard.yearToDate?.netProfit || 0,
+    incomeTransactions: payments.filter(p => p.status === 'completed' && p.type !== 'expenditure').length,
+    expenditureTransactions: payments.filter(p => p.type === 'expenditure').length
+  } : {
+    totalIncome: 0,
+    totalExpenditures: 0,
+    netProfit: 0,
+    incomeTransactions: 0,
+    expenditureTransactions: 0
+  };
 
   // Fetch inventory invoice totals
   const { data: inventoryTotals, isLoading: isLoadingInventory } = useQuery({
@@ -1205,7 +1222,7 @@ export default function Payments() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Total Income</p>
+                    <p className="text-sm font-medium text-slate-600">Total Income (YTD)</p>
                     <p className="text-2xl font-bold text-green-600">
                       ${accountingSummary?.totalIncome?.toFixed(2) || '0.00'}
                     </p>
