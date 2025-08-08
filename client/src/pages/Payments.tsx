@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
@@ -100,6 +101,9 @@ export default function Payments() {
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     end: new Date().toISOString().split('T')[0] 
   });
+  const [paymentStatus, setPaymentStatus] = useState("");
+  const [showPayslipPrint, setShowPayslipPrint] = useState(false);
+  const [completedPaymentData, setCompletedPaymentData] = useState<any>(null);
 
   // Define columns for EnhancedDataTable
   const paymentColumns: Column[] = [
@@ -259,11 +263,33 @@ export default function Payments() {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
       toast({
         title: "Payment Processed",
-        description: "Payment completed successfully and invoice generated.",
+        description: "Payment completed successfully. Redirecting to print payslip...",
       });
       setPaymentMethodDialog(false);
+      
+      // Store payment data for payslip generation
+      setCompletedPaymentData({
+        ...data,
+        paymentMethod: selectedPaymentMethod,
+        customerName: selectedPayment?.customerName,
+        amount: selectedPayment?.amount,
+        paymentDate: new Date().toISOString()
+      });
+      
       setSelectedPayment(null);
       setSelectedPaymentMethod("");
+      
+      // Automatically redirect to print payslip after 1 second
+      setTimeout(() => {
+        setShowPayslipPrint(true);
+        handlePrintPayslip({
+          ...data,
+          paymentMethod: selectedPaymentMethod,
+          customerName: selectedPayment?.customerName,
+          amount: selectedPayment?.amount,
+          paymentDate: new Date().toISOString()
+        });
+      }, 1000);
     },
     onError: (error) => {
       toast({
@@ -291,12 +317,32 @@ export default function Payments() {
       queryClient.invalidateQueries({ queryKey: ["/api/medical-invoices"] });
       toast({
         title: "Payment Processed",
-        description: "Invoice payment completed successfully.",
+        description: "Invoice payment completed successfully. Redirecting to print payslip...",
       });
       setPaymentMethodDialog(false);
+      
+      // Store payment data for payslip generation
+      setCompletedPaymentData({
+        ...data,
+        paymentMethod: selectedPaymentMethod,
+        invoiceId: selectedPaymentInvoiceId,
+        paymentDate: new Date().toISOString()
+      });
+      
       setSelectedPayment(null);
       setSelectedPaymentMethod("");
       setSelectedPaymentInvoiceId(null);
+      
+      // Automatically redirect to print payslip after 1 second
+      setTimeout(() => {
+        setShowPayslipPrint(true);
+        handlePrintPayslip({
+          ...data,
+          paymentMethod: selectedPaymentMethod,
+          invoiceId: selectedPaymentInvoiceId,
+          paymentDate: new Date().toISOString()
+        });
+      }, 1000);
     },
     onError: (error) => {
       toast({
@@ -403,6 +449,18 @@ export default function Payments() {
       }
     };
 
+    const handleStatusChange = (newStatus: string) => {
+      if (newStatus === "paid") {
+        // Automatically open payment method dialog when "paid" is selected
+        setSelectedPayment(payment);
+        setPaymentMethodDialog(true);
+        toast({
+          title: "Payment Method Required",
+          description: "Please select a payment method to complete the transaction.",
+        });
+      }
+    };
+
     return (
       <>
         <DropdownMenu>
@@ -420,16 +478,26 @@ export default function Payments() {
               <Printer className="h-4 w-4 mr-2" />
               Print Receipt
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handlePrintPayslip(payment)}>
+              <Receipt className="h-4 w-4 mr-2" />
+              Print Payslip
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleSharePayment}>
               <Share2 className="h-4 w-4 mr-2" />
               Share
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {payment.status === "pending" && (
-              <DropdownMenuItem onClick={handlePayNow} className="text-green-600">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Pay Now
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuItem onClick={handlePayNow} className="text-green-600">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Pay Now
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange("paid")} className="text-blue-600">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Mark as Paid
+                </DropdownMenuItem>
+              </>
             )}
             <DropdownMenuItem onClick={() => window.open(`mailto:${payment.customerName}?subject=Payment Receipt&body=Your payment of $${payment.amount.toFixed(2)} has been processed.`)}>
               <Send className="h-4 w-4 mr-2" />
@@ -511,6 +579,240 @@ export default function Payments() {
   };
 
   const analytics = calculatePaymentAnalytics();
+
+  // Professional Payslip Printing Function
+  const handlePrintPayslip = (paymentData: any) => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Payment Receipt - ${paymentData.customerName || 'Customer'}</title>
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { 
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background: #f5f5f5;
+                padding: 20px;
+                line-height: 1.4;
+              }
+              .payslip-container {
+                max-width: 800px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+              }
+              .header {
+                background: linear-gradient(135deg, #5b63e8 0%, #4c54d2 100%);
+                color: white;
+                padding: 20px;
+                position: relative;
+                display: flex;
+                align-items: center;
+              }
+              .logo-section {
+                width: 60px;
+                margin-right: 20px;
+              }
+              .logo-box {
+                width: 60px;
+                height: 60px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 8px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+              }
+              .company-info {
+                flex: 1;
+                text-align: center;
+              }
+              .company-title {
+                font-size: 24px;
+                font-weight: bold;
+                margin-bottom: 6px;
+                letter-spacing: -0.5px;
+              }
+              .company-subtitle {
+                font-size: 14px;
+                opacity: 0.9;
+                margin-bottom: 10px;
+              }
+              .company-details {
+                font-size: 12px;
+                opacity: 0.8;
+                line-height: 1.4;
+              }
+              .receipt-badges {
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                text-align: right;
+              }
+              .badge {
+                display: block;
+                background: rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                border-radius: 4px;
+                padding: 6px 12px;
+                font-size: 11px;
+                font-weight: 600;
+                margin-bottom: 6px;
+                backdrop-filter: blur(10px);
+              }
+              .main-content {
+                padding: 30px;
+              }
+              .payment-section {
+                background: #f8fafc;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 30px;
+                border-left: 4px solid #5b63e8;
+              }
+              .section-title {
+                color: #5b63e8;
+                font-size: 16px;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 15px;
+              }
+              .payment-details {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+              }
+              .detail-item {
+                margin-bottom: 12px;
+              }
+              .detail-label {
+                font-size: 12px;
+                color: #5b63e8;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
+              }
+              .detail-value {
+                font-size: 16px;
+                font-weight: bold;
+                color: #2d3748;
+              }
+              .amount-section {
+                background: linear-gradient(135deg, #5b63e8 0%, #4c54d2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                text-align: center;
+                margin-bottom: 30px;
+              }
+              .amount-label {
+                font-size: 16px;
+                opacity: 0.9;
+                margin-bottom: 8px;
+              }
+              .amount-value {
+                font-size: 32px;
+                font-weight: bold;
+                letter-spacing: -1px;
+              }
+              .footer {
+                text-align: center;
+                color: #64748b;
+                font-size: 12px;
+                border-top: 1px solid #e2e8f0;
+                padding-top: 20px;
+              }
+              @media print {
+                body { background: white; padding: 0; }
+                .payslip-container { box-shadow: none; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="payslip-container">
+              <!-- Header Section -->
+              <div class="header">
+                <div class="logo-section">
+                  <div class="logo-box"></div>
+                </div>
+                <div class="company-info">
+                  <div class="company-title">OptiStore Pro</div>
+                  <div class="company-subtitle">Medical Center</div>
+                  <div class="company-details">
+                    123 Vision Street<br>
+                    Eyecare City, EC 12345<br>
+                    Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                  </div>
+                </div>
+                <div class="receipt-badges">
+                  <div class="badge">PAYMENT RECEIPT</div>
+                  <div class="badge">${new Date().toLocaleDateString()}</div>
+                </div>
+              </div>
+
+              <!-- Main Content -->
+              <div class="main-content">
+                <!-- Payment Information -->
+                <div class="payment-section">
+                  <div class="section-title">Payment Information</div>
+                  <div class="payment-details">
+                    <div>
+                      <div class="detail-item">
+                        <div class="detail-label">Customer Name</div>
+                        <div class="detail-value">${paymentData.customerName || 'N/A'}</div>
+                      </div>
+                      <div class="detail-item">
+                        <div class="detail-label">Payment Method</div>
+                        <div class="detail-value" style="text-transform: capitalize;">${paymentData.paymentMethod || 'N/A'}</div>
+                      </div>
+                      <div class="detail-item">
+                        <div class="detail-label">Payment Date</div>
+                        <div class="detail-value">${new Date(paymentData.paymentDate || Date.now()).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="detail-item">
+                        <div class="detail-label">Transaction ID</div>
+                        <div class="detail-value">${paymentData.id || paymentData.transactionId || 'TXN-' + Date.now()}</div>
+                      </div>
+                      <div class="detail-item">
+                        <div class="detail-label">Invoice ID</div>
+                        <div class="detail-value">${paymentData.invoiceId || 'N/A'}</div>
+                      </div>
+                      <div class="detail-item">
+                        <div class="detail-label">Status</div>
+                        <div class="detail-value" style="color: #48bb78;">PAID</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Payment Amount -->
+                <div class="amount-section">
+                  <div class="amount-label">Total Amount Paid</div>
+                  <div class="amount-value">$${parseFloat(paymentData.amount || 0).toFixed(2)}</div>
+                </div>
+
+                <!-- Footer -->
+                <div class="footer">
+                  Payment processed on ${new Date().toLocaleDateString()} | OptiStore Pro Medical Center<br>
+                  Thank you for your payment. For questions, contact us at billing@optistorepro.com
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+        setShowPayslipPrint(false);
+      }, 500);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -1135,28 +1437,74 @@ export default function Payments() {
       <Dialog open={paymentMethodDialog} onOpenChange={setPaymentMethodDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Select Payment Method</DialogTitle>
+            <DialogTitle className="flex items-center space-x-2">
+              <CreditCard className="h-5 w-5 text-blue-600" />
+              <span>Complete Payment</span>
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              {selectedPaymentInvoiceId 
-                ? `Processing payment for Invoice ID: ${selectedPaymentInvoiceId}`
-                : `Processing payment for ${selectedPayment?.customerName} - $${selectedPayment?.amount.toFixed(2)}`
-              }
-            </p>
-            <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose payment method..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="card">Credit/Debit Card</SelectItem>
-                <SelectItem value="check">Check</SelectItem>
-                <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                <SelectItem value="digital_wallet">Digital Wallet</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex justify-end gap-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm font-medium text-blue-800 mb-2">
+                {selectedPaymentInvoiceId 
+                  ? `Processing payment for Invoice ID: ${selectedPaymentInvoiceId}`
+                  : `Processing payment for ${selectedPayment?.customerName}`
+                }
+              </p>
+              <p className="text-lg font-bold text-blue-900">
+                Amount: ${selectedPayment?.amount?.toFixed(2) || '0.00'}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-700">Select Payment Method:</Label>
+              <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Choose how the payment was received" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash" className="py-3">
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span>Cash Payment</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="card" className="py-3">
+                    <div className="flex items-center space-x-2">
+                      <CreditCard className="h-4 w-4" />
+                      <span>Credit/Debit Card</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="check" className="py-3">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Check</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="bank_transfer" className="py-3">
+                    <div className="flex items-center space-x-2">
+                      <Building2 className="h-4 w-4" />
+                      <span>Bank Transfer</span>
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="digital_wallet" className="py-3">
+                    <div className="flex items-center space-x-2">
+                      <Wallet className="h-4 w-4" />
+                      <span>Digital Wallet</span>
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {selectedPaymentMethod && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-700 flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Payment method selected. Click "Complete Payment" to finalize and print receipt.
+                </p>
+              </div>
+            )}
+            
+            <div className="flex justify-end space-x-2 pt-4">
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -1184,8 +1532,19 @@ export default function Payments() {
                   }
                 }}
                 disabled={!selectedPaymentMethod || processPaymentMutation.isPending || processInvoicePaymentMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700"
               >
-                {(processPaymentMutation.isPending || processInvoicePaymentMutation.isPending) ? "Processing..." : "Process Payment"}
+                {(processPaymentMutation.isPending || processInvoicePaymentMutation.isPending) ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Receipt className="h-4 w-4 mr-2" />
+                    Complete Payment & Print Receipt
+                  </>
+                )}
               </Button>
             </div>
           </div>
