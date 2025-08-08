@@ -101,6 +101,7 @@ export default function Payroll() {
       presentDays: 22,
       overtimeHours: 12,
       status: "approved",
+      paymentMethod: "bank_transfer",
       generatedDate: "2025-08-05"
     },
     {
@@ -120,6 +121,7 @@ export default function Payroll() {
       presentDays: 21,
       overtimeHours: 4,
       status: "paid",
+      paymentMethod: "direct_deposit",
       generatedDate: "2025-07-31"
     },
     {
@@ -139,6 +141,7 @@ export default function Payroll() {
       presentDays: 20,
       overtimeHours: 0,
       status: "paid",
+      paymentMethod: "cash",
       generatedDate: "2025-06-30"
     },
     {
@@ -158,6 +161,7 @@ export default function Payroll() {
       presentDays: 21,
       overtimeHours: 6,
       status: "paid",
+      paymentMethod: "credit_card",
       generatedDate: "2025-05-31"
     },
     {
@@ -177,6 +181,7 @@ export default function Payroll() {
       presentDays: 22,
       overtimeHours: 10,
       status: "paid",
+      paymentMethod: "check",
       generatedDate: "2025-04-30"
     }
   ];
@@ -792,6 +797,31 @@ export default function Payroll() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Status</label>
+                    <select className="w-full p-2 border rounded-md" defaultValue="draft">
+                      <option value="draft">Draft</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="paid">Paid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Payment Method</label>
+                    <select className="w-full p-2 border rounded-md" defaultValue="cash">
+                      <option value="cash">Cash</option>
+                      <option value="bank_transfer">Bank Transfer</option>
+                      <option value="debit_card">Debit Card</option>
+                      <option value="credit_card">Credit Card</option>
+                      <option value="check">Check/Cheque</option>
+                      <option value="direct_deposit">Direct Deposit</option>
+                      <option value="digital_wallet">Digital Wallet</option>
+                      <option value="mobile_payment">Mobile Payment</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setOpen(false)}>
                     Cancel
@@ -1164,7 +1194,7 @@ export default function Payroll() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => printPayslip(payroll)}
+                                  onClick={() => handlePrintPayroll(payroll)}
                                 >
                                   <Printer className="h-4 w-4" />
                                 </Button>
@@ -1388,6 +1418,19 @@ export default function Payroll() {
                         <option value="pending">Pending</option>
                         <option value="approved">Approved</option>
                         <option value="paid">Paid</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label>Payment Method</Label>
+                      <select className="w-full p-2 border rounded-md" defaultValue={editPayroll.paymentMethod || 'cash'}>
+                        <option value="cash">Cash</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="debit_card">Debit Card</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="check">Check/Cheque</option>
+                        <option value="direct_deposit">Direct Deposit</option>
+                        <option value="digital_wallet">Digital Wallet</option>
+                        <option value="mobile_payment">Mobile Payment</option>
                       </select>
                     </div>
                   </div>
