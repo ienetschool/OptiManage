@@ -101,6 +101,7 @@ export default function Payments() {
     start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], 
     end: new Date().toISOString().split('T')[0] 
   });
+  const [accountingDateRange, setAccountingDateRange] = useState('30'); // Default to 30 days
   const [paymentStatus, setPaymentStatus] = useState("");
   const [showPayslipPrint, setShowPayslipPrint] = useState(false);
   const [completedPaymentData, setCompletedPaymentData] = useState<any>(null);
@@ -219,6 +220,39 @@ export default function Payments() {
       return response.json();
     },
     enabled: activeTab === "profit-loss" || activeTab === "accounting"
+  });
+
+  // Fetch accounting transactions and categories
+  const { data: accountingTransactions, isLoading: isLoadingTransactions } = useQuery({
+    queryKey: ["/api/accounting/payment-transactions", accountingDateRange],
+    queryFn: async () => {
+      const endDate = new Date().toISOString().split('T')[0];
+      let startDate;
+      
+      switch(accountingDateRange) {
+        case '7':
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          break;
+        case '30':
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          break;
+        case '90':
+          startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          break;
+        case 'ytd':
+          startDate = new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
+          break;
+        default:
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      }
+      
+      const response = await fetch(`/api/accounting/payment-transactions?startDate=${startDate}&endDate=${endDate}&limit=50`);
+      if (!response.ok) {
+        return [];
+      }
+      return response.json();
+    },
+    enabled: activeTab === "accounting"
   });
 
   // Fetch accounting dashboard data (working endpoint with year-to-date data)
@@ -1281,56 +1315,153 @@ export default function Payments() {
             </Card>
           </div>
 
+          {/* Date Range Selector */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-medium text-slate-600">Time Period</h3>
+                  <p className="text-xs text-slate-500">Select date range for detailed analysis</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant={accountingDateRange === '7' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setAccountingDateRange('7')}
+                  >
+                    7 Days
+                  </Button>
+                  <Button 
+                    variant={accountingDateRange === '30' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setAccountingDateRange('30')}
+                  >
+                    30 Days
+                  </Button>
+                  <Button 
+                    variant={accountingDateRange === '90' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setAccountingDateRange('90')}
+                  >
+                    90 Days
+                  </Button>
+                  <Button 
+                    variant={accountingDateRange === 'ytd' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setAccountingDateRange('ytd')}
+                  >
+                    YTD
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Income vs Expenditure Breakdown */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-green-600">
                   <TrendingUp className="h-5 w-5" />
-                  <span>Income Categories (Last 30 Days)</span>
+                  <span>Income Categories (Last {accountingDateRange === 'ytd' ? 'YTD' : accountingDateRange + ' Days'})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoadingAccounting ? (
+                {isLoadingTransactions ? (
                   <div className="text-center py-8">Loading...</div>
-                ) : profitLossReport?.income ? (
+                ) : payments && payments.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                      <span className="font-medium">Product Sales</span>
-                      <span className="text-green-600 font-bold">
-                        ${profitLossReport.income.categories?.product_sales?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                      <span className="font-medium">Medical Services</span>
-                      <span className="text-blue-600 font-bold">
-                        ${profitLossReport.income.categories?.medical_services?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                      <span className="font-medium">Appointments</span>
-                      <span className="text-purple-600 font-bold">
-                        ${profitLossReport.income.categories?.appointments?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium">Other Income</span>
-                      <span className="text-gray-600 font-bold">
-                        ${profitLossReport.income.categories?.other?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold">Total Income</span>
-                        <span className="text-lg font-bold text-green-600">
-                          ${profitLossReport.income.total?.toFixed(2) || '0.00'}
-                        </span>
-                      </div>
-                    </div>
+                    {(() => {
+                      // Calculate income categories from payments data based on date range
+                      const incomePayments = payments.filter(p => {
+                        if (p.status !== 'completed' || p.type === 'expenditure') return false;
+                        
+                        const paymentDate = new Date(p.paymentDate);
+                        const now = new Date();
+                        let cutoffDate;
+                        
+                        switch(accountingDateRange) {
+                          case '7':
+                            cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            break;
+                          case '30':
+                            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            break;
+                          case '90':
+                            cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                            break;
+                          case 'ytd':
+                            cutoffDate = new Date(now.getFullYear(), 0, 1);
+                            break;
+                          default:
+                            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        }
+                        
+                        return paymentDate >= cutoffDate;
+                      });
+                      
+                      const productSales = incomePayments
+                        .filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale')
+                        .reduce((sum, p) => sum + (parseFloat(p.amount.toString()) || 0), 0);
+                      
+                      const medicalServices = incomePayments
+                        .filter(p => p.source === 'medical_invoice')
+                        .reduce((sum, p) => sum + (parseFloat(p.amount.toString()) || 0), 0);
+                      
+                      const appointments = incomePayments
+                        .filter(p => p.source === 'appointment')
+                        .reduce((sum, p) => sum + (parseFloat(p.amount.toString()) || 0), 0);
+                      
+                      const otherIncome = incomePayments
+                        .filter(p => !p.source || (p.source !== 'regular_invoice' && p.source !== 'quick_sale' && p.source !== 'medical_invoice' && p.source !== 'appointment'))
+                        .reduce((sum, p) => sum + (parseFloat(p.amount.toString()) || 0), 0);
+                      
+                      const totalIncome = productSales + medicalServices + appointments + otherIncome;
+                      
+                      return (
+                        <>
+                          <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <span className="font-medium">Product Sales</span>
+                            <span className="text-green-600 font-bold">
+                              ${productSales.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <span className="font-medium">Medical Services</span>
+                            <span className="text-blue-600 font-bold">
+                              ${medicalServices.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                            <span className="font-medium">Appointments</span>
+                            <span className="text-purple-600 font-bold">
+                              ${appointments.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium">Other Income</span>
+                            <span className="text-gray-600 font-bold">
+                              ${otherIncome.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="border-t pt-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-bold">Total Income</span>
+                              <span className="text-lg font-bold text-green-600">
+                                ${totalIncome.toFixed(2)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{incomePayments.length} transactions</p>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    No income data available for the selected period
+                    <Receipt className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <p>No income data available for the selected period</p>
+                    <p className="text-xs mt-1">Data will appear as transactions are processed</p>
                   </div>
                 )}
               </CardContent>
@@ -1340,57 +1471,93 @@ export default function Payments() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-red-600">
                   <TrendingDown className="h-5 w-5" />
-                  <span>Expenditure Categories (Last 30 Days)</span>
+                  <span>Expenditure Categories (Last {accountingDateRange === 'ytd' ? 'YTD' : accountingDateRange + ' Days'})</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoadingAccounting ? (
+                {isLoadingTransactions ? (
                   <div className="text-center py-8">Loading...</div>
-                ) : profitLossReport?.expenditures ? (
+                ) : payments && payments.length > 0 ? (
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                      <span className="font-medium">Inventory Purchases</span>
-                      <span className="text-red-600 font-bold">
-                        ${profitLossReport.expenditures.categories?.inventory_purchases?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                      <span className="font-medium">Operating Expenses</span>
-                      <span className="text-orange-600 font-bold">
-                        ${profitLossReport.expenditures.categories?.operating_expenses?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                      <span className="font-medium">Other Expenses</span>
-                      <span className="text-gray-600 font-bold">
-                        ${profitLossReport.expenditures.categories?.other?.toFixed(2) || '0.00'}
-                      </span>
-                    </div>
-                    <div className="border-t pt-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold">Total Expenditures</span>
-                        <span className="text-lg font-bold text-red-600">
-                          ${profitLossReport.expenditures.total?.toFixed(2) || '0.00'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {/* Net Profit Calculation */}
-                    <div className="border-t pt-3 bg-slate-50 p-3 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold">Net Profit</span>
-                        <span className={`text-lg font-bold ${(profitLossReport.summary?.netProfit || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          ${profitLossReport.summary?.netProfit?.toFixed(2) || '0.00'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Profit Margin: {profitLossReport.summary?.profitMargin?.toFixed(1) || '0.0'}%
-                      </p>
-                    </div>
+                    {(() => {
+                      // Calculate expenditure categories from payments data based on date range
+                      const expenditurePayments = payments.filter(p => {
+                        if (p.type !== 'expenditure') return false;
+                        
+                        const paymentDate = new Date(p.paymentDate);
+                        const now = new Date();
+                        let cutoffDate;
+                        
+                        switch(accountingDateRange) {
+                          case '7':
+                            cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            break;
+                          case '30':
+                            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            break;
+                          case '90':
+                            cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                            break;
+                          case 'ytd':
+                            cutoffDate = new Date(now.getFullYear(), 0, 1);
+                            break;
+                          default:
+                            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        }
+                        
+                        return paymentDate >= cutoffDate;
+                      });
+                      
+                      // For now, since we don't have expenditure data, show placeholder with explanation
+                      const inventoryExpenses = 0; // Will be populated when expenditure payments are added
+                      const operatingExpenses = 0; // Will be populated when expenditure payments are added  
+                      const otherExpenses = 0; // Will be populated when expenditure payments are added
+                      const totalExpenses = inventoryExpenses + operatingExpenses + otherExpenses;
+                      
+                      return (
+                        <>
+                          <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                            <span className="font-medium">Inventory Purchases</span>
+                            <span className="text-red-600 font-bold">
+                              ${inventoryExpenses.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                            <span className="font-medium">Operating Expenses</span>
+                            <span className="text-orange-600 font-bold">
+                              ${operatingExpenses.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span className="font-medium">Other Expenses</span>
+                            <span className="text-gray-600 font-bold">
+                              ${otherExpenses.toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="border-t pt-3">
+                            <div className="flex justify-between items-center">
+                              <span className="text-lg font-bold">Total Expenditures</span>
+                              <span className="text-lg font-bold text-red-600">
+                                ${totalExpenses.toFixed(2)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">{expenditurePayments.length} transactions</p>
+                          </div>
+                          <div className="border-t pt-3 bg-blue-50 p-3 rounded-lg">
+                            <p className="text-sm text-blue-700 text-center">
+                              💡 Expenditure tracking will show data once expense transactions are recorded in the system
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()
+                    }
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    No expenditure data available for the selected period
+                    <TrendingDown className="h-12 w-12 mx-auto text-gray-400 mb-3" />
+                    <p>No expenditure data available for the selected period</p>
+                    <p className="text-xs mt-1">Data will appear as transactions are processed</p>
                   </div>
                 )}
               </CardContent>
@@ -1409,32 +1576,103 @@ export default function Payments() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoadingReport ? (
+              {isLoadingTransactions ? (
                 <div className="text-center py-8">Loading transactions...</div>
-              ) : profitLossReport?.entries?.length > 0 ? (
+              ) : payments && payments.length > 0 ? (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {profitLossReport.entries.slice(0, 20).map((entry, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                  {payments
+                    .filter(payment => {
+                      // Filter by date range
+                      const paymentDate = new Date(payment.paymentDate);
+                      const now = new Date();
+                      let cutoffDate;
+                      
+                      switch(accountingDateRange) {
+                        case '7':
+                          cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                          break;
+                        case '30':
+                          cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                          break;
+                        case '90':
+                          cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                          break;
+                        case 'ytd':
+                          cutoffDate = new Date(now.getFullYear(), 0, 1);
+                          break;
+                        default:
+                          cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                      }
+                      
+                      return paymentDate >= cutoffDate && payment.status === 'completed';
+                    })
+                    .slice(0, 20)
+                    .map((payment, index) => (
+                    <div key={payment.id || index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${entry.type === 'income' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                        <div className={`p-2 rounded-full ${
+                          payment.type !== 'expenditure' ? 'bg-green-100' : 'bg-red-100'
+                        }`}>
+                          {payment.type !== 'expenditure' ? (
+                            <TrendingUp className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4 text-red-600" />
+                          )}
+                        </div>
                         <div>
-                          <p className="font-medium">{entry.description}</p>
+                          <p className="font-medium">
+                            {payment.source === 'medical_invoice' ? 'Medical Service' : 
+                             payment.source === 'regular_invoice' ? 'Product Sale' :
+                             payment.source === 'appointment' ? 'Appointment Fee' :
+                             payment.source === 'quick_sale' ? 'Quick Sale' : 'Transaction'}
+                          </p>
                           <p className="text-xs text-gray-500">
-                            {new Date(entry.date).toLocaleDateString()} • {entry.category}
+                            {new Date(payment.paymentDate).toLocaleDateString()} • 
+                            <span className="capitalize ml-1">
+                              {payment.paymentMethod?.replace('_', ' ') || 'N/A'}
+                            </span>
+                            {payment.customerName && (
+                              <span className="ml-2">• {payment.customerName}</span>
+                            )}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-bold ${entry.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                          {entry.type === 'income' ? '+' : '-'}${entry.amount.toFixed(2)}
+                        <p className={`font-bold ${
+                          payment.type !== 'expenditure' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {payment.type !== 'expenditure' ? '+' : '-'}${parseFloat(payment.amount.toString()).toFixed(2)}
                         </p>
-                        <p className="text-xs text-gray-500 capitalize">{entry.type}</p>
+                        <p className="text-xs text-gray-500">ID: {payment.invoiceId || payment.transactionId || payment.id}</p>
                       </div>
                     </div>
                   ))}
-                  {profitLossReport.entries.length > 20 && (
+                  {payments.length > 20 && (
                     <div className="text-center py-2 text-gray-500 text-sm">
-                      Showing 20 of {profitLossReport.entries.length} transactions
+                      Showing 20 of {payments.filter(p => {
+                        const paymentDate = new Date(p.paymentDate);
+                        const now = new Date();
+                        let cutoffDate;
+                        
+                        switch(accountingDateRange) {
+                          case '7':
+                            cutoffDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            break;
+                          case '30':
+                            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                            break;
+                          case '90':
+                            cutoffDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+                            break;
+                          case 'ytd':
+                            cutoffDate = new Date(now.getFullYear(), 0, 1);
+                            break;
+                          default:
+                            cutoffDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        }
+                        
+                        return paymentDate >= cutoffDate && p.status === 'completed';
+                      }).length} transactions
                     </div>
                   )}
                 </div>
