@@ -384,6 +384,58 @@ export function registerHRRoutes(app: Express) {
     }
   });
 
+  // Update payroll record (for payment processing)
+  app.put("/api/payroll/:id", isAuthenticated, async (req, res) => {
+    try {
+      const { paymentMethod, status, paymentDate, ...otherUpdates } = req.body;
+      
+      const updateData: any = {
+        ...otherUpdates,
+        updatedAt: new Date()
+      };
+      
+      if (paymentMethod) {
+        updateData.paymentMethod = paymentMethod;
+      }
+      
+      if (status) {
+        updateData.status = status;
+      }
+      
+      if (paymentDate) {
+        updateData.paymentDate = new Date(paymentDate);
+      }
+      
+      const [updatedPayroll] = await db
+        .update(payroll)
+        .set(updateData)
+        .where(eq(payroll.id, req.params.id))
+        .returning();
+      
+      if (!updatedPayroll) {
+        return res.status(404).json({ message: "Payroll record not found" });
+      }
+      
+      // If payment is processed, send notification to staff member
+      if (status === 'paid') {
+        await db.insert(notificationsTable).values({
+          recipientId: updatedPayroll.staffId,
+          title: "Payment Processed",
+          message: `Your salary payment has been processed via ${paymentMethod}`,
+          type: "hr",
+          priority: "normal",
+          relatedType: "payroll",
+          relatedId: updatedPayroll.id
+        });
+      }
+      
+      res.json(updatedPayroll);
+    } catch (error) {
+      console.error("Error updating payroll:", error);
+      res.status(500).json({ message: "Failed to update payroll record" });
+    }
+  });
+
   // Generate Payslip PDF
   app.post("/api/payroll/:id/generate-payslip", isAuthenticated, async (req, res) => {
     try {

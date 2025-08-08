@@ -27,6 +27,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Payroll() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,6 +36,7 @@ export default function Payroll() {
   const [bulkPayrollOpen, setBulkPayrollOpen] = useState(false);
   const [selectedPayroll, setSelectedPayroll] = useState<any>(null);
   const [editPayroll, setEditPayroll] = useState<any>(null);
+  const [editFormData, setEditFormData] = useState<any>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [sortField, setSortField] = useState<string>('id');
@@ -47,14 +49,13 @@ export default function Payroll() {
   });
 
   const { data: payrollData = [] } = useQuery({
-    queryKey: ["/api/payroll", selectedMonth],
+    queryKey: ["/api/payroll"],
   });
 
   const createPayrollMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return data;
+      const response = await apiRequest("POST", "/api/payroll", data);
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/payroll"] });
@@ -64,13 +65,55 @@ export default function Payroll() {
       });
       setOpen(false);
     },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create payroll record.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updatePayrollMutation = useMutation({
+    mutationFn: async (data: { id: string; updates: any }) => {
+      const response = await apiRequest("PUT", `/api/payroll/${data.id}`, data.updates);
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payroll"] });
+      toast({
+        title: "Payment Processed",
+        description: "Payroll payment has been processed successfully.",
+      });
+      setEditPayroll(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to process payment.",
+        variant: "destructive",
+      });
+    },
   });
 
   const bulkPayrollMutation = useMutation({
     mutationFn: async (data: any) => {
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return data;
+      // Generate payroll for all active staff
+      const promises = staff.filter(s => s.status === 'active').map(staffMember => {
+        const autoValues = calculateAutoValues(staffMember);
+        return apiRequest("POST", "/api/payroll", {
+          staffId: staffMember.id,
+          payMonth: new Date().getMonth() + 1,
+          payYear: new Date().getFullYear(),
+          basicSalary: autoValues.basicSalary,
+          allowances: autoValues.allowances || {},
+          overtime: autoValues.overtime,
+          bonus: 0,
+          deductions: autoValues.deductions || {},
+          status: 'draft'
+        });
+      });
+      await Promise.all(promises);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/payroll"] });
@@ -80,111 +123,59 @@ export default function Payroll() {
       });
       setBulkPayrollOpen(false);
     },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to generate bulk payroll.",
+        variant: "destructive",
+      });
+    },
   });
 
-  // Mock payroll data - Latest entries first by default
-  const mockPayroll = [
-    {
-      id: "5",
-      staffId: "staff-5",
-      staffName: "Dr. Smita Ghosh",
-      staffCode: "STF-304783",
-      position: "Doctor",
-      payPeriod: "August 2025",
-      basicSalary: 85000,
-      allowances: 18000,
-      overtime: 3200,
-      grossSalary: 106200,
-      deductions: 21240,
-      netSalary: 84960,
-      workingDays: 22,
-      presentDays: 22,
-      overtimeHours: 12,
-      status: "approved",
-      paymentMethod: "bank_transfer",
-      generatedDate: "2025-08-05"
-    },
-    {
-      id: "4",
-      staffId: "staff-4",
-      staffName: "Robert Taylor",
-      staffCode: "EMP004",
-      position: "Optician",
-      payPeriod: "July 2025",
-      basicSalary: 45000,
-      allowances: 8000,
-      overtime: 1200,
-      grossSalary: 54200,
-      deductions: 10840,
-      netSalary: 43360,
-      workingDays: 22,
-      presentDays: 21,
-      overtimeHours: 4,
-      status: "paid",
-      paymentMethod: "direct_deposit",
-      generatedDate: "2025-07-31"
-    },
-    {
-      id: "3",
-      staffId: "staff-3",
-      staffName: "Emma Wilson", 
-      staffCode: "EMP003",
-      position: "Sales Associate",
-      payPeriod: "June 2025",
-      basicSalary: 35000,
-      allowances: 5000,
-      overtime: 0,
-      grossSalary: 40000,
-      deductions: 8000,
-      netSalary: 32000,
-      workingDays: 22,
-      presentDays: 20,
-      overtimeHours: 0,
-      status: "paid",
-      paymentMethod: "cash",
-      generatedDate: "2025-06-30"
-    },
-    {
-      id: "2",
-      staffId: "staff-2", 
-      staffName: "Michael Chen",
-      staffCode: "EMP002",
-      position: "Store Manager",
-      payPeriod: "May 2025",
-      basicSalary: 60000,
-      allowances: 12000,
-      overtime: 1800,
-      grossSalary: 73800,
-      deductions: 14760,
-      netSalary: 59040,
-      workingDays: 22,
-      presentDays: 21,
-      overtimeHours: 6,
-      status: "paid",
-      paymentMethod: "credit_card",
-      generatedDate: "2025-05-31"
-    },
-    {
-      id: "1",
-      staffId: "staff-1",
-      staffName: "Dr. Sarah Johnson",
-      staffCode: "EMP001",
-      position: "Senior Optometrist",
-      payPeriod: "April 2025",
-      basicSalary: 75000,
-      allowances: 15000,
-      overtime: 2500,
-      grossSalary: 92500,
-      deductions: 18500,
-      netSalary: 74000,
-      workingDays: 22,
-      presentDays: 22,
-      overtimeHours: 10,
-      status: "paid",
-      paymentMethod: "check",
-      generatedDate: "2025-04-30"
-    }
-  ];
+  // Transform payroll data for display
+  const transformedPayrollData = payrollData.map((payroll: any) => {
+    const staffMember = staff.find(s => s.id === payroll.staffId);
+    return {
+      id: payroll.id,
+      staffId: payroll.staffId,
+      staffName: staffMember ? `${staffMember.firstName} ${staffMember.lastName}` : 'Unknown Staff',
+      staffCode: staffMember?.staffCode || 'N/A',
+      position: staffMember?.position || 'N/A',
+      payPeriod: `${getMonthName(payroll.payMonth)} ${payroll.payYear}`,
+      basicSalary: parseFloat(payroll.basicSalary || '0'),
+      allowances: calculateAllowancesTotal(payroll.allowances),
+      overtime: parseFloat(payroll.overtime || '0'),
+      grossSalary: parseFloat(payroll.grossSalary || '0'),
+      deductions: calculateDeductionsTotal(payroll.deductions),
+      netSalary: parseFloat(payroll.netSalary || '0'),
+      workingDays: payroll.workingDays || 22,
+      presentDays: payroll.presentDays || 22,
+      overtimeHours: payroll.overtimeHours || 0,
+      status: payroll.status || 'draft',
+      paymentMethod: payroll.paymentMethod || 'Not Set',
+      generatedDate: payroll.createdAt ? format(new Date(payroll.createdAt), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      ...payroll
+    };
+  });
+
+  // Helper functions for data transformation
+  const getMonthName = (month: number): string => {
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[month - 1] || 'Unknown';
+  };
+
+  const calculateAllowancesTotal = (allowances: any): number => {
+    if (!allowances || typeof allowances !== 'object') return 0;
+    return Object.values(allowances).reduce((sum: number, val: any) => sum + (parseFloat(val) || 0), 0);
+  };
+
+  const calculateDeductionsTotal = (deductions: any): number => {
+    if (!deductions || typeof deductions !== 'object') return 0;
+    return Object.values(deductions).reduce((sum: number, val: any) => sum + (parseFloat(val) || 0), 0);
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -244,7 +235,7 @@ export default function Payroll() {
   };
 
   // Filter and sort payroll data
-  const filteredPayroll = mockPayroll.filter(payroll => 
+  const filteredPayroll = transformedPayrollData.filter(payroll => 
     payroll.staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     payroll.staffCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
     payroll.position.toLowerCase().includes(searchTerm.toLowerCase())
@@ -273,10 +264,48 @@ export default function Payroll() {
 
   const handleEditPayroll = (payroll: any) => {
     setEditPayroll(payroll);
+    setEditFormData({
+      workingDays: payroll.workingDays,
+      presentDays: payroll.presentDays,
+      overtimeHours: payroll.overtimeHours,
+      basicSalary: payroll.basicSalary,
+      allowances: payroll.allowances,
+      overtime: payroll.overtime,
+      deductions: payroll.deductions,
+      status: payroll.status,
+      paymentMethod: payroll.paymentMethod || 'cash'
+    });
   };
 
-  const handlePrintPayroll = (payroll: any) => {
-    // Generate payslip in new window using the professional blue design from INV-789319
+  const handleProcessPayment = async (payroll: any, paymentMethod: string) => {
+    try {
+      await updatePayrollMutation.mutateAsync({
+        id: payroll.id,
+        updates: {
+          paymentMethod: paymentMethod,
+          status: 'paid',
+          paymentDate: new Date(),
+        }
+      });
+      
+      // Generate and print payslip after payment
+      setTimeout(() => {
+        handlePrintPayroll(payroll);
+      }, 500);
+    } catch (error) {
+      console.error('Payment processing error:', error);
+    }
+  };
+
+  const handlePrintPayroll = (payrollData: any) => {
+    // Use updated payroll data if available
+    const payroll = payrollData.paymentMethod ? payrollData : {
+      ...payrollData,
+      paymentMethod: payrollData.paymentMethod || 'Not Set',
+      status: payrollData.status || 'draft'
+    };
+    
+    // Generate payslip in new window using the professional blue design
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -1188,13 +1217,23 @@ export default function Payroll() {
                                   variant="outline"
                                   size="sm"
                                   onClick={() => setSelectedPayroll(payroll)}
+                                  data-testid={`button-view-${payroll.id}`}
                                 >
                                   <Eye className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   variant="outline"
                                   size="sm"
+                                  onClick={() => handleEditPayroll(payroll)}
+                                  data-testid={`button-edit-${payroll.id}`}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
                                   onClick={() => handlePrintPayroll(payroll)}
+                                  data-testid={`button-print-${payroll.id}`}
                                 >
                                   <Printer className="h-4 w-4" />
                                 </Button>
@@ -1373,15 +1412,30 @@ export default function Payroll() {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Working Days</Label>
-                  <Input type="number" defaultValue={editPayroll.workingDays} />
+                  <Input 
+                    type="number" 
+                    value={editFormData.workingDays || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, workingDays: parseInt(e.target.value) || 0 }))}
+                    data-testid="input-working-days"
+                  />
                 </div>
                 <div>
                   <Label>Present Days</Label>
-                  <Input type="number" defaultValue={editPayroll.presentDays} />
+                  <Input 
+                    type="number" 
+                    value={editFormData.presentDays || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, presentDays: parseInt(e.target.value) || 0 }))}
+                    data-testid="input-present-days"
+                  />
                 </div>
                 <div>
                   <Label>Overtime Hours</Label>
-                  <Input type="number" defaultValue={editPayroll.overtimeHours} />
+                  <Input 
+                    type="number" 
+                    value={editFormData.overtimeHours || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, overtimeHours: parseInt(e.target.value) || 0 }))}
+                    data-testid="input-overtime-hours"
+                  />
                 </div>
               </div>
 
@@ -1391,15 +1445,30 @@ export default function Payroll() {
                   <div className="space-y-3">
                     <div>
                       <Label>Basic Salary</Label>
-                      <Input type="number" defaultValue={editPayroll.basicSalary} />
+                      <Input 
+                        type="number" 
+                        value={editFormData.basicSalary || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, basicSalary: parseFloat(e.target.value) || 0 }))}
+                        data-testid="input-basic-salary"
+                      />
                     </div>
                     <div>
                       <Label>Allowances</Label>
-                      <Input type="number" defaultValue={editPayroll.allowances} />
+                      <Input 
+                        type="number" 
+                        value={editFormData.allowances || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, allowances: parseFloat(e.target.value) || 0 }))}
+                        data-testid="input-allowances"
+                      />
                     </div>
                     <div>
                       <Label>Overtime Amount</Label>
-                      <Input type="number" defaultValue={editPayroll.overtime} />
+                      <Input 
+                        type="number" 
+                        value={editFormData.overtime || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, overtime: parseFloat(e.target.value) || 0 }))}
+                        data-testid="input-overtime-amount"
+                      />
                     </div>
                   </div>
                 </div>
@@ -1409,11 +1478,21 @@ export default function Payroll() {
                   <div className="space-y-3">
                     <div>
                       <Label>Total Deductions</Label>
-                      <Input type="number" defaultValue={editPayroll.deductions} />
+                      <Input 
+                        type="number" 
+                        value={editFormData.deductions || ''}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, deductions: parseFloat(e.target.value) || 0 }))}
+                        data-testid="input-deductions"
+                      />
                     </div>
                     <div>
                       <Label>Status</Label>
-                      <select className="w-full p-2 border rounded-md" defaultValue={editPayroll.status}>
+                      <select 
+                        className="w-full p-2 border rounded-md" 
+                        value={editFormData.status || 'draft'}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, status: e.target.value }))}
+                        data-testid="select-status"
+                      >
                         <option value="draft">Draft</option>
                         <option value="pending">Pending</option>
                         <option value="approved">Approved</option>
@@ -1422,7 +1501,12 @@ export default function Payroll() {
                     </div>
                     <div>
                       <Label>Payment Method</Label>
-                      <select className="w-full p-2 border rounded-md" defaultValue={editPayroll.paymentMethod || 'cash'}>
+                      <select 
+                        className="w-full p-2 border rounded-md" 
+                        value={editFormData.paymentMethod || 'cash'}
+                        onChange={(e) => setEditFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                        data-testid="select-payment-method"
+                      >
                         <option value="cash">Cash</option>
                         <option value="bank_transfer">Bank Transfer</option>
                         <option value="debit_card">Debit Card</option>
@@ -1441,14 +1525,21 @@ export default function Payroll() {
                 <Button variant="outline" onClick={() => setEditPayroll(null)}>
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  toast({
-                    title: "Payroll Updated",
-                    description: "Payroll record has been updated successfully.",
-                  });
-                  setEditPayroll(null);
-                }}>
-                  Save Changes
+                <Button 
+                  onClick={() => {
+                    // Process payment and update status
+                    updatePayrollMutation.mutate({
+                      id: editPayroll.id,
+                      updates: {
+                        ...editFormData,
+                        paymentDate: editFormData.status === 'paid' ? new Date() : null
+                      }
+                    });
+                  }}
+                  disabled={updatePayrollMutation.isPending}
+                  data-testid="button-save-payroll"
+                >
+                  {updatePayrollMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </div>
