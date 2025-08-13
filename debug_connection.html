@@ -1,61 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Debug Database Connection</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Connection Debug</title>
+    <style>
+        body { font-family: Arial; margin: 40px; max-width: 800px; }
+        .status { margin: 20px 0; padding: 20px; border-radius: 8px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button { padding: 12px 24px; font-size: 16px; margin: 10px; cursor: pointer; }
+        .test-btn { background: #28a745; color: white; border: none; border-radius: 5px; }
+    </style>
 </head>
 <body>
-    <h1>Database Connection Debug</h1>
-    <button onclick="testConnection()">Test Connection</button>
-    <div id="result"></div>
+    <h1>OptiStore Pro - Database Connection Debug</h1>
+    
+    <div id="status" class="status info">
+        <h3>Status: Ready</h3>
+        <p>Click the button below to test database connectivity with your production database.</p>
+    </div>
+    
+    <div>
+        <button class="test-btn" onclick="testConnection()">Test Production Database</button>
+        <button class="test-btn" onclick="window.location.href='/dashboard'">Go to Dashboard</button>
+    </div>
+    
+    <div id="details" style="margin-top: 20px;">
+        <h3>Database Configuration</h3>
+        <ul>
+            <li><strong>Host:</strong> 5.181.218.15</li>
+            <li><strong>Port:</strong> 5432</li>
+            <li><strong>Database:</strong> ieopt</li>
+            <li><strong>User:</strong> ledbpt_opt</li>
+            <li><strong>Type:</strong> PostgreSQL</li>
+        </ul>
+    </div>
     
     <script>
         async function testConnection() {
-            const resultDiv = document.getElementById('result');
-            
-            const testData = {
-                dbType: 'postgresql',
-                dbHost: 'localhost',
-                dbPort: '5432',
-                dbUser: 'ledbpt_opt',
-                dbPassword: '',
-                dbName: 'ieopt'
-            };
-            
-            console.log('Testing with data:', testData);
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = '<h3>Status: Testing...</h3><p>Connecting to production database...</p>';
+            statusDiv.className = 'status info';
             
             try {
                 const response = await fetch('/api/install/test-connection', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(testData)
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dbType: 'postgresql',
+                        dbHost: '5.181.218.15',
+                        dbPort: '5432',
+                        dbUser: 'ledbpt_opt',
+                        dbPassword: 'Ra4#PdaqW0c^pa8c',
+                        dbName: 'ieopt'
+                    })
                 });
                 
-                console.log('Response:', response);
+                const result = await response.json();
                 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                if (result.success) {
+                    statusDiv.innerHTML = `
+                        <h3>Status: ✅ SUCCESS</h3>
+                        <p><strong>Database connection successful!</strong></p>
+                        <p>Connection string: ${result.connectionString || 'Not provided'}</p>
+                        <p>Your OptiStore Pro system is ready to use.</p>
+                    `;
+                    statusDiv.className = 'status success';
+                } else {
+                    throw new Error(result.error || result.message || 'Connection failed');
                 }
                 
-                const result = await response.json();
-                console.log('Success:', result);
-                
-                resultDiv.innerHTML = `
-                    <h2>Success!</h2>
-                    <p>Status: ${response.status}</p>
-                    <pre>${JSON.stringify(result, null, 2)}</pre>
-                `;
             } catch (error) {
-                console.error('Error:', error);
-                resultDiv.innerHTML = `
-                    <h2>Error!</h2>
-                    <p style="color: red;">${error.message}</p>
+                statusDiv.innerHTML = `
+                    <h3>Status: ❌ ERROR</h3>
+                    <p><strong>Connection failed:</strong> ${error.message}</p>
+                    <p>Please check your database configuration and try again.</p>
                 `;
+                statusDiv.className = 'status error';
             }
         }
+        
+        console.log('Debug page loaded successfully');
     </script>
 </body>
 </html>

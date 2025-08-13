@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function InstallWizardSimple() {
   const [connectionStatus, setConnectionStatus] = useState('idle');
@@ -16,10 +16,10 @@ export default function InstallWizardSimple() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           dbType: 'postgresql',
-          dbHost: 'localhost',
+          dbHost: '5.181.218.15',
           dbPort: '5432',
           dbUser: 'ledbpt_opt',
-          dbPassword: '',
+          dbPassword: 'Ra4#PdaqW0c^pa8c',
           dbName: 'ieopt'
         })
       });
@@ -36,9 +36,9 @@ export default function InstallWizardSimple() {
       } else {
         throw new Error(result.error || 'Connection failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       setConnectionStatus('error');
-      setConnectionMessage(`Connection failed: ${error.message}`);
+      setConnectionMessage(`Connection failed: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }

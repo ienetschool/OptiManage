@@ -391,9 +391,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register installation routes
   registerInstallRoutes(app);
   
-  // Redirect install.html to React component
+  // Serve debug connection page for immediate testing
   app.get('/install.html', (req, res) => {
-    res.redirect('/install');
+    res.sendFile('/home/runner/workspace/debug_connection.html');
+  });
+  
+  app.get('/install-debug', (req, res) => {
+    res.sendFile('/home/runner/workspace/debug_connection.html');
   });
   
   // Serve test install page
