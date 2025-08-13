@@ -23,8 +23,10 @@
     </div>
     
     <div>
-        <button class="test-btn" onclick="testConnection()">Test Production Database</button>
-        <button class="test-btn" onclick="window.location.href='/dashboard'">Go to Dashboard</button>
+        <button class="test-btn" onclick="testConnection('5.181.218.15')">Test with IP Address (5.181.218.15)</button>
+        <button class="test-btn" onclick="testConnection('localhost')">Test with Localhost</button>
+        <button class="test-btn" onclick="testConnection('127.0.0.1')">Test with 127.0.0.1</button>
+        <button class="test-btn" onclick="window.location.href='/dashboard'" style="background: #007bff;">Go to Dashboard</button>
     </div>
     
     <div id="details" style="margin-top: 20px;">
@@ -39,9 +41,9 @@
     </div>
     
     <script>
-        async function testConnection() {
+        async function testConnection(host = '5.181.218.15') {
             const statusDiv = document.getElementById('status');
-            statusDiv.innerHTML = '<h3>Status: Testing...</h3><p>Connecting to production database...</p>';
+            statusDiv.innerHTML = `<h3>Status: Testing...</h3><p>Connecting to database at ${host}...</p>`;
             statusDiv.className = 'status info';
             
             try {
@@ -50,7 +52,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         dbType: 'postgresql',
-                        dbHost: '5.181.218.15',
+                        dbHost: host,
                         dbPort: '5432',
                         dbUser: 'ledbpt_opt',
                         dbPassword: 'Ra4#PdaqW0c^pa8c',
@@ -63,8 +65,9 @@
                 if (result.success) {
                     statusDiv.innerHTML = `
                         <h3>Status: ✅ SUCCESS</h3>
-                        <p><strong>Database connection successful!</strong></p>
+                        <p><strong>Database connection successful with ${host}!</strong></p>
                         <p>Connection string: ${result.connectionString || 'Not provided'}</p>
+                        <p><strong>Recommendation:</strong> Use <code>${host}</code> as your database host.</p>
                         <p>Your OptiStore Pro system is ready to use.</p>
                     `;
                     statusDiv.className = 'status success';
