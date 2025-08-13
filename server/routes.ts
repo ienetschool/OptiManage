@@ -391,9 +391,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register installation routes
   registerInstallRoutes(app);
   
-  // Serve install.html as static file before Vite middleware
+  // Redirect install.html to React component
   app.get('/install.html', (req, res) => {
-    res.sendFile('/home/runner/workspace/install.html');
+    res.redirect('/install');
   });
   
   // Serve test install page
