@@ -391,6 +391,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register installation routes
   registerInstallRoutes(app);
   
+  // Serve install.html as static file before Vite middleware
+  app.get('/install.html', (req, res) => {
+    res.sendFile('/home/runner/workspace/install.html');
+  });
+  
   // Database backup download endpoint
   app.get('/api/download/database-backup', (req, res) => {
     const backupFile = 'database_backup_complete.sql';
