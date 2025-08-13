@@ -355,6 +355,14 @@ function getInvoiceData(invoiceId: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // PRIORITY ROUTES - Must be before Vite middleware to prevent interception
+  
+  // Dashboard route bypass - serve React app directly
+  app.get('/dashboard*', (req, res, next) => {
+    // Let this pass through to Vite to serve the React app
+    next();
+  });
+  
   // FORCE IMMEDIATE RESPONSE - NO MIDDLEWARE INTERFERENCE
   app.use('/api/db-test', (req, res) => {
     res.writeHead(200, {

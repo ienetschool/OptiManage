@@ -146,16 +146,12 @@ function Router() {
 
       {/* Dashboard routes */}
       <Route path="/dashboard">
-        {isAuthenticated ? (
-          <AppLayout>
-            <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <Dashboard />
-            </div>
-          </AppLayout>
-        ) : (
-          <AuthPage />
-        )}
+        <AppLayout>
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Dashboard />
+          </div>
+        </AppLayout>
       </Route>
       
       <Route path="/stores">
