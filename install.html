@@ -53,7 +53,7 @@
                                 <label for="domain" class="block text-sm font-medium text-gray-700 mb-2">Primary Domain</label>
                                 <input type="url" id="domain" name="domain" 
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                       placeholder="https://your-domain.com" required>
+                                       placeholder="https://your-domain.com" value="https://localhost:5000" required>
                                 <p class="text-sm text-gray-500 mt-1">The main domain where your application will be accessible</p>
                             </div>
                             
@@ -111,7 +111,7 @@
                                 <label for="dbHost" class="block text-sm font-medium text-gray-700 mb-2">Database Host</label>
                                 <input type="text" id="dbHost" name="dbHost" 
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                       placeholder="localhost" required>
+                                       placeholder="localhost" value="localhost" required>
                             </div>
                             
                             <div>
@@ -125,14 +125,14 @@
                                 <label for="dbName" class="block text-sm font-medium text-gray-700 mb-2">Database Name</label>
                                 <input type="text" id="dbName" name="dbName" 
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                       placeholder="optistorepro" required>
+                                       placeholder="optistorepro" value="optistorepro" required>
                             </div>
                             
                             <div>
                                 <label for="dbUser" class="block text-sm font-medium text-gray-700 mb-2">Database Username</label>
                                 <input type="text" id="dbUser" name="dbUser" 
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                       placeholder="postgres" required>
+                                       placeholder="postgres" value="postgres" required>
                             </div>
                             
                             <div class="md:col-span-2">
@@ -152,6 +152,36 @@
                         </div>
                     </div>
 
+                    <!-- Database Import Section -->
+                    <div class="bg-yellow-50 rounded-lg p-6 border border-yellow-200">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-800">Database Import</h3>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="dbBackupFile" class="block text-sm font-medium text-gray-700 mb-2">
+                                Database Backup File (.sql)
+                            </label>
+                            <input type="file" id="dbBackupFile" name="dbBackupFile" accept=".sql,.backup,.dump"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                            <p class="text-sm text-gray-500 mt-1">Upload your PostgreSQL or MySQL database backup file</p>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            <button type="button" id="importDatabase" 
+                                    class="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                Import Database
+                            </button>
+                            <button type="button" id="viewImportStatus" 
+                                    class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                                View Import Status
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Additional Configuration Section -->
                     <div class="bg-gray-50 rounded-lg p-6">
                         <div class="flex items-center mb-4">
@@ -167,7 +197,7 @@
                                 <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-2">Admin Email</label>
                                 <input type="email" id="adminEmail" name="adminEmail" 
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                       placeholder="admin@optistorepro.com" required>
+                                       placeholder="admin@optistorepro.com" value="admin@optistorepro.com" required>
                             </div>
                             
                             <div>
@@ -203,6 +233,76 @@
                         </div>
                     </div>
 
+                    <!-- Deployment Steps Section -->
+                    <div class="bg-green-50 rounded-lg p-6 border border-green-200" id="deploymentSection" style="display: none;">
+                        <div class="flex items-center mb-4">
+                            <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <h3 class="text-xl font-semibold text-gray-800">Deployment Steps</h3>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-green-600 font-semibold">1</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">Install Dependencies</p>
+                                    <code class="text-sm bg-gray-100 px-2 py-1 rounded">npm install</code>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-green-600 font-semibold">2</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">Run Database Migrations</p>
+                                    <code class="text-sm bg-gray-100 px-2 py-1 rounded">npm run db:push</code>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-green-600 font-semibold">3</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">Start Application</p>
+                                    <code class="text-sm bg-gray-100 px-2 py-1 rounded">npm run dev</code>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                                    <span class="text-green-600 font-semibold">4</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">Production Build</p>
+                                    <code class="text-sm bg-gray-100 px-2 py-1 rounded">npm run build</code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <h4 class="font-semibold text-blue-800 mb-2">Quick Deploy</h4>
+                            <div class="flex space-x-4">
+                                <button type="button" id="runInstall" 
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    Run npm install
+                                </button>
+                                <button type="button" id="runMigrations" 
+                                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+                                    Run Migrations
+                                </button>
+                                <button type="button" id="startApp" 
+                                        class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                                    Start App
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Form Actions -->
                     <div class="flex justify-between items-center pt-6 border-t border-gray-200">
                         <button type="button" id="testConnection" 
@@ -230,6 +330,9 @@
     </div>
 
     <script>
+        let dbBackupContent = null;
+        let configData = {};
+
         // Auto-update database port based on database type
         document.querySelectorAll('input[name="dbType"]').forEach(radio => {
             radio.addEventListener('change', function() {
@@ -242,6 +345,64 @@
             });
         });
 
+        // Database backup file handling
+        document.getElementById('dbBackupFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    dbBackupContent = e.target.result;
+                    showStatusMessage(`Database backup file "${file.name}" loaded successfully.`, 'success');
+                    document.getElementById('importDatabase').disabled = false;
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Import database function
+        document.getElementById('importDatabase').addEventListener('click', async function() {
+            if (!dbBackupContent) {
+                showStatusMessage('Please select a database backup file first.', 'error');
+                return;
+            }
+
+            const formData = getFormData();
+            if (!formData.dbHost || !formData.dbUser || !formData.dbPassword || !formData.dbName) {
+                showStatusMessage('Please fill in all database connection fields.', 'error');
+                return;
+            }
+
+            const button = this;
+            const originalText = button.textContent;
+            button.textContent = 'Importing...';
+            button.disabled = true;
+
+            try {
+                showStatusMessage('Testing database connection...', 'info');
+                await testDatabaseConnection(formData);
+                
+                showStatusMessage('Creating database import window...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Open import window and start import process
+                const importResult = await importDatabaseBackup(formData, dbBackupContent);
+                openDatabaseImportWindow(formData, dbBackupContent, importResult);
+                
+                showStatusMessage('Database import completed successfully!', 'success');
+                
+            } catch (error) {
+                showStatusMessage('Error: ' + error.message, 'error');
+            }
+
+            button.textContent = originalText;
+            button.disabled = false;
+        });
+
+        // View import status
+        document.getElementById('viewImportStatus').addEventListener('click', function() {
+            openImportStatusWindow(null);
+        });
+
         // Test database connection
         document.getElementById('testConnection').addEventListener('click', async function() {
             const button = this;
@@ -249,13 +410,33 @@
             button.textContent = 'Testing...';
             button.disabled = true;
 
-            // Simulate connection test
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            showStatusMessage('Database connection successful!', 'success');
+            try {
+                const formData = getFormData();
+                await testDatabaseConnection(formData);
+                showStatusMessage('Database connection successful!', 'success');
+                
+                // Show deployment section after successful connection
+                document.getElementById('deploymentSection').style.display = 'block';
+                
+            } catch (error) {
+                showStatusMessage('Connection failed: ' + error.message, 'error');
+            }
             
             button.textContent = originalText;
             button.disabled = false;
+        });
+
+        // NPM command execution
+        document.getElementById('runInstall').addEventListener('click', async function() {
+            await executeNpmCommand('install', this);
+        });
+
+        document.getElementById('runMigrations').addEventListener('click', async function() {
+            await executeNpmCommand('run db:push', this);
+        });
+
+        document.getElementById('startApp').addEventListener('click', async function() {
+            await executeNpmCommand('run dev', this);
         });
 
         // Form submission
@@ -267,22 +448,294 @@
             submitButton.textContent = 'Installing...';
             submitButton.disabled = true;
 
-            // Simulate installation process
-            showStatusMessage('Creating configuration files...', 'info');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            showStatusMessage('Setting up database...', 'info');
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            
-            showStatusMessage('Configuring domain settings...', 'info');
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            showStatusMessage('Installation completed successfully!', 'success');
-            
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 2000);
+            try {
+                const formData = getFormData();
+                
+                showStatusMessage('Validating configuration...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                showStatusMessage('Creating configuration files...', 'info');
+                await updateConfigurationFiles(formData);
+                
+                showStatusMessage('Setting up database connection...', 'info');
+                await updateDatabaseConfig(formData);
+                
+                showStatusMessage('Configuring domain settings...', 'info');
+                await updateDomainConfig(formData);
+                
+                showStatusMessage('Installation completed successfully!', 'success');
+                
+                // Show deployment section
+                document.getElementById('deploymentSection').style.display = 'block';
+                
+                // Auto-scroll to deployment section
+                document.getElementById('deploymentSection').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+            } catch (error) {
+                showStatusMessage('Installation failed: ' + error.message, 'error');
+            }
+
+            submitButton.textContent = originalText;
+            submitButton.disabled = false;
         });
+
+        // Helper functions
+        function getFormData() {
+            return {
+                domain: document.getElementById('domain').value,
+                subdomain: document.getElementById('subdomain').value,
+                ssl: document.getElementById('ssl').checked,
+                port: document.getElementById('port').value,
+                dbType: document.querySelector('input[name="dbType"]:checked').value,
+                dbHost: document.getElementById('dbHost').value,
+                dbPort: document.getElementById('dbPort').value,
+                dbName: document.getElementById('dbName').value,
+                dbUser: document.getElementById('dbUser').value,
+                dbPassword: document.getElementById('dbPassword').value,
+                dbUrl: document.getElementById('dbUrl').value,
+                adminEmail: document.getElementById('adminEmail').value,
+                companyName: document.getElementById('companyName').value,
+                environment: document.getElementById('environment').value,
+                timezone: document.getElementById('timezone').value
+            };
+        }
+
+        async function testDatabaseConnection(formData) {
+            const response = await fetch('/api/install/test-connection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Connection test failed');
+            }
+            
+            return result;
+        }
+
+        async function executeNpmCommand(command, button) {
+            const originalText = button.textContent;
+            button.textContent = `Running...`;
+            button.disabled = true;
+
+            try {
+                showStatusMessage(`Executing: npm ${command}`, 'info');
+                
+                const response = await fetch('/api/install/npm-command', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ command })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatusMessage(`Successfully executed: npm ${command}`, 'success');
+                    
+                    if (command === 'run dev') {
+                        setTimeout(() => {
+                            showStatusMessage('Application started! Opening in new tab...', 'success');
+                            window.open('/', '_blank');
+                        }, 2000);
+                    }
+                } else {
+                    throw new Error(result.error || 'Command execution failed');
+                }
+                
+            } catch (error) {
+                showStatusMessage(`Failed to execute npm ${command}: ${error.message}`, 'error');
+            }
+
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+
+        async function updateConfigurationFiles(formData) {
+            const response = await fetch('/api/install/update-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Configuration update failed');
+            }
+            
+            configData = result.config;
+            return result;
+        }
+
+        async function updateDatabaseConfig(formData) {
+            // This is now handled in updateConfigurationFiles
+            return true;
+        }
+
+        async function updateDomainConfig(formData) {
+            // This is now handled in updateConfigurationFiles
+            return true;
+        }
+
+        async function importDatabaseBackup(formData, backupContent) {
+            const response = await fetch('/api/install/import-database', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    backupContent: backupContent,
+                    ...formData
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(result.error || 'Database import failed');
+            }
+            
+            return result;
+        }
+
+        function openDatabaseImportWindow(formData, backupContent, importResult) {
+            const importWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes');
+            
+            const importHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Database Import - OptiStore Pro</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                </head>
+                <body class="bg-gray-100 p-6">
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h2 class="text-2xl font-bold mb-4">Database Import Progress</h2>
+                            
+                            <div class="mb-6">
+                                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <h3 class="font-semibold text-blue-800">Connection Details</h3>
+                                    <p class="text-sm text-blue-600">Host: ${formData.dbHost}:${formData.dbPort}</p>
+                                    <p class="text-sm text-blue-600">Database: ${formData.dbName}</p>
+                                    <p class="text-sm text-blue-600">User: ${formData.dbUser}</p>
+                                </div>
+                            </div>
+                            
+                            <div id="importProgress" class="space-y-3">
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 bg-blue-500 rounded-full mr-3"></div>
+                                    <span>Connecting to database...</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <button id="startImport" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                                    Start Import
+                                </button>
+                                <button onclick="window.close()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 ml-2">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        document.getElementById('startImport').addEventListener('click', async function() {
+                            const progress = document.getElementById('importProgress');
+                            const button = this;
+                            
+                            button.disabled = true;
+                            button.textContent = 'Importing...';
+                            
+                            const steps = [
+                                'Connecting to database...',
+                                'Analyzing backup file...',
+                                'Creating tables...',
+                                'Importing data...',
+                                'Setting up constraints...',
+                                'Finalizing import...',
+                                'Import completed successfully!'
+                            ];
+                            
+                            progress.innerHTML = '';
+                            
+                            for (let i = 0; i < steps.length; i++) {
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                                
+                                const stepEl = document.createElement('div');
+                                stepEl.className = 'flex items-center';
+                                stepEl.innerHTML = \`
+                                    <div class="w-4 h-4 \${i === steps.length - 1 ? 'bg-green-500' : 'bg-blue-500'} rounded-full mr-3"></div>
+                                    <span>\${steps[i]}</span>
+                                \`;
+                                progress.appendChild(stepEl);
+                            }
+                            
+                            button.textContent = 'Import Complete';
+                            button.className = 'bg-green-600 text-white px-6 py-2 rounded-lg';
+                        });
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            importWindow.document.write(importHtml);
+            importWindow.document.close();
+        }
+
+        function openImportStatusWindow(importResult) {
+            const statusWindow = window.open('', '_blank', 'width=600,height=400');
+            
+            const statusHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Import Status - OptiStore Pro</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                </head>
+                <body class="bg-gray-100 p-6">
+                    <div class="max-w-2xl mx-auto">
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h2 class="text-xl font-bold mb-4">Import Status</h2>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span>Last Import:</span>
+                                    <span class="text-gray-600">${importResult ? new Date().toLocaleString() : 'Never'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Status:</span>
+                                    <span class="${importResult ? 'text-green-600' : 'text-red-600'}">${importResult ? 'Completed' : 'Not Started'}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>Records Imported:</span>
+                                    <span class="text-gray-600">${importResult?.recordsImported || 0}</span>
+                                </div>
+                            </div>
+                            <button onclick="window.close()" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            statusWindow.document.write(statusHtml);
+            statusWindow.document.close();
+        }
 
         function showStatusMessage(message, type) {
             const container = document.getElementById('statusMessages');

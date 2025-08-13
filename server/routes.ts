@@ -12,6 +12,7 @@ import { registerPaymentRoutes } from "./routes/paymentRoutes";
 import accountingRoutes from "./routes/accountingRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
+import { registerInstallRoutes } from "./installRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -386,6 +387,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register HR routes
   registerHRRoutes(app);
+  
+  // Register installation routes
+  registerInstallRoutes(app);
   
   // Database backup download endpoint
   app.get('/api/download/database-backup', (req, res) => {
