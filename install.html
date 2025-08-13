@@ -496,6 +496,15 @@
             const dbPasswordElement = document.getElementById('dbPassword');
             const dbNameElement = document.getElementById('dbName');
             
+            console.log('Form elements found:', {
+                dbTypeElement: !!dbTypeElement,
+                dbHostElement: !!dbHostElement,
+                dbPortElement: !!dbPortElement,
+                dbUserElement: !!dbUserElement,
+                dbPasswordElement: !!dbPasswordElement,
+                dbNameElement: !!dbNameElement
+            });
+            
             // Update stored database config with current form values or defaults
             installationData.database = {
                 dbType: dbTypeElement?.value || installationData.database.dbType || 'postgresql',
@@ -506,7 +515,7 @@
                 dbName: dbNameElement?.value || installationData.database.dbName || 'ieopt'
             };
             
-            console.log('Loaded database configuration:', installationData.database);
+            console.log('Final database configuration:', installationData.database);
         }
 
         function nextStep() {
@@ -573,6 +582,8 @@
             console.log('Testing connection with configuration:', dbConfig);
             
             try {
+                console.log('Sending request to /api/install/test-connection with data:', dbConfig);
+                
                 const response = await fetch('/api/install/test-connection', {
                     method: 'POST',
                     headers: { 
@@ -582,11 +593,17 @@
                     body: JSON.stringify(dbConfig)
                 });
                 
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
+                console.log('Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    url: response.url
+                });
                 
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    const errorText = await response.text();
+                    console.error('Error response body:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ' - ' + errorText : ''}`);
                 }
                 
                 const contentType = response.headers.get('content-type');

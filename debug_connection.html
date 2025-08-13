@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Database Connection</title>
+</head>
+<body>
+    <h1>Database Connection Debug</h1>
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            
+            const testData = {
+                dbType: 'postgresql',
+                dbHost: 'localhost',
+                dbPort: '5432',
+                dbUser: 'ledbpt_opt',
+                dbPassword: '',
+                dbName: 'ieopt'
+            };
+            
+            console.log('Testing with data:', testData);
+            
+            try {
+                const response = await fetch('/api/install/test-connection', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                console.log('Response:', response);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Success:', result);
+                
+                resultDiv.innerHTML = `
+                    <h2>Success!</h2>
+                    <p>Status: ${response.status}</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `
+                    <h2>Error!</h2>
+                    <p style="color: red;">${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
