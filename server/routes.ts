@@ -396,6 +396,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.sendFile('/home/runner/workspace/install.html');
   });
   
+  // Serve test install page
+  app.get('/test_install_direct.html', (req, res) => {
+    res.sendFile('/home/runner/workspace/test_install_direct.html');
+  });
+  
   // Database backup download endpoint
   app.get('/api/download/database-backup', (req, res) => {
     const backupFile = 'database_backup_complete.sql';

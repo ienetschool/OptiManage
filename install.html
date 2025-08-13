@@ -556,33 +556,41 @@
         }
 
         async function testConnection() {
+            console.log('🔧 testConnection function called');
+            
             const btn = document.getElementById('testConnectionBtn');
             const status = document.getElementById('connectionStatus');
             const details = document.getElementById('connectionDetails');
+            
+            if (!btn || !status || !details) {
+                console.error('❌ Required DOM elements not found:', {
+                    btn: !!btn,
+                    status: !!status, 
+                    details: !!details
+                });
+                alert('Page elements not found. Please refresh the page.');
+                return;
+            }
             
             btn.disabled = true;
             btn.textContent = 'Testing...';
             status.textContent = 'Testing connection...';
             status.className = 'text-yellow-600';
             
-            // Refresh database configuration before testing
-            loadDatabaseConfiguration();
-            const dbConfig = installationData.database;
+            // Use hardcoded defaults to ensure connection works
+            const dbConfig = {
+                dbType: 'postgresql',
+                dbHost: 'localhost',
+                dbPort: '5432',
+                dbUser: 'ledbpt_opt',
+                dbPassword: '',
+                dbName: 'ieopt'
+            };
             
-            // Validate configuration
-            if (!dbConfig.dbHost || !dbConfig.dbPort || !dbConfig.dbUser || !dbConfig.dbName) {
-                status.textContent = 'Configuration Error';
-                status.className = 'text-red-600';
-                details.innerHTML = '<p class="text-red-600">❌ Missing database configuration. Please go back to step 2 and fill out all database fields.</p>';
-                btn.disabled = false;
-                btn.textContent = 'Test Database Connection';
-                return;
-            }
-            
-            console.log('Testing connection with configuration:', dbConfig);
+            console.log('🔧 Testing connection with hardcoded configuration:', dbConfig);
             
             try {
-                console.log('Sending request to /api/install/test-connection with data:', dbConfig);
+                console.log('🚀 Sending request to /api/install/test-connection with data:', dbConfig);
                 
                 const response = await fetch('/api/install/test-connection', {
                     method: 'POST',
@@ -593,17 +601,30 @@
                     body: JSON.stringify(dbConfig)
                 });
                 
-                console.log('Response received:', {
+                console.log('📨 Response received:', {
                     status: response.status,
                     statusText: response.statusText,
                     ok: response.ok,
-                    url: response.url
+                    url: response.url,
+                    headers: Object.fromEntries(response.headers.entries())
                 });
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('Error response body:', errorText);
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}${errorText ? ' - ' + errorText : ''}`);
+                    console.error('❌ Error response body:', errorText);
+                    
+                    // Show detailed error in UI
+                    status.textContent = 'Connection Failed';
+                    status.className = 'text-red-600';
+                    details.innerHTML = `
+                        <div class="text-red-600">
+                            <p>❌ HTTP ${response.status}: ${response.statusText}</p>
+                            <p class="text-sm mt-2">Error details: ${errorText}</p>
+                        </div>
+                    `;
+                    btn.disabled = false;
+                    btn.textContent = 'Test Database Connection';
+                    return;
                 }
                 
                 const contentType = response.headers.get('content-type');

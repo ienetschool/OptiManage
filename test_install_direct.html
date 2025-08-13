@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Install Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Direct Database Connection Test</h1>
+    <div id="status">Ready to test...</div>
+    <button onclick="testConnection()">Test Database Connection</button>
+    <div id="details"></div>
+    
+    <script>
+        console.log('Script loaded successfully');
+        
+        async function testConnection() {
+            console.log('testConnection function called');
+            
+            const statusDiv = document.getElementById('status');
+            const detailsDiv = document.getElementById('details');
+            
+            statusDiv.textContent = 'Testing...';
+            statusDiv.className = '';
+            
+            const testData = {
+                dbType: 'postgresql',
+                dbHost: 'localhost',
+                dbPort: '5432',
+                dbUser: 'ledbpt_opt',
+                dbPassword: '',
+                dbName: 'ieopt'
+            };
+            
+            console.log('Sending request with data:', testData);
+            
+            try {
+                const response = await fetch('/api/install/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                console.log('Response received:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    ok: response.ok
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Success result:', result);
+                
+                statusDiv.textContent = 'Connection Successful!';
+                statusDiv.className = 'success';
+                detailsDiv.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+                
+            } catch (error) {
+                console.error('Connection test failed:', error);
+                statusDiv.textContent = 'Connection Failed';
+                statusDiv.className = 'error';
+                detailsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Test that JavaScript is working
+        console.log('Test page ready');
+        window.addEventListener('load', () => {
+            console.log('Page loaded successfully');
+        });
+    </script>
+</body>
+</html>
