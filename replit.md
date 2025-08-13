@@ -4,6 +4,14 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
+- **August 13, 2025**: Created complete self-hosted deployment package for Hostinger VPS with AlmaLinux 9 + Plesk
+  - **Target Environment**: User's Hostinger VPS (5.181.218.15) with AlmaLinux 9, Plesk, and PostgreSQL
+  - **Domain Configuration**: https://opt.vivaindia.com with existing PostgreSQL database (ieopt)
+  - **Database Integration**: Configured for existing database (localhost:5432, user: ledbpt_opt, db: ieopt)
+  - **Plesk Compatibility**: Created Plesk-specific deployment scripts and Nginx proxy configuration
+  - **AlmaLinux Optimization**: Adapted commands for AlmaLinux 9 (dnf package manager, firewalld, systemd)
+  - **Production Ready**: Complete deployment package with PM2, SSL, backups, monitoring, and health checks
+  - **Management Tools**: Created quick command scripts for application management and maintenance
 - **August 13, 2025**: Identified and resolved installation wizard database connection testing issues
   - **Issue**: Vite development server intercepting all routes, causing generic error pages despite successful server responses
   - **Root Cause**: React/Vite routing conflicts prevent proper HTML page serving, even API routes show 200 OK in console but display error pages in browser
