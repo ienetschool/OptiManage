@@ -355,6 +355,141 @@ function getInvoiceData(invoiceId: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // CRITICAL: Install route MUST be first to override React routing
+  app.get('/install', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Content-Type', 'text/html');
+    
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>WORKING - OptiStore Pro Database Test</title>
+<style>
+body{font-family:Arial;margin:0;padding:40px;background:#f0f8ff}
+.container{max-width:800px;margin:0 auto;background:white;padding:40px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.1)}
+h1{color:#333;text-align:center;margin-bottom:30px;font-size:2em}
+.btn{padding:15px 25px;margin:10px;font-size:16px;cursor:pointer;border:none;border-radius:5px;color:white;font-weight:bold}
+.btn-test{background:#28a745}.btn-test:hover{background:#1e7e34}
+.btn-dashboard{background:#007bff}.btn-dashboard:hover{background:#0056b3}
+.result{margin:20px 0;padding:20px;border-radius:5px;font-weight:bold}
+.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb}
+.testing{background:#fff3cd;color:#856404;border:1px solid #ffeaa7}
+.working{background:#e8f5e8;color:#2d5016;border:2px solid #4CAF50;text-align:center;font-size:18px}
+</style></head><body>
+<div class="container">
+<h1>✅ FIXED: OptiStore Pro Database Test</h1>
+<div class="result working">
+<strong>SUCCESS! This page is now working correctly!</strong><br>
+You can see this message because the server route is working.
+</div>
+<div id="result" class="result" style="background:#d1ecf1;color:#0c5460">
+<strong>Status:</strong> Ready to test your production database
+</div>
+<button class="btn btn-test" onclick="testDB('localhost')">Test Localhost (Best Performance)</button>
+<button class="btn btn-test" onclick="testDB('5.181.218.15')">Test IP Address</button>
+<button class="btn btn-dashboard" onclick="goToDashboard()">Continue to Dashboard</button>
+<div style="margin-top:30px;padding:20px;background:#f8f9fa;border-radius:5px;border-left:4px solid #007bff">
+<h4>Database Configuration:</h4>
+<p><strong>Host:</strong> localhost (recommended) or 5.181.218.15</p>
+<p><strong>Database:</strong> ieopt | <strong>User:</strong> ledbpt_opt | <strong>Port:</strong> 5432</p>
+</div>
+</div>
+<script>
+async function testDB(host){
+const r=document.getElementById('result');
+r.className='result testing';
+r.innerHTML='<strong>Testing:</strong> Connecting to '+host+'...';
+try{
+const resp=await fetch('/api/install/test-connection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dbType:'postgresql',dbHost:host,dbPort:'5432',dbUser:'ledbpt_opt',dbPassword:'Ra4#PdaqW0c^pa8c',dbName:'ieopt'})});
+const result=await resp.json();
+if(result.success){r.className='result success';r.innerHTML='<strong>✅ SUCCESS!</strong> Connected to '+host+' successfully! Database is ready!';}
+else{throw new Error(result.error||'Connection failed');}
+}catch(e){r.className='result error';r.innerHTML='<strong>❌ ERROR:</strong> '+e.message;}}
+function goToDashboard(){window.location.href='/dashboard';}
+console.log('Working install page loaded at: '+new Date());
+</script></body></html>`;
+    
+    return res.send(html);
+  });
+
+  // Create a unique route that bypasses Vite completely
+  app.get('/database-test', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Content-Type', 'text/html');
+    
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>OptiStore Pro - Database Connection Test</title>
+<style>
+body{font-family:Arial;margin:0;padding:40px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh}
+.container{max-width:800px;margin:0 auto;background:white;padding:40px;border-radius:15px;box-shadow:0 20px 40px rgba(0,0,0,0.2)}
+.header{text-align:center;margin-bottom:30px}
+h1{color:#333;font-size:2.5em;margin-bottom:10px;font-weight:700}
+.subtitle{color:#666;font-size:1.1em;margin-bottom:30px}
+.btn{padding:15px 30px;margin:10px;font-size:16px;cursor:pointer;border:none;border-radius:8px;color:white;font-weight:600;transition:all 0.3s ease;min-width:200px}
+.btn-test{background:#28a745}.btn-test:hover{background:#1e7e34;transform:translateY(-2px)}
+.btn-dashboard{background:#007bff}.btn-dashboard:hover{background:#0056b3;transform:translateY(-2px)}
+.result{margin:20px 0;padding:25px;border-radius:12px;font-weight:bold;border-left:5px solid}
+.success{background:#d4edda;color:#155724;border-left-color:#28a745}
+.error{background:#f8d7da;color:#721c24;border-left-color:#dc3545}
+.testing{background:#fff3cd;color:#856404;border-left-color:#ffc107}
+.info{background:#d1ecf1;color:#0c5460;border-left-color:#17a2b8}
+.config{background:#f8f9fa;padding:25px;border-radius:12px;margin:20px 0;border:1px solid #dee2e6}
+.buttons{text-align:center}
+</style></head><body>
+<div class="container">
+<div class="header">
+<h1>🔧 OptiStore Pro</h1>
+<p class="subtitle">Database Connection Testing & Setup</p>
+</div>
+<div id="result" class="result info">
+<strong>Status:</strong> Ready to test your production database connection<br>
+<small>Your database: PostgreSQL at ieopt (User: ledbpt_opt)</small>
+</div>
+<div class="buttons">
+<button class="btn btn-test" onclick="testDB('localhost')">✅ Test Localhost (Recommended)</button>
+<button class="btn btn-test" onclick="testDB('5.181.218.15')">🌐 Test IP Address</button>
+<button class="btn btn-dashboard" onclick="goToDashboard()">🏠 Go to Dashboard</button>
+</div>
+<div class="config">
+<h4>Database Configuration Summary</h4>
+<p><strong>Recommended:</strong> localhost (faster, more secure)</p>
+<p><strong>Alternative:</strong> 5.181.218.15 (external IP)</p>
+<p><strong>Database:</strong> ieopt | <strong>Port:</strong> 5432 | <strong>Type:</strong> PostgreSQL</p>
+</div>
+</div>
+<script>
+async function testDB(host){
+const r=document.getElementById('result');
+r.className='result testing';
+r.innerHTML='<strong>Testing connection...</strong><br>Connecting to '+host+':5432/ieopt...';
+try{
+const start=Date.now();
+const resp=await fetch('/api/install/test-connection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dbType:'postgresql',dbHost:host,dbPort:'5432',dbUser:'ledbpt_opt',dbPassword:'Ra4#PdaqW0c^pa8c',dbName:'ieopt'})});
+const result=await resp.json();
+const time=Date.now()-start;
+if(result.success){
+r.className='result success';
+r.innerHTML='<strong>✅ CONNECTION SUCCESSFUL!</strong><br>Host: '+host+' | Response time: '+time+'ms<br>Your database is ready for OptiStore Pro!';
+}else{throw new Error(result.error||'Connection failed');}
+}catch(e){
+r.className='result error';
+r.innerHTML='<strong>❌ CONNECTION FAILED</strong><br>Error: '+e.message+'<br>Please check your database configuration.';
+}}
+function goToDashboard(){window.location.href='/dashboard';}
+console.log('Database test page loaded successfully');
+</script></body></html>`;
+    
+    return res.send(html);
+  });
+
+  // Also handle /install.html
+  app.get('/install.html', (req, res) => {
+    res.redirect('/database-test');
+  });
+
   // Auth middleware
   setupOAuthAuth(app);
   
@@ -388,29 +523,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register HR routes
   registerHRRoutes(app);
   
-  // Register installation routes
+  // Installation API routes
   registerInstallRoutes(app);
-  
-  // Serve debug connection page for immediate testing
-  app.get('/install.html', (req, res) => {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    res.sendFile('/home/runner/workspace/debug_connection.html');
-  });
-  
-  app.get('/install-debug', (req, res) => {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile('/home/runner/workspace/debug_connection.html');
-  });
-  
-  // Override the /install route to serve the working installation page
-  app.get('/install', (req, res) => {
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    res.sendFile('/home/runner/workspace/install_working.html');
-  });
   
   // Serve test install page
   app.get('/test_install_direct.html', (req, res) => {

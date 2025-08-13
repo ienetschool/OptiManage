@@ -70,10 +70,7 @@ function Router() {
 
   return (
     <Switch>
-      {/* Installation Wizard Route - Standalone for installation */}
-      <Route path="/install">
-        <TestPage />
-      </Route>
+      {/* Installation Wizard Route - Now handled by server */}
       
       {/* Print Preview Route - Standalone for direct printing */}
       <Route path="/print-preview/:invoiceId?">
