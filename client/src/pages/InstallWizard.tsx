@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface DatabaseConfig {
   dbType: string;
@@ -10,7 +10,7 @@ interface DatabaseConfig {
 }
 
 export default function InstallWizard() {
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(3); // Start at step 3 for testing
   const [databaseConfig, setDatabaseConfig] = useState<DatabaseConfig>({
     dbType: 'postgresql',
     dbHost: 'localhost',
@@ -23,13 +23,21 @@ export default function InstallWizard() {
   const [connectionMessage, setConnectionMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Debug logging
+  useEffect(() => {
+    console.log('✅ InstallWizard component mounted');
+    console.log('📊 Current step:', currentStep);
+    console.log('🔧 Database config:', databaseConfig);
+  }, [currentStep, databaseConfig]);
+
   const testDatabaseConnection = async () => {
+    console.log('🚀 testDatabaseConnection called');
     setIsLoading(true);
     setConnectionStatus('testing');
     setConnectionMessage('Testing connection...');
     
     try {
-      console.log('🚀 Testing database connection with:', databaseConfig);
+      console.log('📤 Sending request with config:', databaseConfig);
       
       const response = await fetch('/api/install/test-connection', {
         method: 'POST',
@@ -43,30 +51,38 @@ export default function InstallWizard() {
       console.log('📨 Response received:', {
         status: response.status,
         ok: response.ok,
-        statusText: response.statusText
+        statusText: response.statusText,
+        url: response.url
       });
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error('❌ Error response text:', errorText);
         throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
       const result = await response.json();
-      console.log('✅ Connection test result:', result);
+      console.log('✅ Success result:', result);
       
       if (result.success) {
         setConnectionStatus('success');
-        setConnectionMessage('Database connection successful!');
+        setConnectionMessage(`Database connection successful! ${result.connectionString || ''}`);
+        console.log('🎉 Connection test successful');
       } else {
-        throw new Error(result.error || 'Connection test failed');
+        throw new Error(result.error || result.message || 'Connection test failed');
       }
       
     } catch (error: any) {
-      console.error('❌ Connection test failed:', error);
+      console.error('💥 Connection test error:', {
+        message: error.message,
+        stack: error.stack,
+        type: error.constructor.name
+      });
       setConnectionStatus('error');
       setConnectionMessage(`Connection failed: ${error.message}`);
     } finally {
       setIsLoading(false);
+      console.log('🏁 testDatabaseConnection completed');
     }
   };
 
