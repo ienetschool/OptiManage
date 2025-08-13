@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiStore Pro - Database Connection Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            padding: 40px 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            padding: 40px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status { 
+            margin: 30px 0; 
+            padding: 25px; 
+            border-radius: 12px; 
+            font-size: 16px;
+            border-left: 5px solid;
+        }
+        .success { 
+            background: #d4edda; 
+            color: #155724; 
+            border-left-color: #28a745;
+        }
+        .error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border-left-color: #dc3545;
+        }
+        .info { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            border-left-color: #17a2b8;
+        }
+        .testing {
+            background: #fff3cd; 
+            color: #856404; 
+            border-left-color: #ffc107;
+        }
+        .buttons { 
+            text-align: center; 
+            margin: 30px 0;
+        }
+        .btn { 
+            padding: 15px 30px; 
+            font-size: 16px; 
+            font-weight: 600;
+            margin: 8px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+            min-width: 200px;
+        }
+        .btn-primary { 
+            background: #007bff; 
+            color: white; 
+        }
+        .btn-primary:hover { 
+            background: #0056b3; 
+            transform: translateY(-2px);
+        }
+        .btn-success { 
+            background: #28a745; 
+            color: white; 
+        }
+        .btn-success:hover { 
+            background: #1e7e34; 
+            transform: translateY(-2px);
+        }
+        .btn:disabled { 
+            opacity: 0.6; 
+            cursor: not-allowed; 
+            transform: none !important;
+        }
+        .config-info {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #dee2e6;
+        }
+        .config-info h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .config-list {
+            list-style: none;
+            padding: 0;
+        }
+        .config-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+        }
+        .config-list li:last-child {
+            border-bottom: none;
+        }
+        .config-list strong {
+            color: #495057;
+            min-width: 80px;
+        }
+        .config-list span {
+            color: #6c757d;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .result-summary {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OptiStore Pro</h1>
+            <p>Database Connection Testing</p>
+        </div>
+
+        <div class="card">
+            <div id="status" class="status info">
+                <h3>Status: Ready to Test</h3>
+                <p>Choose a connection method below to test your database connectivity. Based on server-side testing, <strong>localhost</strong> is recommended for best performance.</p>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-success" onclick="testConnection('localhost')" id="btn-localhost">
+                    Test Localhost (Recommended)
+                </button>
+                <button class="btn btn-primary" onclick="testConnection('5.181.218.15')" id="btn-ip">
+                    Test IP Address
+                </button>
+                <button class="btn btn-primary" onclick="testConnection('127.0.0.1')" id="btn-127">
+                    Test 127.0.0.1
+                </button>
+            </div>
+            
+            <div id="results" class="result-summary" style="display: none;">
+                <h4>Test Results Summary</h4>
+                <div id="results-content"></div>
+            </div>
+            
+            <div class="buttons" style="margin-top: 40px;">
+                <a href="/dashboard" class="btn btn-primary">Continue to Dashboard</a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="config-info">
+                <h3>Database Configuration</h3>
+                <ul class="config-list">
+                    <li><strong>Type:</strong> <span>PostgreSQL</span></li>
+                    <li><strong>Database:</strong> <span>ieopt</span></li>
+                    <li><strong>User:</strong> <span>ledbpt_opt</span></li>
+                    <li><strong>Port:</strong> <span>5432</span></li>
+                    <li><strong>Primary Host:</strong> <span>5.181.218.15</span></li>
+                    <li><strong>Recommended:</strong> <span>localhost (faster, more secure)</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let testResults = {};
+        
+        async function testConnection(host) {
+            const statusDiv = document.getElementById('status');
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            const buttons = document.querySelectorAll('.btn');
+            
+            // Disable all buttons during test
+            buttons.forEach(btn => btn.disabled = true);
+            
+            statusDiv.innerHTML = `
+                <h3><span class="spinner"></span>Testing Connection...</h3>
+                <p>Connecting to database at <strong>${host}</strong>...</p>
+            `;
+            statusDiv.className = 'status testing';
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch('/api/install/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dbType: 'postgresql',
+                        dbHost: host,
+                        dbPort: '5432',
+                        dbUser: 'ledbpt_opt',
+                        dbPassword: 'Ra4#PdaqW0c^pa8c',
+                        dbName: 'ieopt'
+                    })
+                });
+                
+                const result = await response.json();
+                const responseTime = Date.now() - startTime;
+                
+                if (result.success) {
+                    testResults[host] = { success: true, time: responseTime };
+                    
+                    statusDiv.innerHTML = `
+                        <h3>✅ Connection Successful!</h3>
+                        <p><strong>Host:</strong> ${host}</p>
+                        <p><strong>Response Time:</strong> ${responseTime}ms</p>
+                        <p><strong>Status:</strong> Database connection verified successfully</p>
+                        <p>You can now proceed to your dashboard or test other connection methods.</p>
+                    `;
+                    statusDiv.className = 'status success';
+                    
+                    updateResultsSummary();
+                    
+                } else {
+                    throw new Error(result.error || result.message || 'Connection failed');
+                }
+                
+            } catch (error) {
+                testResults[host] = { success: false, error: error.message };
+                
+                statusDiv.innerHTML = `
+                    <h3>❌ Connection Failed</h3>
+                    <p><strong>Host:</strong> ${host}</p>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check your database configuration or try a different connection method.</p>
+                `;
+                statusDiv.className = 'status error';
+                
+                updateResultsSummary();
+            } finally {
+                // Re-enable buttons
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+        
+        function updateResultsSummary() {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('results-content');
+            
+            if (Object.keys(testResults).length > 0) {
+                resultsDiv.style.display = 'block';
+                
+                let summaryHTML = '<ul style="list-style: none; padding: 0;">';
+                Object.entries(testResults).forEach(([host, result]) => {
+                    if (result.success) {
+                        summaryHTML += `<li style="color: #28a745; margin: 5px 0;">✅ ${host}: SUCCESS (${result.time}ms)</li>`;
+                    } else {
+                        summaryHTML += `<li style="color: #dc3545; margin: 5px 0;">❌ ${host}: FAILED (${result.error})</li>`;
+                    }
+                });
+                summaryHTML += '</ul>';
+                
+                resultsContent.innerHTML = summaryHTML;
+            }
+        }
+        
+        console.log('OptiStore Pro Installation Wizard loaded successfully');
+    </script>
+</body>
+</html>

@@ -393,11 +393,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Serve debug connection page for immediate testing
   app.get('/install.html', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
     res.sendFile('/home/runner/workspace/debug_connection.html');
   });
   
   app.get('/install-debug', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile('/home/runner/workspace/debug_connection.html');
+  });
+  
+  // Override the /install route to serve the working installation page
+  app.get('/install', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.sendFile('/home/runner/workspace/install_working.html');
   });
   
   // Serve test install page
