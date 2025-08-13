@@ -413,8 +413,8 @@ console.log('Working install page loaded at: '+new Date());
     return res.send(html);
   });
 
-  // Create a unique route that bypasses Vite completely
-  app.get('/database-test', (req, res) => {
+  // Create API endpoint that serves HTML directly
+  app.get('/api/database-test', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
@@ -485,9 +485,14 @@ console.log('Database test page loaded successfully');
     return res.send(html);
   });
 
+  // Simple test API endpoint to verify server is working
+  app.get('/api/test-page', (req, res) => {
+    res.json({ message: 'Server is working correctly', timestamp: new Date().toISOString() });
+  });
+
   // Also handle /install.html
   app.get('/install.html', (req, res) => {
-    res.redirect('/database-test');
+    res.redirect('/api/database-test');
   });
 
   // Auth middleware
@@ -526,9 +531,13 @@ console.log('Database test page loaded successfully');
   // Installation API routes
   registerInstallRoutes(app);
   
-  // Serve test install page
+  // Serve test install page and direct test page
   app.get('/test_install_direct.html', (req, res) => {
     res.sendFile('/home/runner/workspace/test_install_direct.html');
+  });
+  
+  app.get('/test_direct.html', (req, res) => {
+    res.sendFile('/home/runner/workspace/test_direct.html');
   });
   
   // Database backup download endpoint

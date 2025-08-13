@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Database Test - OptiStore Pro</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            margin: 0; 
+            padding: 40px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            color: #333; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 40px; 
+            border-radius: 15px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        h1 { color: #333; font-size: 2.5em; margin-bottom: 10px; font-weight: 700; }
+        .subtitle { color: #666; font-size: 1.1em; margin-bottom: 30px; }
+        .btn { 
+            padding: 15px 30px; 
+            margin: 10px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            border: none; 
+            border-radius: 8px; 
+            color: white; 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+            min-width: 200px; 
+        }
+        .btn-test { background: #28a745; }
+        .btn-test:hover { background: #1e7e34; transform: translateY(-2px); }
+        .btn-dashboard { background: #007bff; }
+        .btn-dashboard:hover { background: #0056b3; transform: translateY(-2px); }
+        .result { 
+            margin: 20px 0; 
+            padding: 25px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            border-left: 5px solid; 
+        }
+        .success { background: #d4edda; color: #155724; border-left-color: #28a745; }
+        .error { background: #f8d7da; color: #721c24; border-left-color: #dc3545; }
+        .testing { background: #fff3cd; color: #856404; border-left-color: #ffc107; }
+        .info { background: #d1ecf1; color: #0c5460; border-left-color: #17a2b8; }
+        .config { background: #f8f9fa; padding: 25px; border-radius: 12px; margin: 20px 0; border: 1px solid #dee2e6; }
+        .buttons { text-align: center; }
+        .working { background: #e8f5e8; color: #2d5016; border: 2px solid #4CAF50; text-align: center; font-size: 18px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>OptiStore Pro</h1>
+            <p class="subtitle">Direct Database Connection Test</p>
+        </div>
+        
+        <div class="result working">
+            <strong>SUCCESS!</strong> This static HTML file is working.<br>
+            Now you can test your database connection properly.
+        </div>
+        
+        <div id="result" class="result info">
+            <strong>Status:</strong> Ready to test your production database connection<br>
+            <small>Database: PostgreSQL ieopt at 5.181.218.15 (User: ledbpt_opt)</small>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn btn-test" onclick="testDB('localhost')">Test Localhost (Recommended)</button>
+            <button class="btn btn-test" onclick="testDB('5.181.218.15')">Test IP Address</button>
+            <button class="btn btn-dashboard" onclick="goToDashboard()">Go to Dashboard</button>
+        </div>
+        
+        <div class="config">
+            <h4>Database Configuration Summary</h4>
+            <p><strong>Recommended:</strong> localhost (faster, more secure)</p>
+            <p><strong>Alternative:</strong> 5.181.218.15 (external IP)</p>
+            <p><strong>Database:</strong> ieopt | <strong>Port:</strong> 5432 | <strong>Type:</strong> PostgreSQL</p>
+            <p><strong>Access this page at:</strong> /test_direct.html</p>
+        </div>
+    </div>
+    
+    <script>
+        async function testDB(host) {
+            const r = document.getElementById('result');
+            r.className = 'result testing';
+            r.innerHTML = '<strong>Testing connection...</strong><br>Connecting to ' + host + ':5432/ieopt...';
+            
+            try {
+                const start = Date.now();
+                const resp = await fetch('/api/install/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        dbType: 'postgresql',
+                        dbHost: host,
+                        dbPort: '5432',
+                        dbUser: 'ledbpt_opt',
+                        dbPassword: 'Ra4#PdaqW0c^pa8c',
+                        dbName: 'ieopt'
+                    })
+                });
+                
+                const result = await resp.json();
+                const time = Date.now() - start;
+                
+                if (result.success) {
+                    r.className = 'result success';
+                    r.innerHTML = '<strong>✅ CONNECTION SUCCESSFUL!</strong><br>Host: ' + host + ' | Response time: ' + time + 'ms<br>Your database is ready for OptiStore Pro!';
+                } else {
+                    throw new Error(result.error || 'Connection failed');
+                }
+            } catch (e) {
+                r.className = 'result error';
+                r.innerHTML = '<strong>❌ CONNECTION FAILED</strong><br>Error: ' + e.message + '<br>Please check your database configuration.';
+            }
+        }
+        
+        function goToDashboard() {
+            window.location.href = '/dashboard';
+        }
+        
+        console.log('Direct database test page loaded at:', new Date().toISOString());
+    </script>
+</body>
+</html>
