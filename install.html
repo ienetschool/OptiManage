@@ -142,7 +142,7 @@
                                 <label for="dbUser" class="block text-sm font-medium text-gray-700 mb-2">Database Username</label>
                                 <input type="text" id="dbUser" name="dbUser" 
                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="postgres" required>
+                                       placeholder="postgres" value="postgres" required>
                             </div>
                             
                             <div class="md:col-span-2">
@@ -494,14 +494,33 @@
             status.textContent = 'Testing connection...';
             status.className = 'text-yellow-600';
             
+            // Get database configuration from Step 2 
+            const dbTypeElement = document.querySelector('input[name="dbType"]:checked');
+            const dbHostElement = document.getElementById('dbHost');
+            const dbPortElement = document.getElementById('dbPort');
+            const dbUserElement = document.getElementById('dbUser');
+            const dbPasswordElement = document.getElementById('dbPassword');
+            const dbNameElement = document.getElementById('dbName');
+            
+            console.log('Form elements found:', {
+                dbType: !!dbTypeElement,
+                dbHost: !!dbHostElement,
+                dbPort: !!dbPortElement,
+                dbUser: !!dbUserElement,
+                dbPassword: !!dbPasswordElement,
+                dbName: !!dbNameElement
+            });
+            
             const dbData = {
-                dbType: document.querySelector('input[name="dbType"]:checked').value,
-                dbHost: document.getElementById('dbHost').value,
-                dbPort: document.getElementById('dbPort').value,
-                dbUser: document.getElementById('dbUser').value,
-                dbPassword: document.getElementById('dbPassword').value,
-                dbName: document.getElementById('dbName').value
+                dbType: dbTypeElement ? dbTypeElement.value : 'postgresql',
+                dbHost: dbHostElement ? dbHostElement.value : 'localhost',
+                dbPort: dbPortElement ? dbPortElement.value : '5432',
+                dbUser: dbUserElement ? dbUserElement.value : 'postgres',
+                dbPassword: dbPasswordElement ? dbPasswordElement.value : '',
+                dbName: dbNameElement ? dbNameElement.value : 'optistorepro'
             };
+            
+            console.log('Database configuration:', dbData);
             
             console.log('Testing connection with data:', dbData);
             

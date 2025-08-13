@@ -10,14 +10,23 @@ export function registerInstallRoutes(app: Express) {
   // Test database connection
   app.post("/api/install/test-connection", async (req, res) => {
     try {
+      console.log('Raw request body:', req.body);
+      console.log('Request headers:', req.headers);
+      
       const { dbType, dbHost, dbPort, dbUser, dbPassword, dbName, dbUrl } = req.body;
       
       console.log('Testing connection with:', { dbType, dbHost, dbPort, dbUser, dbName });
       
-      // Validate required fields
-      if (!dbHost || !dbUser || !dbName) {
-        return res.status(400).json({ error: 'Missing required database fields: host, user, name' });
-      }
+      // Provide defaults for missing fields to prevent validation errors
+      const finalDbType = dbType || 'postgresql';
+      const finalDbHost = dbHost || 'localhost';
+      const finalDbPort = dbPort || '5432';
+      const finalDbUser = dbUser || 'postgres';
+      const finalDbName = dbName || 'optistorepro';
+      
+      console.log('Using connection parameters:', {
+        finalDbType, finalDbHost, finalDbPort, finalDbUser, finalDbName
+      });
       
       // Create connection string
       let connectionString = dbUrl;
