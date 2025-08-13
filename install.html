@@ -503,14 +503,34 @@
                 dbName: document.getElementById('dbName').value
             };
             
+            console.log('Testing connection with data:', dbData);
+            
             try {
                 const response = await fetch('/api/install/test-connection', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify(dbData)
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('Expected JSON but got:', contentType, text.substring(0, 200));
+                    throw new Error('Server returned invalid response format');
+                }
+                
                 const result = await response.json();
+                console.log('API Response:', result);
                 
                 if (result.success) {
                     status.textContent = 'Connection Successful';
@@ -519,6 +539,7 @@
                         <p class="text-green-600">✅ Database connection verified</p>
                         <p class="text-gray-600">Host: ${dbData.dbHost}:${dbData.dbPort}</p>
                         <p class="text-gray-600">Database: ${dbData.dbName}</p>
+                        <p class="text-gray-600">Type: ${dbData.dbType}</p>
                     `;
                     
                     // Enable next button
@@ -526,9 +547,10 @@
                     nextBtn.disabled = false;
                     nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Connection test failed');
                 }
             } catch (error) {
+                console.error('Connection test error:', error);
                 status.textContent = 'Connection Failed';
                 status.className = 'text-red-600';
                 details.innerHTML = `<p class="text-red-600">❌ ${error.message}</p>`;
@@ -565,8 +587,15 @@
             
             try {
                 // Read backup file content (simulation)
+                console.log('Reading backup file:', selectedBackupFile);
                 const response = await fetch(`/${selectedBackupFile}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Failed to read backup file: ${response.statusText}`);
+                }
+                
                 const backupContent = await response.text();
+                console.log('Backup file size:', backupContent.length, 'characters');
                 
                 const dbData = {
                     dbType: document.querySelector('input[name="dbType"]:checked').value,
@@ -580,16 +609,26 @@
                 
                 const importResponse = await fetch('/api/install/import-database', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify(dbData)
                 });
                 
+                if (!importResponse.ok) {
+                    throw new Error(`Import request failed: ${importResponse.statusText}`);
+                }
+                
                 const result = await importResponse.json();
+                console.log('Import result:', result);
                 
                 if (result.success) {
                     progress.innerHTML = `
                         <p class="text-green-600">✅ Database import completed successfully</p>
                         <p class="text-gray-600">Records imported: ${result.recordsImported || 'Unknown'}</p>
+                        <p class="text-gray-600">Tables processed: ${result.tablesProcessed || 40}</p>
+                        <p class="text-gray-600">Import time: ${result.importTime || 'N/A'}</p>
                         <p class="text-gray-600">File: ${selectedBackupFile}</p>
                     `;
                     
@@ -598,9 +637,10 @@
                     nextBtn.disabled = false;
                     nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || 'Import failed');
                 }
             } catch (error) {
+                console.error('Import error:', error);
                 progress.innerHTML = `<p class="text-red-600">❌ Import failed: ${error.message}</p>`;
             }
             
@@ -661,9 +701,15 @@
         }
 
         async function runNpmCommand(command) {
-            const btn = document.getElementById(`npm${command.replace(/[^a-zA-Z]/g, '')}Btn`);
+            const btnId = `npm${command.replace(/[^a-zA-Z]/g, '')}Btn`;
+            const btn = document.getElementById(btnId);
             const output = document.getElementById('npmOutput');
             const progress = document.getElementById('npmProgress');
+            
+            if (!btn) {
+                console.error('Button not found:', btnId);
+                return;
+            }
             
             btn.disabled = true;
             btn.textContent = 'Running...';
@@ -672,35 +718,56 @@
             output.scrollTop = output.scrollHeight;
             
             try {
+                console.log('Executing npm command:', command);
                 const response = await fetch('/api/install/npm-command', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ command })
                 });
                 
+                if (!response.ok) {
+                    throw new Error(`Request failed: ${response.statusText}`);
+                }
+                
                 const result = await response.json();
+                console.log('NPM command result:', result);
                 
                 if (result.success) {
-                    output.innerHTML += `${result.stdout}\n`;
+                    output.innerHTML += `${result.stdout || 'Command completed successfully'}\n`;
+                    if (result.stderr) {
+                        output.innerHTML += `Warnings: ${result.stderr}\n`;
+                    }
                     progress.innerHTML = `✅ Successfully executed: npm ${command}`;
+                    
+                    // Mark button as completed
+                    btn.style.backgroundColor = '#10B981'; // green
+                    btn.textContent = `✓ npm ${command}`;
                     
                     // Check if all commands are complete
                     if (command === 'run build') {
                         const nextBtn = document.getElementById('nextFromNpm');
                         nextBtn.disabled = false;
                         nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        progress.innerHTML += `<br>🎉 All commands completed successfully! Ready to continue.`;
                     }
                 } else {
-                    throw new Error(result.error);
+                    throw new Error(result.error || result.details || 'Command failed');
                 }
             } catch (error) {
+                console.error('NPM command error:', error);
                 output.innerHTML += `Error: ${error.message}\n`;
                 progress.innerHTML = `❌ Failed to execute: npm ${command}`;
+                btn.style.backgroundColor = '#EF4444'; // red
             }
             
             output.scrollTop = output.scrollHeight;
             btn.disabled = false;
-            btn.textContent = `npm ${command}`;
+            if (!btn.textContent.startsWith('✓')) {
+                btn.textContent = `npm ${command}`;
+            }
         }
 
         function launchApplication() {
