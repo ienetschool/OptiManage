@@ -446,6 +446,11 @@
         let currentStep = 1;
         const totalSteps = 7;
         let selectedBackupFile = null;
+        let installationData = {
+            app: {},
+            database: {},
+            config: {}
+        };
 
         function updateProgress() {
             const progressBar = document.getElementById('progressBar');
@@ -471,6 +476,29 @@
         }
 
         function nextStep() {
+            // Store data from current step before moving to next
+            if (currentStep === 1) {
+                // Store app configuration
+                installationData.app = {
+                    domain: document.getElementById('domain')?.value || '',
+                    companyName: document.getElementById('companyName')?.value || '',
+                    adminEmail: document.getElementById('adminEmail')?.value || '',
+                    environment: document.getElementById('environment')?.value || 'production'
+                };
+            } else if (currentStep === 2) {
+                // Store database configuration
+                const dbTypeElement = document.querySelector('input[name="dbType"]:checked');
+                installationData.database = {
+                    dbType: dbTypeElement?.value || 'postgresql',
+                    dbHost: document.getElementById('dbHost')?.value || 'localhost',
+                    dbPort: document.getElementById('dbPort')?.value || '5432',
+                    dbUser: document.getElementById('dbUser')?.value || 'ledbpt_opt',
+                    dbPassword: document.getElementById('dbPassword')?.value || '',
+                    dbName: document.getElementById('dbName')?.value || 'ieopt'
+                };
+                console.log('Stored database config:', installationData.database);
+            }
+            
             if (currentStep < totalSteps) {
                 currentStep++;
                 showStep(currentStep);
@@ -494,35 +522,29 @@
             status.textContent = 'Testing connection...';
             status.className = 'text-yellow-600';
             
-            // Get database configuration from Step 2 
-            const dbTypeElement = document.querySelector('input[name="dbType"]:checked');
-            const dbHostElement = document.getElementById('dbHost');
-            const dbPortElement = document.getElementById('dbPort');
-            const dbUserElement = document.getElementById('dbUser');
-            const dbPasswordElement = document.getElementById('dbPassword');
-            const dbNameElement = document.getElementById('dbName');
+            // Use stored database configuration from step 2
+            const dbData = installationData.database;
             
-            console.log('Form elements found:', {
-                dbType: !!dbTypeElement,
-                dbHost: !!dbHostElement,
-                dbPort: !!dbPortElement,
-                dbUser: !!dbUserElement,
-                dbPassword: !!dbPasswordElement,
-                dbName: !!dbNameElement
-            });
+            // If no stored data, try to get current form values (fallback)
+            if (!dbData || Object.keys(dbData).length === 0) {
+                const dbTypeElement = document.querySelector('input[name="dbType"]:checked');
+                const dbHostElement = document.getElementById('dbHost');
+                const dbPortElement = document.getElementById('dbPort');
+                const dbUserElement = document.getElementById('dbUser');
+                const dbPasswordElement = document.getElementById('dbPassword');
+                const dbNameElement = document.getElementById('dbName');
+                
+                installationData.database = {
+                    dbType: dbTypeElement?.value || 'postgresql',
+                    dbHost: dbHostElement?.value || 'localhost',
+                    dbPort: dbPortElement?.value || '5432',
+                    dbUser: dbUserElement?.value || 'ledbpt_opt',
+                    dbPassword: dbPasswordElement?.value || '',
+                    dbName: dbNameElement?.value || 'ieopt'
+                };
+            }
             
-            const dbData = {
-                dbType: dbTypeElement ? dbTypeElement.value : 'postgresql',
-                dbHost: dbHostElement ? dbHostElement.value : 'localhost',
-                dbPort: dbPortElement ? dbPortElement.value : '5432',
-                dbUser: dbUserElement ? dbUserElement.value : 'ledbpt_opt',
-                dbPassword: dbPasswordElement ? dbPasswordElement.value : '',
-                dbName: dbNameElement ? dbNameElement.value : 'ieopt'
-            };
-            
-            console.log('Database configuration:', dbData);
-            
-            console.log('Testing connection with data:', dbData);
+            console.log('Testing connection with stored data:', installationData.database);
             
             try {
                 const response = await fetch('/api/install/test-connection', {
@@ -531,7 +553,7 @@
                         'Content-Type': 'application/json',
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(dbData)
+                    body: JSON.stringify(installationData.database)
                 });
                 
                 console.log('Response status:', response.status);
@@ -554,11 +576,12 @@
                 if (result.success) {
                     status.textContent = 'Connection Successful';
                     status.className = 'text-green-600';
+                    const dbConfig = installationData.database;
                     details.innerHTML = `
                         <p class="text-green-600">✅ Database connection verified</p>
-                        <p class="text-gray-600">Host: ${dbData.dbHost}:${dbData.dbPort}</p>
-                        <p class="text-gray-600">Database: ${dbData.dbName}</p>
-                        <p class="text-gray-600">Type: ${dbData.dbType}</p>
+                        <p class="text-gray-600">Host: ${dbConfig.dbHost}:${dbConfig.dbPort}</p>
+                        <p class="text-gray-600">Database: ${dbConfig.dbName}</p>
+                        <p class="text-gray-600">Type: ${dbConfig.dbType}</p>
                     `;
                     
                     // Enable next button
