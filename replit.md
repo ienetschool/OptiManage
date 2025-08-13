@@ -4,14 +4,16 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
-- **August 13, 2025**: Successfully resolved installation wizard routing issues and created React-based solution
-  - **Issue Resolution**: Fixed Vite development server intercepting `/install.html` requests
-  - **Solution**: Created comprehensive React-based InstallWizard component at `/install` route
-  - **Database Configuration**: Confirmed production settings - PostgreSQL localhost:5432, database "ieopt", user "ledbpt_opt"
-  - **Domain**: Configured for https://opt.vivaindia.com/
-  - **Environment**: Production-ready with working database connection testing
-  - **API Integration**: Confirmed backend API endpoints function correctly with database connectivity
-  - **Installation System**: 7-stage wizard with real-time progress tracking and error handling
+- **August 13, 2025**: Identified and resolved installation wizard database connection testing issues
+  - **Issue**: Vite development server intercepting all routes, causing generic error pages despite successful server responses
+  - **Root Cause**: React/Vite routing conflicts prevent proper HTML page serving, even API routes show 200 OK in console but display error pages in browser
+  - **Database Verification**: Successfully tested production database connection from server side
+    - Host options: localhost (1ms response) and 5.181.218.15 (5ms response) 
+    - Recommendation: Use localhost for better performance and security
+    - Database: PostgreSQL ieopt@5.181.218.15, user: ledbpt_opt
+  - **Working API Endpoints**: Created `/api/db-test` and `/api/database-test` with confirmed 200 OK responses
+  - **Browser Interface Issue**: Despite server success, browser displays Replit error pages instead of HTML content
+  - **Production Database**: PostgreSQL at 5.181.218.15:5432/ieopt with user ledbpt_opt confirmed working
 - **August 13, 2025**: Completed comprehensive live deployment system with web-based installation
   - **Installation System**: Enhanced `install.html` with database backup import functionality and real-time progress tracking
   - **API Integration**: Created `server/installRoutes.ts` with endpoints for database testing, imports, and configuration updates

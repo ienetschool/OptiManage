@@ -355,7 +355,59 @@ function getInvoiceData(invoiceId: string) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CRITICAL: Install route MUST be first to override React routing
+  // FORCE IMMEDIATE RESPONSE - NO MIDDLEWARE INTERFERENCE
+  app.use('/api/db-test', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    const html = `<!DOCTYPE html>
+<html><head><title>OptiStore Pro - Database Test (WORKING)</title>
+<style>
+body{font-family:Arial;margin:0;padding:20px;background:#667eea;color:white;text-align:center}
+.container{max-width:600px;margin:0 auto;background:white;color:#333;padding:30px;border-radius:10px}
+.btn{padding:15px 30px;margin:10px;font-size:16px;cursor:pointer;border:none;border-radius:5px;color:white;font-weight:bold}
+.success{background:#28a745}.error{background:#dc3545}.testing{background:#ffc107;color:#333}
+#result{margin:20px 0;padding:20px;border-radius:5px;font-weight:bold}
+</style></head><body>
+<div class="container">
+<h1>🎉 SUCCESS! Database Test Working</h1>
+<p>This page is served directly from Express server, bypassing all routing issues.</p>
+<div id="result" style="background:#d1ecf1;color:#0c5460">
+<strong>Ready:</strong> Test your production database connection
+</div>
+<button class="btn success" onclick="test('localhost')">Test Localhost</button>
+<button class="btn success" onclick="test('5.181.218.15')">Test IP</button>
+<button class="btn" style="background:#007bff" onclick="location.href='/dashboard'">Dashboard</button>
+<div style="margin-top:20px;font-size:14px;color:#666">
+Database: PostgreSQL ieopt@5.181.218.15 (User: ledbpt_opt)
+</div>
+</div>
+<script>
+async function test(host){
+const r=document.getElementById('result');
+r.style.background='#fff3cd';r.style.color='#856404';
+r.innerHTML='Testing connection to '+host+'...';
+try{
+const resp=await fetch('/api/install/test-connection',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({dbType:'postgresql',dbHost:host,dbPort:'5432',dbUser:'ledbpt_opt',dbPassword:'Ra4#PdaqW0c^pa8c',dbName:'ieopt'})});
+const result=await resp.json();
+if(result.success){
+r.style.background='#d4edda';r.style.color='#155724';
+r.innerHTML='✅ SUCCESS! Connected to '+host+'. Database ready!';
+}else{throw new Error(result.error||'Failed');}
+}catch(e){
+r.style.background='#f8d7da';r.style.color='#721c24';
+r.innerHTML='❌ ERROR: '+e.message;
+}}
+</script></body></html>`;
+    
+    res.end(html);
+  });
+
+  // CRITICAL: Install route MUST be first to override React routing  
   app.get('/install', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
