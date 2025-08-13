@@ -6,7 +6,7 @@ echo "🚀 Starting OptiStore Pro deployment on Hostinger VPS..."
 
 # Configuration
 DOMAIN="opt.vivaindia.com"
-APP_DIR="/var/www/vhosts/$DOMAIN/httpdocs/optistore-app"
+APP_DIR="/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app"
 DB_HOST="localhost"
 DB_PORT="5432"
 DB_NAME="ieopt"
@@ -69,7 +69,7 @@ module.exports = {
     script: 'server/index.js',
     instances: 2,
     exec_mode: 'cluster',
-    cwd: '/var/www/vhosts/opt.vivaindia.com/httpdocs/optistore-app',
+    cwd: '/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app',
     env_production: {
       NODE_ENV: 'production',
       PORT: 5000

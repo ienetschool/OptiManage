@@ -53,10 +53,10 @@ pm2 --version
 
 ### 3.1 Navigate to Domain Directory
 ```bash
-# Go to your domain directory
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs
+# Go to your domain directory (corrected path)
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com
 
-# Create application structure
+# Create application structure (or use existing if already present)
 mkdir -p optistore-app
 cd optistore-app
 ```
@@ -73,13 +73,13 @@ You can upload files via:
 **Option B: Using SCP from your local machine**
 ```bash
 # From your local machine, upload the files
-scp -r /path/to/optistore-files/* root@5.181.218.15:/var/www/vhosts/opt.vivaindia.com/httpdocs/optistore-app/
+scp -r /path/to/optistore-files/* root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/
 ```
 
 **Option C: Git Clone (if you have repository)**
 ```bash
 # Clone from repository
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/optistore-app/
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/
 git clone https://github.com/yourusername/optistore-pro.git .
 ```
 
@@ -109,7 +109,7 @@ psql -h localhost -p 5432 -U ledbpt_opt -d ieopt -c "\dt" | wc -l
 
 ### 5.1 Install Dependencies
 ```bash
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/optistore-app/
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/
 
 # Install Node.js dependencies
 npm install
@@ -146,7 +146,7 @@ module.exports = {
     script: 'server/index.js',
     instances: 2,
     exec_mode: 'cluster',
-    cwd: '/var/www/vhosts/opt.vivaindia.com/httpdocs/optistore-app',
+    cwd: '/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app',
     env_production: {
       NODE_ENV: 'production',
       PORT: 5000
