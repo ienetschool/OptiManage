@@ -10,7 +10,7 @@ interface DatabaseConfig {
 }
 
 export default function InstallWizard() {
-  const [currentStep, setCurrentStep] = useState(3); // Start at step 3 for testing
+  const [currentStep, setCurrentStep] = useState(1); // Start at step 1
   const [databaseConfig, setDatabaseConfig] = useState<DatabaseConfig>({
     dbType: 'postgresql',
     dbHost: 'localhost',
