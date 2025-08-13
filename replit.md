@@ -4,6 +4,12 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
+- **August 13, 2025**: Updated installation wizard with production database configuration
+  - **Domain**: Configured for https://opt.vivaindia.com/
+  - **Database**: PostgreSQL on localhost:5432, database "ieopt", user "ledbpt_opt"  
+  - **Environment**: Set to production mode for live deployment
+  - **Admin Email**: admin@opt.vivaindia.com
+  - **Installation Ready**: All 7-stage wizard configured with real production values
 - **August 13, 2025**: Completed comprehensive live deployment system with web-based installation
   - **Installation System**: Enhanced `install.html` with database backup import functionality and real-time progress tracking
   - **API Integration**: Created `server/installRoutes.ts` with endpoints for database testing, imports, and configuration updates
