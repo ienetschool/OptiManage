@@ -53,6 +53,7 @@ import AuthPage from "@/pages/AuthPage";
 import QuickLogin from "@/pages/QuickLogin";
 import Sidebar from "@/components/layout/Sidebar";
 import AppLayout from "@/components/layout/AppLayout";
+import InstallWizard from "@/pages/InstallWizard";
 import PublicLayout from "@/components/layout/PublicLayout";
 import PatientPortalLayout from "@/components/layout/PatientPortalLayout";
 import PrintPreview from "@/pages/PrintPreview";
@@ -68,6 +69,11 @@ function Router() {
 
   return (
     <Switch>
+      {/* Installation Wizard Route - Standalone for installation */}
+      <Route path="/install">
+        <InstallWizard />
+      </Route>
+      
       {/* Print Preview Route - Standalone for direct printing */}
       <Route path="/print-preview/:invoiceId?">
         <PrintPreview />
