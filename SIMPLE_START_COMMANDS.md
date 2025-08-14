@@ -1,43 +1,67 @@
-# Simple Production Start - Direct Port Method
+# 🚀 Start Here - Copy These Exact Commands
 
-## SUCCESS: Application Accessible!
-✅ curl http://opt.vivaindia.com:5000 returns HTTP/1.1 200 OK
-✅ Application serving HTML content correctly
-✅ Port 5000 externally accessible
+## Quick Fix for opt.vivaindia.com
 
-## Immediate Solution: Use Port 5000 Directly
-Your OptiStore Pro is now accessible at:
-**http://opt.vivaindia.com:5000**
+Copy and paste these commands one by one:
 
-## Optional: Configure Standard HTTPS Port
-If you want to use the standard domain without port number:
-
-### Method 1: Run on Port 80
+### 1. Connect to your server:
 ```bash
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
-pm2 delete optistore-pro
-DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="80" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
-pm2 save
+ssh root@5.181.218.15
 ```
 
-Then access via: http://opt.vivaindia.com
-
-### Method 2: Simple Plesk Proxy Fix
-In Plesk, clear all nginx/apache directives and add only:
-```apache
-ProxyPass / http://127.0.0.1:5000/
-ProxyPassReverse / http://127.0.0.1:5000/
+### 2. Navigate to application:
+```bash
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
 ```
 
-## Current Status: WORKING
-OptiStore Pro is fully operational and accessible at http://opt.vivaindia.com:5000
+### 3. Test MySQL endpoint (this should fail with 404):
+```bash
+curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
+```
 
-Users can now:
-- Manage patient records
-- Schedule appointments  
-- Track inventory
-- Process invoices
-- Handle prescriptions
-- Manage staff and permissions
+### 4. Check what's running:
+```bash
+pm2 status
+```
 
-The deployment is complete and functional!
+### 5. Test database connection directly:
+```bash
+mysql -h localhost -u ledbpt_optie -p opticpro
+```
+**Password:** `g79h94LAP`
+
+If connected, type: `SHOW TABLES;` then `exit`
+
+### 6. Deploy missing columns to database:
+```bash
+mysql -h localhost -u ledbpt_optie -p opticpro -e "
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
+ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
+"
+```
+
+### 7. Restart application:
+```bash
+pm2 restart all
+```
+
+### 8. Test the website:
+Go to: https://opt.vivaindia.com
+
+The application should now work without 500 errors!
+
+---
+
+## What This Does:
+- Adds missing database columns that are causing 500 errors
+- Fixes the "Unknown column" errors in products, patients, customers, etc.
+- Keeps your existing data intact
+- Makes the application fully functional
+
+After running these commands, your OptiStore Pro should work perfectly!

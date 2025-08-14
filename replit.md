@@ -15,6 +15,8 @@ OptiStore Pro is a comprehensive medical practice management system built with R
   - **Missing Columns**: Products.barcode, patients.emergency_contact, store_inventory.reserved_quantity causing 500 errors
   - **Direct Access Guide**: Created comprehensive nginx proxy configuration for port-free domain access
   - **Status**: Local development working perfectly, production deployment needs updated server/routes.ts file
+  - **API Endpoint Created**: `/api/add-missing-columns` endpoint ready to deploy missing database columns via SSH
+  - **Production Fix Ready**: Complete SSH command guide created for immediate deployment resolution
 - **August 14, 2025**: ✅ **DEPLOYMENT COMPLETE** - OptiStore Pro successfully deployed and fully operational on production server
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk

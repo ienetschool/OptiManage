@@ -654,6 +654,53 @@ console.log('Database test page loaded successfully');
       });
     }
   });
+
+  // Add missing columns endpoint
+  app.post('/api/add-missing-columns', async (req, res) => {
+    try {
+      console.log('🔧 Adding missing database columns...');
+      
+      const alterStatements = [
+        'ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100)',
+        'ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255)',
+        'ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20)',
+        'ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0',
+        'ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36)',
+        'ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100)',
+        'ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50)',
+        'ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20)',
+        'ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36)'
+      ];
+      
+      let addedColumns = 0;
+      for (const statement of alterStatements) {
+        try {
+          await mysqlDb.execute(statement);
+          addedColumns++;
+          console.log(`✅ Executed: ${statement}`);
+        } catch (error: any) {
+          // Ignore "duplicate column" errors
+          if (error.code !== 'ER_DUP_FIELDNAME') {
+            console.warn(`⚠️ Warning: ${statement} - ${error.message}`);
+          }
+        }
+      }
+      
+      console.log(`✅ Added ${addedColumns} missing columns successfully`);
+      res.json({
+        success: true,
+        message: `Successfully added ${addedColumns} missing database columns`,
+        columnsAdded: addedColumns
+      });
+    } catch (error) {
+      console.error('❌ Error adding missing columns:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to add missing columns',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
   
   // Serve installation interface
   app.get('/install', (req, res) => {

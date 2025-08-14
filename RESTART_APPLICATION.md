@@ -1,53 +1,67 @@
-# Final Solution: Fix Port Access & Database Display
+# 🔄 Quick Application Restart Guide
 
-## Problem Analysis
-1. **Port Issue**: Application works on :8080 but user needs standard domain access
-2. **Database Display**: Shows 0 tables in Replit interface despite 44 tables existing and API calls working
+If your application at https://opt.vivaindia.com is not responding or showing errors, follow these steps:
 
-## Solution 1: Run Application on Port 80 (Standard HTTP)
+## SSH Commands (Copy & Paste):
 
-### Commands to Execute:
+### 1. Connect:
 ```bash
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
-pm2 delete optistore-pro
-sudo DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="80" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
-pm2 save
+ssh root@5.181.218.15
 ```
 
-**Result**: Application accessible at http://opt.vivaindia.com (without port)
-
-## Solution 2: Fix Replit Database Display
-
-The database has 44 tables and is working correctly. Your API logs prove this:
-- `GET /api/customers 200` - Returns customer data
-- `GET /api/patients 200` - Returns patient data  
-- `GET /api/products 200` - Returns product data
-- `GET /api/dashboard 200` - Returns dashboard stats
-
-### Why Replit Shows "0 tables":
-- Replit interface bug with external PostgreSQL connections
-- Database connection string uses external server (localhost:5432)
-- Data flows correctly through API (proven by your logs)
-- This is a display-only issue, not a functional problem
-
-## Verification of Working System
-Your logs show:
-```
-GET /api/customers 200 in 3348ms :: [{"id":"cust001","firstName":"Rajesh"...
-GET /api/patients 200 in 3351ms :: [{"id":"e879a730-9df1-4a8b...
-GET /api/products 200 in 3468ms :: [Contact Lens Solutions...
-GET /api/dashboard 200 in 3785ms :: {"totalAppointments":0,"totalPatients":3...
+### 2. Navigate to app:
+```bash
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
 ```
 
-This proves the database is fully functional with all tables and data accessible.
+### 3. Check status:
+```bash
+pm2 status
+```
 
-## Application Value
-Your OptiStore Pro provides:
-- Complete patient management system
-- Appointment scheduling
-- Inventory tracking (3+ products confirmed)
-- Customer management (3+ customers confirmed) 
-- Medical records management
-- Financial tracking and invoicing
+### 4. Restart all processes:
+```bash
+pm2 restart all
+```
 
-The system is production-ready and handling real data from your PostgreSQL database.
+### 5. Check logs:
+```bash
+pm2 logs --lines 10
+```
+
+### 6. Test application:
+```bash
+curl http://localhost:8080/api/stores
+```
+
+Should return JSON with your 2 stores.
+
+### 7. Test website:
+Open: https://opt.vivaindia.com
+
+---
+
+## If Application Won't Start:
+```bash
+# Check if the process exists
+pm2 delete all
+
+# Start fresh
+npm start &
+
+# Or start with PM2
+pm2 start ecosystem.config.js
+```
+
+## Environment Check:
+```bash
+# Check environment variables
+cat .env
+
+# Should contain:
+# DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro
+# NODE_ENV=production
+# PORT=8080
+```
+
+Your application should be accessible at https://opt.vivaindia.com after restart!
