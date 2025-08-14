@@ -675,7 +675,7 @@ console.log('Database test page loaded successfully');
       let addedColumns = 0;
       for (const statement of alterStatements) {
         try {
-          await mysqlDb.execute(statement);
+          await mysqlConnection.execute(statement);
           addedColumns++;
           console.log(`✅ Executed: ${statement}`);
         } catch (error: any) {
