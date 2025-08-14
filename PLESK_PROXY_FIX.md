@@ -1,62 +1,73 @@
-# Fix Plesk Proxy Configuration
+# Plesk Proxy Configuration for OptiStore Pro
 
-## Current Issue
-- Application is running on port 5000 (confirmed)
-- Domain shows Plesk error page instead of your app
-- Proxy configuration needs adjustment
+## Current Status: ✅ Application Ready
+- Application running on localhost:5000
+- PM2 configured for auto-restart
+- System startup integration complete
+- HTML content serving correctly
 
-## Solution Steps
+## Plesk Proxy Setup Instructions
 
-### 1. Check if app is responding locally
-SSH to your server and test:
-```bash
-curl http://localhost:5000
-```
-This should return HTML from your app.
+### Method 1: Plesk Control Panel (Recommended)
+1. Login to your Plesk control panel
+2. Navigate to **Websites & Domains**
+3. Click on **opt.vivaindia.com**
+4. Go to **Proxy Rules** (or **Apache & nginx Settings**)
+5. Add new proxy rule:
+   - **Source**: `/` (root path)
+   - **Destination**: `http://localhost:5000`
+   - **Enable**: Check all boxes (proxy headers, etc.)
 
-### 2. Fix Plesk Proxy Configuration
+### Method 2: Manual Nginx Configuration
+If Plesk proxy doesn't work, edit nginx configuration:
 
-**Option A: Apache & Nginx Settings**
-1. Go to Plesk → opt.vivaindia.com → Apache & Nginx Settings
-2. In "Additional nginx directives" add:
 ```nginx
-location / {
-    proxy_pass http://127.0.0.1:5000;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+server {
+    listen 443 ssl http2;
+    server_name opt.vivaindia.com;
+    
+    # SSL configuration (managed by Plesk)
+    
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
 }
 ```
-3. Click "Apply"
 
-**Option B: Use Plesk Node.js App Feature**
-1. Go to Plesk → opt.vivaindia.com → Node.js
-2. Enable Node.js application
-3. Set:
-   - Application root: `/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app`
-   - Application startup file: `dist/index.js`
-   - Application URL: leave empty (will use main domain)
-4. Click "Enable"
-
-### 3. Alternative: Direct Port Test
-Test if your app works by visiting:
-```
-http://opt.vivaindia.com:5000
-```
-(Note: HTTP not HTTPS, and with :5000 port)
-
-### 4. Check PM2 Logs
+### Test After Configuration
 ```bash
-pm2 logs optistore-pro --lines 50
+curl -I https://opt.vivaindia.com
 ```
-Look for any errors when requests come in.
 
-### 5. Restart Services
+Expected result: Should show HTTP 200 and HTML content from OptiStore Pro.
+
+## Final Testing Commands
 ```bash
-pm2 restart optistore-pro
-service nginx reload
+# Test local application
+curl http://localhost:5000
+
+# Test after proxy setup
+curl https://opt.vivaindia.com
+
+# Check PM2 status
+pm2 status
 ```
 
-## Expected Result
-After fixing the proxy, visiting https://opt.vivaindia.com should show your OptiStore Pro login page instead of the Plesk error.
+## Production Checklist ✅
+- [x] Application built and optimized
+- [x] Database connected successfully  
+- [x] PM2 process manager configured
+- [x] System startup integration enabled
+- [x] Application responding on localhost:5000
+- [ ] Plesk proxy configured (final step)
+- [ ] HTTPS domain access verified
+
+**OptiStore Pro is ready for production use!**
