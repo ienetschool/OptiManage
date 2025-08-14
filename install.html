@@ -492,18 +492,22 @@
             updateProgress(25);
             
             try {
-                const response = await fetch('/api/stores');
+                const response = await fetch('/api/mysql-test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
                 
                 updateProgress(75);
                 const result = await response.json();
                 updateProgress(100);
                 
-                if (Array.isArray(result) && result.length > 0) {
-                    showStatus('✅ Database connection successful! Found existing data in your database.', 'success');
-                } else if (response.ok) {
-                    showStatus('✅ Database connection successful! Ready for schema deployment.', 'success');
+                if (result.success) {
+                    showStatus('✅ Database connection successful! Your MySQL database is accessible and ready.', 'success');
                 } else {
-                    showStatus('❌ Connection test failed. Please check database credentials.', 'error');
+                    showStatus(`❌ Connection failed: ${result.message}`, 'error');
                 }
             } catch (error) {
                 showStatus(`❌ Connection test failed: ${error.message}`, 'error');

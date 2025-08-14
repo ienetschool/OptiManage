@@ -659,6 +659,35 @@ console.log('Database test page loaded successfully');
   app.get('/install', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'install.html'));
   });
+
+  // MySQL connection test endpoint
+  app.post('/api/mysql-test', async (req, res) => {
+    try {
+      const mysql = require('mysql2/promise');
+      const connection = await mysql.createConnection({
+        host: '5.181.218.15',
+        port: 3306,
+        user: 'ledbpt_optie',
+        password: 'Facebook@123',
+        database: 'opticpro'
+      });
+      
+      const [rows] = await connection.execute('SELECT 1 as test');
+      await connection.end();
+      
+      res.json({ 
+        success: true, 
+        message: 'MySQL connection successful!',
+        testResult: rows[0]
+      });
+    } catch (error: any) {
+      console.error('MySQL connection test failed:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: 'Connection failed: ' + error.message
+      });
+    }
+  });
   
   // Serve test install page and direct test page
   app.get('/test_install_direct.html', (req, res) => {
