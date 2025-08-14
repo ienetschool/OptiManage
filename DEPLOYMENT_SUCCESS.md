@@ -1,53 +1,42 @@
-# OptiStore Pro Deployment Success!
+# DEPLOYMENT SUCCESS! 
 
 ## ✅ Application Successfully Running
 
-### Current Status
-- **PM2 Process**: Online and running
-- **Environment Variables**: All set correctly via direct method
-- **Database Connection**: Working (no DATABASE_URL errors)
-- **Port**: Application running on port 5000
+**Status**: OptiStore Pro is now running on production server
+**Server**: 5.181.218.15 (Hostinger VPS with AlmaLinux 9 + Plesk)
+**Port**: 5000
+**Database**: Connected successfully to PostgreSQL localhost:5432/ieopt
 
-### Final Testing Commands
-
-Run these on your server to verify everything works:
-
+## Working Command
 ```bash
-# Check PM2 status
-pm2 status
-
-# View recent logs
-pm2 logs optistore-pro --lines 10
-
-# Test local response
-curl http://localhost:5000
-
-# Check if port 5000 is active
-netstat -tulpn | grep :5000
+DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5EBa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="5000" node dist/index.js
 ```
-
-### Access Your Application
-
-Your OptiStore Pro should now be accessible at:
-**https://opt.vivaindia.com**
-
-### Save Configuration
-```bash
-pm2 save
-pm2 startup
-```
-
-## What Was Fixed
-1. ✅ Built application successfully (npm run build)
-2. ✅ Resolved PM2 installation and startup
-3. ✅ Fixed DATABASE_URL environment variable issue
-4. ✅ Started application with direct environment variables
-5. ✅ Application now running in production mode
 
 ## Next Steps
-- Test the website at https://opt.vivaindia.com
-- Configure Plesk proxy if needed
-- Set up automatic startup with pm2 startup
-- Monitor logs for any issues
 
-Your OptiStore Pro medical practice management system is now deployed and running!
+### 1. Start with PM2 for Process Management
+Press Ctrl+C to stop the current process, then run:
+```bash
+DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5EBa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="5000" pm2 start dist/index.js --name optistore-pro
+```
+
+### 2. Verify PM2 Status
+```bash
+pm2 status
+pm2 save
+```
+
+### 3. Configure Nginx Proxy (if needed)
+The application is running on port 5000. Configure Plesk to proxy https://opt.vivaindia.com to localhost:5000
+
+### 4. Test the Website
+Visit: https://opt.vivaindia.com (after Nginx proxy setup)
+Or directly: http://5.181.218.15:5000
+
+## Key Learning
+- **Database URL Format**: Special characters in password must be URL-encoded:
+  - `#` becomes `%23`
+  - `^` becomes `%5E`
+- **Working Password**: `Ra4%23PdaqW0c%5EBa8c` (URL-encoded version)
+
+## Application Status: LIVE AND RUNNING! ✅
