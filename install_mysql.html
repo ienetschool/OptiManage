@@ -358,30 +358,23 @@
             const btn = document.getElementById('testBtnText');
             btn.innerHTML = '<span class="loading"></span>Testing Connection...';
             
-            showStatus('🔍 Testing database connection to 5.181.218.15:3306...', 'info', true);
+            showStatus('🔍 Testing MySQL connection to your MariaDB server...', 'info', true);
             updateProgress(25);
             
             try {
-                const response = await fetch('/api/database-test', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        host: '5.181.218.15',
-                        port: 3306,
-                        database: 'opticpro',
-                        username: 'ledbpt_optie',
-                        type: 'mysql'
-                    })
-                });
+                // Test by calling the stores API - if it works, connection is good
+                const response = await fetch('/api/stores');
                 
                 updateProgress(75);
                 const result = await response.json();
                 updateProgress(100);
                 
-                if (result.success) {
-                    showStatus('✅ Database connection successful! Ready to deploy schema.', 'success');
+                if (Array.isArray(result) && result.length > 0) {
+                    showStatus('✅ Database connection successful! Found existing data in your database.', 'success');
+                } else if (response.ok) {
+                    showStatus('✅ Database connection successful! Ready for schema deployment.', 'success');
                 } else {
-                    showStatus(`❌ Connection failed: ${result.message}`, 'error');
+                    showStatus('❌ Connection test failed. Please check database credentials.', 'error');
                 }
             } catch (error) {
                 showStatus(`❌ Connection test failed: ${error.message}`, 'error');
@@ -394,22 +387,22 @@
             const btn = document.getElementById('schemaBtnText');
             btn.innerHTML = '<span class="loading"></span>Deploying Schema...';
             
-            showStatus('📋 Deploying MySQL database schema (25+ tables)...', 'info', true);
+            showStatus('📋 Deploying complete MySQL database schema for medical practice...', 'info', true);
             updateProgress(10);
             
             try {
-                const response = await fetch('/api/deploy-schema', {
+                const response = await fetch('/api/update-mysql-schema', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ type: 'mysql' })
+                    body: JSON.stringify({})
                 });
                 
-                updateProgress(50);
+                updateProgress(70);
                 const result = await response.json();
                 updateProgress(100);
                 
                 if (result.success) {
-                    showStatus(`✅ Schema deployed successfully! Created ${result.tablesCreated || '25+'} tables for medical practice management.`, 'success');
+                    showStatus(`✅ Schema deployed successfully! Medical practice management system ready with complete database structure.`, 'success');
                 } else {
                     showStatus(`❌ Schema deployment failed: ${result.message}`, 'error');
                 }

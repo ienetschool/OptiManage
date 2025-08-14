@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import path from 'path';
 import { storage } from "./storage";
 import { setupOAuthAuth, isAuthenticated } from "./oauthAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
@@ -652,6 +653,11 @@ console.log('Database test page loaded successfully');
         error: error.toString()
       });
     }
+  });
+  
+  // Serve installation interface
+  app.get('/install', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'install.html'));
   });
   
   // Serve test install page and direct test page

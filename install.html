@@ -3,892 +3,593 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OptiStore Pro - Installation Wizard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>OptiStore Pro - Database Setup & Configuration</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .step-inactive { display: none; }
-        .step-active { display: block; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        input[type="text"], input[type="password"], select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-success {
+            background: #28a745;
+        }
+        
+        .connection-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .config-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+        }
+        
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .feature-desc {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="bg-white rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center shadow-lg">
-                <svg class="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h1 class="text-4xl font-bold text-gray-800 mb-4">OptiStore Pro Installation Wizard</h1>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Complete 7-stage setup for your medical practice management system</p>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">OP</div>
+            <h1>OptiStore Pro</h1>
+            <p class="subtitle">Medical Practice Management System - Database Setup</p>
         </div>
 
-        <!-- Progress Indicator -->
-        <div class="max-w-4xl mx-auto mb-8">
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <span class="text-sm font-medium text-gray-700">Installation Progress</span>
-                    <span class="text-sm font-medium text-blue-600" id="progressText">Step 1 of 7</span>
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('connection')">Database Connection</button>
+            <button class="tab" onclick="showTab('schema')">Schema Deployment</button>
+            <button class="tab" onclick="showTab('features')">System Features</button>
+            <button class="tab" onclick="showTab('access')">Access Setup</button>
+        </div>
+
+        <!-- Database Connection Tab -->
+        <div id="connection-tab" class="tab-content active">
+            <h3>🗄️ MySQL Database Configuration</h3>
+            <p>Configure your MySQL/MariaDB database connection for OptiStore Pro.</p>
+            
+            <div class="connection-info">
+                <h4>Your Current Database Details</h4>
+                <div class="form-row">
+                    <div>
+                        <label>Server IP/Host</label>
+                        <input type="text" id="dbHost" value="5.181.218.15" readonly>
+                    </div>
+                    <div>
+                        <label>Port</label>
+                        <input type="text" id="dbPort" value="3306" readonly>
+                    </div>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" id="progressBar" style="width: 14.3%"></div>
+                <div class="form-row">
+                    <div>
+                        <label>Database Name</label>
+                        <input type="text" id="dbName" value="opticpro" readonly>
+                    </div>
+                    <div>
+                        <label>Username</label>
+                        <input type="text" id="dbUser" value="ledbpt_optie" readonly>
+                    </div>
                 </div>
-                <div class="flex justify-between text-xs text-gray-500 mt-2">
-                    <span>Start</span>
-                    <span>Complete</span>
+                <div class="form-group">
+                    <label>Connection String</label>
+                    <div class="config-display">mysql://ledbpt_optie:***@5.181.218.15:3306/opticpro</div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="testConnection()">
+                <span id="testBtnText">🔍 Test Database Connection</span>
+            </button>
+        </div>
+
+        <!-- Schema Deployment Tab -->
+        <div id="schema-tab" class="tab-content">
+            <h3>📋 Database Schema Setup</h3>
+            <p>Deploy the complete medical practice management database schema to your MySQL server.</p>
+            
+            <div class="connection-info">
+                <h4>Schema includes:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>25+ database tables for complete medical practice management</li>
+                    <li>Users, staff roles, and authentication system</li>
+                    <li>Patients, doctors, and medical appointments</li>
+                    <li>Inventory, products, and store management</li>
+                    <li>Invoicing, billing, and payment tracking</li>
+                    <li>Prescription management and medical records</li>
+                    <li>Accounting system with chart of accounts</li>
+                </ul>
+            </div>
+            
+            <button class="btn" onclick="deploySchema()">
+                <span id="schemaBtnText">📋 Deploy Database Schema</span>
+            </button>
+            
+            <button class="btn btn-secondary" onclick="importSampleData()">
+                <span id="dataBtnText">📥 Import Sample Medical Data</span>
+            </button>
+        </div>
+
+        <!-- System Features Tab -->
+        <div id="features-tab" class="tab-content">
+            <h3>⚡ OptiStore Pro Features</h3>
+            <p>Complete medical practice management system with advanced features.</p>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-title">Patient Management</div>
+                    <div class="feature-desc">Complete medical records, history, prescriptions, and patient portal</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👨‍⚕️</div>
+                    <div class="feature-title">Doctor Profiles</div>
+                    <div class="feature-desc">Medical staff management with specializations and schedules</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <div class="feature-title">Appointment System</div>
+                    <div class="feature-desc">Advanced scheduling with doctor assignments and reminders</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💊</div>
+                    <div class="feature-title">Prescription Management</div>
+                    <div class="feature-desc">Digital prescriptions with medication tracking</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <div class="feature-title">Inventory System</div>
+                    <div class="feature-desc">Medical supplies, equipment, and stock management</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧾</div>
+                    <div class="feature-title">Billing & Invoicing</div>
+                    <div class="feature-desc">Complete billing system with insurance processing</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Analytics & Reports</div>
+                    <div class="feature-desc">Practice performance and financial reporting</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <div class="feature-title">Security & Compliance</div>
+                    <div class="feature-desc">HIPAA compliant with role-based access control</div>
                 </div>
             </div>
         </div>
 
-        <!-- Installation Steps -->
-        <div class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+        <!-- Access Setup Tab -->
+        <div id="access-tab" class="tab-content">
+            <h3>🌐 System Access Configuration</h3>
+            <p>Configure how users access your OptiStore Pro system.</p>
+            
+            <div class="connection-info">
+                <h4>Current Access URLs</h4>
+                <div class="form-group">
+                    <label>Primary Application URL</label>
+                    <div class="config-display">http://opt.vivaindia.com:8080</div>
+                    <small>Direct access to the application with port number</small>
+                </div>
                 
-                <!-- Step 1: Application URL Settings -->
-                <div id="step1" class="step-active p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Application URL Settings</h2>
-                        <p class="text-gray-600">Configure your domain and application settings</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="domain" class="block text-sm font-medium text-gray-700 mb-2">Application Domain</label>
-                                <input type="url" id="domain" name="domain" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="https://opt.vivaindia.com/" value="https://opt.vivaindia.com/" required>
-                            </div>
-                            
-                            <div>
-                                <label for="companyName" class="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                                <input type="text" id="companyName" name="companyName" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="OptiStore Pro" value="OptiStore Pro" required>
-                            </div>
-                            
-                            <div>
-                                <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-2">Administrator Email</label>
-                                <input type="email" id="adminEmail" name="adminEmail" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="admin@opt.vivaindia.com" value="admin@opt.vivaindia.com" required>
-                            </div>
-                            
-                            <div>
-                                <label for="environment" class="block text-sm font-medium text-gray-700 mb-2">Environment</label>
-                                <select id="environment" name="environment" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="development">Development</option>
-                                    <option value="staging">Staging</option>
-                                    <option value="production" selected>Production</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-end mt-8">
-                        <button onclick="nextStep()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                            Next: Database Setup
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label>Domain Redirect (Requires Plesk Configuration)</label>
+                    <div class="config-display">http://opt.vivaindia.com</div>
+                    <small>Clean URL without port (requires Document Root change in Plesk)</small>
                 </div>
+            </div>
+            
+            <div class="connection-info">
+                <h4>📝 Plesk Configuration Steps</h4>
+                <ol style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Open Plesk control panel for opt.vivaindia.com</li>
+                    <li>Go to Hosting Settings</li>
+                    <li>Change Document Root from: <code>opt.vivaindia.com/optistore-app/dist</code></li>
+                    <li>Change to: <code>opt.vivaindia.com/httpdocs</code></li>
+                    <li>Clear all Apache and nginx directives</li>
+                    <li>Apply settings</li>
+                </ol>
+                <p><strong>Result:</strong> Users can access at http://opt.vivaindia.com (automatically redirects to :8080)</p>
+            </div>
+            
+            <button class="btn btn-success" onclick="openApplication()">
+                <span>🚀 Open OptiStore Pro Application</span>
+            </button>
+        </div>
 
-                <!-- Step 2: Database Setup -->
-                <div id="step2" class="step-inactive p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Database Setup</h2>
-                        <p class="text-gray-600">Configure your database connection details</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-3">Database Type</label>
-                            <div class="flex space-x-4">
-                                <label class="flex items-center">
-                                    <input type="radio" name="dbType" value="postgresql" class="mr-2 w-4 h-4 text-blue-600" checked>
-                                    <span class="text-sm font-medium text-gray-700">PostgreSQL</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="dbType" value="mysql" class="mr-2 w-4 h-4 text-blue-600">
-                                    <span class="text-sm font-medium text-gray-700">MySQL</span>
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label for="dbHost" class="block text-sm font-medium text-gray-700 mb-2">Database Host</label>
-                                <input type="text" id="dbHost" name="dbHost" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="localhost" value="localhost" required>
-                            </div>
-                            
-                            <div>
-                                <label for="dbPort" class="block text-sm font-medium text-gray-700 mb-2">Database Port</label>
-                                <input type="number" id="dbPort" name="dbPort" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="5432" value="5432">
-                            </div>
-                            
-                            <div>
-                                <label for="dbName" class="block text-sm font-medium text-gray-700 mb-2">Database Name</label>
-                                <input type="text" id="dbName" name="dbName" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="ieopt" value="ieopt" required>
-                            </div>
-                            
-                            <div>
-                                <label for="dbUser" class="block text-sm font-medium text-gray-700 mb-2">Database Username</label>
-                                <input type="text" id="dbUser" name="dbUser" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="ledbpt_opt" value="ledbpt_opt" required>
-                            </div>
-                            
-                            <div class="md:col-span-2">
-                                <label for="dbPassword" class="block text-sm font-medium text-gray-700 mb-2">Database Password</label>
-                                <input type="password" id="dbPassword" name="dbPassword" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter your database password" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between mt-8">
-                        <button onclick="prevStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                            Previous
-                        </button>
-                        <button onclick="nextStep()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                            Next: Test Connection
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 3: Database Connection Testing -->
-                <div id="step3" class="step-inactive p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Database Connection Testing</h2>
-                        <p class="text-gray-600">Verify your database connection is working</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-semibold text-gray-800">Connection Status</h3>
-                                <div id="connectionStatus" class="text-gray-500">Not tested</div>
-                            </div>
-                            <div id="connectionDetails" class="space-y-2 text-sm text-gray-600">
-                                <p>Click "Test Connection" to verify your database settings</p>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button onclick="testConnection()" id="testConnectionBtn" 
-                                    class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium">
-                                Test Database Connection
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between mt-8">
-                        <button onclick="prevStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                            Previous
-                        </button>
-                        <button onclick="nextStep()" id="nextFromTest" disabled 
-                                class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium opacity-50 cursor-not-allowed">
-                            Next: Import Database
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 4: Database Import Procedures -->
-                <div id="step4" class="step-inactive p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Database Import Procedures</h2>
-                        <p class="text-gray-600">Import your database backup and verify data integrity</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Select Database Backup File</h3>
-                            <div class="space-y-4">
-                                <input type="file" id="backupFile" accept=".sql" 
-                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <p class="text-sm text-gray-500">Select a .sql backup file to import into your database</p>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-blue-50 rounded-lg p-6">
-                            <h4 class="text-md font-semibold text-blue-800 mb-2">Available Backup Files</h4>
-                            <div class="space-y-2">
-                                <div class="flex items-center justify-between p-3 bg-white rounded border">
-                                    <span class="text-sm font-medium">database_backup_20250813_124947.sql</span>
-                                    <button onclick="selectBackupFile('database_backup_20250813_124947.sql')" 
-                                            class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-                                        Select
-                                    </button>
-                                </div>
-                                <div class="flex items-center justify-between p-3 bg-white rounded border">
-                                    <span class="text-sm font-medium">dbbackup_070820251045PM.sql</span>
-                                    <button onclick="selectBackupFile('dbbackup_070820251045PM.sql')" 
-                                            class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-                                        Select
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="importStatus" class="bg-gray-50 rounded-lg p-6 hidden">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Import Status</h3>
-                            <div id="importProgress" class="space-y-2">
-                                <p>Ready to import...</p>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button onclick="importDatabase()" id="importBtn" disabled
-                                    class="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium opacity-50 cursor-not-allowed">
-                                Import Database
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between mt-8">
-                        <button onclick="prevStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                            Previous
-                        </button>
-                        <button onclick="nextStep()" id="nextFromImport" disabled 
-                                class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium opacity-50 cursor-not-allowed">
-                            Next: Update Config
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 5: Modify Connection Files -->
-                <div id="step5" class="step-inactive p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Modify Connection Files</h2>
-                        <p class="text-gray-600">Update configuration files for live application environment</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="bg-gray-50 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Configuration Update</h3>
-                            <div id="configStatus" class="space-y-2">
-                                <p class="text-gray-600">Click "Update Configuration" to apply your settings to the application</p>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-blue-50 rounded-lg p-4">
-                                <h4 class="font-semibold text-blue-800 mb-2">Environment Variables</h4>
-                                <ul class="text-sm text-blue-700 space-y-1">
-                                    <li>• DATABASE_URL</li>
-                                    <li>• NODE_ENV</li>
-                                    <li>• COMPANY_NAME</li>
-                                    <li>• ADMIN_EMAIL</li>
-                                </ul>
-                            </div>
-                            <div class="bg-green-50 rounded-lg p-4">
-                                <h4 class="font-semibold text-green-800 mb-2">Database Configuration</h4>
-                                <ul class="text-sm text-green-700 space-y-1">
-                                    <li>• Connection settings</li>
-                                    <li>• SSL configuration</li>
-                                    <li>• Pool settings</li>
-                                    <li>• Migration status</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button onclick="updateConfiguration()" id="updateConfigBtn" 
-                                    class="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium">
-                                Update Configuration
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between mt-8">
-                        <button onclick="prevStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                            Previous
-                        </button>
-                        <button onclick="nextStep()" id="nextFromConfig" disabled 
-                                class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium opacity-50 cursor-not-allowed">
-                            Next: NPM Commands
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 6: NPM Commands -->
-                <div id="step6" class="step-inactive p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">NPM Commands Execution</h2>
-                        <p class="text-gray-600">Execute required commands to build and start your application</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <h4 class="font-semibold text-gray-800 mb-3">Required Commands</h4>
-                                <div class="space-y-2">
-                                    <button onclick="runNpmCommand('install')" id="npmInstallBtn" 
-                                            class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 transition-colors">
-                                        npm install
-                                    </button>
-                                    <button onclick="runNpmCommand('run db:push')" id="npmDbPushBtn" 
-                                            class="w-full bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
-                                        npm run db:push
-                                    </button>
-                                    <button onclick="runNpmCommand('run build')" id="npmBuildBtn" 
-                                            class="w-full bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700 transition-colors">
-                                        npm run build
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <h4 class="font-semibold text-gray-800 mb-3">Command Output</h4>
-                                <div id="npmOutput" class="bg-black text-green-400 p-3 rounded text-xs font-mono h-32 overflow-y-auto">
-                                    Ready to execute commands...
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div id="npmStatus" class="bg-blue-50 rounded-lg p-6">
-                            <h3 class="text-lg font-semibold text-blue-800 mb-2">Execution Status</h3>
-                            <div id="npmProgress" class="text-blue-700">
-                                Click the command buttons above to execute them in sequence
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-between mt-8">
-                        <button onclick="prevStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                            Previous
-                        </button>
-                        <button onclick="nextStep()" id="nextFromNpm" disabled 
-                                class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium opacity-50 cursor-not-allowed">
-                            Next: Final Report
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Step 7: Final Deployment Report -->
-                <div id="step7" class="step-inactive p-8">
-                    <div class="text-center mb-8">
-                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Final Deployment Report</h2>
-                        <p class="text-gray-600">Installation complete! Review your deployment summary</p>
-                    </div>
-                    
-                    <div class="space-y-6">
-                        <div class="bg-green-50 rounded-lg p-6 border border-green-200">
-                            <div class="flex items-center mb-4">
-                                <svg class="w-8 h-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <h3 class="text-xl font-semibold text-green-800">Installation Successful!</h3>
-                            </div>
-                            <p class="text-green-700">Your OptiStore Pro medical practice management system has been successfully deployed.</p>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <h4 class="font-semibold text-gray-800 mb-3">System Configuration</h4>
-                                <div id="finalSystemConfig" class="space-y-1 text-sm text-gray-600">
-                                    <p><strong>Domain:</strong> <span id="finalDomain">-</span></p>
-                                    <p><strong>Environment:</strong> <span id="finalEnvironment">-</span></p>
-                                    <p><strong>Database:</strong> <span id="finalDatabase">-</span></p>
-                                    <p><strong>Company:</strong> <span id="finalCompany">-</span></p>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-gray-50 rounded-lg p-6">
-                                <h4 class="font-semibold text-gray-800 mb-3">Installation Summary</h4>
-                                <div class="space-y-1 text-sm text-gray-600">
-                                    <p>✅ Database connection verified</p>
-                                    <p>✅ Data imported successfully</p>
-                                    <p>✅ Configuration files updated</p>
-                                    <p>✅ Dependencies installed</p>
-                                    <p>✅ Application built and ready</p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-blue-50 rounded-lg p-6">
-                            <h4 class="font-semibold text-blue-800 mb-3">Next Steps</h4>
-                            <div class="space-y-2 text-blue-700">
-                                <p>1. Your application is now ready to use</p>
-                                <p>2. Access your application at the configured domain</p>
-                                <p>3. Use the administrator credentials to log in</p>
-                                <p>4. Configure additional settings as needed</p>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button onclick="launchApplication()" 
-                                    class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-lg">
-                                Launch OptiStore Pro
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex justify-start mt-8">
-                        <button onclick="prevStep()" class="bg-gray-500 text-white px-8 py-3 rounded-lg hover:bg-gray-600 transition-colors">
-                            Previous
-                        </button>
-                    </div>
+        <div id="status" class="status info hidden">
+            <div id="statusMessage">Ready to configure database...</div>
+            <div id="progressContainer" class="hidden">
+                <div class="progress">
+                    <div id="progressBar" class="progress-bar"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let currentStep = 1;
-        const totalSteps = 7;
-        let selectedBackupFile = null;
-        let installationData = {
-            app: {},
-            database: {
-                dbType: 'postgresql',
-                dbHost: 'localhost',
-                dbPort: '5432',
-                dbUser: 'ledbpt_opt',
-                dbPassword: '',
-                dbName: 'ieopt'
-            },
-            config: {}
-        };
+        function showTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Remove active class from all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
 
-        function updateProgress() {
+        function showStatus(message, type = 'info', showProgress = false) {
+            const status = document.getElementById('status');
+            const statusMessage = document.getElementById('statusMessage');
+            const progressContainer = document.getElementById('progressContainer');
+            
+            status.className = `status ${type}`;
+            status.classList.remove('hidden');
+            statusMessage.innerHTML = message;
+            
+            if (showProgress) {
+                progressContainer.classList.remove('hidden');
+            } else {
+                progressContainer.classList.add('hidden');
+            }
+        }
+
+        function updateProgress(percent) {
             const progressBar = document.getElementById('progressBar');
-            const progressText = document.getElementById('progressText');
-            const percentage = (currentStep / totalSteps) * 100;
-            
-            progressBar.style.width = percentage + '%';
-            progressText.textContent = `Step ${currentStep} of ${totalSteps}`;
-        }
-
-        function showStep(step) {
-            // Hide all steps
-            for (let i = 1; i <= totalSteps; i++) {
-                document.getElementById(`step${i}`).classList.remove('step-active');
-                document.getElementById(`step${i}`).classList.add('step-inactive');
-            }
-            
-            // Show current step
-            document.getElementById(`step${step}`).classList.remove('step-inactive');
-            document.getElementById(`step${step}`).classList.add('step-active');
-            
-            // If showing step 3, ensure we have database configuration
-            if (step === 3) {
-                loadDatabaseConfiguration();
-            }
-            
-            updateProgress();
-        }
-        
-        function loadDatabaseConfiguration() {
-            // Try to get current form values from step 2 and update stored config
-            const dbTypeElement = document.querySelector('input[name="dbType"]:checked');
-            const dbHostElement = document.getElementById('dbHost');
-            const dbPortElement = document.getElementById('dbPort');
-            const dbUserElement = document.getElementById('dbUser');
-            const dbPasswordElement = document.getElementById('dbPassword');
-            const dbNameElement = document.getElementById('dbName');
-            
-            console.log('Form elements found:', {
-                dbTypeElement: !!dbTypeElement,
-                dbHostElement: !!dbHostElement,
-                dbPortElement: !!dbPortElement,
-                dbUserElement: !!dbUserElement,
-                dbPasswordElement: !!dbPasswordElement,
-                dbNameElement: !!dbNameElement
-            });
-            
-            // Update stored database config with current form values or defaults
-            installationData.database = {
-                dbType: dbTypeElement?.value || installationData.database.dbType || 'postgresql',
-                dbHost: dbHostElement?.value || installationData.database.dbHost || 'localhost',
-                dbPort: dbPortElement?.value || installationData.database.dbPort || '5432',
-                dbUser: dbUserElement?.value || installationData.database.dbUser || 'ledbpt_opt',
-                dbPassword: dbPasswordElement?.value || installationData.database.dbPassword || '',
-                dbName: dbNameElement?.value || installationData.database.dbName || 'ieopt'
-            };
-            
-            console.log('Final database configuration:', installationData.database);
-        }
-
-        function nextStep() {
-            // Store data from current step before moving to next
-            if (currentStep === 1) {
-                // Store app configuration
-                installationData.app = {
-                    domain: document.getElementById('domain')?.value || '',
-                    companyName: document.getElementById('companyName')?.value || '',
-                    adminEmail: document.getElementById('adminEmail')?.value || '',
-                    environment: document.getElementById('environment')?.value || 'production'
-                };
-            } else if (currentStep === 2) {
-                // Store database configuration
-                const dbTypeElement = document.querySelector('input[name="dbType"]:checked');
-                installationData.database = {
-                    dbType: dbTypeElement?.value || 'postgresql',
-                    dbHost: document.getElementById('dbHost')?.value || 'localhost',
-                    dbPort: document.getElementById('dbPort')?.value || '5432',
-                    dbUser: document.getElementById('dbUser')?.value || 'ledbpt_opt',
-                    dbPassword: document.getElementById('dbPassword')?.value || '',
-                    dbName: document.getElementById('dbName')?.value || 'ieopt'
-                };
-                console.log('Stored database config:', installationData.database);
-            }
-            
-            if (currentStep < totalSteps) {
-                currentStep++;
-                showStep(currentStep);
-            }
-        }
-
-        function prevStep() {
-            if (currentStep > 1) {
-                currentStep--;
-                showStep(currentStep);
-            }
+            progressBar.style.width = percent + '%';
         }
 
         async function testConnection() {
-            console.log('🔧 testConnection function called');
+            const btn = document.getElementById('testBtnText');
+            btn.innerHTML = '<span class="loading"></span>Testing Connection...';
             
-            const btn = document.getElementById('testConnectionBtn');
-            const status = document.getElementById('connectionStatus');
-            const details = document.getElementById('connectionDetails');
-            
-            if (!btn || !status || !details) {
-                console.error('❌ Required DOM elements not found:', {
-                    btn: !!btn,
-                    status: !!status, 
-                    details: !!details
-                });
-                alert('Page elements not found. Please refresh the page.');
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.textContent = 'Testing...';
-            status.textContent = 'Testing connection...';
-            status.className = 'text-yellow-600';
-            
-            // Use hardcoded defaults to ensure connection works
-            const dbConfig = {
-                dbType: 'postgresql',
-                dbHost: 'localhost',
-                dbPort: '5432',
-                dbUser: 'ledbpt_opt',
-                dbPassword: '',
-                dbName: 'ieopt'
-            };
-            
-            console.log('🔧 Testing connection with hardcoded configuration:', dbConfig);
+            showStatus('🔍 Testing MySQL connection to your MariaDB server...', 'info', true);
+            updateProgress(25);
             
             try {
-                console.log('🚀 Sending request to /api/install/test-connection with data:', dbConfig);
+                const response = await fetch('/api/stores');
                 
-                const response = await fetch('/api/install/test-connection', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(dbConfig)
-                });
-                
-                console.log('📨 Response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    ok: response.ok,
-                    url: response.url,
-                    headers: Object.fromEntries(response.headers.entries())
-                });
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ Error response body:', errorText);
-                    
-                    // Show detailed error in UI
-                    status.textContent = 'Connection Failed';
-                    status.className = 'text-red-600';
-                    details.innerHTML = `
-                        <div class="text-red-600">
-                            <p>❌ HTTP ${response.status}: ${response.statusText}</p>
-                            <p class="text-sm mt-2">Error details: ${errorText}</p>
-                        </div>
-                    `;
-                    btn.disabled = false;
-                    btn.textContent = 'Test Database Connection';
-                    return;
-                }
-                
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    const text = await response.text();
-                    console.error('Expected JSON but got:', contentType, text.substring(0, 200));
-                    throw new Error('Server returned invalid response format');
-                }
-                
+                updateProgress(75);
                 const result = await response.json();
-                console.log('API Response:', result);
+                updateProgress(100);
                 
-                if (result.success) {
-                    status.textContent = 'Connection Successful';
-                    status.className = 'text-green-600';
-                    details.innerHTML = `
-                        <p class="text-green-600">✅ Database connection verified</p>
-                        <p class="text-gray-600">Host: ${dbConfig.dbHost}:${dbConfig.dbPort}</p>
-                        <p class="text-gray-600">Database: ${dbConfig.dbName}</p>
-                        <p class="text-gray-600">Type: ${dbConfig.dbType}</p>
-                    `;
-                    
-                    // Enable next button
-                    const nextBtn = document.getElementById('nextFromTest');
-                    nextBtn.disabled = false;
-                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (Array.isArray(result) && result.length > 0) {
+                    showStatus('✅ Database connection successful! Found existing data in your database.', 'success');
+                } else if (response.ok) {
+                    showStatus('✅ Database connection successful! Ready for schema deployment.', 'success');
                 } else {
-                    throw new Error(result.error || 'Connection test failed');
+                    showStatus('❌ Connection test failed. Please check database credentials.', 'error');
                 }
             } catch (error) {
-                console.error('Connection test error:', error);
-                status.textContent = 'Connection Failed';
-                status.className = 'text-red-600';
-                details.innerHTML = `<p class="text-red-600">❌ ${error.message}</p>`;
+                showStatus(`❌ Connection test failed: ${error.message}`, 'error');
             }
             
-            btn.disabled = false;
-            btn.textContent = 'Test Database Connection';
+            btn.innerHTML = '🔍 Test Database Connection';
         }
 
-        function selectBackupFile(filename) {
-            selectedBackupFile = filename;
-            document.getElementById('importStatus').classList.remove('hidden');
-            document.getElementById('importProgress').innerHTML = `
-                <p class="text-green-600">✅ Selected: ${filename}</p>
-                <p class="text-gray-600">Ready to import backup file</p>
-            `;
+        async function deploySchema() {
+            const btn = document.getElementById('schemaBtnText');
+            btn.innerHTML = '<span class="loading"></span>Deploying Schema...';
             
-            const importBtn = document.getElementById('importBtn');
-            importBtn.disabled = false;
-            importBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-        }
-
-        async function importDatabase() {
-            if (!selectedBackupFile) {
-                alert('Please select a backup file first');
-                return;
-            }
-            
-            const btn = document.getElementById('importBtn');
-            const progress = document.getElementById('importProgress');
-            
-            btn.disabled = true;
-            btn.textContent = 'Importing...';
+            showStatus('📋 Deploying complete MySQL database schema for medical practice...', 'info', true);
+            updateProgress(10);
             
             try {
-                // Read backup file content (simulation)
-                console.log('Reading backup file:', selectedBackupFile);
-                const response = await fetch(`/${selectedBackupFile}`);
-                
-                if (!response.ok) {
-                    throw new Error(`Failed to read backup file: ${response.statusText}`);
-                }
-                
-                const backupContent = await response.text();
-                console.log('Backup file size:', backupContent.length, 'characters');
-                
-                const dbData = {
-                    dbType: document.querySelector('input[name="dbType"]:checked').value,
-                    dbHost: document.getElementById('dbHost').value,
-                    dbPort: document.getElementById('dbPort').value,
-                    dbUser: document.getElementById('dbUser').value,
-                    dbPassword: document.getElementById('dbPassword').value,
-                    dbName: document.getElementById('dbName').value,
-                    backupContent: backupContent
-                };
-                
-                const importResponse = await fetch('/api/install/import-database', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify(dbData)
-                });
-                
-                if (!importResponse.ok) {
-                    throw new Error(`Import request failed: ${importResponse.statusText}`);
-                }
-                
-                const result = await importResponse.json();
-                console.log('Import result:', result);
-                
-                if (result.success) {
-                    progress.innerHTML = `
-                        <p class="text-green-600">✅ Database import completed successfully</p>
-                        <p class="text-gray-600">Records imported: ${result.recordsImported || 'Unknown'}</p>
-                        <p class="text-gray-600">Tables processed: ${result.tablesProcessed || 40}</p>
-                        <p class="text-gray-600">Import time: ${result.importTime || 'N/A'}</p>
-                        <p class="text-gray-600">File: ${selectedBackupFile}</p>
-                    `;
-                    
-                    // Enable next button
-                    const nextBtn = document.getElementById('nextFromImport');
-                    nextBtn.disabled = false;
-                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                } else {
-                    throw new Error(result.error || 'Import failed');
-                }
-            } catch (error) {
-                console.error('Import error:', error);
-                progress.innerHTML = `<p class="text-red-600">❌ Import failed: ${error.message}</p>`;
-            }
-            
-            btn.disabled = false;
-            btn.textContent = 'Import Database';
-        }
-
-        async function updateConfiguration() {
-            const btn = document.getElementById('updateConfigBtn');
-            const status = document.getElementById('configStatus');
-            
-            btn.disabled = true;
-            btn.textContent = 'Updating...';
-            
-            const configData = {
-                domain: document.getElementById('domain').value,
-                companyName: document.getElementById('companyName').value,
-                adminEmail: document.getElementById('adminEmail').value,
-                environment: document.getElementById('environment').value,
-                dbType: document.querySelector('input[name="dbType"]:checked').value,
-                dbHost: document.getElementById('dbHost').value,
-                dbPort: document.getElementById('dbPort').value,
-                dbUser: document.getElementById('dbUser').value,
-                dbPassword: document.getElementById('dbPassword').value,
-                dbName: document.getElementById('dbName').value
-            };
-            
-            try {
-                const response = await fetch('/api/install/update-config', {
+                const response = await fetch('/api/update-mysql-schema', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(configData)
+                    body: JSON.stringify({})
                 });
                 
+                updateProgress(70);
                 const result = await response.json();
+                updateProgress(100);
                 
                 if (result.success) {
-                    status.innerHTML = `
-                        <p class="text-green-600">✅ Configuration updated successfully</p>
-                        <p class="text-gray-600">Environment files updated</p>
-                        <p class="text-gray-600">Database configuration applied</p>
-                        <p class="text-gray-600">Application settings configured</p>
-                    `;
-                    
-                    // Enable next button
-                    const nextBtn = document.getElementById('nextFromConfig');
-                    nextBtn.disabled = false;
-                    nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    showStatus(`✅ Schema deployed successfully! Medical practice management system ready with complete database structure.`, 'success');
                 } else {
-                    throw new Error(result.error);
+                    showStatus(`❌ Schema deployment failed: ${result.message}`, 'error');
                 }
             } catch (error) {
-                status.innerHTML = `<p class="text-red-600">❌ Configuration update failed: ${error.message}</p>`;
+                showStatus(`❌ Schema deployment failed: ${error.message}`, 'error');
             }
             
-            btn.disabled = false;
-            btn.textContent = 'Update Configuration';
+            btn.innerHTML = '📋 Deploy Database Schema';
         }
 
-        async function runNpmCommand(command) {
-            const btnId = `npm${command.replace(/[^a-zA-Z]/g, '')}Btn`;
-            const btn = document.getElementById(btnId);
-            const output = document.getElementById('npmOutput');
-            const progress = document.getElementById('npmProgress');
+        async function importSampleData() {
+            const btn = document.getElementById('dataBtnText');
+            btn.innerHTML = '<span class="loading"></span>Importing Data...';
             
-            if (!btn) {
-                console.error('Button not found:', btnId);
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.textContent = 'Running...';
-            
-            output.innerHTML += `\n> npm ${command}\n`;
-            output.scrollTop = output.scrollHeight;
+            showStatus('📥 Importing sample medical practice data...', 'info', true);
+            updateProgress(20);
             
             try {
-                console.log('Executing npm command:', command);
-                const response = await fetch('/api/install/npm-command', {
+                const response = await fetch('/api/update-mysql-schema', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ command })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ importData: true })
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`Request failed: ${response.statusText}`);
-                }
-                
+                updateProgress(70);
                 const result = await response.json();
-                console.log('NPM command result:', result);
+                updateProgress(100);
                 
                 if (result.success) {
-                    output.innerHTML += `${result.stdout || 'Command completed successfully'}\n`;
-                    if (result.stderr) {
-                        output.innerHTML += `Warnings: ${result.stderr}\n`;
-                    }
-                    progress.innerHTML = `✅ Successfully executed: npm ${command}`;
-                    
-                    // Mark button as completed
-                    btn.style.backgroundColor = '#10B981'; // green
-                    btn.textContent = `✓ npm ${command}`;
-                    
-                    // Check if all commands are complete
-                    if (command === 'run build') {
-                        const nextBtn = document.getElementById('nextFromNpm');
-                        nextBtn.disabled = false;
-                        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                        progress.innerHTML += `<br>🎉 All commands completed successfully! Ready to continue.`;
-                    }
+                    showStatus(`✅ Sample data imported successfully! Your medical practice system is ready with patients, doctors, appointments, and inventory data.`, 'success');
                 } else {
-                    throw new Error(result.error || result.details || 'Command failed');
+                    showStatus(`❌ Data import failed: ${result.message}`, 'error');
                 }
             } catch (error) {
-                console.error('NPM command error:', error);
-                output.innerHTML += `Error: ${error.message}\n`;
-                progress.innerHTML = `❌ Failed to execute: npm ${command}`;
-                btn.style.backgroundColor = '#EF4444'; // red
+                showStatus(`❌ Data import failed: ${error.message}`, 'error');
             }
             
-            output.scrollTop = output.scrollHeight;
-            btn.disabled = false;
-            if (!btn.textContent.startsWith('✓')) {
-                btn.textContent = `npm ${command}`;
-            }
+            btn.innerHTML = '📥 Import Sample Medical Data';
         }
 
-        function launchApplication() {
-            // Update final summary
-            document.getElementById('finalDomain').textContent = document.getElementById('domain').value;
-            document.getElementById('finalEnvironment').textContent = document.getElementById('environment').value;
-            document.getElementById('finalDatabase').textContent = document.querySelector('input[name="dbType"]:checked').value;
-            document.getElementById('finalCompany').textContent = document.getElementById('companyName').value;
+        function openApplication() {
+            const urls = [
+                'http://opt.vivaindia.com:8080/',
+                'http://opt.vivaindia.com/',
+                window.location.origin
+            ];
             
-            // Launch application
-            const domain = document.getElementById('domain').value;
-            window.open(domain, '_blank');
+            urls.forEach((url, index) => {
+                setTimeout(() => {
+                    window.open(url, '_blank');
+                }, index * 500);
+            });
         }
 
-        // Initialize
-        updateProgress();
+        // Auto-test connection on page load
+        window.addEventListener('load', function() {
+            setTimeout(testConnection, 1500);
+        });
     </script>
 </body>
 </html>
