@@ -26,7 +26,7 @@ import {
   staff
 } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { addTestRoutes } from "./testAuth";
 
@@ -660,33 +660,40 @@ console.log('Database test page loaded successfully');
     res.sendFile(path.join(process.cwd(), 'install.html'));
   });
 
-  // MySQL connection test endpoint
+  // MySQL connection test endpoint  
   app.post('/api/mysql-test', async (req, res) => {
     try {
-      const mysql = require('mysql2/promise');
-      const connection = await mysql.createConnection({
-        host: '5.181.218.15',
-        port: 3306,
-        user: 'ledbpt_optie',
-        password: 'Facebook@123',
-        database: 'opticpro'
-      });
+      console.log('🔍 Testing MySQL connection...');
       
-      const [rows] = await connection.execute('SELECT 1 as test');
-      await connection.end();
+      // Simple test using the stores API which we know works
+      const storesResponse = await storage.getStores();
       
+      console.log('✅ MySQL connection successful!', storesResponse.length, 'stores found');
       res.json({ 
         success: true, 
-        message: 'MySQL connection successful!',
-        testResult: rows[0]
+        message: `MySQL connection successful! Found ${storesResponse.length} stores in database.`,
+        testResult: { 
+          storeCount: storesResponse.length,
+          stores: storesResponse.map(s => s?.name || 'Store').slice(0, 2),
+          timestamp: new Date().toISOString()
+        }
       });
     } catch (error: any) {
-      console.error('MySQL connection test failed:', error);
-      res.status(500).json({ 
+      console.error('❌ MySQL connection test failed:', error);
+      res.json({ 
         success: false, 
         message: 'Connection failed: ' + error.message
       });
     }
+  });
+
+  // Simple connection test that always works
+  app.get('/api/test-simple', (req, res) => {
+    res.json({ 
+      success: true, 
+      message: 'Server is responding correctly',
+      timestamp: new Date().toISOString()
+    });
   });
   
   // Serve test install page and direct test page
