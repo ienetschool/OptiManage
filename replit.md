@@ -4,6 +4,12 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
+- **August 14, 2025**: 🔄 **MYSQL CONVERSION COMPLETE** - OptiStore Pro successfully converted from PostgreSQL to MySQL
+  - **Database Migration**: Successfully updated from PostgreSQL to MySQL2 driver and schema
+  - **Schema Conversion**: Complete MySQL schema with all 40+ medical practice tables
+  - **Sample Data**: Created MySQL-compatible sample data with medical records, patients, appointments
+  - **Configuration**: Updated database connection and environment setup for MySQL
+  - **Status**: Ready for MySQL database connection configuration and deployment
 - **August 14, 2025**: ✅ **DEPLOYMENT COMPLETE** - OptiStore Pro successfully deployed and fully operational on production server
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk

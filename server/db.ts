@@ -1,6 +1,6 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from "@shared/schema";
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
+import * as schema from "@shared/mysql-schema";
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -8,6 +8,5 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const connectionString = process.env.DATABASE_URL;
-const sql = postgres(connectionString);
-export const db = drizzle(sql, { schema });
+export const connection = mysql.createPool(process.env.DATABASE_URL);
+export const db = drizzle(connection, { schema, mode: 'default' });
