@@ -505,7 +505,13 @@ location / {<br>
             
             try {
                 // First test if server is responding
-                const serverTest = await fetch('/api/test-simple');
+                const serverTest = await fetch('/api/test-simple', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
                 if (!serverTest.ok) {
                     throw new Error('Server not responding');
                 }
