@@ -680,7 +680,7 @@ console.log('Database test page loaded successfully');
       });
     } catch (error: any) {
       console.error('❌ MySQL connection test failed:', error);
-      res.json({ 
+      res.status(500).json({ 
         success: false, 
         message: 'Connection failed: ' + error.message
       });

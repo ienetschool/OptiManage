@@ -530,8 +530,10 @@ location / {<br>
                 const result = await response.json();
                 updateProgress(100);
                 
+                console.log('Connection test result:', result);
                 if (result.success) {
-                    showStatus('✅ Database connection successful! Your MySQL database is accessible and ready.', 'success');
+                    const storeInfo = result.testResult ? ` Found ${result.testResult.storeCount} stores: ${result.testResult.stores.join(', ')}` : '';
+                    showStatus(`✅ Database connection successful! Your MySQL database is accessible and ready.${storeInfo}`, 'success');
                 } else {
                     showStatus(`❌ Connection failed: ${result.message}`, 'error');
                 }
