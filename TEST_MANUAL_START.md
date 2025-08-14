@@ -1,54 +1,64 @@
-# SUCCESS: Application Now Running!
+# 📋 Manual Testing Steps for Production Fix
 
-## ✅ Current Status: OPERATIONAL
+## Copy these commands exactly:
 
-### Application Status
-- **PM2 Process**: optistore-pro is ONLINE (192.7MB memory usage)
-- **Port**: 8080 responding correctly
-- **Server**: Express serving on port 8080
-- **HTML Output**: Full application HTML being served
-
-### Logs Show Success
-```
-[express] serving on port 8080
-```
-
-### Next Steps
-
-#### Test External Access
-The application is now running internally. Test external access:
-
+### 1. Connect to your server:
 ```bash
-# Test external connection
-curl http://opt.vivaindia.com:8080
-
-# If that works, open in browser:
-# http://opt.vivaindia.com:8080
+ssh root@5.181.218.15
 ```
 
-#### Open Firewall Port (if needed)
-If external access doesn't work, open the firewall:
-
+### 2. Go to your application folder:
 ```bash
-sudo firewall-cmd --permanent --add-port=8080/tcp  
-sudo firewall-cmd --reload
-sudo firewall-cmd --list-ports
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
 ```
 
-## Expected Result
-Your OptiStore Pro medical practice management system should now be fully accessible at:
-**http://opt.vivaindia.com:8080**
+### 3. Test if MySQL endpoint exists:
+```bash
+curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
+```
 
-With complete functionality:
-- Patient management and medical records
-- Appointment scheduling  
-- Inventory tracking
-- Invoice processing
-- Prescription management
-- Staff role management
-- Dashboard analytics
+**Expected Result:**
+- If you see `404` or `Cannot GET` → The endpoint is missing (continue to step 4)
+- If you see JSON with "success":true → The endpoint exists (skip to step 6)
 
-The database is confirmed working with 44 tables and all sample data accessible through the API endpoints.
+### 4. Check PM2 status:
+```bash
+pm2 status
+```
 
-## Production Status: READY
-OptiStore Pro is now deployed and operational for daily medical practice use.
+### 5. Check application logs:
+```bash
+pm2 logs --lines 20
+```
+
+### 6. Test database connection directly:
+```bash
+mysql -h localhost -u ledbpt_optie -p opticpro
+```
+Enter password: `g79h94LAP`
+
+If connected successfully, type:
+```sql
+SHOW TABLES;
+exit
+```
+
+### 7. Restart application:
+```bash
+pm2 restart all
+```
+
+### 8. Test again:
+```bash
+curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
+```
+
+### 9. Test in browser:
+Open: https://opt.vivaindia.com/install
+Click "Test Database Connection"
+
+## What to Look For:
+- ✅ JSON response with "success":true and "Found 2 stores"
+- ❌ 404 error = Missing endpoint, need to upload new routes.ts
+- ❌ 500 error = Database connection issue
+- ❌ Connection refused = Application not running

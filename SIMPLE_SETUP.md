@@ -1,65 +1,77 @@
-# Simple Production Setup Commands
+# 🔧 Simple SSH Commands to Fix Your Production Server
 
-## Current Status
-- PM2 is running but no processes active
-- Need to start OptiStore Pro application
-- Database connection confirmed working
-
-## Commands to Execute
-
-### Step 1: Start Application with PM2
+## Step 1: Connect to Your Server
 ```bash
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
-
-# Start the application
-DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="8080" pm2 start dist/index.js --name optistore-pro
-
-# Save PM2 configuration
-pm2 save
-
-# Setup auto-restart on server reboot
-pm2 startup
+ssh root@5.181.218.15
 ```
 
-### Step 2: Verify Application is Running
+## Step 2: Navigate to Your Application
 ```bash
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+```
+
+## Step 3: Check Current Status
+```bash
+# Check if the MySQL test endpoint exists
+curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
+
+# If you get 404 error, the endpoint doesn't exist - continue to Step 4
+# If you get JSON response, skip to Step 5
+```
+
+## Step 4: Upload New Routes File (if needed)
+You need to upload the updated `server/routes.ts` file to your server. This file contains the MySQL connection endpoints.
+
+**Option A: Use SCP to upload**
+```bash
+# From your local computer (not on the server):
+scp server/routes.ts root@5.181.218.15:/var/www/vhosts/opt.vivaindia.com/httpdocs/server/routes.ts
+```
+
+**Option B: Edit directly on server**
+```bash
+# On the server, backup current file:
+cp server/routes.ts server/routes.ts.backup
+
+# Then edit the file to add the missing endpoints
+# (This requires manual editing - Option A is easier)
+```
+
+## Step 5: Restart the Application
+```bash
+# Restart PM2 processes
+pm2 restart all
+
 # Check PM2 status
 pm2 status
+```
 
-# Test local connection
-curl http://localhost:8080
+## Step 6: Test the Fix
+```bash
+# Test MySQL connection endpoint
+curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
 
+# Should return something like:
+# {"success":true,"message":"MySQL connection successful! Found 2 stores..."}
+```
+
+## Step 7: Test Web Interface
+Open your browser and go to:
+- https://opt.vivaindia.com/install
+
+Click "Test Database Connection" - it should now work!
+
+## If Still Having Issues
+```bash
 # Check application logs
-pm2 logs optistore-pro --lines 20
+pm2 logs
+
+# Check if the application is running
+pm2 status
+
+# Check database connection manually
+mysql -h localhost -u ledbpt_optie -p opticpro
+# Enter password: g79h94LAP
 ```
 
-### Step 3: Open Firewall Port
-```bash
-# Add port to firewall
-sudo firewall-cmd --permanent --add-port=8080/tcp
-sudo firewall-cmd --reload
-
-# Verify firewall rules
-sudo firewall-cmd --list-ports
-```
-
-### Step 4: Test External Access
-```bash
-# Test from server
-curl http://opt.vivaindia.com:8080
-
-# Expected response: HTML content from OptiStore Pro
-```
-
-## Expected Results
-After running these commands:
-1. `pm2 status` should show optistore-pro as "online"
-2. Application should respond on http://localhost:8080
-3. External access should work on http://opt.vivaindia.com:8080
-4. All medical practice features should be accessible
-
-## Troubleshooting
-If issues persist:
-- Check `pm2 logs optistore-pro` for error messages
-- Verify database connection with `psql -h localhost -U ledbpt_opt -d ieopt`
-- Test different port (3000) if 8080 has conflicts
+The key issue is that your production server needs the updated `server/routes.ts` file that contains the MySQL connection endpoints.
