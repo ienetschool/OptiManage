@@ -419,16 +419,28 @@
             </div>
             
             <div class="connection-info">
-                <h4>📝 Plesk Configuration Steps</h4>
+                <h4>📝 Plesk Configuration for Direct Access (No Port Numbers)</h4>
                 <ol style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
                     <li>Open Plesk control panel for opt.vivaindia.com</li>
-                    <li>Go to Hosting Settings</li>
-                    <li>Change Document Root from: <code>opt.vivaindia.com/optistore-app/dist</code></li>
-                    <li>Change to: <code>opt.vivaindia.com/httpdocs</code></li>
-                    <li>Clear all Apache and nginx directives</li>
-                    <li>Apply settings</li>
+                    <li>Go to <strong>Apache & nginx Settings</strong></li>
+                    <li>Enable <strong>nginx</strong> for this domain</li>
+                    <li>In nginx directives, add this configuration:</li>
                 </ol>
-                <p><strong>Result:</strong> Users can access at http://opt.vivaindia.com (automatically redirects to :8080)</p>
+                <div class="config-display" style="font-size: 12px; margin: 10px 0;">
+location / {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://localhost:8080;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header Host $host;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header X-Real-IP $remote_addr;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header X-Forwarded-Proto $scheme;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;proxy_buffering off;<br>
+}
+                </div>
+                <ol start="5" style="margin: 10px 0; padding-left: 20px; line-height: 1.6;">
+                    <li>Click <strong>Apply</strong> to save settings</li>
+                    <li>Test access at http://opt.vivaindia.com (no port needed)</li>
+                </ol>
+                <p><strong>Result:</strong> Clean access at http://opt.vivaindia.com with no port numbers or redirects</p>
             </div>
             
             <button class="btn btn-success" onclick="openApplication()">

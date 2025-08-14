@@ -137,9 +137,10 @@ OptiStore Pro is a comprehensive medical practice management system built with R
 ## User Preferences
 - Use TypeScript for type safety
 - Follow modern React patterns with hooks
-- Prefer PostgreSQL over MySQL for production
+- Prefer MySQL/MariaDB for production deployment
 - Use shadcn/ui components for consistent UI
 - Implement proper error handling and validation
+- **Domain Access**: Direct access without port numbers or redirects (no :8080 in URLs)
 
 ## Development Guidelines
 - All database operations use Drizzle ORM
