@@ -591,6 +591,69 @@ console.log('Database test page loaded successfully');
   // Installation API routes
   registerInstallRoutes(app);
   
+  // MySQL Schema Update Route
+  app.post("/api/update-mysql-schema", async (req, res) => {
+    try {
+      console.log("🔄 Starting MySQL schema update...");
+      
+      const { connection: mysqlConnection } = await import("./mysql-db");
+      const fs = await import('fs');
+      
+      // Read the complete MySQL backup file
+      const sqlFile = fs.readFileSync('./optistore_pro_mysql_complete.sql', 'utf8');
+      
+      // Split the SQL file into individual statements
+      const statements = sqlFile
+        .split(';')
+        .map(stmt => stmt.trim())
+        .filter(stmt => stmt.length > 0 && !stmt.startsWith('--') && !stmt.startsWith('SET'));
+      
+      let tablesCreated = 0;
+      let recordsInserted = 0;
+      const results = [];
+      
+      // Execute statements in batches
+      for (const statement of statements) {
+        try {
+          if (statement.toLowerCase().includes('create table') || 
+              statement.toLowerCase().includes('drop table')) {
+            await mysqlConnection.execute(statement);
+            tablesCreated++;
+            console.log(`✅ Table: ${statement.substring(0, 50)}...`);
+          } else if (statement.toLowerCase().includes('insert into')) {
+            await mysqlConnection.execute(statement);
+            recordsInserted++;
+            console.log(`✅ Data: ${statement.substring(0, 50)}...`);
+          }
+          results.push(`✅ ${statement.substring(0, 100)}...`);
+        } catch (error: any) {
+          if (!error.message.includes('already exists') && !error.message.includes('Duplicate entry')) {
+            console.log(`⚠️ Skipped: ${statement.substring(0, 50)}... (${error.message})`);
+            results.push(`⚠️ ${error.message}`);
+          }
+        }
+      }
+      
+      console.log(`🎉 Schema update completed: ${tablesCreated} tables, ${recordsInserted} records`);
+      
+      res.json({
+        success: true,
+        message: "MySQL schema updated successfully",
+        tablesCreated,
+        recordsInserted,
+        details: results
+      });
+      
+    } catch (error: any) {
+      console.error("❌ MySQL schema update failed:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+        error: error.toString()
+      });
+    }
+  });
+  
   // Serve test install page and direct test page
   app.get('/test_install_direct.html', (req, res) => {
     res.sendFile('/home/runner/workspace/test_install_direct.html');
