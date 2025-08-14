@@ -1,98 +1,147 @@
-# 🌐 Direct Access Setup (No Port Redirects)
+# ✅ PLESK Direct Access Configuration Guide
 
-## Goal
-Access OptiStore Pro at `http://opt.vivaindia.com` directly without any `:8080` port numbers or redirects.
+## Your Domain Setup
+- **Domain**: opt.vivaindia.com
+- **Hosting Type**: Website 
+- **Document Root**: /opt.vivaindia.sql
+- **SSL**: Enabled with Let's Encrypt
+- **Server**: 5.181.218.15 (AlmaLinux 9 + Plesk)
 
-## Current Status
-- Application runs on port 8080 internally
-- Domain currently redirects or requires port specification
-- Need to configure Plesk to serve app directly on port 80
+## Step 1: Configure Nginx Reverse Proxy in Plesk
 
-## Solution Options
-
-### Option 1: Nginx Reverse Proxy (Recommended)
-Configure Plesk to proxy requests from port 80 to your application on port 8080.
-
-#### Plesk Configuration Steps:
-1. **Login to Plesk Control Panel**
-2. **Go to Domains > opt.vivaindia.com**
-3. **Navigate to Apache & nginx Settings**
-4. **Enable nginx for this domain**
-5. **Add this nginx directive:**
+### Method A: Using Plesk Interface
+1. Go to **Domains** → **opt.vivaindia.com** → **Apache & nginx Settings**
+2. In the **Additional nginx directives** section, add:
 
 ```nginx
 location / {
-    proxy_pass http://localhost:8080;
+    proxy_pass http://127.0.0.1:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_buffering off;
-    proxy_read_timeout 300s;
-    proxy_connect_timeout 75s;
+    proxy_redirect off;
+    
+    # WebSocket support for real-time features
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+
+# Serve static assets directly
+location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_cache_valid 200 1h;
+    add_header Cache-Control "public, immutable";
 }
 ```
 
-6. **Apply Settings**
+### Method B: Direct File Configuration (Alternative)
+If Method A doesn't work, create/edit the nginx configuration file:
 
-### Option 2: Change Application Port
-Modify the application to run directly on port 80 (requires root privileges).
+**File**: `/var/www/vhosts/opt.vivaindia.com/conf/vhost_nginx.conf`
 
-#### Server Configuration:
+```nginx
+server {
+    listen 80;
+    listen 443 ssl http2;
+    server_name opt.vivaindia.com;
+    
+    # SSL configuration (handled by Plesk)
+    include /var/www/vhosts/opt.vivaindia.com/conf/vhost_ssl.conf;
+    
+    # Proxy all requests to Node.js app
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_buffering off;
+        proxy_redirect off;
+        
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+## Step 2: Upload and Start Your Application
+
+### Upload Application Files
+1. Upload all OptiStore Pro files to: `/var/www/vhosts/opt.vivaindia.com/httpdocs/`
+2. Ensure these key files are present:
+   - `package.json`
+   - `server/` directory
+   - `client/` directory  
+   - `.env` with MySQL credentials
+
+### Install Dependencies
+SSH into your server and run:
 ```bash
-# Stop current application
-pm2 stop optistore-pro
-
-# Update application to run on port 80
-export PORT=80
-
-# Start with root privileges (required for port 80)
-sudo pm2 start npm --name "optistore-pro" -- run start:prod
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+npm install
 ```
 
-### Option 3: Document Root Method
-Change Plesk document root to serve a redirect HTML file.
-
-#### Plesk Steps:
-1. **Go to Hosting Settings**
-2. **Change Document Root to:** `opt.vivaindia.com/httpdocs`
-3. **Create index.html in httpdocs:**
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="refresh" content="0; url=http://localhost:8080">
-    <script>window.location.href = 'http://localhost:8080';</script>
-</head>
-<body>Redirecting to OptiStore Pro...</body>
-</html>
+### Configure Environment
+Create `.env` file:
+```env
+DATABASE_URL=mysql://ledbpt_optie:Facebook@123@5.181.218.15:3306/opticpro
+NODE_ENV=production
+PORT=8080
 ```
 
-## Recommended Implementation
+### Start with PM2
+```bash
+npm install -g pm2
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
+```
 
-**Use Option 1 (Nginx Reverse Proxy)** because:
-- ✅ Clean URLs without port numbers
-- ✅ No application code changes needed
-- ✅ Professional setup
-- ✅ Easy to maintain
-- ✅ Works with SSL/HTTPS later
+## Step 3: Test Configuration
 
-## Testing Access
-After configuration, test these URLs:
-- ✅ `http://opt.vivaindia.com` (should work directly)
-- ✅ `https://opt.vivaindia.com` (if SSL configured)
+### Reload Nginx
+```bash
+plesk bin nginx_reload
+# OR
+systemctl reload nginx
+```
 
-## Current Application Status
-- **Running on:** Port 8080
-- **MySQL Database:** Connected (5.181.218.15:3306)
-- **Installation Interface:** Available at `/install`
-- **Status:** Ready for direct access configuration
+### Test Access
+1. **Direct access**: https://opt.vivaindia.com (should work without :8080)
+2. **Installation**: https://opt.vivaindia.com/install
+3. **API test**: https://opt.vivaindia.com/api/stores
 
-## Next Steps
-1. Choose configuration method (recommend Option 1)
-2. Apply Plesk nginx proxy settings
-3. Test direct access without port numbers
-4. Configure SSL certificate for HTTPS (optional)
+## Step 4: Troubleshooting
 
-Your OptiStore Pro medical practice management system will then be accessible directly at your domain without any port specifications.
+### Check PM2 Status
+```bash
+pm2 status
+pm2 logs
+```
+
+### Check Nginx Configuration
+```bash
+nginx -t
+systemctl status nginx
+```
+
+### Check Port 8080
+```bash
+netstat -tlnp | grep 8080
+curl http://localhost:8080/api/stores
+```
+
+## Expected Results
+- ✅ **https://opt.vivaindia.com** → OptiStore Pro main interface
+- ✅ **https://opt.vivaindia.com/install** → Installation interface
+- ✅ **https://opt.vivaindia.com/api/stores** → API response
+- ✅ **No :8080 in URLs** → Clean professional appearance
+
+## Final Verification
+Once configured, your medical practice management system will be accessible at:
+**https://opt.vivaindia.com** with full SSL encryption and no port numbers visible to users.
