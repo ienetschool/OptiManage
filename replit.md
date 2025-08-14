@@ -4,15 +4,17 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
-- **August 14, 2025**: ✅ **MYSQL CONNECTION AND INSTALLATION INTERFACE COMPLETE** - OptiStore Pro successfully connected to MySQL with working installation system
+- **August 14, 2025**: ✅ **MYSQL CONNECTION WORKING - PRODUCTION DEPLOYMENT ISSUE IDENTIFIED** - OptiStore Pro successfully connected to MySQL, production needs code update
   - **Database Migration**: Successfully updated from PostgreSQL to MySQL2 driver and connected to user's MariaDB server
-  - **Connection Established**: Connected to MySQL database at 5.181.218.15:3306 (opticpro database, user: ledbpt_optie)
+  - **Connection Established**: Connected to MySQL database at 5.181.218.15:3306 (opticpro database, user: ledbpt_optie, password: g79h94LAP)
   - **API Working**: Stores, dashboard, and authentication APIs operational with MySQL backend (2 stores confirmed)
-  - **Installation Interface**: ✅ Working `/install` interface with functional MySQL connection test 
-  - **Connection Test**: ✅ Confirmed working - detects 2 existing stores in database
+  - **Installation Interface**: ✅ Working locally at `/install` with functional MySQL connection test 
+  - **Connection Test**: ✅ Confirmed working locally - detects 2 existing stores in database
+  - **Production Issue**: https://opt.vivaindia.com/install shows "Server not responding" due to older deployed code missing MySQL endpoints
   - **Schema Ready**: Complete MySQL schema prepared for deployment with 25+ medical practice tables
+  - **Missing Columns**: Products.barcode, patients.emergency_contact, store_inventory.reserved_quantity causing 500 errors
   - **Direct Access Guide**: Created comprehensive nginx proxy configuration for port-free domain access
-  - **Status**: Installation interface ready for schema deployment and sample data import
+  - **Status**: Local development working perfectly, production deployment needs updated server/routes.ts file
 - **August 14, 2025**: ✅ **DEPLOYMENT COMPLETE** - OptiStore Pro successfully deployed and fully operational on production server
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk

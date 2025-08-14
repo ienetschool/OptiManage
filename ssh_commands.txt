@@ -1,0 +1,33 @@
+# SSH Commands to Fix Production Server
+
+# 1. Connect to your server
+ssh root@5.181.218.15
+
+# 2. Test MySQL connection
+mysql -h localhost -u ledbpt_optie -p opticpro
+# Enter password: g79h94LAP
+# Type: SHOW TABLES; (should show your existing tables)
+# Type: exit
+
+# 3. Go to application directory
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+
+# 4. Backup current code
+cp -r . ../backup_$(date +%Y%m%d_%H%M%S)
+
+# 5. Check current application status
+pm2 status
+pm2 logs
+
+# 6. Test if endpoints exist
+curl http://localhost:8080/api/stores
+curl http://localhost:8080/api/mysql-test
+
+# 7. If mysql-test fails (404), you need to upload new server/routes.ts
+# Upload the updated routes.ts file, then restart:
+pm2 restart all
+
+# 8. After restart, test again:
+curl http://localhost:8080/api/mysql-test -X POST -H "Content-Type: application/json" -d "{}"
+
+# Should return: {"success":true,"message":"MySQL connection successful! Found 2 stores..."}
