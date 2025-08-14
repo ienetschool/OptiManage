@@ -1,65 +1,52 @@
-# Final Deployment Fix - Simple Environment Variable Solution
+# Final PM2 Deployment Fix
 
-## Issue
-- Permission denied accessing ecosystem.config.js
-- PM2 not reading environment variables from .env file
-- Application crashes due to missing DATABASE_URL
+## Issue Identified
+PM2 error: "Script not found: /root/dist/index.js"
+PM2 is looking in wrong directory - needs absolute path
 
-## Simple Solution
+## Solution Commands
 
-### 1. Create ecosystem config manually
+### 1. Stop any existing PM2 processes
+```bash
+pm2 delete optistore-pro
+pm2 kill
+```
+
+### 2. Start PM2 with absolute path
 ```bash
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
+DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="5000" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
+```
+
+### 3. Alternative: Use PM2 ecosystem file
+```bash
 cat > ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [{
     name: 'optistore-pro',
-    script: 'dist/index.js',
+    script: './dist/index.js',
+    cwd: '/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app',
     env: {
       NODE_ENV: 'production',
-      PORT: 5000,
-      DATABASE_URL: 'postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@localhost:5432/ieopt',
-      COMPANY_NAME: 'OptiStore Pro',
-      ADMIN_EMAIL: 'admin@opt.vivaindia.com',
-      DOMAIN: 'https://opt.vivaindia.com',
-      SESSION_SECRET: 'OptiStore-Pro-2025-Secret'
-    }
+      PORT: '5000',
+      DATABASE_URL: 'postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt'
+    },
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G'
   }]
-}
+};
 EOF
-```
 
-### 2. Restart with ecosystem config
-```bash
-pm2 delete optistore-pro
 pm2 start ecosystem.config.js
 ```
 
-### 3. Alternative: Direct environment variables
-If ecosystem doesn't work, use this:
-```bash
-pm2 delete optistore-pro
-pm2 start dist/index.js --name optistore-pro --env production \
-  --env DATABASE_URL="postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@localhost:5432/ieopt" \
-  --env NODE_ENV="production" \
-  --env PORT="5000"
-```
-
-### 4. Test application
+### 4. Verify and save
 ```bash
 pm2 status
-pm2 logs optistore-pro --lines 5
-curl http://localhost:5000
-```
-
-### 5. Save PM2 configuration
-```bash
 pm2 save
 pm2 startup
 ```
 
-## Expected Result
-- PM2 status shows "online"
-- No DATABASE_URL errors in logs
-- Application responds to curl localhost:5000
-- Website works at https://opt.vivaindia.com
+Use method 2 (absolute path) first - it's the simplest fix.
