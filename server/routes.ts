@@ -660,6 +660,11 @@ console.log('Database test page loaded successfully');
     res.sendFile(path.join(process.cwd(), 'install.html'));
   });
 
+  // Serve simple connection test page
+  app.get('/test-connection', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'simple_connection_test.html'));
+  });
+
   // MySQL connection test endpoint  
   app.post('/api/mysql-test', async (req, res) => {
     try {

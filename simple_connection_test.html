@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple MySQL Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        .btn { padding: 15px 25px; margin: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MySQL Connection Test - OptiStore Pro</h1>
+        <p>Testing direct connection to your MySQL database:</p>
+        <ul>
+            <li><strong>Host:</strong> 5.181.218.15:3306</li>
+            <li><strong>Database:</strong> opticpro</li>
+            <li><strong>User:</strong> ledbpt_optie</li>
+        </ul>
+        
+        <button class="btn" onclick="testConnection()">Test MySQL Connection</button>
+        <button class="btn" onclick="testServer()">Test Server Response</button>
+        
+        <div id="result" class="result info">Click "Test MySQL Connection" to verify database connectivity</div>
+    </div>
+
+    <script>
+        async function testConnection() {
+            const result = document.getElementById('result');
+            result.className = 'result info';
+            result.innerHTML = 'Testing MySQL connection...';
+            
+            try {
+                const response = await fetch('/api/mysql-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `✅ SUCCESS! ${data.message}<br>
+                        <strong>Stores found:</strong> ${data.testResult.storeCount}<br>
+                        <strong>Store names:</strong> ${data.testResult.stores.join(', ')}`;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `❌ Connection failed: ${data.message}`;
+                }
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+        
+        async function testServer() {
+            const result = document.getElementById('result');
+            result.className = 'result info';
+            result.innerHTML = 'Testing server response...';
+            
+            try {
+                const response = await fetch('/api/test-simple');
+                const data = await response.json();
+                
+                result.className = 'result success';
+                result.innerHTML = `✅ Server responding: ${data.message}`;
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `❌ Server error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
