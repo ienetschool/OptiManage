@@ -1,51 +1,65 @@
-# Simple Production Setup - Direct Access Method
+# Simple Production Setup Commands
 
 ## Current Status
-- Application running perfectly on localhost:5000
-- Plesk proxy configuration having conflicts
-- Need alternative approach for production access
+- PM2 is running but no processes active
+- Need to start OptiStore Pro application
+- Database connection confirmed working
 
-## Solution 1: Try Different Port Configuration
-Update PM2 to run on port 80 (if available) or 8080:
+## Commands to Execute
 
+### Step 1: Start Application with PM2
 ```bash
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
-pm2 delete optistore-pro
-DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="8080" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
+
+# Start the application
+DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="8080" pm2 start dist/index.js --name optistore-pro
+
+# Save PM2 configuration
 pm2 save
+
+# Setup auto-restart on server reboot
+pm2 startup
 ```
 
-Then test: http://opt.vivaindia.com:8080
-
-## Solution 2: Check Firewall and Open Port
+### Step 2: Verify Application is Running
 ```bash
-# Check if port 5000 is accessible externally
-netstat -tlnp | grep :5000
-firewall-cmd --list-ports
-firewall-cmd --permanent --add-port=5000/tcp
-firewall-cmd --reload
+# Check PM2 status
+pm2 status
+
+# Test local connection
+curl http://localhost:8080
+
+# Check application logs
+pm2 logs optistore-pro --lines 20
 ```
 
-Then test: http://opt.vivaindia.com:5000
-
-## Solution 3: Manual Apache Configuration File
-Create direct Apache virtual host configuration instead of using Plesk interface:
-
+### Step 3: Open Firewall Port
 ```bash
-cat > /etc/httpd/conf.d/optistore-proxy.conf << 'EOF'
-<VirtualHost *:443>
-    ServerName opt.vivaindia.com
-    ProxyPreserveHost On
-    ProxyRequests Off
-    ProxyPass / http://127.0.0.1:5000/
-    ProxyPassReverse / http://127.0.0.1:5000/
-    
-    SSLEngine on
-    # SSL certificates managed by Plesk
-</VirtualHost>
-EOF
+# Add port to firewall
+sudo firewall-cmd --permanent --add-port=8080/tcp
+sudo firewall-cmd --reload
 
-systemctl reload httpd
+# Verify firewall rules
+sudo firewall-cmd --list-ports
 ```
 
-Try solutions in order - the simplest is testing port access first.
+### Step 4: Test External Access
+```bash
+# Test from server
+curl http://opt.vivaindia.com:8080
+
+# Expected response: HTML content from OptiStore Pro
+```
+
+## Expected Results
+After running these commands:
+1. `pm2 status` should show optistore-pro as "online"
+2. Application should respond on http://localhost:8080
+3. External access should work on http://opt.vivaindia.com:8080
+4. All medical practice features should be accessible
+
+## Troubleshooting
+If issues persist:
+- Check `pm2 logs optistore-pro` for error messages
+- Verify database connection with `psql -h localhost -U ledbpt_opt -d ieopt`
+- Test different port (3000) if 8080 has conflicts
