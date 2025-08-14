@@ -1,39 +1,51 @@
-# Simple 5-Minute Setup
+# Simple Production Setup - Direct Access Method
 
-## Step 1: Connect to Your Server
-```bash
-ssh root@5.181.218.15
-```
-Password: `&8KXC4D+Ojfhuu0LSMhE`
+## Current Status
+- Application running perfectly on localhost:5000
+- Plesk proxy configuration having conflicts
+- Need alternative approach for production access
 
-## Step 2: Run This Single Command
-Copy and paste this entire block:
+## Solution 1: Try Different Port Configuration
+Update PM2 to run on port 80 (if available) or 8080:
 
-```bash
-dnf update -y && dnf install -y curl wget git nodejs npm && npm install -g pm2 && mkdir -p /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app && cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app && echo "Setup complete! Upload your files here: $(pwd)"
-```
-
-## Step 3: Upload Your Files
-Upload all your OptiStore Pro files to:
-`/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/`
-
-## Step 4: Deploy
 ```bash
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
-npm install
-npm run build
-pm2 start server/index.js --name optistore
+pm2 delete optistore-pro
+DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="8080" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
+pm2 save
 ```
 
-## Step 5: Configure Domain in Plesk
-1. Login to Plesk
-2. Go to opt.vivaindia.com settings  
-3. Add this to Nginx settings:
-```
-location / {
-    proxy_pass http://127.0.0.1:5000;
-}
-```
-4. Enable SSL
+Then test: http://opt.vivaindia.com:8080
 
-Done! Your app will be live at https://opt.vivaindia.com
+## Solution 2: Check Firewall and Open Port
+```bash
+# Check if port 5000 is accessible externally
+netstat -tlnp | grep :5000
+firewall-cmd --list-ports
+firewall-cmd --permanent --add-port=5000/tcp
+firewall-cmd --reload
+```
+
+Then test: http://opt.vivaindia.com:5000
+
+## Solution 3: Manual Apache Configuration File
+Create direct Apache virtual host configuration instead of using Plesk interface:
+
+```bash
+cat > /etc/httpd/conf.d/optistore-proxy.conf << 'EOF'
+<VirtualHost *:443>
+    ServerName opt.vivaindia.com
+    ProxyPreserveHost On
+    ProxyRequests Off
+    ProxyPass / http://127.0.0.1:5000/
+    ProxyPassReverse / http://127.0.0.1:5000/
+    
+    SSLEngine on
+    # SSL certificates managed by Plesk
+</VirtualHost>
+EOF
+
+systemctl reload httpd
+```
+
+Try solutions in order - the simplest is testing port access first.
