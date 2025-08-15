@@ -536,6 +536,25 @@ console.log('Working install page loaded at: '+new Date());
     }
   });
 
+  // Force MySQL fix with direct connection
+  app.post('/api/force-mysql-fix', async (req, res) => {
+    try {
+      console.log('🔧 Force MySQL fix with direct connection...');
+      
+      const { forceMySQLFix } = await import('./force-mysql-fix');
+      const result = await forceMySQLFix();
+      
+      console.log('✅ Force MySQL fix result:', result);
+      res.json(result);
+    } catch (error) {
+      console.error('❌ Force MySQL fix error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
   // Create API endpoint that serves HTML directly
   app.get('/api/database-test', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
