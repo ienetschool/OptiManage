@@ -1,52 +1,87 @@
-# Fix Nginx Proxy Configuration
+# Nginx Proxy Configuration for opt.vivaindia.com
 
-## Issue Identified
-- curl shows HTTP 200 (proxy working at protocol level)
-- Browser shows Plesk error page (nginx configuration issue)
-- Need to update nginx directives in Plesk
+## Goal: Access OptiStore Pro at http://opt.vivaindia.com without :8080
 
-## Solution: Update Nginx Configuration
+## Method 1: Plesk Nginx Configuration
+1. Login to Plesk panel
+2. Navigate to: Websites & Domains → opt.vivaindia.com
+3. Click "Apache & nginx Settings"
+4. In "Additional nginx directives" section, add:
 
-### 1. Go back to Plesk nginx Settings
-Navigate to: Websites & Domains > opt.vivaindia.com > Apache & nginx Settings
-
-### 2. In "Additional nginx directives" section, replace with:
 ```nginx
 location / {
-    proxy_pass http://127.0.0.1:5000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
+    proxy_pass http://127.0.0.1:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-Port $server_port;
-    proxy_cache_bypass $http_upgrade;
-    proxy_redirect off;
     proxy_buffering off;
+}
+
+location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+location /install {
+    proxy_pass http://127.0.0.1:8080/install;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```
 
-### 3. Alternative: Try Apache Configuration
-If nginx doesn't work, in "Additional Apache directives", use:
-```apache
-ProxyPreserveHost On
-ProxyRequests Off
-ProxyPass / http://127.0.0.1:5000/
-ProxyPassReverse / http://127.0.0.1:5000/
-ProxyPassReverse / https://opt.vivaindia.com/
-```
+5. Click "OK" to apply
 
-### 4. Verify Application Status
+## Method 2: SSH Commands (Alternative)
+Run these in SSH as root:
+
 ```bash
-pm2 status
-curl http://localhost:5000
-netstat -tlnp | grep :5000
+# Create nginx config for the domain
+cat > /var/www/vhosts/system/opt.vivaindia.com/conf/vhost_nginx.conf << 'EOF'
+server {
+    listen 80;
+    server_name opt.vivaindia.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+# Reload nginx
+nginx -t && systemctl reload nginx
 ```
 
-The key changes:
-- Use 127.0.0.1 instead of localhost
-- Add proper headers for HTTPS
-- Disable proxy buffering
-- Set proxy_redirect off
+## Method 3: Simple Redirect (Quick Fix)
+```bash
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/httpdocs
+cat > index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="refresh" content="0; url=http://opt.vivaindia.com:8080">
+    <title>OptiStore Pro</title>
+</head>
+<body>
+    <p>Redirecting to OptiStore Pro...</p>
+    <script>window.location.href = 'http://opt.vivaindia.com:8080';</script>
+</body>
+</html>
+EOF
+```
+
+## Result
+After applying any method, users can access:
+- http://opt.vivaindia.com → OptiStore Pro main application
+- http://opt.vivaindia.com/install → Database setup page
+
+The :8080 port will be hidden from users.

@@ -1,75 +1,53 @@
-# Domain Access Fix - Final Steps
+# Domain Access Fix - Remove Port 8080 Requirement
 
-## Current Status Analysis
-- ✅ **PM2 Process**: optistore-main running successfully on port 8080
-- ✅ **Server**: Express serving on port 8080 
-- ❌ **opt.vivaindia.com**: Shows Plesk error page
-- ❌ **opt.vivaindia.com:8080**: Shows "Not Found" (server responding but wrong route)
+## Current Issue
+- Application requires :8080 in URL
+- User wants normal domain access: http://opt.vivaindia.com
+- Database connection test failing
 
-## Root Cause
-The server is running but either:
-1. Serving on wrong path/route
-2. Plesk proxy configuration not pointing to correct application
-3. Missing static file serving configuration
+## Solution: Plesk Proxy Configuration
 
-## Fix Commands
+### Step 1: Set up Proxy in Plesk
+1. Login to Plesk control panel
+2. Go to "Websites & Domains" → opt.vivaindia.com
+3. Go to "Apache & nginx Settings"
+4. Add this to "Additional nginx directives":
 
-### Step 1: Verify Server is Actually Serving Content
-```bash
-# SSH to your production server
-ssh root@5.181.218.15
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
-
-# Test server directly on the server
-curl http://localhost:8080
-curl http://localhost:8080/api/dashboard
-
-# Check what routes are available
-pm2 logs optistore-main --lines 30
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 ```
 
-### Step 2: Fix Plesk Domain Configuration
+### Step 2: Alternative - Use .htaccess redirect
+Add to document root .htaccess:
+```apache
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^opt\.vivaindia\.com$
+RewriteRule ^(.*)$ http://opt.vivaindia.com:8080/$1 [R=301,L]
+```
+
+### Step 3: Database Connection Fix
+The connection test is failing because the production server doesn't have the API endpoints active.
+
+## SSH Commands to Execute:
+
 ```bash
-# Create HTML redirect file for main domain
-cat > /var/www/vhosts/vivaindia.com/httpdocs/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>OptiStore Pro - Redirecting...</title>
-    <meta http-equiv="refresh" content="0;url=http://opt.vivaindia.com:8080">
-</head>
-<body>
-    <p>Redirecting to OptiStore Pro...</p>
-    <p>If you are not redirected, <a href="http://opt.vivaindia.com:8080">click here</a>.</p>
-</body>
-</html>
+# 1. Create nginx proxy config
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com
+cat > .htaccess << 'EOF'
+RewriteEngine On
+RewriteCond %{SERVER_PORT} !^8080$
+RewriteRule ^(.*)$ http://opt.vivaindia.com:8080/$1 [R=301,L]
 EOF
 
-# Set proper permissions
-chmod 644 /var/www/vhosts/vivaindia.com/httpdocs/index.html
+# 2. Check if server on 8080 has API routes
+curl -I http://localhost:8080/api/test-db-connection
+
+# 3. If API missing, ensure production server is running full app
+ps aux | grep "server/index.ts"
 ```
-
-### Step 3: Configure Plesk Proxy (Alternative Method)
-```bash
-# Create Plesk subdomain configuration
-# This needs to be done through Plesk panel or CLI
-plesk bin subdomain -c opt -domain vivaindia.com -www-root /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/server/public
-```
-
-### Step 4: Test Application Routes
-```bash
-# Test if the main application route works
-curl -v http://localhost:8080/
-curl -v http://localhost:8080/index.html
-curl -v http://localhost:8080/api/auth/user
-
-# Check what files are actually being served
-ls -la /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/server/public/
-```
-
-## Expected Results
-After these fixes:
-- ✅ **opt.vivaindia.com** should redirect to the application
-- ✅ **opt.vivaindia.com:8080** should show the full OptiStore Pro interface
-- ✅ All API endpoints should be accessible
