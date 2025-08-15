@@ -27,7 +27,7 @@ OptiStore Pro uses a modern tech stack:
 - **Database**: PostgreSQL (current development), MySQL (preferred production).
 - **Authentication**: Replit Auth.
 - **Styling**: Tailwind CSS, shadcn/ui.
-- **Cloud/Hosting**: Hostinger VPS (AlmaLinux 9 + Plesk) for production deployment at /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/.
+- **Cloud/Hosting**: Hostinger VPS (AlmaLinux 9 + Plesk) for production deployment at /var/www/vhosts/vivaindia.com/.
 - **Process Management**: PM2 for Node.js application management in production.
 
 ## Recent Changes
@@ -63,4 +63,4 @@ OptiStore Pro uses a modern tech stack:
   - **Automatic Deployment Setup**: ✅ **GITHUB ACTIONS & AUTO-DEPLOY** - Created GitHub Actions workflow for automatic deployment on code push, manual auto-deploy script for instant updates, and continuous deployment options for seamless production updates
   - **All Deployment Methods Active**: ✅ **COMPLETE AUTOMATION** - Manual deployment (./auto-deploy.sh), continuous file watching (./deployment/continuous-deploy.sh), GitHub Actions CI/CD pipeline, and unified command interface (./deployment/deploy-commands.sh) all configured for MySQL production server
   - **August 15, 2025 - All Deployment Methods Tested**: ✅ **DEPLOYMENT AUTOMATION COMPLETE** - All four deployment methods (manual, continuous, GitHub Actions, unified interface) tested and ready for MySQL production server, comprehensive automation suite prepared for seamless code updates
-  - **August 15, 2025 - Server Started Successfully**: ✅ **NODE.JS SERVER RUNNING** - Node.js server successfully started on port 8080 at /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/, but 502 error persists externally, indicating nginx proxy configuration issue preventing external access to running server
+  - **Production Server Issue**: ❌ **PERSISTENT 502 BAD GATEWAY** - Production server Node.js process failing to start on port 8080, multiple restart attempts unsuccessful, requires diagnostic to identify root cause (missing files, tsx installation, database connection, or port binding issues)
