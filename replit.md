@@ -10,7 +10,9 @@ OptiStore Pro is a comprehensive medical practice management system built with R
   - **Database**: Connected to MySQL localhost:3306/opticpro with user ledbpt_optie (all columns added)
   - **Application Status**: **LIVE AND RUNNING** on port 8080 with PM2 process manager
   - **Primary Access**: https://opt.vivaindia.com (fully functional with complete UI)
-  - **Database Schema**: ✅ Complete - all 9 missing columns successfully added via SSH MySQL commands
+  - **Database Schema**: ⚠️ Additional missing columns found - need comprehensive database fix for all tables
+  - **Domain Issue**: ERR_CONNECTION_RESET indicates domain/proxy configuration needed
+  - **Next Steps**: Complete database column addition + domain configuration fix
   - **Key Systems Verified**: 
     - Patient management interface operational (emergency_contact fields added)
     - Product inventory system working (barcode column added)
