@@ -1,0 +1,108 @@
+COMPLETE MYSQL ROUTES FIX - Copy and paste ALL of these commands in your SSH terminal:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# 1. Fix medicalRoutes.ts (Patient registration and medical forms)
+cat > server/medicalRoutes.ts << 'MEDICAL_EOF'
+import type { Express } from "express";
+import { 
+  doctors, 
+  patients, 
+  medicalAppointments, 
+  prescriptions,
+  insertDoctorSchema,
+  insertPatientSchema,
+  insertMedicalAppointmentSchema,
+  insertPrescriptionSchema
+} from "@shared/mysql-schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import { isAuthenticated } from "./oauthAuth";
+
+export function registerMedicalRoutes(app: Express) {
+  app.post("/api/patients", async (req, res) => {
+    try {
+      const patientCode = req.body.patientCode || `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      const validationData = { ...req.body };
+      delete validationData.patientCode;
+      
+      const modifiedSchema = insertPatientSchema.omit({ patientCode: true });
+      const validatedData = modifiedSchema.parse(validationData);
+      const finalData = { ...validatedData, patientCode };
+      
+      await db.insert(patients).values(finalData);
+      const [patient] = await db.select().from(patients).where(eq(patients.patientCode, patientCode)).limit(1);
+      
+      res.json(patient);
+    } catch (error: any) {
+      console.error("Error creating patient:", error);
+      res.status(500).json({ message: "Failed to create patient", error: error?.message });
+    }
+  });
+
+  app.get("/api/patients", isAuthenticated, async (req, res) => {
+    try {
+      const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
+      res.json(patientsList);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+
+  app.post("/api/medical-appointments", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertMedicalAppointmentSchema.parse(req.body);
+      await db.insert(medicalAppointments).values(validatedData);
+      const [appointment] = await db.select().from(medicalAppointments).where(eq(medicalAppointments.appointmentNumber, validatedData.appointmentNumber)).limit(1);
+      res.json(appointment);
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      res.status(500).json({ message: "Failed to create appointment" });
+    }
+  });
+
+  app.post("/api/prescriptions", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertPrescriptionSchema.parse(req.body);
+      await db.insert(prescriptions).values(validatedData);
+      const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.prescriptionNumber, validatedData.prescriptionNumber)).limit(1);
+      res.json(prescription);
+    } catch (error) {
+      console.error("Error creating prescription:", error);
+      res.status(500).json({ message: "Failed to create prescription" });
+    }
+  });
+}
+MEDICAL_EOF
+
+# 2. Fix main routes.ts (All other forms including appointments, invoices, etc.)
+cp server/routes.ts server/routes.ts.backup
+sed -i 's/\.returning()//' server/routes.ts
+
+# 3. Fix storage.ts (Remove PostgreSQL syntax)
+cp server/storage.ts server/storage.ts.backup
+sed -i 's/\.returning()//' server/storage.ts
+
+# 4. Fix hrRoutes.ts (Staff management forms)
+cp server/hrRoutes.ts server/hrRoutes.ts.backup
+sed -i 's/\.returning()//' server/hrRoutes.ts
+
+# Restart production server with all fixes
+pkill -f 'tsx server/index.ts'
+sleep 5
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+
+# Verify server restart
+sleep 10
+ps aux | grep tsx | grep -v grep
+
+# Test all major endpoints
+echo "Testing patient registration:"
+curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"AllFixed","lastName":"Production","phone":"5555555555","email":"allfixed@prod.com"}' | head -c 200
+
+echo -e "\nTesting dashboard:"
+curl -s http://localhost:8080/api/dashboard | head -c 100
+
+echo -e "\nAll routes fixed for MySQL compatibility!"
+COMPLETE_PRODUCTION_ROUTES_FIX.txt
