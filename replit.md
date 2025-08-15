@@ -9,8 +9,10 @@ OptiStore Pro is a comprehensive medical practice management system built with R
   - **Schema Fix Complete**: All missing columns added to appointments, invoices, and invoice_items tables
   - **API Status**: All endpoints (appointments, invoices, dashboard, patients) responding with 200 status codes
   - **Development Server**: Running successfully on port 5000 without database errors
-  - **Production Issue**: Domain opt.vivaindia.com/install shows "Server not responding" - requires production server restart
-  - **Next Steps**: Deploy fixed application to production server with PM2 restart
+  - **Production Issue**: Domain opt.vivaindia.com shows "Server not responding" - production server needs manual restart
+  - **Installation Form**: Updated with password field and editable database connection fields
+  - **Next Steps**: SSH to production server (5.181.218.15) and restart PM2 processes with updated schema fixes
+  - **Production Commands**: Created PRODUCTION_SERVER_FIX.md with complete server restart instructions
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk
   - **Database**: Connected to MySQL localhost:3306/opticpro with user ledbpt_optie (all columns added)
