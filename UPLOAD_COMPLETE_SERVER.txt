@@ -1,0 +1,147 @@
+COMPLETE SERVER SETUP FOR /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/
+==================================================================
+
+Run these commands in your SSH terminal:
+
+# 1. Navigate to the correct directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/
+
+# 2. Create the complete server structure
+mkdir -p server shared client/dist
+
+# 3. Create the main server file with MySQL integration
+cat > server/index.ts << 'SERVEREOF'
+import express from "express";
+import mysql from "mysql2/promise";
+import path from "path";
+import fs from "fs";
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// MySQL Database Connection
+const dbConfig = {
+  host: 'localhost',
+  user: 'ledbpt_optie',
+  password: 'g79h94LAP',
+  database: 'opticpro'
+};
+
+// Dashboard API with MySQL
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [patients] = await connection.execute('SELECT COUNT(*) as count FROM patients');
+    const [appointments] = await connection.execute('SELECT COUNT(*) as count FROM appointments');
+    const [sales] = await connection.execute('SELECT COUNT(*) as count FROM invoices');
+    await connection.end();
+    
+    res.json({
+      totalPatients: patients[0]?.count || 0,
+      totalAppointments: appointments[0]?.count || 0,
+      totalSales: sales[0]?.count || 0,
+      message: 'OptiStore Pro - Medical Practice Management System'
+    });
+  } catch (error) {
+    console.error('Database error:', error);
+    res.json({
+      totalPatients: 0,
+      totalAppointments: 0,
+      totalSales: 0,
+      message: 'OptiStore Pro Running - Database Connecting...'
+    });
+  }
+});
+
+// Patients API
+app.get('/api/patients', async (req, res) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute('SELECT * FROM patients ORDER BY id DESC LIMIT 50');
+    await connection.end();
+    res.json(rows);
+  } catch (error) {
+    console.error('Patients API error:', error);
+    res.status(500).json({ message: 'Database connection error', error: error.message });
+  }
+});
+
+// Appointments API
+app.get('/api/appointments', async (req, res) => {
+  try {
+    const connection = await mysql.createConnection(dbConfig);
+    const [rows] = await connection.execute('SELECT * FROM appointments ORDER BY appointment_date DESC LIMIT 50');
+    await connection.end();
+    res.json(rows);
+  } catch (error) {
+    console.error('Appointments API error:', error);
+    res.json([]);
+  }
+});
+
+// Auth API (mock for production)
+app.get('/api/auth/user', (req, res) => {
+  res.json({ id: "admin", email: "admin@optistore.com", name: "OptiStore Admin" });
+});
+
+// Static files (React build)
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Catch-all handler for React app
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({ 
+      message: 'OptiStore Pro - Medical Practice Management System',
+      status: 'Server Running',
+      api: '/api/dashboard'
+    });
+  }
+});
+
+const port = process.env.PORT || 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`OptiStore Pro server running on port ${port}`);
+  console.log(`Database: ${dbConfig.database}@${dbConfig.host}`);
+});
+SERVEREOF
+
+# 4. Create package.json
+cat > package.json << 'PKGEOF'
+{
+  "name": "optistore-pro",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server/index.ts",
+    "dev": "tsx server/index.ts"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.3",
+    "tsx": "^4.6.2"
+  }
+}
+PKGEOF
+
+# 5. Install dependencies
+npm install
+
+# 6. Kill existing processes and start server
+pkill -f tsx 2>/dev/null || true
+pkill -f node 2>/dev/null || true
+sleep 3
+
+# 7. Start the server
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npm start > server.log 2>&1 &
+
+# 8. Check server status
+echo "Waiting for server to start..."
+sleep 10
+ps aux | grep tsx | grep -v grep
+curl -s http://localhost:8080/api/dashboard
+
+echo "OptiStore Pro server should now be running on opt.vivaindia.com"
