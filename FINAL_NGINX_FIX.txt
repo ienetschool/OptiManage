@@ -1,24 +1,63 @@
-location / {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_buffering off;
+NGINX PROXY FIX - Run these commands in your SSH terminal:
+
+# First, test direct access (this should work):
+curl -s http://localhost:8080/api/patients -X POST -H "Content-Type: application/json" -d '{"firstName":"DirectTest","lastName":"Server","phone":"7777777777","email":"direct@test.com"}' | head -c 300
+
+# Check nginx configuration for opt.vivaindia.com
+find /etc/nginx /var/www/vhosts -name "*.conf" -o -name "nginx.conf" | xargs grep -l "opt.vivaindia.com" 2>/dev/null
+
+# The issue is nginx proxy configuration. We need to configure it to forward to localhost:8080
+# Check current nginx config:
+cat /var/www/vhosts/vivaindia.com/conf/vhost_nginx.conf
+
+# Or try PHP fallback approach - create a simple proxy in the web root:
+cat > /var/www/vhosts/vivaindia.com/opt.vivaindia.com/index.php << 'EOF'
+<?php
+$request_uri = $_SERVER['REQUEST_URI'];
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Proxy all requests to Node.js server on port 8080
+$target_url = 'http://localhost:8080' . $request_uri;
+
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $target_url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+
+if ($method === 'POST' || $method === 'PUT') {
+    $input = file_get_contents('php://input');
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $input);
 }
 
-location /api/ {
-    proxy_pass http://127.0.0.1:8080/api/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+// Forward headers
+$headers = array();
+foreach (getallheaders() as $key => $value) {
+    if (strtolower($key) !== 'host') {
+        $headers[] = "$key: $value";
+    }
 }
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-location /install {
-    proxy_pass http://127.0.0.1:8080/install;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+http_response_code($http_code);
+if ($response) {
+    // Detect content type
+    if (strpos($response, '<!DOCTYPE html') !== false || strpos($response, '<html') !== false) {
+        header('Content-Type: text/html');
+    } elseif (strpos($response, '{') === 0 || strpos($response, '[') === 0) {
+        header('Content-Type: application/json');
+    }
+    echo $response;
+} else {
+    http_response_code(502);
+    echo "Bad Gateway - Unable to connect to backend service";
 }
+?>
+EOF
+
+# Test the PHP proxy
+curl -s https://opt.vivaindia.com/api/dashboard | head -c 100
