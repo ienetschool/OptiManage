@@ -1,20 +1,24 @@
-# IMMEDIATE PRODUCTION SERVER RESTART
+URGENT: Production Server is DOWN - Run these commands immediately:
+
+ssh root@5.181.218.15
+
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-# 1. Kill existing server
-pkill -f "tsx.*server/index.ts" 2>/dev/null || true
+# Kill any hanging processes
+sudo fuser -k 8080/tcp
+pkill -f tsx
+pkill -f node
 
-# 2. Start production server with API routes
-NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro" nohup npx tsx server/index.ts > api-production.log 2>&1 &
+# Start the server properly
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
 
-# 3. Wait and test API endpoints
-sleep 15
-echo "=== Testing API endpoints ==="
-curl -I http://localhost:8080/api/install/test-connection
-curl -I http://localhost:8080/api/dashboard
-curl -I http://localhost:8080/
-
-# 4. Check port status
+# Check if it's running
+sleep 10
+ps aux | grep tsx | grep -v grep
 netstat -tlnp | grep :8080
-echo "=== Production server PID ==="
-ps aux | grep tsx | grep server/index.ts
+
+# Test the API
+curl -s http://localhost:8080/api/dashboard | head -c 100
+
+# If still not working, check the log
+tail -20 production.log
