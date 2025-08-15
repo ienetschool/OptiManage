@@ -1,67 +1,69 @@
-# 🔄 Quick Application Restart Guide
+# 🔄 Fix Connection Refused Error - opt.vivaindia.com
 
-If your application at https://opt.vivaindia.com is not responding or showing errors, follow these steps:
+## Problem
+Your website is showing "ERR_CONNECTION_REFUSED" which means the application stopped running.
 
-## SSH Commands (Copy & Paste):
+## Step-by-Step Fix
 
-### 1. Connect:
+### 1. Connect to your server:
 ```bash
 ssh root@5.181.218.15
 ```
 
-### 2. Navigate to app:
-```bash
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
-```
-
-### 3. Check status:
+### 2. Check what's running:
 ```bash
 pm2 status
 ```
 
-### 4. Restart all processes:
+### 3. If nothing is running, go to your app:
 ```bash
-pm2 restart all
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
 ```
 
-### 5. Check logs:
+### 4. Start the application:
 ```bash
-pm2 logs --lines 10
-```
-
-### 6. Test application:
-```bash
-curl http://localhost:8080/api/stores
-```
-
-Should return JSON with your 2 stores.
-
-### 7. Test website:
-Open: https://opt.vivaindia.com
-
----
-
-## If Application Won't Start:
-```bash
-# Check if the process exists
-pm2 delete all
-
-# Start fresh
-npm start &
-
-# Or start with PM2
 pm2 start ecosystem.config.js
 ```
 
-## Environment Check:
+### 5. Check if it's running:
 ```bash
-# Check environment variables
-cat .env
-
-# Should contain:
-# DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro
-# NODE_ENV=production
-# PORT=8080
+pm2 status
+curl http://localhost:8080/api/stores
 ```
 
-Your application should be accessible at https://opt.vivaindia.com after restart!
+### 6. Add the missing database columns:
+```bash
+mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
+ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
+EOF
+```
+
+### 7. Test your website:
+Open https://opt.vivaindia.com in your browser - it should work now!
+
+## If Still Not Working
+
+Try these additional steps:
+
+```bash
+# Check logs for errors
+pm2 logs
+
+# Restart everything
+pm2 restart all
+
+# Manual start if PM2 fails
+npm start &
+
+# Check if port is listening
+netstat -tulpn | grep 8080
+```
+
+Your OptiStore Pro medical practice management system should be accessible after these steps!

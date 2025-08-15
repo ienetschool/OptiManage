@@ -4,7 +4,13 @@
 OptiStore Pro is a comprehensive medical practice management system built with React/TypeScript frontend and Express/Node.js backend. The system provides inventory management, appointment scheduling, prescription management, invoicing, and complete financial tracking capabilities for medical practices, specifically designed for optical/eye care facilities.
 
 ## Recent Changes
-- **August 14, 2025**: ✅ **DEPLOYMENT COMPLETE** - OptiStore Pro successfully deployed and fully operational on production server
+- **August 14, 2025**: 🚨 **PRODUCTION SERVER CONNECTION ISSUE** - opt.vivaindia.com showing ERR_CONNECTION_REFUSED
+  - **Problem**: Application not accessible at https://opt.vivaindia.com (connection refused)
+  - **Cause**: PM2 process likely stopped or port 8080 not accessible
+  - **Solution**: SSH server restart and status check required
+  - **Database**: MySQL connection working (5.181.218.15:3306/opticpro, user: ledbpt_optie)
+  - **Local Dev**: Working perfectly with all features functional
+  - **Next Step**: Restart PM2 processes on production server
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk
   - **Database**: Connected to PostgreSQL localhost:5432/ieopt with user ledbpt_opt (44 tables confirmed)

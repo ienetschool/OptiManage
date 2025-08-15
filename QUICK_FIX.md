@@ -1,51 +1,64 @@
-# ✅ Installation Interface Fixed!
+# 🚨 Production Server Down - Quick Fix
 
-## Status Update
-- **MySQL Connection**: ✅ Working and tested
-- **Installation Interface**: ✅ Ready at /install 
-- **Database**: ✅ Connected to 5.181.218.15:3306/opticpro
-- **API Test**: ✅ Connection test endpoint functional
+## Issue: Connection Refused
+Your production server at opt.vivaindia.com is showing "ERR_CONNECTION_REFUSED" which means:
+- The application is not running
+- PM2 process has stopped
+- Port 8080 is not accessible
 
-## How to Use Installation Interface
+## Quick Fix Commands
 
-### 1. Access the Interface
-Visit: **http://localhost:5000/install** (or your domain/install)
+SSH to your server and run these commands:
 
-### 2. Connection Test
-Click "Test Database Connection" - should show success ✅
-
-### 3. Deploy Schema
-Use "Deploy Database Schema" to create all medical practice tables
-
-### 4. Import Sample Data  
-Use "Import Sample Medical Data" for test patients, doctors, appointments
-
-## Backend API Issues
-Current 500 errors are due to schema mismatches:
-- **Products**: Missing `barcode` column  
-- **Patients**: Missing `emergency_contact` column
-- **Store Inventory**: Missing `reserved_quantity` column
-
-**Solution**: Use the installation interface to deploy the complete MySQL schema, which will add all missing columns and resolve the API errors.
-
-## Direct Domain Access Setup
-For http://opt.vivaindia.com (no port), add this to Plesk nginx settings:
-
-```nginx
-location / {
-    proxy_pass http://localhost:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_buffering off;
-}
+```bash
+ssh root@5.181.218.15
 ```
 
-## Next Steps
-1. ✅ Connection test is working
-2. 🔄 Deploy schema via /install interface 
-3. 🔄 Import sample medical data
-4. 🔄 Configure Plesk nginx for clean URLs
+```bash
+# Check PM2 status
+pm2 status
 
-Your OptiStore Pro medical practice management system is ready for final deployment!
+# If no processes running, start the application
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+pm2 start ecosystem.config.js
+
+# OR restart all processes
+pm2 restart all
+
+# Check status again
+pm2 status
+
+# Check logs for errors
+pm2 logs --lines 20
+
+# Test the application
+curl http://localhost:8080/api/stores
+```
+
+## Expected Results
+After running these commands:
+- PM2 should show your application running
+- `curl` should return JSON with your stores
+- https://opt.vivaindia.com should work
+
+## If Still Not Working
+```bash
+# Check if port 8080 is open
+netstat -tulpn | grep 8080
+
+# Check nginx/apache status
+systemctl status nginx
+systemctl status apache2
+
+# Restart web server if needed
+systemctl restart nginx
+```
+
+## Alternative: Manual Start
+If PM2 isn't working:
+```bash
+cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+npm start &
+```
+
+Your OptiStore Pro should be accessible again after these steps!
