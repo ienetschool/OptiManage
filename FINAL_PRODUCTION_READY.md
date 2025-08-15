@@ -1,64 +1,97 @@
-# 🚀 Production Deployment Complete - Final Steps
+# Final Production Setup - Application Running Successfully
 
 ## Current Status ✅
-- **Local Development**: OptiStore Pro running on localhost:5000
-- **MySQL Connection**: Successfully connected to database at 5.181.218.15:3306
-- **Production Server**: https://opt.vivaindia.com (needs database column fix)
-- **Database**: opticpro database with user ledbpt_optie (password: g79h94LAP)
+- **PM2 Application**: "optistore-pro" running successfully (37.6MB memory)
+- **Server Path**: `/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app`
+- **Port**: Application running on port 8080
+- **Health**: Application responding and stable
 
-## Production Fix Commands
-
-Copy and paste this complete command block to fix your production deployment:
+## Step 1: Complete Database Schema Fix
+Run this command to add ALL missing database columns:
 
 ```bash
-ssh root@5.181.218.15 "
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
-mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
-ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
-ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);
-EOF
-pm2 restart all
-pm2 status
-echo 'Testing API...'
-curl -s http://localhost:8080/api/stores | head -200
-"
+ssh root@5.181.218.15 "mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
+ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price DECIMAL(10,2);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id VARCHAR(36);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id VARCHAR(36);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type VARCHAR(50);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_level INT DEFAULT 10;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS blood_group VARCHAR(10);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS allergies TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS medical_history TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_provider VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_number VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS current_medications TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS previous_eye_conditions TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS last_eye_exam_date DATE;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS current_prescription TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS risk_factors TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS family_medical_history TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS smoking_status VARCHAR(20);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS alcohol_consumption VARCHAR(20);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS exercise_frequency VARCHAR(20);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_sphere DECIMAL(4,2);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_cylinder DECIMAL(4,2);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_axis INT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_sphere DECIMAL(4,2);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_cylinder DECIMAL(4,2);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_axis INT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS pupillary_distance DECIMAL(4,1);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS doctor_notes TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS treatment_plan TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS follow_up_date DATE;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS medical_alerts TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS username VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS password VARCHAR(255);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS national_id VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS nis_number VARCHAR(50);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_coupons TEXT;
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS loyalty_tier VARCHAR(20);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_tier VARCHAR(20);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS notes TEXT;
+EOF"
 ```
 
-## What This Does
-1. **Connects** to your production server (5.181.218.15)
-2. **Navigates** to your application directory
-3. **Adds 9 missing columns** to fix all "Unknown column" errors
-4. **Restarts** the application with PM2
-5. **Tests** the API to confirm it's working
+## Step 2: Test Direct Port Access
+After database fix, test these URLs:
 
-## After Running the Command
-Your OptiStore Pro at https://opt.vivaindia.com will be fully functional with:
-- ✅ Patient management working (emergency contact fields)
-- ✅ Product inventory loading (barcode column)
-- ✅ Customer data displaying (address fields)
-- ✅ Inventory tracking operational (reserved quantity)
-- ✅ Sales processing working (staff ID field)
+```bash
+# Test if port 8080 is accessible externally
+curl -I http://5.181.218.15:8080
 
-## Test Your Deployment
-After running the command, visit:
-- https://opt.vivaindia.com (main application)
-- https://opt.vivaindia.com/install (installation interface)
+# Test direct domain with port
+curl -I http://opt.vivaindia.com:8080
+```
 
-Both should work without 500 errors.
+## Step 3: Domain Configuration Options
 
-## Database Schema Complete ✅
-Your MySQL database will have all required columns for:
-- Medical practice management
-- Patient records and appointments
-- Inventory and sales tracking
-- Staff and user management
-- Financial reporting and invoicing
+### Option A: Direct Port Access
+If port 8080 is accessible, your application will be available at:
+- **http://opt.vivaindia.com:8080**
 
-**Your OptiStore Pro deployment is production-ready!**
+### Option B: Plesk Proxy Setup (if port access blocked)
+Configure Plesk to proxy traffic from port 80/443 to port 8080:
+
+1. In Plesk control panel:
+   - Go to "Websites & Domains" → opt.vivaindia.com
+   - Click "Apache & nginx Settings"
+   - Add proxy configuration to forward traffic to localhost:8080
+
+2. Alternative: Create a simple redirect HTML file at document root pointing to :8080
+
+## Expected Results
+After database fix:
+- ✅ All 500 errors resolved
+- ✅ Patient management functional
+- ✅ Product inventory working
+- ✅ Customer records loading
+- ✅ Complete medical practice dashboard operational
+
+## Application Access
+Your OptiStore Pro will be accessible at:
+- **Primary**: http://opt.vivaindia.com:8080 (direct port access)
+- **Alternative**: Requires Plesk proxy configuration for clean URL access
+
+The application is running successfully - we just need to complete the database schema and configure domain access.
