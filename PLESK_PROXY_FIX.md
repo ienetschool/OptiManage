@@ -1,118 +1,95 @@
-# Plesk Configuration Fix - Correct Path
+# Plesk Proxy Configuration Fix
 
-## Issue Identified
-Your Plesk Node.js application is configured but pointing to the wrong directory:
-- **Current Document Root**: `/opt.vivaindia.sql`
-- **Should be**: Where your PM2 application is actually running
+## Current Status Analysis
+- ✅ **opt.vivaindia.com/install** - Working (OptiStore Pro installation interface visible)
+- ❌ **opt.vivaindia.com** - 504 Gateway Timeout (Nginx proxy configuration issue)
+- ✅ **opt.vivaindia.com:8080** - Application running on direct port access
 
-## Step 1: Database Fix (Complete All Missing Columns)
-First, let's fix all database issues:
+## Root Cause
+The Plesk proxy configuration is not properly forwarding requests from port 80 to port 8080 where the application runs.
 
+## Immediate Fix Commands
+
+### Step 1: Configure Plesk Proxy Pass
 ```bash
-ssh root@5.181.218.15 "mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
-ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price DECIMAL(10,2);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id VARCHAR(36);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id VARCHAR(36);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type VARCHAR(50);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_level INT DEFAULT 10;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS blood_group VARCHAR(10);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS allergies TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS medical_history TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_provider VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_number VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS current_medications TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS previous_eye_conditions TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS last_eye_exam_date DATE;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS current_prescription TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS risk_factors TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS family_medical_history TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS smoking_status VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS alcohol_consumption VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS exercise_frequency VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_sphere DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_cylinder DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_axis INT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_sphere DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_cylinder DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_axis INT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS pupillary_distance DECIMAL(4,1);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS doctor_notes TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS treatment_plan TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS follow_up_date DATE;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS medical_alerts TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS username VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS password VARCHAR(255);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS national_id VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS nis_number VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_coupons TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS loyalty_tier VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_tier VARCHAR(20);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS prescription_type VARCHAR(50);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS visual_acuity_right_eye VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS visual_acuity_left_eye VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS sphere_right DECIMAL(4,2);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS cylinder_right DECIMAL(4,2);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS axis_right INT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS add_right DECIMAL(4,2);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS sphere_left DECIMAL(4,2);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS cylinder_left DECIMAL(4,2);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS axis_left INT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS add_left DECIMAL(4,2);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS pd_distance DECIMAL(4,1);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS pd_near DECIMAL(4,1);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS pd_far DECIMAL(4,1);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS diagnosis TEXT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS treatment TEXT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS advice TEXT;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS next_follow_up DATE;
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS status VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS qr_code TEXT;
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS subtotal DECIMAL(10,2);
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS tax_amount DECIMAL(10,2);
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS total DECIMAL(10,2);
-EOF"
-```
+# SSH to your server
+ssh root@5.181.218.15
 
-## Step 2: Find Actual Application Path
-```bash
-ssh root@5.181.218.15 "pm2 show optistore-pro | grep 'script path'"
-```
+# Navigate to Plesk configuration
+cd /var/www/vhosts/vivaindia.com/conf
 
-## Step 3: Plesk Node.js Configuration Options
-
-### Option A: Update Plesk Application Root
-1. In Plesk → opt.vivaindia.com → Node.js
-2. Change **Application Root** to the actual directory where your PM2 app is running
-3. Update **Application URL** if needed
-4. Restart the Node.js application in Plesk
-
-### Option B: Use PM2 with Plesk Proxy
-1. Keep PM2 running on port 8080
-2. Configure Plesk to proxy traffic to localhost:8080
-3. Add this to Apache & nginx Settings:
-
-**Additional nginx directives:**
-```
+# Create or edit the vhost_nginx.conf file
+cat > vhost_nginx.conf << 'EOF'
+# Proxy configuration for OptiStore Pro
 location / {
     proxy_pass http://localhost:8080;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_cache_bypass $http_upgrade;
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
 }
+
+# Handle static assets
+location /assets/ {
+    proxy_pass http://localhost:8080/assets/;
+    proxy_set_header Host $host;
+}
+
+# Handle API routes
+location /api/ {
+    proxy_pass http://localhost:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+EOF
+
+# Rebuild Plesk configuration
+/usr/local/psa/admin/bin/httpdmng --reconfigure-domain vivaindia.com
 ```
 
-## Step 4: Test Access
-After configuration:
-- **HTTPS**: https://opt.vivaindia.com (should work with SSL)
-- **Direct**: http://opt.vivaindia.com:8080 (if port access enabled)
+### Step 2: Alternative - Direct Nginx Configuration
+```bash
+# If Plesk method doesn't work, directly edit nginx config
+cat > /etc/nginx/plesk.conf.d/server.conf << 'EOF'
+server {
+    listen 80;
+    server_name opt.vivaindia.com;
+    
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
 
-## Expected Result
-Your OptiStore Pro medical practice management system will be accessible at the clean domain URL without port numbers, with all database errors resolved.
+# Test and reload nginx
+nginx -t && systemctl reload nginx
+```
+
+### Step 3: Verify Application Status
+```bash
+# Ensure PM2 is still running
+pm2 status
+pm2 logs optistore-main --lines 10
+
+# Test direct access
+curl http://localhost:8080/
+curl http://localhost:8080/api/dashboard
+
+# Test after proxy configuration
+curl http://opt.vivaindia.com/
+curl http://opt.vivaindia.com/api/dashboard
+```
+
+## Expected Results
+After applying these fixes:
+- ✅ **opt.vivaindia.com** should load the full OptiStore Pro interface
+- ✅ **opt.vivaindia.com:8080** will continue working as backup
+- ✅ All API endpoints accessible through main domain
