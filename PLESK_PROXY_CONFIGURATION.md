@@ -1,67 +1,69 @@
-# Plesk Proxy Configuration - Complete Solution
+# Plesk Proxy Configuration - No Port 8080 in URL
 
-## Current Status
-✅ Application running on port 3000 via PM2 (18.8MB memory usage)
-✅ Database connected and operational
-❌ Plesk proxy not forwarding requests properly
+## Goal: Access OptiStore Pro at http://opt.vivaindia.com (hide port 8080)
 
-## Complete Solution Steps
-
-### Step 1: Access Plesk Apache & nginx Settings
-Navigate to: **Websites & Domains** → **opt.vivaindia.com** → **Apache & nginx Settings**
-
-### Step 2: Configure Proxy Mode
-1. **Enable "Proxy mode"** checkbox at the top
-2. **Clear both** "Additional Apache directives" and "Additional nginx directives" fields completely
-
-### Step 3: Add Nginx Proxy Configuration
-In **"Additional nginx directives"** field, add:
+## Method 1: Plesk Control Panel (Recommended)
+1. Login to your Plesk control panel
+2. Go to "Websites & Domains" → "opt.vivaindia.com"
+3. Click "Apache & nginx Settings"
+4. In "Additional nginx directives" add:
 
 ```nginx
 location / {
-    proxy_pass http://localhost:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection 'upgrade';
+    proxy_pass http://127.0.0.1:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_cache_bypass $http_upgrade;
-    proxy_read_timeout 86400;
+    proxy_buffering off;
+}
+
+location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+location /install {
+    proxy_pass http://127.0.0.1:8080/install;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
 }
 ```
 
-### Step 4: Alternative Apache Configuration
-If nginx doesn't work, try Apache in **"Additional Apache directives"**:
+5. Click "OK" to apply
+6. Wait 30 seconds for nginx to reload
 
-```apache
-ProxyPreserveHost On
-ProxyRequests Off
-ProxyPass / http://localhost:3000/
-ProxyPassReverse / http://localhost:3000/
+## Method 2: SSH Command (If Plesk method doesn't work)
+```bash
+# Remove the redirect file
+rm /var/www/vhosts/vivaindia.com/opt.vivaindia.sql/index.html
+
+# Create nginx config
+cat > /var/www/vhosts/system/opt.vivaindia.com/conf/vhost_nginx.conf << 'EOF'
+server {
+    listen 80;
+    server_name opt.vivaindia.com;
+    
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+# Test and reload nginx
+nginx -t && systemctl reload nginx
 ```
 
-### Step 5: Disable Static File Handling
-In **"Hosting Settings"** for opt.vivaindia.com:
-- **Uncheck** "Smart static files processing"
-- Set **Document root** to: `/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist`
-
-### Step 6: Test Access
-Visit: **http://opt.vivaindia.com**
-Should now load OptiStore Pro without port number.
-
-### Troubleshooting
-If still showing error:
-1. Check PM2 status: `pm2 status`
-2. Test direct access: `curl http://localhost:3000`
-3. Restart nginx: `systemctl restart nginx`
-4. Check Plesk error logs
-
-## Expected Result
-OptiStore Pro accessible at http://opt.vivaindia.com with full functionality:
-- Patient management
-- Appointment scheduling  
-- Inventory tracking
-- Invoice processing
-- Prescription management
+## Result
+- **http://opt.vivaindia.com** → Shows OptiStore Pro (no port visible)
+- **http://opt.vivaindia.com/install** → Database setup page
+- Port 8080 is completely hidden from users
