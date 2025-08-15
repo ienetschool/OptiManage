@@ -1,0 +1,33 @@
+RUN THIS IN YOUR SSH TERMINAL:
+=============================
+
+cd /var/www/vhosts/vivaindia.com/
+
+# Upload the main server file
+cat > server/index.ts << 'EOF'
+import express from "express";
+import mysql from "mysql2/promise";
+
+const app = express();
+app.use(express.json());
+
+// Simple API endpoint
+app.get('/api/dashboard', async (req, res) => {
+  res.json({ message: "Server working", status: "OK" });
+});
+
+// Serve static files
+app.use(express.static('public'));
+
+// Start server
+const port = 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
+});
+EOF
+
+# Install tsx if needed
+npm install tsx
+
+# Start server
+NODE_ENV=production PORT=8080 npx tsx server/index.ts
