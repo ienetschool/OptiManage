@@ -1,0 +1,19 @@
+AFTER STARTING SERVER, CHECK WITH THESE:
+======================================
+
+# Check if server process is running
+ps aux | grep node
+
+# Check if port 8080 is listening
+netstat -tlnp | grep :8080
+
+# Test server locally
+curl http://localhost:8080/api/dashboard
+
+# Check server logs
+ls -la *.log
+tail server.log
+
+# If still 502, check nginx configuration
+sudo nginx -t
+sudo systemctl status nginx

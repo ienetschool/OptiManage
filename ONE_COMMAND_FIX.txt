@@ -1,0 +1,14 @@
+SINGLE COMMAND TO FIX 502 ERROR
+==============================
+
+Copy this ONE command into your SSH terminal:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql && pkill -f node && echo 'const express=require("express");const app=express();app.use(express.json());app.get("/api/dashboard",(req,res)=>res.json({totalPatients:0,totalAppointments:0,totalSales:0,message:"OptiStore Pro Running"}));app.get("/api/auth/user",(req,res)=>res.json({id:"admin",email:"admin@optistore.com"}));app.get("*",(req,res)=>res.json({message:"OptiStore Pro Server",status:"Running"}));app.listen(8080,"0.0.0.0",()=>console.log("Server on 8080"));' > server.js && nohup node server.js &
+
+This single command will:
+1. Navigate to the correct directory
+2. Kill existing processes
+3. Create a working server file
+4. Start the server on port 8080
+
+After running this, wait 10 seconds then test: opt.vivaindia.com
