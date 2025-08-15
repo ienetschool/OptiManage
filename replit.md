@@ -13,7 +13,8 @@ OptiStore Pro is a comprehensive medical practice management system built with R
   - **Installation Form**: Updated with password field and editable database connection fields
   - **Next Steps**: SSH to production server (5.181.218.15) and restart PM2 processes with updated schema fixes
   - **Production Commands**: Created PRODUCTION_SERVER_FIX.md and PRODUCTION_RESTART_COMMANDS.sh with complete server restart instructions
-  - **Application Path**: Confirmed production path: /var/www/vivaindia.com/opt.vivaindia.sql
+  - **SSH Access**: Successfully connected to production server (5.181.218.15) with Plesk control panel
+  - **Server Analysis**: Created PRODUCTION_DIAGNOSTIC_COMMANDS.md to locate correct application directory
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk
   - **Database**: Connected to MySQL localhost:3306/opticpro with user ledbpt_optie (all columns added)
