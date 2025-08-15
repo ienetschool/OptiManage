@@ -1,53 +1,89 @@
-# Simple Production Fix - Root Cause Analysis
+# Simple Nginx Fix for Domain Access
 
-## Problem Identified
-The application is built as a TypeScript project that needs compilation, but production server is trying to run `app.js` which doesn't exist or isn't the correct entry point.
+## Current Status
+- ✅ PM2: optistore-main running (3.3mb memory)
+- ✅ Application: Working on port 8080
+- ✅ Proxy Config: Applied but still 504 error
+- ❌ Domain: opt.vivaindia.com still timing out
 
-## Development vs Production Structure
-- **Development**: Uses `tsx server/index.ts` (TypeScript runtime)
-- **Production**: Needs compiled JavaScript or proper Node.js startup
+## Simple Solution - Direct Nginx Server Block
 
-## Quick Production Fix Commands
-
+### Step 1: Create Direct Server Configuration
 ```bash
-# Navigate to application directory
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+ssh root@5.181.218.15
 
-# Check what files actually exist
-ls -la
-ls -la server/
+# Create direct nginx configuration for subdomain
+cat > /etc/nginx/conf.d/opt.vivaindia.com.conf << 'EOF'
+server {
+    listen 80;
+    server_name opt.vivaindia.com;
 
-# Install dependencies if missing
-npm install
+    # Main application proxy
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_connect_timeout 10s;
+        proxy_send_timeout 10s;
+        proxy_read_timeout 10s;
+    }
+}
+EOF
 
-# Build the application for production
-npm run build || tsc || echo "No build script found"
+# Test nginx configuration
+nginx -t
 
-# Set environment variables
-export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
-export NODE_ENV=production
-export PORT=8080
-
-# Try different startup approaches
-# Option 1: Use tsx if available
-npx tsx server/index.ts &
-
-# Option 2: Use npm start script
-npm start &
-
-# Option 3: Use node if JS files exist
-node server/index.js &
-
-# Check if any approach worked
-sleep 3
-curl http://localhost:8080/
-netstat -tlnp | grep :8080
+# Reload nginx if test passes
+systemctl reload nginx
 ```
 
-## Plesk Configuration Update
-Once you identify the working startup command, update Plesk:
-1. **Application Startup File**: Use the working entry point
-2. **NPM Script**: If npm start works, use that instead of direct file
+### Step 2: Alternative - Use Different Port
+```bash
+# If port 80 is blocked by Plesk, use port 8000
+cat > /etc/nginx/conf.d/opt-8000.conf << 'EOF'
+server {
+    listen 8000;
+    server_name opt.vivaindia.com;
 
-## Expected Result
-After finding the correct startup method, the application should bind to port 8080 and be accessible via opt.vivaindia.com:8080
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+EOF
+
+nginx -t && systemctl reload nginx
+```
+
+### Step 3: Verify and Test
+```bash
+# Check PM2 is still running
+pm2 status
+
+# Test direct application
+curl http://localhost:8080/
+
+# Test domain after nginx reload
+curl -v http://opt.vivaindia.com/
+
+# If using port 8000
+curl -v http://opt.vivaindia.com:8000/
+
+# Check nginx error logs if still failing
+tail -f /var/log/nginx/error.log
+```
+
+## Expected Access Points
+After this fix:
+- ✅ **opt.vivaindia.com** - Main application (if port 80 works)
+- ✅ **opt.vivaindia.com:8000** - Alternative access (if port 80 blocked)
+- ✅ **opt.vivaindia.com:8080** - Direct application access
