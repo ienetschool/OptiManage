@@ -1,0 +1,27 @@
+RUN THESE COMMANDS TO START THE SERVER PROPERLY:
+
+1. First, make sure you're in the right directory:
+   cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+   pwd
+
+2. Check if tsx is installed:
+   which tsx
+   npm list -g tsx
+
+3. If tsx is not found, install it:
+   npm install -g tsx
+
+4. Start the server with correct syntax:
+   NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts &
+
+5. Check if it's running:
+   ps aux | grep tsx | grep -v grep
+
+6. Check the port:
+   netstat -tlnp | grep :8080
+
+7. Test the API:
+   curl -s http://localhost:8080/api/dashboard
+
+ALTERNATIVE: If tsx still doesn't work, try with node:
+   NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' node --loader=tsx/esm server/index.ts &

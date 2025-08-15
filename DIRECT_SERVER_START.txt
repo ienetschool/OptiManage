@@ -1,0 +1,17 @@
+DIRECT SERVER START COMMANDS - COPY AND PASTE:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+npm install -g tsx
+
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts &
+
+sleep 5
+
+ps aux | grep tsx | grep -v grep
+
+netstat -tlnp | grep :8080
+
+curl -s http://localhost:8080/api/dashboard
+
+echo "Server should now be running on port 8080"
