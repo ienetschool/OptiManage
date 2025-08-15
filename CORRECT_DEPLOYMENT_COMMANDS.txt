@@ -1,0 +1,29 @@
+CORRECT PRODUCTION SERVER COMMANDS
+===================================
+
+✅ CORRECT PATH: /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+✅ CORRECT DATABASE: postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@5.181.218.15/ieopt?schema=public
+
+STEP 1: SSH into server
+ssh vivassh@5.181.218.15
+
+STEP 2: Navigate to CORRECT project directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+STEP 3: Kill existing processes
+pkill -f 'tsx server/index.ts'
+
+STEP 4: Start server with CORRECT PostgreSQL database
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@5.181.218.15/ieopt?schema=public' nohup npx tsx server/index.ts > production.log 2>&1 &
+
+STEP 5: Verify server is running
+ps aux | grep tsx
+netstat -tlnp | grep :8080
+
+STEP 6: Check for any errors
+tail -f production.log
+
+EXPECTED RESULT:
+- Server runs on port 8080
+- opt.vivaindia.com loads properly
+- Forms work with PostgreSQL database

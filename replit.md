@@ -24,10 +24,11 @@ OptiStore Pro uses a modern tech stack:
 - **Design Decisions**: Emphasis on clean UI, readability (e.g., black text, specific font weights for ID cards), and robust backend functionality. Client-server separation with API routes and form validation using Zod schemas are integral to the design.
 
 ## External Dependencies
-- **Database**: PostgreSQL (current development), MySQL (preferred production).
+- **Database**: PostgreSQL production database: postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@5.181.218.15/ieopt?schema=public
 - **Authentication**: Replit Auth.
 - **Styling**: Tailwind CSS, shadcn/ui.
 - **Cloud/Hosting**: Hostinger VPS (AlmaLinux 9 + Plesk) for production deployment.
+- **Production Path**: /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 - **Process Management**: PM2 for Node.js application management in production.
 
 ## Recent Changes
@@ -62,3 +63,4 @@ OptiStore Pro uses a modern tech stack:
   - **August 15, 2025 - MySQL Fix Complete**: ✅ **PRODUCTION MYSQL VERIFIED** - Production server confirmed using MySQL database (ledbpt_optie@localhost:3306/opticpro), dashboard API returning live data, all PostgreSQL syntax removed from server code, fixed files ready for production deployment
   - **Automatic Deployment Setup**: ✅ **GITHUB ACTIONS & AUTO-DEPLOY** - Created GitHub Actions workflow for automatic deployment on code push, manual auto-deploy script for instant updates, and continuous deployment options for seamless production updates
   - **All Deployment Methods Active**: ✅ **COMPLETE AUTOMATION** - Manual deployment (./auto-deploy.sh), continuous file watching (./deployment/continuous-deploy.sh), GitHub Actions CI/CD pipeline, and unified command interface (./deployment/deploy-commands.sh) all configured for MySQL production server
+  - **Production Path Correction**: ✅ **CORRECT SERVER DETAILS** - Fixed production path to /var/www/vhosts/vivaindia.com/opt.vivaindia.sql and PostgreSQL database postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@5.181.218.15/ieopt?schema=public
