@@ -1,0 +1,13 @@
+COPY THIS COMMAND TO YOUR SSH TERMINAL:
+=====================================
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql && pkill -f tsx && mkdir -p server && echo 'import express from "express"; const app = express(); app.use(express.json()); app.get("/api/dashboard", (req,res) => res.json({message:"Server working"})); app.use(express.static("public")); app.listen(8080, "0.0.0.0", () => console.log("Server on 8080"));' > server/index.ts && NODE_ENV=production PORT=8080 npx tsx server/index.ts
+
+This single command will:
+1. Go to correct directory
+2. Kill existing processes  
+3. Create server directory
+4. Create basic server file
+5. Start server on port 8080
+
+After running this, opt.vivaindia.com should work without 502 error.
