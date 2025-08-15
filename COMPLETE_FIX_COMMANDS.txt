@@ -1,0 +1,72 @@
+COMPLETE 502 ERROR FIX - COPY THESE COMMANDS TO YOUR SSH TERMINAL
+================================================================
+
+# Navigate to your application directory
+cd /var/www/vhosts/vivaindia.com/opt
+
+# 1. Check current server status
+echo "=== CHECKING CURRENT STATUS ==="
+ps aux | grep tsx | grep -v grep || echo "No server running"
+netstat -tlnp | grep :8080 || echo "Port 8080 not listening"
+
+# 2. Kill any existing processes completely
+echo "=== KILLING EXISTING PROCESSES ==="
+pkill -9 -f tsx 2>/dev/null || echo "No tsx processes"
+pkill -9 -f node 2>/dev/null || echo "No node processes"
+pkill -9 -f "server/index" 2>/dev/null || echo "No server processes"
+sleep 5
+
+# 3. Build frontend and prepare static files
+echo "=== BUILDING FRONTEND ==="
+cd client
+npm run build
+cd ..
+mkdir -p server/public
+cp -r client/dist/* server/public/
+echo "Static files prepared"
+
+# 4. Check if tsx is available
+echo "=== CHECKING TSX INSTALLATION ==="
+which tsx || npm install -g tsx
+
+# 5. Start server with full logging and error handling
+echo "=== STARTING PRODUCTION SERVER ==="
+NODE_ENV=production \
+PORT=8080 \
+FORCE_PRODUCTION=true \
+DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' \
+nohup npx tsx server/index.ts > production.log 2>&1 &
+
+SERVER_PID=$!
+echo "Server started with PID: $SERVER_PID"
+
+# 6. Wait for server to fully initialize
+echo "=== WAITING FOR SERVER STARTUP ==="
+sleep 15
+
+# 7. Verify server is running
+echo "=== VERIFYING SERVER STATUS ==="
+ps aux | grep $SERVER_PID | grep -v grep && echo "✅ Server process running" || echo "❌ Server process died"
+netstat -tlnp | grep :8080 && echo "✅ Port 8080 listening" || echo "❌ Port 8080 not listening"
+
+# 8. Test server responses
+echo "=== TESTING SERVER RESPONSES ==="
+echo "Testing API endpoint:"
+curl -s --max-time 10 http://localhost:8080/api/dashboard | head -c 100
+echo ""
+echo "Testing main page:"
+curl -s --max-time 10 http://localhost:8080/ | head -c 100
+echo ""
+
+# 9. Check server logs
+echo "=== CHECKING SERVER LOGS ==="
+tail -20 production.log
+
+# 10. Final status check
+echo "=== FINAL STATUS ==="
+if ps aux | grep $SERVER_PID | grep -v grep > /dev/null; then
+    echo "✅ Server is running successfully"
+    echo "✅ Your site should now work at opt.vivaindia.com"
+else
+    echo "❌ Server failed to start - check logs above"
+fi

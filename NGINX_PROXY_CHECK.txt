@@ -1,0 +1,36 @@
+NGINX PROXY CONFIGURATION CHECK
+==============================
+
+If the server is running on port 8080 but you still get 502 errors,
+the issue might be with the nginx proxy configuration.
+
+In your SSH terminal, check the nginx configuration:
+
+1. Check nginx configuration:
+   cat /etc/nginx/conf.d/opt.vivaindia.com.conf
+   
+   OR (if using different path):
+   find /etc/nginx -name "*opt.vivaindia*" -type f
+
+2. The nginx config should contain something like:
+   server {
+       server_name opt.vivaindia.com;
+       location / {
+           proxy_pass http://127.0.0.1:8080;
+           proxy_set_header Host $host;
+           proxy_set_header X-Real-IP $remote_addr;
+       }
+   }
+
+3. If the proxy_pass is wrong, fix it:
+   - Should be: proxy_pass http://127.0.0.1:8080;
+   - NOT: proxy_pass http://localhost:8081; or other ports
+
+4. After any nginx config changes:
+   nginx -t          # Test configuration
+   systemctl reload nginx    # Reload nginx
+
+5. Check nginx status:
+   systemctl status nginx
+
+This ensures nginx properly forwards requests to your Node.js server on port 8080.
