@@ -6,7 +6,7 @@
 echo "🔧 Starting OptiStore Pro Production Server Fix..."
 
 # Navigate to application directory
-cd /var/www/vivaindia.com/opt.vivaindia.sql
+cd /var/www/vhosts/vivaindia.com/optistore-app
 
 # Update environment with MySQL connection
 export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
