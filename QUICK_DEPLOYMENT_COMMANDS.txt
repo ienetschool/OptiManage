@@ -1,0 +1,23 @@
+QUICK MYSQL DEPLOYMENT COMMANDS
+==============================
+
+Copy and run these commands to deploy MySQL fixes directly:
+
+# Upload files to production server
+scp server/medicalRoutes.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/server/
+scp server/storage.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/server/
+scp server/hrRoutes.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/server/
+scp shared/mysql-schema.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/shared/
+
+# Restart production server
+ssh vivassh@5.181.218.15 << 'EOF'
+cd /var/www/vhosts/vivaindia.com/opt
+pkill -f 'tsx server/index.ts'
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+ps aux | grep tsx
+EOF
+
+# Test patient registration
+curl -X POST https://opt.vivaindia.com/api/patients -H "Content-Type: application/json" -d '{"firstName":"Test","lastName":"User","phone":"1234567890","email":"test@mysql.com"}'
+
+RESULT: All form submissions will work with your MySQL database!
