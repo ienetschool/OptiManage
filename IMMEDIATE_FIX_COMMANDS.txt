@@ -1,0 +1,35 @@
+COPY AND RUN THESE COMMANDS TO FIX 502 ERROR
+============================================
+
+ssh vivassh@5.181.218.15 << 'EOF'
+cd /var/www/vhosts/vivaindia.com/opt
+echo "=== FIXING 502 ERROR ==="
+echo "Current directory: $(pwd)"
+
+echo "Killing existing processes..."
+pkill -f tsx
+pkill -f node
+sleep 3
+
+echo "Starting production server..."
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+
+echo "Server started with PID: $!"
+sleep 8
+
+echo "Checking server process..."
+ps aux | grep tsx | grep -v grep
+
+echo "Testing localhost response..."
+curl -s http://localhost:8080/api/dashboard | head -c 100
+
+echo "Checking port 8080..."
+netstat -tlnp | grep :8080
+
+echo "Recent logs..."
+tail -5 production.log
+EOF
+
+echo "Testing external access..."
+sleep 5
+curl -s https://opt.vivaindia.com/api/dashboard
