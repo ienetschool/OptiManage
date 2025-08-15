@@ -1,0 +1,32 @@
+MANUAL FIX - Run these exact commands in your SSH terminal:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# Remove PostgreSQL .returning() syntax from ALL route files
+sed -i 's/\.returning([^)]*)//' server/routes.ts
+sed -i 's/\.returning([^)]*)//' server/storage.ts  
+sed -i 's/\.returning([^)]*)//' server/hrRoutes.ts
+sed -i 's/\.returning([^)]*)//' server/medicalRoutes.ts
+
+# Also fix any .returning() without parameters
+sed -i 's/\.returning()//' server/routes.ts
+sed -i 's/\.returning()//' server/storage.ts  
+sed -i 's/\.returning()//' server/hrRoutes.ts
+sed -i 's/\.returning()//' server/medicalRoutes.ts
+
+# Restart production server
+pkill -f 'tsx server/index.ts'
+sudo fuser -k 8080/tcp
+sleep 5
+
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+
+# Verify restart
+sleep 10
+ps aux | grep tsx | grep -v grep
+netstat -tlnp | grep :8080
+
+# Test endpoints
+curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"TestFixed","lastName":"AllForms","phone":"8888888888","email":"testfixed@all.com"}' | head -c 300
+
+echo "All forms should now work on opt.vivaindia.com"
