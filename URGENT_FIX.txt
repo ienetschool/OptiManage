@@ -1,0 +1,27 @@
+URGENT PRODUCTION SERVER FIX - COPY AND PASTE THESE COMMANDS NOW:
+
+1. Open your terminal/SSH client and connect to your server:
+   ssh vivassh@5.181.218.15
+
+2. Navigate to the project directory:
+   cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+3. Kill any existing server process:
+   pkill -f 'tsx server/index.ts'
+
+4. Start the production server with MySQL connection:
+   NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+
+5. Verify it's running:
+   ps aux | grep tsx | grep -v grep
+   netstat -tlnp | grep :8080
+
+6. Test the API:
+   curl -s http://localhost:8080/api/dashboard
+
+After running these commands, opt.vivaindia.com will work immediately.
+
+ALTERNATIVE: If tsx command not found, install it first:
+   npm install -g tsx
+   
+Then repeat steps 4-6.

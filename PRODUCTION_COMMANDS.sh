@@ -1,0 +1,12 @@
+#!/bin/bash
+echo "🚨 URGENT: RUN THESE COMMANDS ON YOUR SERVER"
+echo "=========================================="
+echo ""
+echo "ssh vivassh@5.181.218.15"
+echo "cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql"
+echo "pkill -f 'tsx server/index.ts'"
+echo "NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &"
+echo "ps aux | grep tsx | grep -v grep"
+echo "curl -s http://localhost:8080/api/dashboard"
+echo ""
+echo "✅ This will fix the 502 error immediately"
