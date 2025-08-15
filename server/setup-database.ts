@@ -88,7 +88,35 @@ export async function createMissingTables() {
 
     // Add missing columns to appointments table
     const appointmentColumns = [
-      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS customer_id VARCHAR(36)'
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS customer_id VARCHAR(36)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS assigned_doctor_id VARCHAR(36)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS appointment_date DATE',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS duration INT',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS service VARCHAR(255)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS appointment_fee DECIMAL(10,2)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_date DATE',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS status VARCHAR(50)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS priority VARCHAR(50)',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS notes TEXT',
+      'ALTER TABLE appointments ADD COLUMN IF NOT EXISTS doctor_notes TEXT'
+    ];
+
+    // Add missing columns to invoices table for payment tracking
+    const invoicePaymentColumns = [
+      'ALTER TABLE invoices ADD COLUMN IF NOT EXISTS payment_date DATE'
+    ];
+
+    // Add missing columns to invoice_items table
+    const invoiceItemColumns = [
+      'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255)',
+      'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS description TEXT',
+      'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS quantity INT',
+      'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS unit_price DECIMAL(10,2)',
+      'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2)',
+      'ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS total DECIMAL(10,2)'
     ];
 
     for (const sql of missingColumns) {
@@ -100,6 +128,22 @@ export async function createMissingTables() {
     }
 
     for (const sql of appointmentColumns) {
+      try {
+        await db.execute(sql);
+      } catch (error) {
+        console.log(`Column might already exist: ${error}`);
+      }
+    }
+
+    for (const sql of invoicePaymentColumns) {
+      try {
+        await db.execute(sql);
+      } catch (error) {
+        console.log(`Column might already exist: ${error}`);
+      }
+    }
+
+    for (const sql of invoiceItemColumns) {
       try {
         await db.execute(sql);
       } catch (error) {

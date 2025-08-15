@@ -517,6 +517,25 @@ console.log('Working install page loaded at: '+new Date());
     }
   });
 
+  // Comprehensive MySQL schema fix endpoint
+  app.post('/api/fix-mysql-schema', async (req, res) => {
+    try {
+      console.log('🔧 Starting comprehensive MySQL schema fix...');
+      
+      const { fixMySQLSchema } = await import('./fix-mysql-schema');
+      const result = await fixMySQLSchema();
+      
+      console.log('✅ MySQL schema fix result:', result);
+      res.json(result);
+    } catch (error) {
+      console.error('❌ MySQL schema fix error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
   // Create API endpoint that serves HTML directly
   app.get('/api/database-test', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
