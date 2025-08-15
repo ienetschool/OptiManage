@@ -5,7 +5,7 @@
 
 PROD_HOST="5.181.218.15"
 PROD_USER="vivassh"
-PROD_PATH="/var/www/vhosts/vivaindia.com"
+PROD_PATH="/var/www/vhosts/vivaindia.com/opt"
 DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
 
 echo "🚀 AUTO-DEPLOYMENT TO PRODUCTION SERVER"
