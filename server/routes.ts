@@ -474,6 +474,49 @@ console.log('Working install page loaded at: '+new Date());
     return res.send(html);
   });
 
+  // Database setup endpoint
+  app.post('/api/setup-database', async (req, res) => {
+    try {
+      console.log('🔧 Setting up database tables...');
+      console.log('DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 30) + '...');
+      
+      const { createMissingTables } = await import('./setup-database');
+      const result = await createMissingTables();
+      
+      console.log('✅ Database setup result:', result);
+      res.json(result);
+    } catch (error) {
+      console.error('❌ Database setup error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // Database connection test endpoint
+  app.get('/api/test-mysql', async (req, res) => {
+    try {
+      console.log('🧪 Testing MySQL connection...');
+      console.log('DATABASE_URL:', process.env.DATABASE_URL?.substring(0, 40) + '...');
+      
+      const { db } = await import('./db');
+      const result = await db.execute('SELECT 1 as test');
+      
+      res.json({ 
+        success: true, 
+        message: 'MySQL connection successful',
+        testResult: result 
+      });
+    } catch (error) {
+      console.error('❌ MySQL test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
   // Create API endpoint that serves HTML directly
   app.get('/api/database-test', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
