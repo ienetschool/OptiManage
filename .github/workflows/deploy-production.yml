@@ -1,0 +1,48 @@
+name: Deploy to Production Server
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        
+    - name: Deploy to production server
+      run: |
+        # Add server to known hosts
+        ssh-keyscan -H 5.181.218.15 >> ~/.ssh/known_hosts
+        
+        # Upload updated files
+        scp -r server/ vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/
+        scp -r shared/ vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/
+        scp -r client/ vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/
+        
+        # Restart production server
+        ssh vivassh@5.181.218.15 << 'EOF'
+          cd /var/www/vhosts/vivaindia.com/opt
+          pkill -f 'tsx server/index.ts'
+          NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+          echo "Production deployment complete!"
+          ps aux | grep tsx | grep -v grep
+        EOF
+        
+        # Test deployment
+        sleep 10
+        curl -f https://opt.vivaindia.com/api/dashboard || exit 1
+        
+    - name: Notify deployment status
+      if: success()
+      run: |
+        echo "✅ Production deployment successful!"
+        echo "🌐 https://opt.vivaindia.com is updated"
