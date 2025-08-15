@@ -1,0 +1,23 @@
+SIMPLE SERVER START COMMANDS - RUN IN SSH
+=========================================
+
+Copy these commands one by one into your SSH terminal:
+
+# 1. Go to the right directory
+cd /var/www/vhosts/vivaindia.com/opt
+
+# 2. Kill everything
+pkill -9 -f tsx
+pkill -9 -f node
+
+# 3. Start server in foreground to see errors
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' npx tsx server/index.ts
+
+# This will show you exactly what error is preventing the server from starting
+# Look for error messages about:
+# - Missing files
+# - Database connection issues  
+# - Port binding problems
+# - Module not found errors
+
+# Once you see the error, press Ctrl+C and tell me what the error message says
