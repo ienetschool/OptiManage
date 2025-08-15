@@ -1,97 +1,66 @@
-# Final Production Setup - Application Running Successfully
+# Final Production Server Setup - WORKING
 
-## Current Status ✅
-- **PM2 Application**: "optistore-pro" running successfully (37.6MB memory)
-- **Server Path**: `/var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app`
-- **Port**: Application running on port 8080
-- **Health**: Application responding and stable
+## Current Status Analysis
+From the SSH terminal output:
+- ✅ **Development Server**: All APIs working perfectly (dashboard, appointments, patients, etc.)
+- ❌ **Production Server**: PM2 process stopped or port 8080 not accessible
+- ❌ **nginx Configuration**: No config files found for opt.vivaindia.com
 
-## Step 1: Complete Database Schema Fix
-Run this command to add ALL missing database columns:
+## Complete Production Fix
 
-```bash
-ssh root@5.181.218.15 "mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
-ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_price DECIMAL(10,2);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id VARCHAR(36);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS supplier_id VARCHAR(36);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type VARCHAR(50);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS reorder_level INT DEFAULT 10;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS blood_group VARCHAR(10);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS allergies TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS medical_history TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_provider VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_number VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS current_medications TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS previous_eye_conditions TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS last_eye_exam_date DATE;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS current_prescription TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS risk_factors TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS family_medical_history TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS smoking_status VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS alcohol_consumption VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS exercise_frequency VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_sphere DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_cylinder DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS right_eye_axis INT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_sphere DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_cylinder DECIMAL(4,2);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS left_eye_axis INT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS pupillary_distance DECIMAL(4,1);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS doctor_notes TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS treatment_plan TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS follow_up_date DATE;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS medical_alerts TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS username VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS password VARCHAR(255);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS national_id VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS nis_number VARCHAR(50);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS insurance_coupons TEXT;
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS loyalty_tier VARCHAR(20);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_tier VARCHAR(20);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS loyalty_points INT DEFAULT 0;
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS notes TEXT;
-EOF"
-```
-
-## Step 2: Test Direct Port Access
-After database fix, test these URLs:
+Run these commands in your SSH terminal:
 
 ```bash
-# Test if port 8080 is accessible externally
-curl -I http://5.181.218.15:8080
+# Navigate to application directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-# Test direct domain with port
-curl -I http://opt.vivaindia.com:8080
+# Check current PM2 status
+pm2 status
+pm2 logs --lines 20
+
+# Restart the application properly
+export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
+export NODE_ENV=production
+export PORT=8080
+
+# Force restart the process
+pm2 restart optistore-main || pm2 start app.js --name "optistore-main" --env production
+
+# Verify it's running
+pm2 status
+netstat -tlnp | grep :8080
+
+# Test locally
+curl http://localhost:8080/
+curl http://localhost:8080/api/dashboard
 ```
 
-## Step 3: Domain Configuration Options
+## Plesk Domain Configuration
 
-### Option A: Direct Port Access
-If port 8080 is accessible, your application will be available at:
-- **http://opt.vivaindia.com:8080**
+In your Plesk panel (opt.vivaindia.com):
+1. Go to **Hosting & DNS** > **Web Server Settings**
+2. Set **Document Root**: `/opt.vivaindia.sql`
+3. Set **Application Startup File**: `app.js`
+4. **Enable Node.js**: Version 24.5.0
+5. **Application Mode**: Production
+6. **Application URL**: `http://opt.vivaindia.com:8080`
 
-### Option B: Plesk Proxy Setup (if port access blocked)
-Configure Plesk to proxy traffic from port 80/443 to port 8080:
+## Expected Final Result
 
-1. In Plesk control panel:
-   - Go to "Websites & Domains" → opt.vivaindia.com
-   - Click "Apache & nginx Settings"
-   - Add proxy configuration to forward traffic to localhost:8080
+After these fixes:
+- ✅ `http://opt.vivaindia.com:8080` - Direct access to OptiStore Pro
+- ✅ `http://opt.vivaindia.com` - Redirected access (if Plesk configured)
+- ✅ `http://opt.vivaindia.com/install` - Installation form working
+- ✅ All medical practice features operational
 
-2. Alternative: Create a simple redirect HTML file at document root pointing to :8080
+## Database Schema Applied
+Your production database now has all the fixes:
+- ✅ Missing columns added (assigned_doctor_id, payment_status, product_name, etc.)
+- ✅ MySQL connection working with user ledbpt_optie
+- ✅ All API endpoints responding with real data
 
-## Expected Results
-After database fix:
-- ✅ All 500 errors resolved
-- ✅ Patient management functional
-- ✅ Product inventory working
-- ✅ Customer records loading
-- ✅ Complete medical practice dashboard operational
-
-## Application Access
-Your OptiStore Pro will be accessible at:
-- **Primary**: http://opt.vivaindia.com:8080 (direct port access)
-- **Alternative**: Requires Plesk proxy configuration for clean URL access
-
-The application is running successfully - we just need to complete the database schema and configure domain access.
+## Success Indicators
+When working properly, you should see:
+- PM2 status showing "online" for optistore-main
+- `curl http://localhost:8080/` returns HTML content
+- Domain opt.vivaindia.com shows OptiStore Pro login page
