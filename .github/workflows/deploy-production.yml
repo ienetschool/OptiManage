@@ -32,7 +32,7 @@ jobs:
         ssh vivassh@5.181.218.15 << 'EOF'
           cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
           pkill -f 'tsx server/index.ts'
-          NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+          NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
           echo "Production deployment complete!"
           ps aux | grep tsx | grep -v grep
         EOF
