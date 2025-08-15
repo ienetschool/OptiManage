@@ -1,0 +1,28 @@
+MANUAL SERVER RESTART COMMANDS
+===============================
+
+Your production server is down. Copy and run these commands:
+
+1. SSH into your server:
+ssh vivassh@5.181.218.15
+
+2. Navigate to project directory:
+cd /var/www/vhosts/vivaindia.com/opt
+
+3. Check if server is running:
+ps aux | grep tsx
+
+4. Kill any existing processes:
+pkill -f 'tsx server/index.ts'
+
+5. Start the server:
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+
+6. Verify it's running:
+ps aux | grep tsx
+netstat -tlnp | grep :8080
+
+7. Check for errors:
+tail -f production.log
+
+The 502 error will disappear once the Node.js server starts on port 8080.
