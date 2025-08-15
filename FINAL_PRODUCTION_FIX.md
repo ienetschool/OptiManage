@@ -1,62 +1,105 @@
-# PRODUCTION ACCESS ISSUE ANALYSIS
-
-## Problem Identified
-✅ **Domain Configuration Working**: opt.vivaindia.com resolves correctly
-✅ **HTTPS Working**: /install page serves correctly on HTTPS (HTTP/2 200)
-❌ **Route Configuration**: Missing proxy configuration for main app and API routes
+# FINAL PRODUCTION SERVER FIX
 
 ## Current Status
-- HTTP automatically redirects to HTTPS (301 Moved Permanently)
-- HTTPS /install page works (25556 bytes, nginx served)
-- Other routes (/, /api/*) not properly proxied to port 8080
-- Production server needs to be accessible via HTTPS proxy
+✅ Website Loading: opt.vivaindia.com now displays OptiStore Pro interface
+✅ Production Server: Running on port 8080 with MySQL database
+❌ Form Submissions: Still showing "Failed to register patient" errors
 
-## Solution Required
-1. Configure HTTPS proxy in Plesk to route to localhost:8080
-2. Ensure production server runs on port 8080 with proper SSL handling
-3. Update nginx directives for HTTPS rather than HTTP proxy
+## Root Cause
+The production server needs the updated MySQL-compatible medicalRoutes.ts file that removes PostgreSQL .returning() syntax.
 
-## Commands to Execute in Production SSH:
+## URGENT FIX - Run in SSH Terminal:
 
 ```bash
-# 1. Start production server on port 8080
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
-pkill -f "tsx.*server/index.ts" 2>/dev/null || true
 
-NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro" nohup npx tsx server/index.ts > https-production.log 2>&1 &
+# Backup current file
+cp server/medicalRoutes.ts server/medicalRoutes.ts.backup
 
-# 2. Verify port 8080 is listening
+# Create the MySQL-compatible medicalRoutes.ts
+cat > server/medicalRoutes.ts << 'EOF'
+import type { Express } from "express";
+import { 
+  doctors, 
+  patients, 
+  medicalAppointments, 
+  prescriptions,
+  insertDoctorSchema,
+  insertPatientSchema,
+  insertMedicalAppointmentSchema,
+  insertPrescriptionSchema
+} from "@shared/mysql-schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import { isAuthenticated } from "./oauthAuth";
+
+export function registerMedicalRoutes(app: Express) {
+  // Public patient registration endpoint
+  app.post("/api/patients", async (req, res) => {
+    try {
+      console.log("Received patient registration data:", req.body);
+      
+      const patientCode = req.body.patientCode || `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      const validationData = { ...req.body };
+      delete validationData.patientCode;
+      
+      const modifiedSchema = insertPatientSchema.omit({ patientCode: true });
+      const validatedData = modifiedSchema.parse(validationData);
+      
+      const finalData = {
+        ...validatedData,
+        patientCode: patientCode
+      };
+      
+      console.log("Final data for insertion:", finalData);
+      
+      // MySQL compatible insert (no .returning())
+      await db.insert(patients).values(finalData);
+      
+      // Fetch the created patient
+      const [patient] = await db.select().from(patients).where(eq(patients.patientCode, patientCode)).limit(1);
+      
+      console.log("Patient created successfully:", patient);
+      res.json(patient);
+    } catch (error: any) {
+      console.error("Error creating patient:", error);
+      
+      if (error.issues) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          error: JSON.stringify(error.issues, null, 2)
+        });
+      }
+      
+      res.status(500).json({ message: "Failed to create patient", error: error?.message || "Unknown error" });
+    }
+  });
+
+  // Get patients
+  app.get("/api/patients", isAuthenticated, async (req, res) => {
+    try {
+      const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
+      res.json(patientsList);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+}
+EOF
+
+# Restart production server
+pkill -f 'tsx server/index.ts'
+sleep 3
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+
+# Verify restart
 sleep 10
-curl -I http://localhost:8080/
-curl -I http://localhost:8080/api/dashboard
-netstat -tlnp | grep :8080
-```
+ps aux | grep tsx | grep -v grep
 
-## Plesk HTTPS Configuration
-Replace nginx directives with HTTPS-aware configuration:
-
-```nginx
-location / {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-Port 443;
-    proxy_buffering off;
-}
-
-location /api/ {
-    proxy_pass http://127.0.0.1:8080/api/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-    proxy_set_header X-Forwarded-Port 443;
-}
+# Test patient registration
+curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"FINAL_TEST","lastName":"Production","phone":"8888888888","email":"finaltest@prod.com"}' | head -c 400
 ```
 
 ## Expected Result
-- https://opt.vivaindia.com → OptiStore Pro main application
-- https://opt.vivaindia.com/install → Database setup (working)
-- https://opt.vivaindia.com/api/dashboard → API endpoints
+After running these commands, the production website will have fully functional patient registration forms matching the development environment.
