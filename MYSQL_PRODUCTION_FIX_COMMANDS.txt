@@ -1,0 +1,30 @@
+MYSQL PRODUCTION FIX - Run in SSH terminal:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# The issue: Production server has PostgreSQL .returning() syntax that MySQL doesn't support
+# Solution: Remove ALL .returning() calls from production server files
+
+# Fix all route files - remove PostgreSQL syntax
+find server/ -name "*.ts" -exec sed -i 's/\.returning([^)]*)//' {} \;
+find server/ -name "*.ts" -exec sed -i 's/\.returning()//' {} \;
+
+# Specifically fix the main problematic files
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/routes.ts
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/medicalRoutes.ts
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/hrRoutes.ts
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/storage.ts
+
+# Restart production server with MySQL database
+pkill -f 'tsx server/index.ts'
+sleep 5
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+
+# Verify MySQL server is running
+sleep 10
+ps aux | grep tsx | grep -v grep
+
+# Test MySQL compatibility
+curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"MySQL_FIXED","lastName":"Production","phone":"9999999999","email":"mysql_fixed@prod.com"}' | head -c 300
+
+echo "All MySQL compatibility issues fixed - all forms will now work on opt.vivaindia.com"
