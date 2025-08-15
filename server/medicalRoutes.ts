@@ -3,21 +3,12 @@ import {
   doctors, 
   patients, 
   medicalAppointments, 
-  prescriptions, 
-  prescriptionItems,
-  medicalInterventions,
-  medicalInvoices,
-  medicalInvoiceItems,
-  patientHistory,
+  prescriptions,
   insertDoctorSchema,
   insertPatientSchema,
   insertMedicalAppointmentSchema,
-  insertPrescriptionSchema,
-  insertPrescriptionItemSchema,
-  insertMedicalInterventionSchema,
-  insertMedicalInvoiceSchema,
-  insertMedicalInvoiceItemSchema
-} from "@shared/schema";
+  insertPrescriptionSchema
+} from "@shared/mysql-schema";
 import { db } from "./db";
 import { eq, desc, and, like, gte, lte } from "drizzle-orm";
 import { isAuthenticated } from "./oauthAuth";
@@ -38,7 +29,13 @@ export function registerMedicalRoutes(app: Express) {
   app.post("/api/doctors", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertDoctorSchema.parse(req.body);
-      const [doctor] = await db.insert(doctors).values(validatedData).returning();
+      
+      // MySQL compatible insert
+      await db.insert(doctors).values(validatedData);
+      
+      // Fetch the created doctor
+      const [doctor] = await db.select().from(doctors).where(eq(doctors.licenseNumber, validatedData.licenseNumber)).limit(1);
+      
       res.json(doctor);
     } catch (error) {
       console.error("Error creating doctor:", error);
@@ -61,12 +58,45 @@ export function registerMedicalRoutes(app: Express) {
   app.post("/api/patients", async (req, res) => {
     try {
       console.log("Received patient registration data:", req.body);
-      const validatedData = insertPatientSchema.parse(req.body);
-      const [patient] = await db.insert(patients).values(validatedData).returning();
+      
+      // Auto-generate patient code if not provided
+      const patientCode = req.body.patientCode || `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      
+      // Create a modified schema that makes patientCode optional for validation
+      const optionalPatientCodeSchema = insertPatientSchema.extend({
+        patientCode: insertPatientSchema.shape.patientCode.optional()
+      });
+      
+      // Validate input without requiring patientCode
+      const validatedData = optionalPatientCodeSchema.parse(req.body);
+      
+      // Add the auto-generated patientCode to the validated data
+      const finalData = {
+        ...validatedData,
+        patientCode: patientCode
+      };
+      
+      console.log("Final data for insertion:", finalData);
+      
+      // MySQL compatible insert
+      await db.insert(patients).values(finalData);
+      
+      // Fetch the created patient
+      const [patient] = await db.select().from(patients).where(eq(patients.patientCode, patientCode)).limit(1);
+      
       console.log("Patient created successfully:", patient);
       res.json(patient);
     } catch (error: any) {
       console.error("Error creating patient:", error);
+      
+      // Handle validation errors
+      if (error.issues) {
+        return res.status(400).json({ 
+          message: "Validation failed", 
+          error: JSON.stringify(error.issues, null, 2)
+        });
+      }
+      
       res.status(500).json({ message: "Failed to create patient", error: error?.message || "Unknown error" });
     }
   });
@@ -85,7 +115,13 @@ export function registerMedicalRoutes(app: Express) {
   app.post("/api/medical-appointments", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertMedicalAppointmentSchema.parse(req.body);
-      const [appointment] = await db.insert(medicalAppointments).values(validatedData).returning();
+      
+      // MySQL compatible insert
+      await db.insert(medicalAppointments).values(validatedData);
+      
+      // Fetch the created appointment
+      const [appointment] = await db.select().from(medicalAppointments).where(eq(medicalAppointments.appointmentNumber, validatedData.appointmentNumber)).limit(1);
+      
       res.json(appointment);
     } catch (error) {
       console.error("Error creating medical appointment:", error);
@@ -110,19 +146,7 @@ export function registerMedicalRoutes(app: Express) {
       
       const [prescription] = await db.insert(prescriptions).values(validatedData).returning();
 
-      // Create patient history entry
-      await db.insert(patientHistory).values({
-        patientId: prescription.patientId,
-        doctorId: prescription.doctorId,
-        recordType: "prescription",
-        recordId: prescription.id,
-        title: `Prescription ${prescription.prescriptionNumber}`,
-        description: `${prescription.prescriptionType} prescription created`,
-        metadata: { 
-          prescriptionType: prescription.prescriptionType,
-          diagnosis: prescription.diagnosis 
-        }
-      });
+      // Patient history creation removed (table not available in MySQL schema)
 
       res.json(prescription);
     } catch (error) {
