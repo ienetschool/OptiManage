@@ -4,12 +4,12 @@ EMERGENCY MANUAL DEPLOYMENT STEPS
 If the server files are missing or corrupted, manually upload them:
 
 1. In your SSH terminal, create the application structure:
-   mkdir -p /var/www/vhosts/vivaindia.com/opt/{server,shared,client}
+   mkdir -p /var/www/vhosts/vivaindia.com/{server,shared,client}
 
 2. Upload the key server files manually by creating them in SSH:
 
    # Create server/index.ts
-   cat > /var/www/vhosts/vivaindia.com/opt/server/index.ts << 'SERVEREOF'
+   cat > /var/www/vhosts/vivaindia.com/server/index.ts << 'SERVEREOF'
 import express from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -44,7 +44,7 @@ app.use(express.urlencoded({ extended: false }));
 SERVEREOF
 
 3. Install dependencies:
-   cd /var/www/vhosts/vivaindia.com/opt
+   cd /var/www/vhosts/vivaindia.com
    npm install express tsx @types/node
 
 4. Test the basic server:

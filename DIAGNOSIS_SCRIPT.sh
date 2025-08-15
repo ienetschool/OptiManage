@@ -6,7 +6,7 @@ echo "=========================="
 
 ssh vivassh@5.181.218.15 << 'EOF'
 echo "1. Current location and files:"
-cd /var/www/vhosts/vivaindia.com/opt 2>/dev/null || cd /var/www/vhosts/vivaindia.com/ 2>/dev/null || echo "Could not find application directory"
+cd /var/www/vhosts/vivaindia.com/ 2>/dev/null || echo "Could not find application directory"
 pwd
 ls -la | head -20
 

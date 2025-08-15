@@ -1,0 +1,24 @@
+CORRECT SERVER START COMMANDS - RUN IN SSH
+==========================================
+
+Copy these commands one by one into your SSH terminal:
+
+# 1. Go to the CORRECT directory (your actual website directory)
+cd /var/www/vhosts/vivaindia.com/
+
+# 2. Check what's in this directory
+ls -la
+
+# 3. Kill any existing processes
+pkill -9 -f tsx
+pkill -9 -f node
+
+# 4. Check if server files exist in the correct location
+ls -la server/index.ts
+
+# 5. If server files exist, start server in foreground to see errors
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' npx tsx server/index.ts
+
+# If server files don't exist, we need to upload them to the correct directory first
+
+This will show you exactly what error prevents the server from starting in your actual website directory.
