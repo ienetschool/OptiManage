@@ -1,33 +1,13 @@
-# SSH Commands to Fix Production Server
+# Copy and paste these commands to fix opt.vivaindia.com
 
-# 1. Connect to your server
-ssh root@5.181.218.15
+# Single command to fix everything:
+ssh root@5.181.218.15 "cd /var/www/vhosts/opt.vivaindia.com/httpdocs/ && pm2 status && pm2 start ecosystem.config.js && pm2 status && curl -s http://localhost:8080/api/stores | head -100"
 
-# 2. Test MySQL connection
-mysql -h localhost -u ledbpt_optie -p opticpro
-# Enter password: g79h94LAP
-# Type: SHOW TABLES; (should show your existing tables)
-# Type: exit
+# If that doesn't work, try fresh start:
+ssh root@5.181.218.15 "cd /var/www/vhosts/opt.vivaindia.com/httpdocs/ && pm2 delete all && pm2 start ecosystem.config.js && pm2 status"
 
-# 3. Go to application directory
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+# Add missing database columns after app is running:
+ssh root@5.181.218.15 "mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro -e \"ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100); ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255); ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20); ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0; ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36); ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100); ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50); ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20); ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);\""
 
-# 4. Backup current code
-cp -r . ../backup_$(date +%Y%m%d_%H%M%S)
-
-# 5. Check current application status
-pm2 status
-pm2 logs
-
-# 6. Test if endpoints exist
-curl http://localhost:8080/api/stores
-curl http://localhost:8080/api/mysql-test
-
-# 7. If mysql-test fails (404), you need to upload new server/routes.ts
-# Upload the updated routes.ts file, then restart:
-pm2 restart all
-
-# 8. After restart, test again:
-curl http://localhost:8080/api/mysql-test -X POST -H "Content-Type: application/json" -d "{}"
-
-# Should return: {"success":true,"message":"MySQL connection successful! Found 2 stores..."}
+# Test if working:
+curl https://opt.vivaindia.com

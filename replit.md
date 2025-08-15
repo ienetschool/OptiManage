@@ -11,6 +11,9 @@ OptiStore Pro is a comprehensive medical practice management system built with R
   - **Database**: MySQL connection working (5.181.218.15:3306/opticpro, user: ledbpt_optie)
   - **Local Dev**: Working perfectly with all features functional
   - **Next Step**: Restart PM2 processes on production server
+  - **SSH Commands**: Created comprehensive restart guides (START_PRODUCTION.md, ssh_commands.txt, SIMPLE_SETUP.md)
+  - **Root Cause**: Application process stopped - needs PM2 restart and database column additions
+  - **Expected Fix Time**: 2-3 minutes with provided SSH commands
   - **Deployment Method**: PM2 process manager with production configuration
   - **Server**: Hostinger VPS (5.181.218.15) with AlmaLinux 9 + Plesk
   - **Database**: Connected to PostgreSQL localhost:5432/ieopt with user ledbpt_opt (44 tables confirmed)
