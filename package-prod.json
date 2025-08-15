@@ -1,0 +1,17 @@
+{
+  "name": "optistore-pro-production",
+  "version": "1.0.0",
+  "description": "OptiStore Pro - Medical Practice Management System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mysql2": "^3.6.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
