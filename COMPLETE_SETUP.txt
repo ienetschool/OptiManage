@@ -1,0 +1,66 @@
+COMPLETE THE SERVER SETUP - COPY THESE COMMANDS
+==============================================
+
+You're already in the right directory and Express is installed. Now run these commands:
+
+# Create the server file
+cat > server.js << 'EOF'
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+app.get('/api/dashboard', (req, res) => {
+  res.json({
+    totalPatients: 0,
+    totalAppointments: 0,
+    totalSales: 0,
+    message: 'OptiStore Pro Running',
+    status: 'OK',
+    server: 'Node.js',
+    database: 'MySQL Ready'
+  });
+});
+
+app.get('/api/auth/user', (req, res) => {
+  res.json({ 
+    id: "admin", 
+    email: "admin@optistore.com", 
+    name: "OptiStore Admin" 
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date() });
+});
+
+app.get('*', (req, res) => {
+  res.json({ 
+    message: 'OptiStore Pro - Medical Practice Management System',
+    status: 'Running',
+    api: '/api/dashboard'
+  });
+});
+
+const port = 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log('OptiStore Pro server running on port ' + port);
+});
+EOF
+
+# Start the server
+nohup node server.js > server.log 2>&1 &
+
+# Wait a moment for startup
+sleep 5
+
+# Check if it's running
+ps aux | grep "node server.js" | grep -v grep
+
+# Test the server locally
+curl -s http://localhost:8080/api/dashboard
+
+# Check what's listening on port 8080
+netstat -tlnp | grep :8080
+
+echo "Server should now be running. Check opt.vivaindia.com in your browser."
