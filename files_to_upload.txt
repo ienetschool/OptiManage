@@ -1,0 +1,31 @@
+FILES THAT NEED TO BE UPLOADED TO PRODUCTION SERVER
+===================================================
+
+These files contain the MySQL compatibility fixes:
+
+1. server/medicalRoutes.ts
+   - Fixed patient registration with auto-generated codes
+   - Removed PostgreSQL .returning() calls
+   - Uses mysql-schema.ts imports
+
+2. server/storage.ts  
+   - All CRUD operations fixed for MySQL
+   - Removed ALL .returning() calls
+   - Uses MySQL-compatible syntax
+
+3. server/hrRoutes.ts
+   - Staff, attendance, payroll forms fixed
+   - MySQL compatibility for HR module
+   - Removed PostgreSQL syntax
+
+4. shared/mysql-schema.ts
+   - MySQL schema definitions
+   - Proper validation schemas
+   - Already compatible with your database
+
+UPLOAD DESTINATION:
+Server: 5.181.218.15
+User: vivassh  
+Path: /var/www/vhosts/vivaindia.com/opt/
+
+These files will fix ALL form submission errors on your production server.
