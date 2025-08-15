@@ -20,11 +20,9 @@ import {
   insertCustomerSchema,
   insertAppointmentSchema,
   insertSaleSchema,
-  insertCategorySchema,
-  insertSupplierSchema,
   doctors,
   staff
-} from "@shared/schema";
+} from "@shared/mysql-schema";
 import { db } from "./db";
 import { eq, sql } from "drizzle-orm";
 import { z } from "zod";

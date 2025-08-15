@@ -9,7 +9,7 @@ import {
   stores,
   users,
   patients
-} from "@shared/schema";
+} from "@shared/mysql-schema";
 import { count, desc, eq, gte, sum, sql, and } from "drizzle-orm";
 import { isAuthenticated } from "../oauthAuth";
 

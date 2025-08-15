@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { z } from "zod";
 import { db } from "../db";
-import { appointments, insertAppointmentSchema } from "@shared/schema";
+import { appointments, insertAppointmentSchema } from "@shared/mysql-schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { isAuthenticated } from "../simpleAuth";
 

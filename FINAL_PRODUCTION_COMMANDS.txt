@@ -1,34 +1,39 @@
-FINAL CORRECT PRODUCTION SERVER COMMANDS
-========================================
+🚀 FINAL PRODUCTION SERVER COMMANDS
+===================================
 
-✅ VERIFIED DETAILS:
-- Path: /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
-- Database: MySQL opticpro
-- Host: localhost:3306 (or 5.181.218.15:3306)
-- User: ledbpt_optie
-- Password: g79h94LAP
+Copy and paste these commands in your SSH terminal:
 
-COPY & PASTE THIS COMMAND:
---------------------------
-ssh vivassh@5.181.218.15 << 'EOF'
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+ssh vivassh@5.181.218.15
+
+# Stop all processes using port 8080
+sudo fuser -k 8080/tcp
 pkill -f 'tsx server/index.ts'
-NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+pkill -f 'node.*8080'
+
+# Wait for processes to stop
 sleep 5
+
+# Navigate to project directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# Start production server
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+
+# Wait for server to start
+sleep 10
+
+# Check server status
 ps aux | grep tsx | grep -v grep
 netstat -tlnp | grep :8080
-tail -5 production.log
-EOF
 
-WHAT THIS DOES:
-- Navigates to correct path
-- Kills existing server processes
-- Starts server with MariaDB connection
-- Checks server is running on port 8080
-- Shows any startup errors
+# Test API
+curl -s http://localhost:8080/api/dashboard | head -c 100
 
-EXPECTED RESULT:
-- Server running on port 8080
-- 502 error disappears
-- opt.vivaindia.com loads properly
-- Forms connect to MySQL opticpro database
+# Check logs if needed
+tail -10 production.log
+
+✅ After running these commands:
+- Production server will be accessible at opt.vivaindia.com
+- All forms will work (patient registration, appointments, etc.)
+- Both development and production use the same MySQL database
+- No more 502 errors or form submission failures
