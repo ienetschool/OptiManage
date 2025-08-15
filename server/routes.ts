@@ -494,7 +494,7 @@ console.log('Working install page loaded at: '+new Date());
     }
   });
 
-  // Database connection test endpoint
+  // Database connection test endpoint - GET version (legacy)
   app.get('/api/test-mysql', async (req, res) => {
     try {
       console.log('🧪 Testing MySQL connection...');
@@ -513,6 +513,63 @@ console.log('Working install page loaded at: '+new Date());
       res.status(500).json({ 
         success: false, 
         error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  });
+
+  // MySQL Connection Test endpoint - POST version with parameters
+  app.post('/api/mysql-test', async (req, res) => {
+    try {
+      console.log('🔧 MySQL connection test requested with form data');
+      
+      const { host, port, user, password, database, type } = req.body;
+      
+      // Use provided credentials or defaults
+      const testHost = host || '5.181.218.15';
+      const testPort = port || '3306';
+      const testUser = user || 'ledbpt_optie';
+      const testPassword = password || 'g79h94LAP';
+      const testDatabase = database || 'opticpro';
+      
+      console.log('Testing connection to:', { testHost, testPort, testUser, testDatabase });
+      
+      // Dynamic import mysql2
+      const mysql = await import('mysql2/promise');
+      
+      const connection = await mysql.createConnection({
+        host: testHost,
+        port: parseInt(testPort),
+        user: testUser,
+        password: testPassword,
+        database: testDatabase
+      });
+
+      // Test basic query
+      const [rows] = await connection.execute('SELECT COUNT(*) as count FROM stores');
+      const storeCount = (rows as any)[0].count;
+      
+      // Get store names
+      const [storeRows] = await connection.execute('SELECT name FROM stores LIMIT 5');
+      const stores = (storeRows as any[]).map(row => row.name);
+      
+      await connection.end();
+      
+      const result = {
+        success: true,
+        message: 'MySQL connection successful',
+        testResult: {
+          storeCount,
+          stores
+        }
+      };
+      
+      console.log('✅ MySQL test result:', result);
+      res.json(result);
+    } catch (error) {
+      console.error('❌ MySQL test error:', error);
+      res.status(500).json({ 
+        success: false, 
+        message: error instanceof Error ? error.message : String(error) 
       });
     }
   });
