@@ -52,3 +52,4 @@ OptiStore Pro uses a modern tech stack:
   - **Installation Page Working**: opt.vivaindia.com/install displaying correctly with database configuration form
   - **Ownership Corrected**: Production folder ownership restored to proper Plesk user (vivassh:psacln)
   - **Production Server**: Final setup and startup procedures configured for port 8080 access
+  - **TSX Command Issue**: Production server missing tsx dependency causing startup failures, fix requires global tsx installation or Node.js loader approach
