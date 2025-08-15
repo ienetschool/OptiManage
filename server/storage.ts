@@ -783,16 +783,32 @@ export class DatabaseStorage implements IStorage {
         paymentDate: invoice.paymentDate?.toISOString(),
         notes: invoice.notes || "",
         source: (invoice as any).source || null,
-        items: dbInvoiceItems.filter(item => item.invoiceId === invoice.id).map(item => ({
-          id: item.id,
-          productId: item.productId,
-          productName: item.productName,
-          description: item.description,
-          quantity: item.quantity,
-          unitPrice: parseFloat(item.unitPrice.toString()),
-          discount: parseFloat(item.discount?.toString() || "0"),
-          total: parseFloat(item.total.toString())
-        }))
+        items: dbInvoiceItems.filter(item => item.invoiceId === invoice.id).map(item => {
+          try {
+            return {
+              id: item.id,
+              productId: item.productId || "",
+              productName: item.productName || "Product",
+              description: item.description || "",
+              quantity: item.quantity || 1,
+              unitPrice: parseFloat(String(item.unitPrice || 0)),
+              discount: parseFloat(String(item.discount || 0)),
+              total: parseFloat(String(item.total || 0))
+            };
+          } catch (error) {
+            console.error('Error processing invoice item:', item, error);
+            return {
+              id: item.id || 'unknown',
+              productId: "",
+              productName: "Product",
+              description: "",
+              quantity: 1,
+              unitPrice: 0,
+              discount: 0,
+              total: 0
+            };
+          }
+        })
         };
       });
 
