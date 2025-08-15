@@ -1,0 +1,41 @@
+# Copy and paste these commands one by one in your SSH terminal
+
+# 1. Install missing dependencies
+npm install
+
+# 2. Install specific missing modules
+npm install express typescript tsx @types/node @types/express
+
+# 3. Set environment variables
+export NODE_ENV=production
+export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
+
+# 4. Create/update .env file
+echo "NODE_ENV=production" > .env
+echo "DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro" >> .env
+
+# 5. Fix database schema (CRITICAL)
+mysql -u ledbpt_optie -pg79h94LAP opticpro -e "
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS assigned_doctor_id VARCHAR(36);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS appointment_fee DECIMAL(10,2);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50);
+ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);
+ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2);
+ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS total DECIMAL(10,2);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(255);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT;
+"
+
+# 6. Stop and restart PM2 process
+pm2 stop optistore-main
+pm2 start optistore-main
+
+# 7. Check if it's working
+sleep 5
+pm2 logs optistore-main --lines 10
+
+# 8. Test port 8080
+netstat -tlnp | grep :8080
+
+# 9. Test the application
+curl -I http://localhost:8080
