@@ -1,0 +1,36 @@
+COMMANDS TO RUN DIRECTLY IN YOUR SSH SESSION
+==========================================
+
+Since you're already connected via SSH, run these commands one by one:
+
+1. Navigate to the application directory:
+cd /var/www/vhosts/vivaindia.com/opt
+
+2. Check current processes:
+ps aux | grep tsx
+
+3. Kill any existing server processes:
+pkill -f tsx
+pkill -f node
+
+4. Wait a moment:
+sleep 3
+
+5. Start the server with MySQL:
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+
+6. Check if the server started:
+ps aux | grep tsx
+
+7. Test local server response:
+curl -s http://localhost:8080/api/dashboard | head -c 100
+
+8. Check what's listening on port 8080:
+netstat -tlnp | grep :8080
+
+9. Check recent logs:
+tail -10 production.log
+
+If the server starts successfully, opt.vivaindia.com should work without the 502 error.
+
+The key is that the server must be running on port 8080 for nginx to proxy requests properly.
