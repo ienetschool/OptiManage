@@ -1,0 +1,33 @@
+PRODUCTION SERVER SETUP COMMANDS
+================================
+
+Run these commands in your SSH terminal:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# Create server file
+cat > server.js << 'EOF'
+const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.get('/api/dashboard', (req, res) => {
+  res.json({ message: 'OptiStore Pro Running', status: 'OK', totalPatients: 0 });
+});
+
+app.get('*', (req, res) => {
+  res.json({ message: 'OptiStore Pro Medical Practice Management', version: '1.0' });
+});
+
+const port = 8080;
+app.listen(port, '0.0.0.0', () => {
+  console.log('Server running on port ' + port);
+});
+EOF
+
+# Install dependencies
+npm install express
+
+# Start server
+pkill -f node
+NODE_ENV=production node server.js
