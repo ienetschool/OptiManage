@@ -1,41 +1,33 @@
-# Copy and paste these commands one by one in your SSH terminal
+# IMMEDIATE FIX for Git deployment permission error
+# Run these commands in SSH terminal as root or with sudo
 
-# 1. Install missing dependencies
-npm install
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-# 2. Install specific missing modules
-npm install express typescript tsx @types/node @types/express
+# 1. Fix ownership for the entire project directory
+sudo chown -R $USER:$USER .
+sudo chown -R $(whoami):$(whoami) .
 
-# 3. Set environment variables
-export NODE_ENV=production
-export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
+# 2. Set proper permissions for all directories and files
+sudo find . -type d -exec chmod 755 {} \;
+sudo find . -type f -exec chmod 644 {} \;
 
-# 4. Create/update .env file
-echo "NODE_ENV=production" > .env
-echo "DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro" >> .env
+# 3. Make sure server directory and subdirs are writable
+sudo chmod -R 755 server/
+sudo mkdir -p server/public/assets
+sudo chmod -R 755 server/public/
 
-# 5. Fix database schema (CRITICAL)
-mysql -u ledbpt_optie -pg79h94LAP opticpro -e "
-ALTER TABLE appointments ADD COLUMN IF NOT EXISTS assigned_doctor_id VARCHAR(36);
-ALTER TABLE appointments ADD COLUMN IF NOT EXISTS appointment_fee DECIMAL(10,2);
-ALTER TABLE appointments ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50);
-ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS product_name VARCHAR(255);
-ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS discount DECIMAL(10,2);
-ALTER TABLE invoice_items ADD COLUMN IF NOT EXISTS total DECIMAL(10,2);
-ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(255);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS address TEXT;
-"
+# 4. Set Git-friendly permissions for deployment
+sudo chown -R $(whoami):$(whoami) server/
+sudo chmod -R 775 server/
 
-# 6. Stop and restart PM2 process
-pm2 stop optistore-main
-pm2 start optistore-main
+# 5. Alternative: Set web server user ownership (if needed)
+sudo chown -R apache:apache server/public/ 2>/dev/null || sudo chown -R www-data:www-data server/public/ 2>/dev/null
 
-# 7. Check if it's working
-sleep 5
-pm2 logs optistore-main --lines 10
+# 6. Verify the fix
+ls -la server/
+ls -la server/public/ 2>/dev/null || echo "server/public/ will be created by Git deployment"
 
-# 8. Test port 8080
-netstat -tlnp | grep :8080
+# 7. Test permissions
+touch server/test-permission.txt && rm server/test-permission.txt && echo "✅ Write permissions OK" || echo "❌ Still permission issues"
 
-# 9. Test the application
-curl -I http://localhost:8080
+echo "Now retry the Git deployment from Plesk interface"
