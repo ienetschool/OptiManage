@@ -1,0 +1,39 @@
+IMMEDIATE PRODUCTION SERVER UPDATE COMMANDS
+=========================================
+
+Your production server (opt.vivaindia.com) is connected to MySQL but running old PostgreSQL code.
+Here are the exact commands to fix it:
+
+1. COPY FIXED FILES TO PRODUCTION:
+---------------------------------
+# Copy the MySQL-compatible server files
+scp server/medicalRoutes.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/server/
+scp server/storage.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/server/
+scp server/hrRoutes.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/server/
+scp shared/mysql-schema.ts vivassh@5.181.218.15:/var/www/vhosts/vivaindia.com/opt/shared/
+
+2. RESTART PRODUCTION SERVER:
+----------------------------
+ssh vivassh@5.181.218.15 << 'EOF'
+cd /var/www/vhosts/vivaindia.com/opt
+pkill -f 'tsx server/index.ts'
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+echo "Production server restarted with MySQL fixes"
+ps aux | grep tsx
+EOF
+
+3. TEST PATIENT REGISTRATION:
+----------------------------
+curl -X POST https://opt.vivaindia.com/api/patients \
+  -H "Content-Type: application/json" \
+  -d '{"firstName":"TestMySQL","lastName":"User","phone":"1234567890","email":"test@mysql.com"}'
+
+WHAT WAS FIXED FOR MYSQL:
+========================
+✅ Removed ALL .returning() PostgreSQL calls
+✅ Fixed patient code auto-generation
+✅ Updated schema imports to mysql-schema.ts
+✅ Fixed form validation for MySQL compatibility
+
+Your MySQL database (ledbpt_optie@localhost:3306/opticpro) is working.
+The issue is just old PostgreSQL code on the server that needs these fixes.
