@@ -1,0 +1,24 @@
+RUN THESE ADDITIONAL COMMANDS ON YOUR SERVER TO CHECK THE STATUS:
+
+1. Check if the server is still running:
+   ps aux | grep tsx | grep -v grep
+
+2. Check what's listening on port 8080:
+   netstat -tlnp | grep :8080
+
+3. Check the production log for errors:
+   tail -20 production.log
+
+4. Test direct connection to port 8080:
+   curl -s http://localhost:8080/api/dashboard
+
+5. If there are errors, restart the server again:
+   pkill -f 'tsx server/index.ts'
+   NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+
+6. Wait 5 seconds, then check again:
+   sleep 5
+   ps aux | grep tsx | grep -v grep
+   curl -s http://localhost:8080/api/dashboard
+
+COPY AND PASTE THESE ONE BY ONE TO DIAGNOSE THE ISSUE

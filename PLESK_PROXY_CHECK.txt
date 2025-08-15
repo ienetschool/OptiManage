@@ -1,0 +1,22 @@
+ADDITIONAL CHECKS FOR PLESK PROXY CONFIGURATION:
+
+The 502 error might be due to nginx proxy configuration in Plesk.
+
+Run these commands on your server to check:
+
+1. Check nginx proxy configuration:
+   grep -r "opt.vivaindia.com" /var/www/vhosts/vivaindia.com/conf/
+
+2. Check if nginx is properly configured to proxy to port 8080:
+   cat /var/www/vhosts/vivaindia.com/conf/vhost.conf
+
+3. If proxy is not configured, you may need to access directly:
+   Try: http://opt.vivaindia.com:8080
+
+4. Or configure Plesk proxy:
+   - Go to Plesk Panel
+   - Select vivaindia.com domain
+   - Go to "Apache & nginx Settings"
+   - Add proxy rules to forward requests to localhost:8080
+
+The server is likely running on port 8080 but nginx isn't forwarding requests to it.
