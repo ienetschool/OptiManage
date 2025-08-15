@@ -1,91 +1,55 @@
-# 🚀 Start Production Server - Complete Guide
+# Production Server Start Guide
 
-## Current Issue
-Your OptiStore Pro at opt.vivaindia.com is showing "Connection Reset" errors because the application is not running on the production server.
+## Issue Fixed
+The `app.js` file was using CommonJS (`require`) but the project is configured as ES module. Fixed by converting to ES module syntax.
 
-## Method 1: Quick PM2 Restart (Recommended)
-
-Copy and paste this complete command:
+## Production Start Commands
 
 ```bash
-ssh root@5.181.218.15 "cd /var/www/vhosts/opt.vivaindia.com/httpdocs/ && pm2 status && pm2 start ecosystem.config.js && pm2 status && curl -s http://localhost:8080/api/stores"
-```
+# Navigate to application directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-## Method 2: Step-by-Step Manual Fix
+# Clean PM2 processes
+pm2 stop all
+pm2 delete all
 
-```bash
-# 1. Connect to server
-ssh root@5.181.218.15
+# Set environment variables
+export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
+export NODE_ENV=production
+export PORT=8080
 
-# 2. Navigate to application
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+# Install dependencies (if needed)
+npm install
 
-# 3. Check PM2 status
-pm2 status
+# Build the application
+npm run build
 
-# 4. Start application if not running
-pm2 start ecosystem.config.js
+# Test the fixed app.js
+node app.js
 
-# 5. Verify it's working
-pm2 status
-curl http://localhost:8080/api/stores
+# If that works, start with PM2
+pm2 start app.js --name "optistore-main"
 
-# 6. If successful, add missing database columns
-mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
-ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
-ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);
-EOF
-```
+# Alternative: Use npm start directly
+pm2 start npm --name "optistore-npm" -- start
 
-## Method 3: Fresh Start (If PM2 fails)
+# Save PM2 configuration
+pm2 save
 
-```bash
-ssh root@5.181.218.15 "cd /var/www/vhosts/opt.vivaindia.com/httpdocs/ && pm2 delete all && npm install && npm run build && pm2 start ecosystem.config.js"
-```
-
-## Method 4: Direct Node Start (Emergency)
-
-```bash
-ssh root@5.181.218.15 "cd /var/www/vhosts/opt.vivaindia.com/httpdocs/ && node server/index.js &"
+# Test the application
+curl http://localhost:8080/
+curl http://localhost:8080/api/dashboard
 ```
 
 ## Expected Results
+After these fixes:
+- `node app.js` should start without ES module errors
+- Application should bind to port 8080
+- `curl http://localhost:8080/` should return HTML content
+- opt.vivaindia.com:8080 should be accessible
 
-After running any of these methods:
-- PM2 should show your application running
-- `curl http://localhost:8080/api/stores` should return JSON data
-- https://opt.vivaindia.com should load your medical practice management system
-
-## Troubleshooting
-
-If still not working:
-
-```bash
-# Check what's using port 8080
-netstat -tulpn | grep 8080
-
-# Check system logs
-journalctl -f
-
-# Check nginx/apache
-systemctl status nginx
-systemctl status apache2
-
-# Manual port check
-telnet localhost 8080
-```
-
-## Success Indicators
-✅ PM2 shows "online" status
-✅ curl returns store data in JSON format
-✅ https://opt.vivaindia.com loads without connection errors
-✅ Dashboard shows patient/product data instead of 500 errors
-
-Your OptiStore Pro medical practice management system will be fully operational!
+## Verification Steps
+1. Check PM2 status: `pm2 status` (should show "online")
+2. Check port: `netstat -tlnp | grep :8080` (should show Node.js process)
+3. Test locally: `curl http://localhost:8080/` (should return HTML)
+4. Test externally: Visit opt.vivaindia.com:8080 in browser
