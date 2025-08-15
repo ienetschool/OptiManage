@@ -1,33 +1,26 @@
-# IMMEDIATE FIX for Git deployment permission error
-# Run these commands in SSH terminal as root or with sudo
+## IMMEDIATE FIX - Run these commands in SSH terminal:
 
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-# 1. Fix ownership for the entire project directory
-sudo chown -R $USER:$USER .
-sudo chown -R $(whoami):$(whoami) .
+# 1. Check what's actually running on port 8080
+netstat -tlnp | grep :8080
+ss -tlnp | grep :8080
 
-# 2. Set proper permissions for all directories and files
-sudo find . -type d -exec chmod 755 {} \;
-sudo find . -type f -exec chmod 644 {} \;
+# 2. Check PM2 logs to see the actual error
+pm2 logs optistore-main --lines 10
 
-# 3. Make sure server directory and subdirs are writable
-sudo chmod -R 755 server/
-sudo mkdir -p server/public/assets
-sudo chmod -R 755 server/public/
+# 3. Stop PM2 and start manually to see real error
+pm2 delete optistore-main
+pm2 kill
 
-# 4. Set Git-friendly permissions for deployment
-sudo chown -R $(whoami):$(whoami) server/
-sudo chmod -R 775 server/
+# 4. Start manually with debug output
+export NODE_ENV=production
+export PORT=8080
+export FORCE_PRODUCTION=true
+export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
 
-# 5. Alternative: Set web server user ownership (if needed)
-sudo chown -R apache:apache server/public/ 2>/dev/null || sudo chown -R www-data:www-data server/public/ 2>/dev/null
+# 5. Try direct node start
+node --loader tsx/esm server/index.ts
 
-# 6. Verify the fix
-ls -la server/
-ls -la server/public/ 2>/dev/null || echo "server/public/ will be created by Git deployment"
-
-# 7. Test permissions
-touch server/test-permission.txt && rm server/test-permission.txt && echo "✅ Write permissions OK" || echo "❌ Still permission issues"
-
-echo "Now retry the Git deployment from Plesk interface"
+## This will show you the real error preventing port 8080 from working.
+## Send me the output from these commands.
