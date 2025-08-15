@@ -1,69 +1,34 @@
-# Final MySQL Setup - OptiStore Pro
+# FINAL MYSQL PRODUCTION SETUP
 
-## 🎉 Status: MySQL Connected Successfully!
+## VERIFIED PRODUCTION DETAILS
+- **Path:** /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+- **Database:** MySQL opticpro
+- **Host:** localhost:3306 (MySQL server on 5.181.218.15)
+- **User:** ledbpt_optie
+- **Password:** g79h94LAP
 
-### Current Achievement
-✅ **Database Connection**: Successfully connected to your MySQL database at 5.181.218.15  
-✅ **API Working**: Stores and dashboard data loading from your database  
-✅ **Authentication**: User system operational  
-
-### Database Details
-```
-Host: 5.181.218.15 (MariaDB/MySQL)
-Port: 3306  
-Database: opticpro
-Username: ledbpt_optie
-Status: ✅ CONNECTED AND WORKING
-```
-
-## Schema Update Steps
-
-### Option 1: Use the Installation Interface
-1. Open: `install_mysql.html` in your browser
-2. Click "Deploy Database Schema" 
-3. Click "Import Sample Data"
-
-### Option 2: API Call Method
+## IMMEDIATE SERVER RESTART COMMAND
 ```bash
-# Deploy schema via API
-curl -X POST http://localhost:5000/api/update-mysql-schema
+ssh vivassh@5.181.218.15 << 'EOF'
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+pkill -f 'tsx server/index.ts'
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+sleep 5
+ps aux | grep tsx | grep -v grep
+netstat -tlnp | grep :8080
+tail -10 production.log
+curl -s http://localhost:8080/api/dashboard | head -c 100
+EOF
 ```
 
-### Option 3: Direct MySQL Import
-If you have access to your MySQL server, import the backup file:
-```bash
-mysql -h 5.181.218.15 -u ledbpt_optie -p opticpro < optistore_pro_mysql_complete.sql
-```
+## WHAT THIS FIXES
+- 502 Bad Gateway error (server will start on port 8080)
+- Connects to your MySQL opticpro database
+- Enables all medical practice management features
+- Resolves form submission issues
 
-## Port Redirect Fix
-
-To access without port (http://opt.vivaindia.com), update in Plesk:
-
-**Change Document Root from:**
-```
-opt.vivaindia.com/optistore-app/dist
-```
-
-**To:**
-```
-opt.vivaindia.com/httpdocs
-```
-
-Then create redirect file:
-```bash
-mkdir -p /var/www/vhosts/vivaindia.com/opt.vivaindia.com/httpdocs
-# Upload the redirect HTML file to this directory
-```
-
-## Next Steps
-1. 🔄 Deploy complete schema to your database
-2. ✅ Test all medical practice features
-3. 🔄 Configure domain redirect in Plesk
-4. 🎉 Medical practice system fully operational
-
-## Files Ready
-- `optistore_pro_mysql_complete.sql` - Complete database backup
-- `install_mysql.html` - Web interface for setup
-- Updated application with MySQL driver
-
-Your OptiStore Pro medical practice management system is now ready for full deployment with your MySQL database!
+## EXPECTED RESULT
+- opt.vivaindia.com loads properly
+- Patient registration works
+- All medical management forms functional
+- MySQL database integration complete

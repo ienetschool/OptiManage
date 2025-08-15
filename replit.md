@@ -24,7 +24,7 @@ OptiStore Pro uses a modern tech stack:
 - **Design Decisions**: Emphasis on clean UI, readability (e.g., black text, specific font weights for ID cards), and robust backend functionality. Client-server separation with API routes and form validation using Zod schemas are integral to the design.
 
 ## External Dependencies
-- **Database**: MariaDB production database: mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro (Host: 5.181.218.15)
+- **Database**: MySQL production database: mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro (Host: 5.181.218.15)
 - **Authentication**: Replit Auth.
 - **Styling**: Tailwind CSS, shadcn/ui.
 - **Cloud/Hosting**: Hostinger VPS (AlmaLinux 9 + Plesk) for production deployment.

@@ -3,7 +3,7 @@ FINAL CORRECT PRODUCTION SERVER COMMANDS
 
 ✅ VERIFIED DETAILS:
 - Path: /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
-- Database: MariaDB opticpro
+- Database: MySQL opticpro
 - Host: localhost:3306 (or 5.181.218.15:3306)
 - User: ledbpt_optie
 - Password: g79h94LAP
@@ -31,4 +31,4 @@ EXPECTED RESULT:
 - Server running on port 8080
 - 502 error disappears
 - opt.vivaindia.com loads properly
-- Forms connect to MariaDB opticpro database
+- Forms connect to MySQL opticpro database
