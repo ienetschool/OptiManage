@@ -1,64 +1,27 @@
-# 📋 Manual Testing Steps for Production Fix
+# Manual Database Fix - Application Already Running
 
-## Copy these commands exactly:
+## Current Status
+Your application is running but may be in a different location. Let's add the missing database columns directly:
 
-### 1. Connect to your server:
+## Database Fix Command
 ```bash
-ssh root@5.181.218.15
+ssh root@5.181.218.15 "mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro -e \"ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100); ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255); ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20); ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0; ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36); ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100); ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50); ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20); ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);\""
 ```
 
-### 2. Go to your application folder:
+## Alternative Paths to Check
+Based on your find results, try these locations:
 ```bash
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/
+# Check optistore-app directory
+ssh root@5.181.218.15 "cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app && ls -la"
+
+# Check if PM2 is running from this location
+ssh root@5.181.218.15 "cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app && pm2 status"
 ```
 
-### 3. Test if MySQL endpoint exists:
+## Test Website
+After adding database columns:
 ```bash
-curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
+curl https://opt.vivaindia.com
 ```
 
-**Expected Result:**
-- If you see `404` or `Cannot GET` → The endpoint is missing (continue to step 4)
-- If you see JSON with "success":true → The endpoint exists (skip to step 6)
-
-### 4. Check PM2 status:
-```bash
-pm2 status
-```
-
-### 5. Check application logs:
-```bash
-pm2 logs --lines 20
-```
-
-### 6. Test database connection directly:
-```bash
-mysql -h localhost -u ledbpt_optie -p opticpro
-```
-Enter password: `g79h94LAP`
-
-If connected successfully, type:
-```sql
-SHOW TABLES;
-exit
-```
-
-### 7. Restart application:
-```bash
-pm2 restart all
-```
-
-### 8. Test again:
-```bash
-curl -X POST http://localhost:8080/api/mysql-test -H "Content-Type: application/json" -d "{}"
-```
-
-### 9. Test in browser:
-Open: https://opt.vivaindia.com/install
-Click "Test Database Connection"
-
-## What to Look For:
-- ✅ JSON response with "success":true and "Found 2 stores"
-- ❌ 404 error = Missing endpoint, need to upload new routes.ts
-- ❌ 500 error = Database connection issue
-- ❌ Connection refused = Application not running
+The application should work without 500 errors once the database columns are added.

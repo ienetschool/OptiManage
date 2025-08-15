@@ -1,60 +1,47 @@
 # Step-by-Step Production Deployment Fix
 
-## Issue Identified
-- Port 8080 showing "connection timed out"
-- PM2 process may not be running on production server
-- Application working in Replit development but not on production server
+## Current Situation
+- Your OptiStore Pro application is running (PM2 shows online status)
+- The issue is missing database columns causing 500 errors
+- Multiple directory paths exist on your server
 
-## Step-by-Step Solution
-
-### Step 1: Check Current PM2 Status
+## Step 1: Add Missing Database Columns
+Run this command to fix the database:
 ```bash
-pm2 status
-pm2 logs optistore-pro
+ssh root@5.181.218.15 "mysql -h localhost -u ledbpt_optie -p'g79h94LAP' opticpro << 'EOF'
+ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
+ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
+ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
+ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);
+EOF"
 ```
 
-### Step 2: Restart Production Application
+## Step 2: Test the Website
+After running the database command:
+1. Open https://opt.vivaindia.com in your browser
+2. Check if the dashboard loads without errors
+3. Try navigating to Patients, Products, and Inventory pages
+
+## Step 3: Verify Application Location
+If you need to restart or modify the application:
 ```bash
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app
-pm2 delete optistore-pro
-DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="8080" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
-pm2 save
-pm2 startup
+# Check which directory has the running application
+ssh root@5.181.218.15 "ps aux | grep node"
+
+# Or check PM2 process details
+ssh root@5.181.218.15 "pm2 show optistore-pro"
 ```
 
-### Step 3: Verify Process is Running
-```bash
-pm2 status
-curl http://localhost:8080
-```
+## Expected Results
+- No more 500 errors on the website
+- Patient management fully functional
+- Product inventory loading properly
+- Customer data displaying correctly
+- Medical practice dashboard operational
 
-### Step 4: Check Firewall Settings
-```bash
-sudo firewall-cmd --list-all
-sudo firewall-cmd --permanent --add-port=8080/tcp
-sudo firewall-cmd --reload
-```
-
-### Step 5: Test External Access
-```bash
-curl http://opt.vivaindia.com:8080
-```
-
-## Alternative: Use Different Port
-If 8080 continues to have issues, try port 3000:
-```bash
-pm2 delete optistore-pro
-DATABASE_URL="postgresql://ledbpt_opt:Ra4%23PdaqW0c%5Epa8c@localhost:5432/ieopt" NODE_ENV="production" PORT="3000" pm2 start /var/www/vhosts/vivaindia.com/opt.vivaindia.com/optistore-app/dist/index.js --name optistore-pro
-pm2 save
-```
-
-Then update the redirect file:
-```bash
-sed -i 's/8080/3000/g' /var/www/vhosts/vivaindia.com/opt.vivaindia.com/httpdocs/index.html
-```
-
-## Expected Result
-After running these commands:
-- PM2 process should show "online" status
-- Application should be accessible at http://opt.vivaindia.com:8080
-- All medical practice features should work correctly
+Your OptiStore Pro deployment will be complete!
