@@ -1,0 +1,36 @@
+IMMEDIATE 502 ERROR FIX COMMANDS
+================================
+
+Your production server is down (502 Bad Gateway). 
+Run these commands to fix it:
+
+# METHOD 1: Automated Fix
+./IMMEDIATE_SERVER_FIX.sh
+
+# METHOD 2: Manual Commands
+ssh vivassh@5.181.218.15 << 'EOF'
+cd /var/www/vhosts/vivaindia.com/opt
+pkill -f 'tsx server/index.ts'
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+ps aux | grep tsx
+netstat -tlnp | grep :8080
+EOF
+
+# METHOD 3: Check Server Status
+ssh vivassh@5.181.218.15 << 'EOF'
+cd /var/www/vhosts/vivaindia.com/opt
+ps aux | grep tsx
+tail -20 production.log
+netstat -tlnp | grep :8080
+EOF
+
+WHAT'S HAPPENING:
+- Nginx proxy is running (you see 502 error)
+- Node.js server on port 8080 is down
+- Need to restart with MySQL database connection
+- Deploy MySQL fixes to resolve form submission errors
+
+EXPECTED RESULT:
+- Server will restart on port 8080
+- MySQL forms will work
+- https://opt.vivaindia.com will load properly
