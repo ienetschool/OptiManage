@@ -62,13 +62,15 @@ export function registerMedicalRoutes(app: Express) {
       // Auto-generate patient code if not provided
       const patientCode = req.body.patientCode || `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
       
-      // Create a modified schema that makes patientCode optional for validation
-      const optionalPatientCodeSchema = insertPatientSchema.extend({
-        patientCode: insertPatientSchema.shape.patientCode.optional()
-      });
+      // Remove patientCode from validation data completely and validate without it
+      const validationData = { ...req.body };
+      delete validationData.patientCode; // Remove it completely from validation
       
-      // Validate input without requiring patientCode
-      const validatedData = optionalPatientCodeSchema.parse(req.body);
+      // Create a schema without patientCode validation
+      const modifiedSchema = insertPatientSchema.omit({ patientCode: true });
+      
+      // Validate input without patientCode
+      const validatedData = modifiedSchema.parse(validationData);
       
       // Add the auto-generated patientCode to the validated data
       const finalData = {
@@ -144,7 +146,11 @@ export function registerMedicalRoutes(app: Express) {
     try {
       const validatedData = insertPrescriptionSchema.parse(req.body);
       
-      const [prescription] = await db.insert(prescriptions).values(validatedData).returning();
+      // MySQL compatible insert
+      await db.insert(prescriptions).values(validatedData);
+      
+      // Fetch the created prescription
+      const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.prescriptionNumber, validatedData.prescriptionNumber)).limit(1);
 
       // Patient history creation removed (table not available in MySQL schema)
 

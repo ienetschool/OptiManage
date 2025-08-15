@@ -236,16 +236,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(product: InsertProduct): Promise<Product> {
-    const [newProduct] = await db.insert(products).values(product).returning();
+    await db.insert(products).values(product);
+    const [newProduct] = await db.select().from(products).where(eq(products.sku, product.sku)).limit(1);
     return newProduct;
   }
 
   async updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product> {
-    const [updatedProduct] = await db
+    await db
       .update(products)
       .set({ ...product, updatedAt: new Date() })
-      .where(eq(products.id, id))
-      .returning();
+      .where(eq(products.id, id));
+    const [updatedProduct] = await db.select().from(products).where(eq(products.id, id)).limit(1);
     return updatedProduct;
   }
 
@@ -264,16 +265,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
-    const [newCustomer] = await db.insert(customers).values(customer).returning();
+    await db.insert(customers).values(customer);
+    const [newCustomer] = await db.select().from(customers).where(eq(customers.email, customer.email)).limit(1);
     return newCustomer;
   }
 
   async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer> {
-    const [updatedCustomer] = await db
+    await db
       .update(customers)
       .set({ ...customer, updatedAt: new Date() })
-      .where(eq(customers.id, id))
-      .returning();
+      .where(eq(customers.id, id));
+    const [updatedCustomer] = await db.select().from(customers).where(eq(customers.id, id)).limit(1);
     return updatedCustomer;
   }
 
@@ -314,7 +316,8 @@ export class DatabaseStorage implements IStorage {
       ...appointment,
       appointmentFee: appointment.appointmentFee ? appointment.appointmentFee.toString() : undefined,
     };
-    const [newAppointment] = await db.insert(appointments).values(appointmentData).returning();
+    await db.insert(appointments).values(appointmentData);
+    const [newAppointment] = await db.select().from(appointments).where(eq(appointments.patientId, appointment.patientId)).orderBy(desc(appointments.createdAt)).limit(1);
     return newAppointment;
   }
 
@@ -325,11 +328,11 @@ export class DatabaseStorage implements IStorage {
       appointmentFee: appointment.appointmentFee ? appointment.appointmentFee.toString() : undefined,
       updatedAt: new Date()
     };
-    const [updatedAppointment] = await db
+    await db
       .update(appointments)
       .set(appointmentData)
-      .where(eq(appointments.id, id))
-      .returning();
+      .where(eq(appointments.id, id));
+    const [updatedAppointment] = await db.select().from(appointments).where(eq(appointments.id, id)).limit(1);
     return updatedAppointment;
   }
 
@@ -353,7 +356,8 @@ export class DatabaseStorage implements IStorage {
         ...sale,
         staffId: sale.staffId || 'system' // Provide default value for staffId
       };
-      const [newSale] = await tx.insert(sales).values([saleData]).returning();
+      await tx.insert(sales).values([saleData]);
+      const [newSale] = await tx.select().from(sales).where(eq(sales.staffId, saleData.staffId)).orderBy(desc(sales.createdAt)).limit(1);
       
       // Only insert items if there are any
       if (items.length > 0) {
@@ -397,7 +401,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCategory(category: InsertCategory): Promise<Category> {
-    const [newCategory] = await db.insert(categories).values(category).returning();
+    await db.insert(categories).values(category);
+    const [newCategory] = await db.select().from(categories).where(eq(categories.name, category.name)).limit(1);
     return newCategory;
   }
 
@@ -407,7 +412,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createSupplier(supplier: InsertSupplier): Promise<Supplier> {
-    const [newSupplier] = await db.insert(suppliers).values(supplier).returning();
+    await db.insert(suppliers).values(supplier);
+    const [newSupplier] = await db.select().from(suppliers).where(eq(suppliers.name, supplier.name)).limit(1);
     return newSupplier;
   }
 
@@ -426,33 +432,33 @@ export class DatabaseStorage implements IStorage {
 
     if (existingInventory.length > 0) {
       // Update existing inventory
-      const [updated] = await db
+      await db
         .update(storeInventory)
         .set({
           quantity,
           lastRestocked: new Date(),
           updatedAt: new Date(),
         })
-        .where(and(eq(storeInventory.storeId, storeId), eq(storeInventory.productId, productId)))
-        .returning();
+        .where(and(eq(storeInventory.storeId, storeId), eq(storeInventory.productId, productId)));
+      const [updated] = await db.select().from(storeInventory).where(and(eq(storeInventory.storeId, storeId), eq(storeInventory.productId, productId))).limit(1);
       return updated;
     } else {
       // Create new inventory record
-      const [inventory] = await db
+      await db
         .insert(storeInventory)
         .values({
           storeId,
           productId,
           quantity,
           lastRestocked: new Date(),
-        })
-        .returning();
+        });
+      const [inventory] = await db.select().from(storeInventory).where(and(eq(storeInventory.storeId, storeId), eq(storeInventory.productId, productId))).limit(1);
       return inventory;
     }
   }
 
   async createInventory(inventoryData: any): Promise<StoreInventory> {
-    const [inventory] = await db
+    await db
       .insert(storeInventory)
       .values({
         storeId: inventoryData.storeId,
@@ -461,8 +467,8 @@ export class DatabaseStorage implements IStorage {
         minStock: inventoryData.minStock || 10,
         maxStock: inventoryData.maxStock || 100,
         lastRestocked: new Date(inventoryData.lastRestocked || new Date()),
-      })
-      .returning();
+      });
+    const [inventory] = await db.select().from(storeInventory).where(and(eq(storeInventory.storeId, inventoryData.storeId), eq(storeInventory.productId, inventoryData.productId))).limit(1);
     return inventory;
   }
 

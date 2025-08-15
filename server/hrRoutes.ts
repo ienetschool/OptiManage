@@ -32,7 +32,8 @@ export function registerHRRoutes(app: Express) {
   app.post("/api/staff", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertStaffSchema.parse(req.body);
-      const [newStaff] = await db.insert(staff).values(validatedData).returning();
+      await db.insert(staff).values(validatedData);
+      const [newStaff] = await db.select().from(staff).where(eq(staff.employeeId, validatedData.employeeId)).limit(1);
       res.json(newStaff);
     } catch (error) {
       console.error("Error creating staff:", error);
@@ -43,11 +44,11 @@ export function registerHRRoutes(app: Express) {
   app.put("/api/staff/:id", isAuthenticated, async (req, res) => {
     try {
       const validatedData = insertStaffSchema.parse(req.body);
-      const [updatedStaff] = await db
+      await db
         .update(staff)
         .set({ ...validatedData, updatedAt: new Date() })
-        .where(eq(staff.id, req.params.id))
-        .returning();
+        .where(eq(staff.id, req.params.id));
+      const [updatedStaff] = await db.select().from(staff).where(eq(staff.id, req.params.id)).limit(1);
       
       if (!updatedStaff) {
         return res.status(404).json({ message: "Staff member not found" });
@@ -143,7 +144,8 @@ export function registerHRRoutes(app: Express) {
         res.json(updatedAttendance);
       } else {
         // Create new record
-        const [newAttendance] = await db.insert(attendance).values(attendanceData).returning();
+        await db.insert(attendance).values(attendanceData);
+        const [newAttendance] = await db.select().from(attendance).where(eq(attendance.staffId, attendanceData.staffId)).orderBy(desc(attendance.date)).limit(1);
         res.json(newAttendance);
       }
     } catch (error) {
@@ -243,7 +245,8 @@ export function registerHRRoutes(app: Express) {
         totalDays
       };
       
-      const [newLeave] = await db.insert(leaveRequests).values(leaveData).returning();
+      await db.insert(leaveRequests).values(leaveData);
+      const [newLeave] = await db.select().from(leaveRequests).where(eq(leaveRequests.staffId, leaveData.staffId)).orderBy(desc(leaveRequests.createdAt)).limit(1);
       
       // Send notification to manager
       if (newLeave.managerId) {
