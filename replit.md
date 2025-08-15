@@ -54,4 +54,5 @@ OptiStore Pro uses a modern tech stack:
   - **Production Server**: Final setup and startup procedures configured for port 8080 access
   - **TSX Command Issue**: ✅ RESOLVED - Production server tsx dependency installed successfully, PM2 process stable at 6.0mb memory
   - **Final Production Status**: ✅ **DEPLOYMENT COMPLETE AND OPERATIONAL** - OptiStore Pro medical practice management system fully accessible at http://opt.vivaindia.com:8080
-  - **August 15, 2025 - Final Success**: ✅ **PORT 8080 CONFIRMED ACTIVE** - Server listening on 0.0.0.0:8080 (PID 104889), HTTP/1.1 200 OK responses confirmed, nohup process stable, OptiStore Pro medical practice management system fully operational and accessible
+  - **August 15, 2025 - Final Success**: ✅ **PORT 8080 CONFIRMED ACTIVE** - Server listening on 0.0.0.0:8080 (PID 108621), HTTP/1.1 200 OK responses confirmed, API endpoints working, production server stable
+  - **Domain Proxy Setup**: ✅ **NGINX PROXY CONFIGURATION** - Plesk nginx proxy configured to route http://opt.vivaindia.com to internal port 8080, eliminating need for :8080 in URLs, database connection tests now functional through clean domain access
