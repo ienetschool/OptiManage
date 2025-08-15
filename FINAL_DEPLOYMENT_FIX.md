@@ -1,62 +1,80 @@
-# 🎯 Final Production Fix - Copy These Commands
+# Final Production Deployment Fix
 
-Your OptiStore Pro at https://opt.vivaindia.com needs missing database columns added. Here are the exact commands:
+## Issue Identified
+PM2 process shows "online" but application is not binding to port 8080. All connection attempts return "Connection refused".
 
-## Method 1: Single Command Block (Recommended)
+## Root Cause Analysis
+The application is likely:
+1. Starting but immediately crashing
+2. Not properly binding to port 8080
+3. Missing environment variables
+4. Database connection failing
 
-SSH to your server and run this complete block:
+## Complete Fix Commands
 
 ```bash
-ssh root@5.181.218.15 "
-cd /var/www/vhosts/opt.vivaindia.com/httpdocs/ && 
-mysql -h localhost -u ledbpt_optie -pg79h94LAP opticpro << 'EOF'
-ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
-ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);
-EOF
-pm2 restart all
-"
+# Navigate to application directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# Stop and delete all PM2 processes
+pm2 stop all
+pm2 delete all
+
+# Set all required environment variables
+export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
+export NODE_ENV=production
+export PORT=8080
+export HOST=0.0.0.0
+
+# Test database connection first
+mysql -h localhost -u ledbpt_optie -pg79h94LAP opticpro -e "SELECT COUNT(*) FROM stores;"
+
+# Start application manually to see errors
+node app.js
+
+# If manual start works, then use PM2
+pm2 start app.js --name "optistore-main" --env production --max-memory-restart 200M
+
+# Check logs immediately
+pm2 logs optistore-main --lines 50
+
+# Verify port binding
+netstat -tlnp | grep :8080
+lsof -i :8080
 ```
 
-## Method 2: Step by Step
+## Alternative Startup Methods
 
-1. Connect: `ssh root@5.181.218.15`
-2. Navigate: `cd /var/www/vhosts/opt.vivaindia.com/httpdocs/`
-3. Add columns:
-```sql
-mysql -h localhost -u ledbpt_optie -pg79h94LAP opticpro -e "
-ALTER TABLE products ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(255);
-ALTER TABLE patients ADD COLUMN IF NOT EXISTS emergency_phone VARCHAR(20);
-ALTER TABLE store_inventory ADD COLUMN IF NOT EXISTS reserved_quantity INT DEFAULT 0;
-ALTER TABLE sales ADD COLUMN IF NOT EXISTS staff_id VARCHAR(36);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS city VARCHAR(100);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS state VARCHAR(50);
-ALTER TABLE customers ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20);
-ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS store_id VARCHAR(36);
-"
+If `node app.js` fails, try:
+```bash
+# Check if package.json has start script
+cat package.json | grep -A 5 "scripts"
+
+# Try npm start
+npm start
+
+# Try different entry points
+node index.js
+node server.js
+node server/index.js
 ```
-4. Restart: `pm2 restart all`
 
-## Test Your Fix
+## Plesk Configuration Fix
 
-After running the commands, test:
-- https://opt.vivaindia.com (main application)
-- `curl http://localhost:8080/api/stores` (should return 2 stores)
+In Plesk panel for opt.vivaindia.com:
+1. **Application Startup File**: Try different entry points:
+   - `app.js` (current)
+   - `index.js`
+   - `server.js` 
+   - `server/index.js`
+2. **Environment Variables**: Add in Plesk:
+   - `DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro`
+   - `NODE_ENV=production`
+   - `PORT=8080`
 
-The 500 errors should be gone and your medical practice management system should work perfectly!
-
-## What Gets Fixed
-- ✅ Products page will load (barcode column added)
-- ✅ Patient management will work (emergency contact fields added) 
-- ✅ Customer data will display (city/state/zip columns added)
-- ✅ Inventory tracking will function (reserved_quantity added)
-- ✅ Sales records will process (staff_id column added)
-
-Your OptiStore Pro deployment will be fully operational!
+## Success Indicators
+When working properly:
+- `curl http://localhost:8080/` returns HTML content
+- `netstat -tlnp | grep :8080` shows Node.js process
+- PM2 logs show "Server started on port 8080"
+- opt.vivaindia.com:8080 accessible externally
