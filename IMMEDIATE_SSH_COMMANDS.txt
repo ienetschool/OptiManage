@@ -1,26 +1,20 @@
-## IMMEDIATE FIX - Run these commands in SSH terminal:
-
+# IMMEDIATE PRODUCTION SERVER RESTART
 cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-# 1. Check what's actually running on port 8080
+# 1. Kill existing server
+pkill -f "tsx.*server/index.ts" 2>/dev/null || true
+
+# 2. Start production server with API routes
+NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro" nohup npx tsx server/index.ts > api-production.log 2>&1 &
+
+# 3. Wait and test API endpoints
+sleep 15
+echo "=== Testing API endpoints ==="
+curl -I http://localhost:8080/api/install/test-connection
+curl -I http://localhost:8080/api/dashboard
+curl -I http://localhost:8080/
+
+# 4. Check port status
 netstat -tlnp | grep :8080
-ss -tlnp | grep :8080
-
-# 2. Check PM2 logs to see the actual error
-pm2 logs optistore-main --lines 10
-
-# 3. Stop PM2 and start manually to see real error
-pm2 delete optistore-main
-pm2 kill
-
-# 4. Start manually with debug output
-export NODE_ENV=production
-export PORT=8080
-export FORCE_PRODUCTION=true
-export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
-
-# 5. Try direct node start
-node --loader tsx/esm server/index.ts
-
-## This will show you the real error preventing port 8080 from working.
-## Send me the output from these commands.
+echo "=== Production server PID ==="
+ps aux | grep tsx | grep server/index.ts
