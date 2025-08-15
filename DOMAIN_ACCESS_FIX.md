@@ -1,20 +1,20 @@
-# Domain Access Fix - Remove Port 8080 Requirement
+# DOMAIN ACCESS - FINAL CONFIGURATION
 
-## Current Issue
-- Application requires :8080 in URL
-- User wants normal domain access: http://opt.vivaindia.com
-- Database connection test failing
+## Current Status ✅
+- **API Routes Working**: All /api/* endpoints accessible via HTTPS domain
+- **Production Server**: Running on port 8080 (PID 131789)
+- **Database Tests**: API endpoint responding correctly
 
-## Solution: Plesk Proxy Configuration
+## Final Steps
 
-### Step 1: Set up Proxy in Plesk
-1. Login to Plesk control panel
-2. Go to "Websites & Domains" → opt.vivaindia.com
-3. Go to "Apache & nginx Settings"
-4. Add this to "Additional nginx directives":
+### 1. Test Database Connection
+The install page at https://opt.vivaindia.com/install should now have working "Test Database Connection" button.
+
+### 2. Main Application Access
+For the main OptiStore Pro application, add this additional nginx directive:
 
 ```nginx
-location / {
+location ~ ^/(?!install|api).*$ {
     proxy_pass http://127.0.0.1:8080;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
@@ -23,31 +23,16 @@ location / {
 }
 ```
 
-### Step 2: Alternative - Use .htaccess redirect
-Add to document root .htaccess:
-```apache
-RewriteEngine On
-RewriteCond %{HTTP_HOST} ^opt\.vivaindia\.com$
-RewriteRule ^(.*)$ http://opt.vivaindia.com:8080/$1 [R=301,L]
-```
+This routes all requests (except /install and /api) to the Express server on port 8080.
 
-### Step 3: Database Connection Fix
-The connection test is failing because the production server doesn't have the API endpoints active.
+## Complete Working URLs
+After final configuration:
+- https://opt.vivaindia.com/install ✅ Database setup page
+- https://opt.vivaindia.com/api/dashboard ✅ API working  
+- https://opt.vivaindia.com ➡️ OptiStore Pro main application
 
-## SSH Commands to Execute:
-
-```bash
-# 1. Create nginx proxy config
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com
-cat > .htaccess << 'EOF'
-RewriteEngine On
-RewriteCond %{SERVER_PORT} !^8080$
-RewriteRule ^(.*)$ http://opt.vivaindia.com:8080/$1 [R=301,L]
-EOF
-
-# 2. Check if server on 8080 has API routes
-curl -I http://localhost:8080/api/test-db-connection
-
-# 3. If API missing, ensure production server is running full app
-ps aux | grep "server/index.ts"
-```
+## Production Details
+- Server: tsx server/index.ts (PID 131789)
+- Port: 8080 (HTTP/1.1 200 OK confirmed)
+- Database: mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro
+- Environment: production
