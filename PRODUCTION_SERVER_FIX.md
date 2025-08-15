@@ -19,7 +19,7 @@ SSH to your production server and run these commands:
 ssh root@5.181.218.15
 
 # Navigate to your application directory
-cd /var/www/opt.vivaindia.com  # or wherever your app is located
+cd /var/www/vivaindia.com/opt.vivaindia.sql
 
 # Update environment with fixed DATABASE_URL
 export DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
