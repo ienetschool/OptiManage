@@ -68,6 +68,7 @@ export interface IStorage {
   // Customer operations
   getCustomers(): Promise<Customer[]>;
   createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer>;
 
   // Basic operations for medical practice
   getDashboardStats(): Promise<any>;
@@ -149,6 +150,16 @@ export class MySQLStorage implements IStorage {
     await db.insert(customers).values(customer);
     const [newCustomer] = await db.select().from(customers).where(eq(customers.email, customer.email!));
     return newCustomer!;
+  }
+
+  async updateCustomer(id: string, customer: Partial<InsertCustomer>): Promise<Customer> {
+    await db.update(customers).set({
+      ...customer,
+      updatedAt: new Date()
+    }).where(eq(customers.id, id));
+    
+    const [updatedCustomer] = await db.select().from(customers).where(eq(customers.id, id));
+    return updatedCustomer!;
   }
 
   async getDashboardStats(): Promise<any> {
