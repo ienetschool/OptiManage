@@ -1,0 +1,29 @@
+IMMEDIATE PRODUCTION SERVER FIX
+===============================
+
+Copy and paste these commands ONE BY ONE in your SSH terminal:
+
+1. Navigate to project:
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+2. Check what went wrong:
+tail -30 production.log
+
+3. Kill any stuck processes:
+pkill -f tsx
+sudo fuser -k 8080/tcp
+
+4. Test server startup (this will show the exact error):
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 tsx server/index.ts
+
+5. If you see errors about missing modules, run:
+npm install
+
+6. If you see "serving on port 8080", press Ctrl+C and run:
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 tsx server/index.ts > production.log 2>&1 &
+
+7. Verify it's working:
+ps aux | grep tsx
+curl http://localhost:8080/api/dashboard
+
+Run step 4 first and tell me what error you see!
