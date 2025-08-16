@@ -14,11 +14,8 @@ import {
   emailTemplates,
   communicationLog,
   patients,
-  purchaseOrders,
-  purchaseOrderItems,
-  stockMovements,
   type User,
-  type UpsertUser,
+  type InsertUser,
   type Store,
   type InsertStore,
   type Product,
@@ -29,22 +26,6 @@ import {
   type InsertAppointment,
   type Sale,
   type InsertSale,
-  type SaleItem,
-  type Category,
-  type InsertCategory,
-  type Supplier,
-  type InsertSupplier,
-  type StoreInventory,
-  type SystemSettings,
-  type InsertSystemSettings,
-  type CustomFieldConfig,
-  type InsertCustomFieldConfig,
-  type PurchaseOrder,
-  type InsertPurchaseOrder,
-  type PurchaseOrderItem,
-  type InsertPurchaseOrderItem,
-  type StockMovement,
-  type InsertStockMovement,
 } from "@shared/mysql-schema";
 import { db } from "./db";
 import { eq, sql, desc, and, or } from "drizzle-orm";
@@ -53,12 +34,13 @@ import { eq, sql, desc, and, or } from "drizzle-orm";
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
-  upsertUser(user: UpsertUser): Promise<User>;
+  upsertUser(user: InsertUser): Promise<User>;
 
   // Store operations
   getStores(): Promise<Store[]>;
   getStore(id: string): Promise<Store | undefined>;
   createStore(store: InsertStore): Promise<Store>;
+  getStoreInventory(): Promise<any[]>; // Added missing method
 
   // Product operations
   getProducts(): Promise<Product[]>;
@@ -81,7 +63,7 @@ export class MySQLStorage implements IStorage {
     return user;
   }
 
-  async upsertUser(user: UpsertUser): Promise<User> {
+  async upsertUser(user: InsertUser): Promise<User> {
     const [existingUser] = await db.select().from(users).where(eq(users.email, user.email!));
     
     if (existingUser) {
@@ -125,6 +107,15 @@ export class MySQLStorage implements IStorage {
     await db.insert(stores).values(store);
     const [newStore] = await db.select().from(stores).where(eq(stores.name, store.name!));
     return newStore!;
+  }
+
+  async getStoreInventory(): Promise<any[]> {
+    try {
+      return await db.select().from(storeInventory);
+    } catch (error) {
+      console.error('Error fetching store inventory:', error);
+      return [];
+    }
   }
 
   async getProducts(): Promise<Product[]> {
