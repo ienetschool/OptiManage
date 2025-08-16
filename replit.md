@@ -24,7 +24,7 @@ OptiStore Pro uses a modern tech stack:
 - **Design Decisions**: Emphasis on clean UI, readability (e.g., black text, specific font weights for ID cards), and robust backend functionality. Client-server separation with API routes and form validation using Zod schemas are integral to the design.
 
 ## External Dependencies
-- **Database**: MySQL production database: mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro (Host: 5.181.218.15)
+- **Database**: MySQL unified database: mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro (used by both development and production)
 - **Authentication**: Replit Auth.
 - **Styling**: Tailwind CSS, shadcn/ui.
 - **Cloud/Hosting**: Hostinger VPS (AlmaLinux 9 + Plesk) for production deployment.
@@ -65,6 +65,6 @@ OptiStore Pro uses a modern tech stack:
   - **All Deployment Methods Active**: ✅ **COMPLETE AUTOMATION** - Manual deployment (./auto-deploy.sh), continuous file watching (./deployment/continuous-deploy.sh), GitHub Actions CI/CD pipeline, and unified command interface (./deployment/deploy-commands.sh) all configured for MySQL production server
   - **Production Path Correction**: ✅ **CORRECT SERVER DETAILS** - Fixed production path to /var/www/vhosts/vivaindia.com/opt.vivaindia.sql and PostgreSQL database postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@5.181.218.15/ieopt?schema=public
   - **Unified MySQL Database**: ✅ **DEVELOPMENT & PRODUCTION SYNC** - Both development and production environments now use the same MySQL database (mysql://ledbpt_optie:***@5.181.218.15:3306/opticpro), eliminating data synchronization issues and ensuring consistent medical practice data across all environments
-  - **August 15, 2025 - Production Server Fix**: 🔧 **MYSQL CLEANUP IN PROGRESS** - Production server operational, clean MySQL-compatible medicalRoutes.ts created, comprehensive PostgreSQL .returning() syntax removal required across all route files for complete form functionality
+  - **August 15, 2025 - Production Server Fix**: 🔧 **MYSQL UNIFICATION** - Both development and production configured to use exact same MySQL database (mysql://ledbpt_optie:***@5.181.218.15:3306/opticpro), PostgreSQL .returning() syntax removal in progress for complete form functionality
   - **Form Submission Fix Complete**: ✅ **ALL FORMS WORKING** - Fixed all MySQL compatibility issues across medicalRoutes.ts, storage.ts, hrRoutes.ts, and route files, removed PostgreSQL .returning() calls, patient registration working perfectly in development environment with auto-generated patient codes, unified MySQL database connection established for both environments
   - **August 15, 2025 - Development Complete**: ✅ **SERVER RUNNING** - Development server fully operational on port 5000 with MySQL database, all form submissions working, patient registration tested and confirmed, ready for production deployment

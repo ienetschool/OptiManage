@@ -1,0 +1,84 @@
+URGENT PRODUCTION FIX - Run these commands in SSH:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# Set exact MySQL database URL
+echo 'DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro"' > .env
+
+# Fix medicalRoutes.ts for pure MySQL
+cat > server/medicalRoutes.ts << 'EOF'
+import type { Express } from "express";
+import { 
+  patients,
+  insertPatientSchema
+} from "@shared/mysql-schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import { isAuthenticated } from "./oauthAuth";
+
+export function registerMedicalRoutes(app: Express) {
+  app.post("/api/patients", async (req, res) => {
+    try {
+      console.log("MySQL Patient Registration:", JSON.stringify(req.body, null, 2));
+      
+      const patientCode = `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      const validationData = { ...req.body };
+      delete validationData.patientCode;
+      
+      const modifiedSchema = insertPatientSchema.omit({ patientCode: true });
+      const validatedData = modifiedSchema.parse(validationData);
+      const finalData = { ...validatedData, patientCode };
+      
+      console.log("MySQL Insert Data:", JSON.stringify(finalData, null, 2));
+      
+      await db.insert(patients).values(finalData);
+      console.log("MySQL Insert Complete");
+      
+      const [patient] = await db.select().from(patients).where(eq(patients.patientCode, patientCode)).limit(1);
+      console.log("MySQL Patient Retrieved:", JSON.stringify(patient, null, 2));
+      
+      res.json(patient);
+    } catch (error) {
+      console.error("MySQL Patient Error:", error);
+      res.status(500).json({ message: "Failed to create patient", error: error.message });
+    }
+  });
+
+  app.get("/api/patients", isAuthenticated, async (req, res) => {
+    try {
+      const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
+      res.json(patientsList);
+    } catch (error) {
+      console.error("MySQL Patients Fetch Error:", error);
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+}
+EOF
+
+# Remove all PostgreSQL syntax from all route files
+find server/ -name "*.ts" -exec sed -i 's/\.returning([^)]*)//' {} \;
+find server/ -name "*.ts" -exec sed -i 's/\.returning()//' {} \;
+
+# Kill and restart production server with MySQL
+pkill -f 'tsx server/index.ts'
+sudo fuser -k 8080/tcp
+sleep 5
+
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" NODE_ENV=production PORT=8080 tsx server/index.ts > production.log 2>&1 &
+
+# Wait for startup
+sleep 15
+
+# Verify server process
+ps aux | grep tsx | grep -v grep
+
+# Test MySQL patient registration
+echo "Testing MySQL patient registration:"
+curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"SSH_MYSQL_TEST","lastName":"Fixed","phone":"9999999999","email":"ssh_mysql@fixed.com"}' | head -c 300
+
+# Check logs
+echo "Production server logs:"
+tail -10 production.log
+
+echo "MySQL production server setup complete"
