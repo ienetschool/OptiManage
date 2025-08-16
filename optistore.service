@@ -1,0 +1,19 @@
+[Unit]
+Description=OptiStore Pro Medical Practice Management
+After=network.target mysql.service
+
+[Service]
+Type=forking
+User=root
+WorkingDirectory=/var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+Environment=NODE_ENV=production
+Environment=PORT=8080
+Environment=DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro
+ExecStart=/usr/bin/pm2 start ecosystem.config.js --no-daemon
+ExecReload=/usr/bin/pm2 reload ecosystem.config.js
+ExecStop=/usr/bin/pm2 delete optistore-production
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
