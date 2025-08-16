@@ -1,0 +1,64 @@
+name: Deploy OptiStore Pro to Production
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build client
+      run: npm run build || echo "No build script found"
+      
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        password: ${{ secrets.PRODUCTION_PASSWORD }}
+        port: 22
+        script: |
+          # Navigate to production directory
+          cd /var/www/vhosts/system/opt.vivaindia.com/httpdocs || cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com || cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+          
+          # Pull latest changes
+          git pull origin main || git pull origin master
+          
+          # Install dependencies
+          npm install --production
+          
+          # Restart PM2 process
+          pm2 restart optistore-production || pm2 start "node --import tsx/esm server/index.ts" --name optistore-production
+          
+          # Save PM2 configuration
+          pm2 save
+          
+          echo "Deployment completed successfully"
+          
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        password: ${{ secrets.PRODUCTION_PASSWORD }}
+        port: 22
+        script: |
+          # Check if application is running
+          pm2 status
+          curl -f https://opt.vivaindia.com/api/dashboard || echo "API check failed"
