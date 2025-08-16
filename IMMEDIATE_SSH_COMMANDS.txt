@@ -1,24 +1,23 @@
-URGENT: Production Server is DOWN - Run these commands immediately:
+CRITICAL: Run these commands in your SSH terminal to see what's wrong:
 
-ssh root@5.181.218.15
+1. Check if server started and what error occurred:
+   tail -30 production.log
 
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+2. Check if tsx is installed and working:
+   which tsx
+   tsx --version
 
-# Kill any hanging processes
-sudo fuser -k 8080/tcp
-pkill -f tsx
-pkill -f node
+3. Check if there are syntax errors in the deployed code:
+   cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+   tsx --check server/index.ts
 
-# Start the server properly
-NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+4. Try starting server in foreground to see exact error:
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 tsx server/index.ts
 
-# Check if it's running
-sleep 10
-ps aux | grep tsx | grep -v grep
-netstat -tlnp | grep :8080
+5. If tsx is missing, install it:
+   npm install -g tsx
 
-# Test the API
-curl -s http://localhost:8080/api/dashboard | head -c 100
+6. If permission issues, fix ownership:
+   chown -R vivassh:psacln /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-# If still not working, check the log
-tail -20 production.log
+Run command #1 first and tell me what error you see in the log!
