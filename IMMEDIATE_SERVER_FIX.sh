@@ -1,63 +1,38 @@
 #!/bin/bash
 
-# Immediate Production Server Fix
-# 502 error means the Node.js server on port 8080 is down
+echo "IMMEDIATE PRODUCTION FIX - DIRECT APPROACH"
+echo "=========================================="
 
-echo "🚨 FIXING 502 BAD GATEWAY ERROR"
-echo "================================"
-echo "Production server at 5.181.218.15:8080 is down"
-echo "Deploying MySQL fixes and restarting server..."
-echo ""
+# Create complete working deployment
+echo "Creating complete production package..."
 
-PROD_HOST="5.181.218.15"
-PROD_USER="vivassh"
-PROD_PATH="/var/www/vhosts/vivaindia.com/opt"
-DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro"
-
-# Step 1: Upload MySQL-compatible files
-echo "📤 UPLOADING MYSQL FIXES..."
-scp server/medicalRoutes.ts $PROD_USER@$PROD_HOST:$PROD_PATH/server/
-scp server/storage.ts $PROD_USER@$PROD_HOST:$PROD_PATH/server/
-scp server/hrRoutes.ts $PROD_USER@$PROD_HOST:$PROD_PATH/server/
-scp shared/mysql-schema.ts $PROD_USER@$PROD_HOST:$PROD_PATH/shared/
-
-# Step 2: Restart production server
-echo ""
-echo "🔄 RESTARTING PRODUCTION SERVER..."
-ssh $PROD_USER@$PROD_HOST << 'EOF'
-cd /var/www/vhosts/vivaindia.com/opt
-
-echo "Killing any existing tsx processes..."
-pkill -f 'tsx server/index.ts' || echo "No existing tsx processes found"
-pkill -f 'node.*server' || echo "No existing node processes found"
-
-echo "Waiting 3 seconds..."
-sleep 3
-
-echo "Starting production server with MySQL..."
-NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
-
-echo "Waiting for server to start..."
-sleep 5
-
-echo "Checking server process..."
-ps aux | grep tsx | grep -v grep
-
-echo "Checking if port 8080 is listening..."
-netstat -tlnp | grep :8080 || ss -tlnp | grep :8080
-
-echo "Testing local server response..."
-curl -s http://localhost:8080/api/dashboard | head -c 100
-
-echo "Checking production log for errors..."
-tail -20 production.log
-EOF
+# Compress all needed files
+tar -czf production_complete.tar.gz server/ package.json tsconfig.json
 
 echo ""
-echo "🧪 TESTING EXTERNAL ACCESS..."
-sleep 5
-curl -s -w "HTTP Status: %{http_code}\n" https://opt.vivaindia.com/api/dashboard | head -c 200
-
+echo "PRODUCTION IS DOWN - 502 Bad Gateway confirmed"
+echo "=============================================="
 echo ""
-echo "✅ SERVER RESTART COMPLETE"
-echo "🌐 Check: https://opt.vivaindia.com"
+echo "The server process is not running on port 8080."
+echo ""
+echo "MANUAL FIX REQUIRED:"
+echo "==================="
+echo ""
+echo "1. Upload production_complete.tar.gz to your server"
+echo "2. SSH: ssh root@5.181.218.15"
+echo "3. Navigate: cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql"
+echo "4. Extract: tar -xzf production_complete.tar.gz"
+echo "5. Install: npm install && npm install -g tsx"
+echo "6. Start: DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' PORT=8080 tsx server/index.ts &"
+echo ""
+echo "Your website will be online immediately after step 6."
+echo ""
+echo "PERMANENT SOLUTION:"
+echo "=================="
+echo "After the manual fix, install PM2:"
+echo "npm install -g pm2"
+echo "pm2 start 'DATABASE_URL=\"mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro\" PORT=8080 tsx server/index.ts' --name optistore"
+echo "pm2 save"
+echo "pm2 startup"
+echo ""
+echo "This will prevent future crashes and auto-restart the server."

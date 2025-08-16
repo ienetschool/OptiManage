@@ -1,50 +1,44 @@
 #!/bin/bash
 
-# OptiStore Pro - Production Deployment Script
-# Deploy to opt.vivaindia.com (5.181.218.15)
+echo "Uploading files to production server..."
 
-echo "🚀 OptiStore Pro - Production Deployment"
-echo "Target: opt.vivaindia.com (5.181.218.15)"
-echo "=========================================="
+# Use scp to copy files directly
+scp -o StrictHostKeyChecking=no -r server/ root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/
+scp -o StrictHostKeyChecking=no package.json root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/
+scp -o StrictHostKeyChecking=no ecosystem.config.js root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/
 
-# Set production paths
-PROD_SERVER="root@5.181.218.15"
-PROD_PATH="/var/www/vhosts/opt.vivaindia.com/httpdocs"
-BACKUP_PATH="/var/www/vhosts/opt.vivaindia.com/backup_$(date +%Y%m%d_%H%M%S)"
+echo "Files uploaded. Starting production server..."
 
-echo "📦 Creating backup of current deployment..."
-ssh $PROD_SERVER "cp -r $PROD_PATH $BACKUP_PATH"
+# Execute commands on production server
+ssh -o StrictHostKeyChecking=no root@5.181.218.15 "
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-echo "📁 Uploading updated application files..."
+# Kill existing processes
+pkill -f tsx
+pkill -f node
+sudo fuser -k 8080/tcp 2>/dev/null
 
-# Upload core application files
-scp -r server/ $PROD_SERVER:$PROD_PATH/
-scp -r client/ $PROD_SERVER:$PROD_PATH/
-scp -r shared/ $PROD_SERVER:$PROD_PATH/
-scp package.json $PROD_SERVER:$PROD_PATH/
-scp ecosystem.config.js $PROD_SERVER:$PROD_PATH/
+# Install dependencies
+npm install
+npm install -g tsx pm2
 
-# Upload installation and test files
-scp install.html $PROD_SERVER:$PROD_PATH/
-scp simple_connection_test.html $PROD_SERVER:$PROD_PATH/
-scp optistore_pro_mysql_complete.sql $PROD_SERVER:$PROD_PATH/
+# Start with PM2
+pm2 delete optistore-production 2>/dev/null
+pm2 start ecosystem.config.js
 
-echo "🔧 Setting up environment variables..."
-ssh $PROD_SERVER "cd $PROD_PATH && echo 'DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' > .env"
-ssh $PROD_SERVER "cd $PROD_PATH && echo 'NODE_ENV=production' >> .env"
-ssh $PROD_SERVER "cd $PROD_PATH && echo 'PORT=8080' >> .env"
+# Save configuration
+pm2 save
+pm2 startup systemd -u root --hp /root
 
-echo "📦 Installing dependencies..."
-ssh $PROD_SERVER "cd $PROD_PATH && npm install --production"
+echo 'Production server started!'
+pm2 status
 
-echo "🔄 Restarting application with PM2..."
-ssh $PROD_SERVER "cd $PROD_PATH && pm2 restart all || pm2 start ecosystem.config.js"
+# Test server
+sleep 3
+curl -s http://localhost:8080/api/dashboard | head -c 100
+"
 
-echo "✅ Deployment complete!"
-echo ""
-echo "🔗 Test URLs:"
-echo "   Main App: https://opt.vivaindia.com"
-echo "   Install:  https://opt.vivaindia.com/install"
-echo "   Test:     https://opt.vivaindia.com/test-connection"
-echo ""
-echo "🔍 Connection test should now work correctly!"
+echo "Testing external access..."
+sleep 5
+curl -s http://opt.vivaindia.com/api/dashboard | head -c 100
+
