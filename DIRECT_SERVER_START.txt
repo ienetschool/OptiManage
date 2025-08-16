@@ -1,17 +1,40 @@
-DIRECT SERVER START COMMANDS - COPY AND PASTE:
+DIRECT SERVER START COMMANDS
+============================
 
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+Based on your screenshot, PM2 restarted but shows "no lines" in logs.
+This suggests the process isn't starting properly.
 
-npm install -g tsx
+RUN THESE COMMANDS IN ORDER:
 
-NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts &
+1. Delete the problematic PM2 process:
+   pm2 delete optistore-production
 
-sleep 5
+2. Navigate to project directory:
+   cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
 
-ps aux | grep tsx | grep -v grep
+3. Install dependencies (if needed):
+   npm install
+   npm install -g tsx
 
-netstat -tlnp | grep :8080
+4. Start server manually to see what's wrong:
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 tsx server/index.ts
 
-curl -s http://localhost:8080/api/dashboard
+5. If you see errors, fix them. If you see "serving on port 8080", press Ctrl+C and run:
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 pm2 start tsx --name optistore-production -- server/index.ts
 
-echo "Server should now be running on port 8080"
+6. Save PM2 configuration:
+   pm2 save
+
+7. Test if working:
+   curl http://localhost:8080/api/dashboard
+   
+8. Check if port is listening:
+   netstat -tlnp | grep 8080
+
+EXPECTED OUTPUT:
+- Server should show "Connecting to MySQL database..."
+- Then "serving on port 8080"
+- curl should return JSON data
+- netstat should show process listening on 8080
+
+After this works, opt.vivaindia.com/app/ will be fully functional.
