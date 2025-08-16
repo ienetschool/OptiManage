@@ -1,3 +1,10 @@
+#!/bin/bash
+echo "URGENT FIXES FOR DEVELOPMENT AND PRODUCTION"
+echo "=========================================="
+
+# Fix 1: Date validation in development
+echo "Fixing date validation in medicalRoutes.ts..."
+cat > server/medicalRoutes_FIXED.ts << 'EOF'
 import type { Express } from "express";
 import { 
   doctors, 
@@ -79,3 +86,30 @@ export function registerMedicalRoutes(app: Express) {
     }
   });
 }
+EOF
+
+# Replace the current file
+cp server/medicalRoutes_FIXED.ts server/medicalRoutes.ts
+
+echo "✅ Development medicalRoutes.ts fixed for date validation"
+
+# Fix 2: Production deployment commands
+echo "Creating production deployment script..."
+cat > deploy_production_now.sh << 'DEPLOY_EOF'
+#!/bin/bash
+echo "SSH into: ssh root@5.181.218.15"  
+echo "Password: &8KXC4D+Ojfhuu0LSMhE"
+echo "Then run:"
+echo ""
+echo "cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql"
+echo "pkill -f 'tsx server/index.ts'"
+echo "sudo fuser -k 8080/tcp"
+echo "DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' NODE_ENV=production PORT=8080 tsx server/index.ts > production.log 2>&1 &"
+echo "sleep 15 && ps aux | grep tsx | grep -v grep"
+DEPLOY_EOF
+
+chmod +x deploy_production_now.sh
+
+echo "✅ Both fixes ready:"
+echo "1. Development date validation fixed"
+echo "2. Production deployment script created"

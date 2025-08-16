@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "SSH into: ssh root@5.181.218.15"  
+echo "Password: &8KXC4D+Ojfhuu0LSMhE"
+echo "Then run:"
+echo ""
+echo "cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql"
+echo "pkill -f 'tsx server/index.ts'"
+echo "sudo fuser -k 8080/tcp"
+echo "DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' NODE_ENV=production PORT=8080 tsx server/index.ts > production.log 2>&1 &"
+echo "sleep 15 && ps aux | grep tsx | grep -v grep"

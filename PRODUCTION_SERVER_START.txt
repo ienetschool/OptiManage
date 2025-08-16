@@ -1,0 +1,27 @@
+PRODUCTION SERVER START COMMANDS
+================================
+
+1. SSH into server:
+   ssh root@5.181.218.15
+   Password: &8KXC4D+Ojfhuu0LSMhE
+
+2. Navigate to project directory:
+   cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+3. Set database environment:
+   echo 'DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro"' > .env
+
+4. Stop any existing server:
+   pkill -f 'tsx server/index.ts'
+   sudo fuser -k 8080/tcp
+
+5. Start production server:
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" NODE_ENV=production PORT=8080 tsx server/index.ts > production.log 2>&1 &
+
+6. Verify server:
+   sleep 15
+   ps aux | grep tsx | grep -v grep
+   curl -s http://localhost:8080/api/dashboard | head -c 100
+
+7. Test patient creation:
+   curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"Production","lastName":"Test","phone":"1111111111","email":"production@test.com"}' | head -c 200
