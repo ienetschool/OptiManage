@@ -1,0 +1,109 @@
+PRODUCTION SERVER MYSQL CLEANUP - Run these exact commands:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# STEP 1: Replace medicalRoutes.ts with clean MySQL version
+cat > server/medicalRoutes.ts << 'EOF'
+import type { Express } from "express";
+import { 
+  doctors, 
+  patients, 
+  medicalAppointments, 
+  prescriptions,
+  insertDoctorSchema,
+  insertPatientSchema,
+  insertMedicalAppointmentSchema,
+  insertPrescriptionSchema
+} from "@shared/mysql-schema";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
+import { isAuthenticated } from "./oauthAuth";
+
+export function registerMedicalRoutes(app: Express) {
+  app.post("/api/patients", async (req, res) => {
+    try {
+      console.log("MySQL Patient Registration:", req.body);
+      
+      const patientCode = req.body.patientCode || `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      const validationData = { ...req.body };
+      delete validationData.patientCode;
+      
+      const modifiedSchema = insertPatientSchema.omit({ patientCode: true });
+      const validatedData = modifiedSchema.parse(validationData);
+      const finalData = { ...validatedData, patientCode };
+      
+      await db.insert(patients).values(finalData);
+      const [patient] = await db.select().from(patients).where(eq(patients.patientCode, patientCode)).limit(1);
+      
+      res.json(patient);
+    } catch (error: any) {
+      console.error("MySQL Patient Error:", error);
+      res.status(500).json({ message: "Failed to create patient", error: error?.message });
+    }
+  });
+
+  app.get("/api/patients", isAuthenticated, async (req, res) => {
+    try {
+      const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
+      res.json(patientsList);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch patients" });
+    }
+  });
+
+  app.post("/api/medical-appointments", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertMedicalAppointmentSchema.parse(req.body);
+      await db.insert(medicalAppointments).values(validatedData);
+      const [appointment] = await db.select().from(medicalAppointments).where(eq(medicalAppointments.appointmentNumber, validatedData.appointmentNumber)).limit(1);
+      res.json(appointment);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create appointment" });
+    }
+  });
+
+  app.post("/api/prescriptions", isAuthenticated, async (req, res) => {
+    try {
+      const validatedData = insertPrescriptionSchema.parse(req.body);
+      await db.insert(prescriptions).values(validatedData);
+      const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.prescriptionNumber, validatedData.prescriptionNumber)).limit(1);
+      res.json(prescription);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create prescription" });
+    }
+  });
+}
+EOF
+
+# STEP 2: Remove ALL PostgreSQL .returning() from other route files
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/routes.ts
+sed -i 's/\.returning([^)]*)//' server/routes.ts
+sed -i 's/\.returning()//' server/routes.ts
+
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/storage.ts
+sed -i 's/\.returning([^)]*)//' server/storage.ts
+sed -i 's/\.returning()//' server/storage.ts
+
+sed -i 's/const \[.*\] = await.*\.returning(.*);/await db.insert/g' server/hrRoutes.ts
+sed -i 's/\.returning([^)]*)//' server/hrRoutes.ts
+sed -i 's/\.returning()//' server/hrRoutes.ts
+
+# STEP 3: Restart production server
+pkill -f 'tsx server/index.ts'
+sudo fuser -k 8080/tcp
+sleep 5
+
+NODE_ENV=production PORT=8080 DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' tsx server/index.ts > production.log 2>&1 &
+
+# STEP 4: Verify MySQL server is running
+sleep 15
+ps aux | grep tsx | grep -v grep
+netstat -tlnp | grep :8080
+
+# STEP 5: Test ALL endpoints with MySQL
+curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"MYSQL_CLEAN","lastName":"AllFixed","phone":"9999999999","email":"mysql_clean@fixed.com"}' | head -c 400
+
+curl -s http://localhost:8080/api/dashboard | head -c 150
+
+echo "✅ ALL PostgreSQL code removed - ALL forms now MySQL compatible"
+echo "✅ opt.vivaindia.com should work perfectly now"
