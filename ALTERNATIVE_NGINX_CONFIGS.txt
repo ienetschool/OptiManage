@@ -1,0 +1,43 @@
+ALTERNATIVE NGINX CONFIGURATIONS
+================================
+
+Since location / causes duplicates, try these alternatives:
+
+OPTION 1: Medical App Path
+location /medapp/ {
+    proxy_pass http://127.0.0.1:8080/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+Access: https://opt.vivaindia.com/medapp/
+
+OPTION 2: OptiStore Path
+location /optistore/ {
+    proxy_pass http://127.0.0.1:8080/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+Access: https://opt.vivaindia.com/optistore/
+
+OPTION 3: API Only (Minimal)
+location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+Access API: https://opt.vivaindia.com/api/dashboard
+
+OPTION 4: Port-Based Access
+If nginx keeps causing issues, use direct port access:
+https://opt.vivaindia.com:8080
+
+Any of these will work and avoid the duplicate location conflict.
