@@ -1,24 +1,32 @@
-location / {
-    proxy_pass http://127.0.0.1:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_buffering off;
+CLEAN NGINX CONFIGURATION SOLUTION
+===================================
+
+STEP 1: Clear the existing nginx directives
+- In Plesk, go to opt.vivaindia.com > Apache & nginx Settings
+- Delete all content from "Additional nginx directives" box
+- Click OK to save
+
+STEP 2: Add this simple configuration instead:
+
+location /app {
+    return 301 /app/;
 }
 
-location /api/ {
-    proxy_pass http://127.0.0.1:8080/api/;
+location /app/ {
+    proxy_pass http://127.0.0.1:8080/;
     proxy_set_header Host $host;
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
 }
 
-location /install {
-    proxy_pass http://127.0.0.1:8080/install;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
+STEP 3: Test configuration
+- Click OK in Plesk
+- Wait 30 seconds
+- Visit: https://opt.vivaindia.com/app/
+
+This approach:
+- Avoids duplicate location conflicts
+- Provides clean URL structure
+- Works with existing Plesk configuration
+- Your medical app will be accessible at opt.vivaindia.com/app/
