@@ -4,9 +4,9 @@
 
 ### 📍 **Production File Path (CONFIRMED)**
 ```
-/var/www/vhosts/vivaindia.com/opt.vivaindia.com/
+/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/
 ```
-This is the **correct and active** production directory for SSL-enabled domain access.
+This is the **correct and active** production directory as confirmed by user.
 
 ### 🔐 **SSL Configuration**
 - **✅ SSL Certificate**: Active and configured

@@ -28,7 +28,7 @@ OptiStore Pro uses a modern tech stack:
 - **Authentication**: Replit Auth.
 - **Styling**: Tailwind CSS, shadcn/ui.
 - **Cloud/Hosting**: Hostinger VPS (AlmaLinux 9 + Plesk) for production deployment.
-- **Production Path**: /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+- **Production Path**: /var/www/vhosts/vivaindia.com/opt.vivaindia.sql (CONFIRMED)
 - **Process Management**: PM2 for Node.js application management in production.
 
 ## Recent Changes

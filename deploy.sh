@@ -10,7 +10,7 @@ echo "🚀 Starting OptiStore Pro deployment..."
 # Configuration
 PRODUCTION_HOST="5.181.218.15"
 PRODUCTION_USER="root"
-PRODUCTION_PATH="/var/www/vhosts/system/opt.vivaindia.com/httpdocs"
+PRODUCTION_PATH="/var/www/vhosts/vivaindia.com/opt.vivaindia.sql"
 
 # Colors for output
 RED='\033[0;31m'
@@ -40,14 +40,8 @@ sshpass -p '&8KXC4D+Ojfhuu0LSMhE' scp deployment.tar.gz root@5.181.218.15:/tmp/
 sshpass -p '&8KXC4D+Ojfhuu0LSMhE' ssh -o StrictHostKeyChecking=no root@5.181.218.15 "
   echo '🔧 Deploying on production server...'
   
-  # Find correct production path
-  if [ -d '/var/www/vhosts/system/opt.vivaindia.com/httpdocs' ]; then
-    PROD_PATH='/var/www/vhosts/system/opt.vivaindia.com/httpdocs'
-  elif [ -d '/var/www/vhosts/vivaindia.com/opt.vivaindia.com' ]; then
-    PROD_PATH='/var/www/vhosts/vivaindia.com/opt.vivaindia.com'  
-  else
-    PROD_PATH='/var/www/vhosts/vivaindia.com/opt.vivaindia.sql'
-  fi
+  # Use confirmed production path
+  PROD_PATH='/var/www/vhosts/vivaindia.com/opt.vivaindia.sql'
   
   echo \"Using production path: \$PROD_PATH\"
   

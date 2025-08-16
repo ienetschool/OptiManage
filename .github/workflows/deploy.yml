@@ -34,8 +34,8 @@ jobs:
         password: ${{ secrets.PRODUCTION_PASSWORD }}
         port: 22
         script: |
-          # Navigate to production directory
-          cd /var/www/vhosts/system/opt.vivaindia.com/httpdocs || cd /var/www/vhosts/vivaindia.com/opt.vivaindia.com || cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+          # Navigate to confirmed production directory
+          cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
           
           # Pull latest changes
           git pull origin main || git pull origin master
