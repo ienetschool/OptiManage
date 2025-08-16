@@ -1,0 +1,31 @@
+PRODUCTION READY COMMANDS - FINAL SOLUTION
+=========================================
+
+Your PM2 process starts but crashes. Here's the definitive fix:
+
+STEP 1: Check what's causing the crash
+pm2 logs optistore-production --lines 50
+
+STEP 2: Delete problematic process
+pm2 delete optistore-production
+
+STEP 3: Try more stable startup method
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+npm install
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 pm2 start "node --loader tsx/esm server/index.ts" --name optistore-production
+
+STEP 4: Save and verify
+pm2 save
+pm2 status
+curl http://localhost:8080/api/dashboard
+
+ALTERNATIVE IF STEP 3 FAILS:
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 pm2 start tsx --name optistore-production --interpreter none -- server/index.ts
+
+SUCCESS INDICATORS:
+- PM2 status shows "online" (not "errored")
+- curl returns JSON medical data
+- Process stays stable without restarting
+- https://opt.vivaindia.com/medical/ loads your medical app
+
+Once PM2 is stable, your OptiStore Pro medical practice management system will be fully operational with zero downtime.
