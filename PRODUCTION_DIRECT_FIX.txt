@@ -1,0 +1,37 @@
+PRODUCTION SERVER DIRECT FIX - COPY EXACTLY
+==========================================
+
+SSH into your server:
+ssh root@5.181.218.15
+Password: &8KXC4D+Ojfhuu0LSMhE
+
+Then run these commands ONE BY ONE:
+
+1. Go to project directory:
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+2. Check what went wrong:
+tail -30 production.log
+
+3. Install tsx globally:
+npm install -g tsx
+
+4. Kill everything on port 8080:
+sudo fuser -k 8080/tcp
+pkill -f tsx
+
+5. Create proper .env file:
+echo 'DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro"' > .env
+
+6. Test the server in FOREGROUND first (to see any errors):
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 NODE_ENV=production tsx server/index.ts
+
+7. If step 6 works and shows "serving on port 8080", press Ctrl+C and run in background:
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 NODE_ENV=production tsx server/index.ts > production.log 2>&1 &
+
+8. Verify it's running:
+ps aux | grep tsx
+netstat -tlnp | grep 8080
+curl http://localhost:8080/api/dashboard
+
+Please run step 6 first and tell me what happens when you start the server in foreground.

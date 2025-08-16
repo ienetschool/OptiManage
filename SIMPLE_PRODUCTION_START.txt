@@ -1,0 +1,22 @@
+SIMPLE PRODUCTION SERVER START
+=============================
+
+Copy and paste these commands EXACTLY in your SSH terminal:
+
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# Check what's wrong
+tail -20 production.log
+
+# Make sure tsx is available
+npm install -g tsx
+
+# Kill everything on port 8080
+sudo fuser -k 8080/tcp
+pkill -f tsx
+
+# Start server in foreground first to see errors
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 NODE_ENV=production tsx server/index.ts
+
+# If that works, then run in background:
+# DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 NODE_ENV=production tsx server/index.ts > production.log 2>&1 &
