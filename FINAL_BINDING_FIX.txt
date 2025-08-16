@@ -1,0 +1,34 @@
+FINAL SERVER BINDING FIX
+========================
+
+Your PM2 process is running successfully but not accepting external connections.
+The server is likely binding to 127.0.0.1 instead of 0.0.0.0.
+
+IMMEDIATE FIX:
+
+1. Check current binding:
+   netstat -tlnp | grep 8080
+
+2. If showing 127.0.0.1:8080, restart with correct binding:
+   pm2 delete optistore-production
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 HOST=0.0.0.0 pm2 start "node --loader tsx/esm server/index.ts" --name optistore-production
+   pm2 save
+
+3. Verify correct binding:
+   netstat -tlnp | grep 8080
+   # Should show: 0.0.0.0:8080
+
+4. Test local access:
+   curl http://localhost:8080/api/dashboard
+
+5. If local works but external doesn't, check firewall:
+   iptables -L | grep 8080
+   firewall-cmd --list-ports
+
+EXPECTED RESULT:
+- Server listening on 0.0.0.0:8080 (not 127.0.0.1:8080)
+- curl returns JSON medical data
+- https://opt.vivaindia.com/medical/ loads your medical app
+- All patient/appointment functionality working
+
+Your OptiStore Pro will be fully accessible once the binding is corrected.
