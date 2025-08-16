@@ -1,53 +1,59 @@
 #!/bin/bash
 
-# CORRECT DOMAIN FIX - OptiStore Pro
-# Fix both domain access and database connection
+echo "PRODUCTION DOMAIN ACCESS FIX"
+echo "============================"
 
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+# Create alternative nginx configuration that should work
+cat > plesk_nginx_fix.conf << 'EOF'
+# WORKING NGINX CONFIGURATION FOR PLESK
 
-echo "=== FIXING DOMAIN ACCESS AND DATABASE CONNECTION ==="
+# Option 1: Proxy all requests to Node.js
+location /opti/ {
+    proxy_pass http://127.0.0.1:8080/;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection 'upgrade';
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_cache_bypass $http_upgrade;
+    proxy_read_timeout 86400;
+}
 
-# 1. Create redirect in the web root (not the app folder)
-echo "1. Setting up domain redirect..."
-mkdir -p /var/www/vhosts/vivaindia.com/opt.vivaindia.com/httpdocs
-cat > /var/www/vhosts/vivaindia.com/opt.vivaindia.com/httpdocs/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="refresh" content="0; url=http://opt.vivaindia.com:8080">
-    <title>OptiStore Pro - Medical Practice Management</title>
-</head>
-<body>
-    <h2>OptiStore Pro</h2>
-    <p>Redirecting to Medical Practice Management System...</p>
-    <script>window.location.href = 'http://opt.vivaindia.com:8080';</script>
-</body>
-</html>
+# Option 2: API-specific routing
+location /api/ {
+    proxy_pass http://127.0.0.1:8080/api/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 EOF
 
-# 2. Set correct ownership
-chown -R vivassh:psacln /var/www/vhosts/vivaindia.com/opt.vivaindia.com/httpdocs/
-
-# 3. Test API endpoints on port 8080
-echo "2. Testing API endpoints..."
-curl -I http://localhost:8080/api/dashboard
-curl -I http://localhost:8080/api/test-db-connection
-curl -I http://localhost:8080/install
-
-# 4. Check if production server is running full application
-echo "3. Checking production server process..."
-ps aux | grep "server/index.ts" | grep -v grep
-
-# 5. If API endpoints missing, ensure full server restart
-echo "4. Checking server logs..."
-if [ -f server.log ]; then
-    tail -10 server.log
-fi
-
+echo "Alternative nginx configurations created."
 echo ""
-echo "=== RESULTS ==="
-echo "✅ Domain redirect: http://opt.vivaindia.com → http://opt.vivaindia.com:8080"
-echo "✅ Installation page: http://opt.vivaindia.com/install"
+echo "TROUBLESHOOTING STEPS:"
+echo "====================="
 echo ""
-echo "To fix database connection test, ensure the production server"
-echo "is running with all API routes active on port 8080"
+echo "1. SSH into server:"
+echo "   ssh root@5.181.218.15"
+echo ""
+echo "2. Check if PM2 is really working:"
+echo "   pm2 status"
+echo "   pm2 logs optistore-production"
+echo ""
+echo "3. Test server directly:"
+echo "   curl http://localhost:8080/api/dashboard"
+echo ""
+echo "4. If not responding, restart PM2:"
+echo "   pm2 restart optistore-production"
+echo ""
+echo "5. Check server listening:"
+echo "   netstat -tlnp | grep 8080"
+echo ""
+echo "6. If still not working, try direct start:"
+echo "   pm2 delete optistore-production"
+echo "   DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro' PORT=8080 tsx server/index.ts &"
+echo ""
+echo "The issue is likely that PM2 shows 'online' but the actual Node.js process is not responding."

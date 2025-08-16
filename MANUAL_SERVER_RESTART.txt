@@ -1,28 +1,38 @@
 MANUAL SERVER RESTART COMMANDS
-===============================
+==============================
 
-Your production server is down. Copy and run these commands:
+The PM2 process shows "online" but server is not responding. This happens when:
+- Process crashed but PM2 hasn't detected it
+- Server bound to wrong interface
+- Environment variables missing
 
-1. SSH into your server:
-ssh vivassh@5.181.218.15
+RUN THESE COMMANDS IN SSH:
 
-2. Navigate to project directory:
-cd /var/www/vhosts/vivaindia.com/opt
+1. Check current PM2 status:
+   pm2 status
+   pm2 logs optistore-production --lines 20
 
-3. Check if server is running:
-ps aux | grep tsx
+2. Force restart PM2 process:
+   pm2 restart optistore-production
 
-4. Kill any existing processes:
-pkill -f 'tsx server/index.ts'
+3. If still not working, delete and recreate:
+   pm2 delete optistore-production
+   cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 pm2 start tsx --name optistore-production -- server/index.ts
+   pm2 save
 
-5. Start the server:
-NODE_ENV=production PORT=8080 FORCE_PRODUCTION=true DATABASE_URL='mysql://ledbpt_optie:g79h94LAP@localhost:3306/opticpro' nohup npx tsx server/index.ts > production.log 2>&1 &
+4. Test if server responds:
+   curl http://localhost:8080/api/dashboard
 
-6. Verify it's running:
-ps aux | grep tsx
-netstat -tlnp | grep :8080
+5. Check if port is listening:
+   netstat -tlnp | grep 8080
 
-7. Check for errors:
-tail -f production.log
+6. If nothing works, start manually:
+   pm2 delete optistore-production
+   DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 tsx server/index.ts
 
-The 502 error will disappear once the Node.js server starts on port 8080.
+After server starts successfully, it should show:
+"Connecting to MySQL database: opticpro at 5.181.218.15:3306"
+"serving on port 8080"
+
+Then your website will work at opt.vivaindia.com/app/
