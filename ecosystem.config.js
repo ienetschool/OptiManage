@@ -1,17 +1,21 @@
 module.exports = {
-  apps: [
-    {
-      name: "optistore-pro",
-      script: "dist/index.js",
-      env: {
-        NODE_ENV: "production",
-        PORT: "5000",
-        DATABASE_URL: "postgresql://ledbpt_opt:Ra4#PdaqW0c^pa8c@localhost:5432/ieopt",
-        COMPANY_NAME: "OptiStore Pro",
-        ADMIN_EMAIL: "admin@opt.vivaindia.com",
-        DOMAIN: "https://opt.vivaindia.com",
-        SESSION_SECRET: "OptiStore-Pro-2025-Secret"
-      }
-    }
-  ]
-};
+  apps: [{
+    name: 'optistore-production',
+    script: 'tsx',
+    args: 'server/index.ts',
+    instances: 1,
+    autorestart: true,
+    watch: false,
+    max_memory_restart: '1G',
+    restart_delay: 4000,
+    env: {
+      NODE_ENV: 'production',
+      PORT: 8080,
+      DATABASE_URL: 'mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro'
+    },
+    error_file: './logs/err.log',
+    out_file: './logs/out.log',
+    log_file: './logs/combined.log',
+    time: true
+  }]
+}
