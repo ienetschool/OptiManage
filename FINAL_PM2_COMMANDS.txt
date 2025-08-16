@@ -1,0 +1,34 @@
+FINAL PM2 SETUP COMMANDS
+========================
+
+Your manual server start worked perfectly! Now make it permanent with PM2:
+
+STEP 1: Stop manual server
+- In your SSH terminal where server is running, press: Ctrl+C
+
+STEP 2: Clean old PM2 processes
+pm2 delete optistore-production
+pm2 delete optistore
+
+STEP 3: Create new stable PM2 process
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 pm2 start tsx --name optistore-production -- server/index.ts
+
+STEP 4: Verify and save
+pm2 status
+pm2 save
+pm2 startup
+
+STEP 5: Test everything works
+curl http://localhost:8080/api/dashboard
+
+SUCCESS INDICATORS:
+- PM2 status shows "online" (not "errored")
+- curl returns JSON medical data
+- https://opt.vivaindia.com/medical/ loads your medical app
+
+Your OptiStore Pro medical practice management system will be fully operational with:
+- Patient management
+- Appointment scheduling
+- Prescription tracking
+- Invoice generation
+- Automatic server restart capability
