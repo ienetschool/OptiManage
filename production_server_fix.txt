@@ -1,0 +1,35 @@
+# PRODUCTION SERVER RESTART COMMANDS
+
+Run these one by one in your SSH terminal:
+
+# 1. Check current server status
+ps aux | grep tsx
+netstat -tlnp | grep 8080
+
+# 2. Kill any existing processes
+pkill -f tsx
+sudo fuser -k 8080/tcp
+
+# 3. Navigate to project directory
+cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+
+# 4. Check for errors in the log
+tail -20 production.log
+
+# 5. Test server start in foreground (to see errors)
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 NODE_ENV=production tsx server/index.ts
+
+# If you see "serving on port 8080", press Ctrl+C and run step 6
+# If you see errors, share them with me
+
+# 6. Start server in background (only if step 5 worked)
+DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" PORT=8080 NODE_ENV=production tsx server/index.ts > production.log 2>&1 &
+
+# 7. Verify server is running
+ps aux | grep tsx | grep -v grep
+curl http://localhost:8080/api/dashboard
+
+# 8. Test UPDATE endpoint
+curl -X PUT http://localhost:8080/api/patients/test123 -H "Content-Type: application/json" -d '{"firstName":"UpdateTest"}'
+
+Share the output from step 5 if there are any errors!
