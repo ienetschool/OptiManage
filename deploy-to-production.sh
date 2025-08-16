@@ -1,53 +1,126 @@
 #!/bin/bash
-echo "🚀 DEPLOYING MYSQL-COMPATIBLE CODE TO PRODUCTION"
-echo "=============================================="
 
-# Upload all MySQL-compatible files to production
-echo "Uploading medicalRoutes.ts..."
-scp -o StrictHostKeyChecking=no server/medicalRoutes.ts root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/server/
+# OptiStore Pro Production Deployment Script
+# Target: opt.vivaindia.com (5.181.218.15)
 
-echo "Uploading storage.ts..."
-scp -o StrictHostKeyChecking=no server/storage.ts root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/server/
+set -e
 
-echo "Uploading hrRoutes.ts..."
-scp -o StrictHostKeyChecking=no server/hrRoutes.ts root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/server/
+SERVER="5.181.218.15"
+USER="root"
+PASSWORD="&8KXC4D+Ojfhuu0LSMhE"
+DOMAIN="opt.vivaindia.com"
+APP_PATH="/var/www/vhosts/vivaindia.com/opt.vivaindia.com"
 
-echo "Uploading db.ts..."
-scp -o StrictHostKeyChecking=no server/db.ts root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/server/
+echo "🚀 Starting OptiStore Pro deployment to production..."
 
-echo "Uploading mysql-schema.ts..."
-scp -o StrictHostKeyChecking=no shared/mysql-schema.ts root@5.181.218.15:/var/www/vhosts/vivaindia.com/opt.vivaindia.sql/shared/
+# Create production build
+echo "📦 Building application for production..."
+npm run build
 
-# Execute production server update commands
-echo "Updating production server..."
-ssh -o StrictHostKeyChecking=no root@5.181.218.15 << 'DEPLOY_EOF'
-cd /var/www/vhosts/vivaindia.com/opt.vivaindia.sql
+# Create deployment package
+echo "📁 Creating deployment package..."
+mkdir -p deployment-package
+cp -r dist/* deployment-package/ 2>/dev/null || true
+cp -r server deployment-package/
+cp -r shared deployment-package/
+cp package.json deployment-package/
+cp package-lock.json deployment-package/
 
-# Set MySQL database URL
-echo 'DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro"' > .env
+# Create production environment file
+cat > deployment-package/.env << EOF
+NODE_ENV=production
+PORT=5000
+DATABASE_URL=mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro
+DOMAIN=https://opt.vivaindia.com
+SESSION_SECRET=optistore-pro-secure-session-key-2025
+FORCE_PRODUCTION=true
+EOF
 
-# Remove all PostgreSQL syntax
-find server/ -name "*.ts" -exec sed -i 's/\.returning([^)]*)//' {} \;
-find server/ -name "*.ts" -exec sed -i 's/\.returning()//' {} \;
+# Create PM2 ecosystem file
+cat > deployment-package/ecosystem.config.js << EOF
+module.exports = {
+  apps: [{
+    name: 'optistore-pro',
+    script: 'tsx',
+    args: 'server/index.ts',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 5000
+    },
+    error_file: './logs/err.log',
+    out_file: './logs/out.log',
+    log_file: './logs/combined.log',
+    time: true
+  }]
+};
+EOF
 
-# Kill existing server
-pkill -f 'tsx server/index.ts'
-sudo fuser -k 8080/tcp
-sleep 5
+echo "🔧 Connecting to production server..."
 
-# Start production server with MySQL
-DATABASE_URL="mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro" NODE_ENV=production PORT=8080 tsx server/index.ts > production.log 2>&1 &
+# Test connection
+sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$SERVER" "echo 'Connection successful to production server'"
 
-# Wait for startup
-sleep 15
+# Prepare server environment
+echo "🛠️ Preparing server environment..."
+sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$SERVER" << 'ENDSSH'
+# Update system
+dnf update -y
 
-# Verify server is running
-ps aux | grep tsx | grep -v grep
+# Install Node.js 20
+curl -fsSL https://rpm.nodesource.com/setup_20.x | bash -
+dnf install -y nodejs
 
-# Test MySQL connection
-curl -s -X POST http://localhost:8080/api/patients -H "Content-Type: application/json" -d '{"firstName":"DEPLOYED","lastName":"MySQL","phone":"9999999999","email":"deployed@mysql.com"}' | head -c 300
+# Install PM2 and tsx globally
+npm install -g pm2 tsx
 
-echo "Production deployment complete"
-DEPLOY_EOF
+# Create application directory
+mkdir -p /var/www/vhosts/vivaindia.com/opt.vivaindia.com
+mkdir -p /var/www/vhosts/vivaindia.com/opt.vivaindia.com/logs
 
-echo "✅ All MySQL-compatible code deployed to production server"
+# Set permissions
+chmod 755 /var/www/vhosts/vivaindia.com/opt.vivaindia.com
+
+echo "Server environment prepared successfully"
+ENDSSH
+
+# Deploy application files
+echo "📤 Uploading application files..."
+sshpass -p "$PASSWORD" scp -r -o StrictHostKeyChecking=no deployment-package/* "$USER@$SERVER:$APP_PATH/"
+
+# Install dependencies and start application
+echo "⚙️ Installing dependencies and starting application..."
+sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no "$USER@$SERVER" << ENDSSH
+cd $APP_PATH
+
+# Install dependencies
+npm install --production
+
+# Stop existing PM2 processes
+pm2 stop all || true
+pm2 delete all || true
+
+# Start application with PM2
+pm2 start ecosystem.config.js
+
+# Save PM2 configuration
+pm2 save
+pm2 startup
+
+# Check application status
+pm2 status
+
+echo "🎉 Application deployed successfully!"
+echo "📊 Application Status:"
+pm2 list
+echo ""
+echo "🌐 Access your application at: https://opt.vivaindia.com"
+echo "🔧 Direct access: http://opt.vivaindia.com:5000"
+ENDSSH
+
+echo "✅ Deployment completed successfully!"
+echo "🌐 Your OptiStore Pro is now live at: https://opt.vivaindia.com"
+
+# Clean up
+rm -rf deployment-package
