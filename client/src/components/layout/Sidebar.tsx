@@ -54,13 +54,7 @@ const navigationItems = [
   {
     title: "Patient Management",
     icon: Users,
-    items: [
-      { title: "Patient Registration", href: "/patients", icon: Calendar },
-      { title: "Prescriptions", href: "/prescriptions", icon: Pill },
-      { title: "Specs Workflow", href: "/specs-workflow", icon: Eye },
-      { title: "Specs Order Creation", href: "/specs-order-creation", icon: ShoppingCart },
-      { title: "Lens Cutting & Fitting", href: "/lens-cutting-workflow", icon: Settings },
-    ],
+    items: patientManagementItems,
   },
   {
     title: "Billing & Invoices",
@@ -144,7 +138,21 @@ export default function Sidebar() {
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
   
-  // Production-ready Patient Management with all 5 items
+  // Development: Force refresh of Patient Management with all 5 items
+  const patientManagementItems = [
+    { title: "Patient Registration", href: "/patients", icon: Calendar },
+    { title: "Prescriptions", href: "/prescriptions", icon: Pill },
+    { title: "Specs Workflow", href: "/specs-workflow", icon: Eye },
+    { title: "Specs Order Creation", href: "/specs-order-creation", icon: ShoppingCart },
+    { title: "Lens Cutting & Fitting", href: "/lens-cutting-workflow", icon: Settings },
+  ];
+  
+  React.useEffect(() => {
+    console.log("🔥 DEVELOPMENT: Patient Management items loaded:", patientManagementItems.length);
+    patientManagementItems.forEach((item, index) => {
+      console.log(`   ${index + 1}. ${item.title} -> ${item.href}`);
+    });
+  }, []);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
