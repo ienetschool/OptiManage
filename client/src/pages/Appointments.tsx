@@ -64,7 +64,7 @@ export default function Appointments() {
       sortable: true,
       filterable: true,
       render: (value, appointment) => {
-        const patient = patients.find(p => p.id === appointment.patientId);
+        const patient = patients?.find(p => p.id === appointment.patientId);
         return (
           <div className="flex items-center space-x-2">
             <Avatar className="h-8 w-8">
