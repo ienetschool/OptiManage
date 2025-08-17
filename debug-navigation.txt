@@ -1,0 +1,35 @@
+Navigation Debug Info:
+
+1. Components imported in App.tsx:
+   - SpecsWorkflow ✓
+   - SpecsOrderCreation ✓  
+   - LensCuttingWorkflow ✓
+
+2. Routes defined in App.tsx:
+   - /specs-workflow ✓
+   - /specs-order-creation ✓
+   - /lens-cutting-workflow ✓
+
+3. Sidebar navigation items defined:
+   - Patient Registration ✓ (showing)
+   - Prescriptions ✓ (showing)
+   - Specs Workflow ✗ (not showing)
+   - Specs Order Creation ✗ (not showing)
+   - Lens Cutting & Fitting ✗ (not showing)
+
+4. Server status:
+   - Development server running ✓
+   - Routes registered ✓
+   - API endpoints working ✓
+
+Issue: Only first 2 items of Patient Management menu are rendering.
+Possible causes:
+- JavaScript error preventing full menu render
+- CSS/styling issue hiding menu items
+- Component import/export issue
+- Browser caching issue
+
+Next steps:
+- Force browser refresh
+- Check browser console for errors
+- Verify all imports are working

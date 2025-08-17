@@ -142,7 +142,7 @@ const navigationItems = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
-  const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices"]);
+  const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
