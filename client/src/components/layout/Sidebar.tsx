@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-// Updated navigation with specs order creation module - FIXED VERSION
+// FORCE REFRESH - Updated navigation with specs order creation module - FIXED VERSION v2
 // Define items inside the component to fix scope issue
 const getNavigationItems = (patientItems: any[]) => [
   {
@@ -134,12 +134,13 @@ const getNavigationItems = (patientItems: any[]) => [
   },
 ];
 
-export default function Sidebar() {
+// Force timestamp: 19:35:00 - All 5 Patient Management items
+function SidebarComponent() {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
   
-  // Development: Force refresh of Patient Management with all 5 items
+  // DEVELOPMENT FORCE REFRESH: All 5 Patient Management items
   const patientManagementItems = [
     { title: "Patient Registration", href: "/patients", icon: Calendar },
     { title: "Prescriptions", href: "/prescriptions", icon: Pill },
@@ -147,6 +148,9 @@ export default function Sidebar() {
     { title: "Specs Order Creation", href: "/specs-order-creation", icon: ShoppingCart },
     { title: "Lens Cutting & Fitting", href: "/lens-cutting-workflow", icon: Settings },
   ];
+  
+  // Debug: Log timestamp to verify component refresh
+  console.log("🕐 SIDEBAR LOADING AT:", new Date().toLocaleTimeString());
 
   // Get navigation items with patient management items
   const navigationItems = getNavigationItems(patientManagementItems);
@@ -288,3 +292,5 @@ export default function Sidebar() {
     </div>
   );
 }
+
+export default SidebarComponent;
