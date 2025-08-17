@@ -153,6 +153,7 @@ function SidebarComponent() {
   console.log("🕐 SIDEBAR LOADING AT:", new Date().toLocaleTimeString());
   console.log("🚨 ORIGINAL SIDEBAR WITH FORCED HEIGHT FIXES - COMPONENT REFRESHED");
   console.log("🎯 PATIENT MANAGEMENT ITEMS:", patientManagementItems.length, "items loaded");
+  console.log("🎯 PATIENT MANAGEMENT ITEMS DETAILS:", patientManagementItems.map(item => item.title));
 
   // DIRECT HARDCODED NAVIGATION TO FORCE ALL 5 ITEMS
   const navigationItems = [
@@ -197,6 +198,9 @@ function SidebarComponent() {
   ];
   
   React.useEffect(() => {
+    // FORCE ALL 5 ITEMS TO BE ALWAYS EXPANDED
+    setExpandedItems(["Patient Management", "Billing & Invoices", "Store Management"]);
+    
     console.log("🔥 CRITICAL DEBUG - Patient Management items:", patientManagementItems.length);
     patientManagementItems.forEach((item, index) => {
       console.log(`   ${index + 1}. ${item.title} -> ${item.href}`);
@@ -209,7 +213,7 @@ function SidebarComponent() {
     console.log("🔍 PM Items details:", pmSection?.items);
     
     console.log("🎯 FULL navigationItems:", navigationItems.length);
-  }, []);
+  }, [patientManagementItems]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
@@ -277,11 +281,32 @@ function SidebarComponent() {
                     </Button>
                   </CollapsibleTrigger>
                   {!collapsed && (
-                    <CollapsibleContent className="mt-1" style={{ minHeight: "200px", maxHeight: "none", overflow: "visible" }}>
-                      <div className="pl-4 space-y-1" style={{ minHeight: "150px", maxHeight: "none" }}>
+                    <CollapsibleContent 
+                      className="mt-1" 
+                      style={{ 
+                        minHeight: "300px", 
+                        maxHeight: "none", 
+                        height: "auto", 
+                        overflow: "visible",
+                        display: "block",
+                        visibility: "visible"
+                      }}
+                      forceMount={true}
+                    >
+                      <div 
+                        className="pl-4 space-y-1" 
+                        style={{ 
+                          minHeight: "250px", 
+                          maxHeight: "none", 
+                          height: "auto",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px"
+                        }}
+                      >
 
                         {item.items?.map((subItem: any, index: number) => {
-                          console.log(`🎯 Rendering menu item ${index}:`, subItem.title, "->", subItem.href);
+                          console.log(`🎯 RENDERING MENU ITEM ${index + 1} of ${item.items.length}:`, subItem.title, "->", subItem.href);
                           return (
                             <Link key={`${subItem.href}-${index}`} href={subItem.href}>
                               <Button
