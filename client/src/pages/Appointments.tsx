@@ -570,8 +570,8 @@ export default function Appointments() {
   });
 
   const shareByEmail = (appointment: any) => {
-    const patient = patients.find(p => p.id === appointment.patientId);
-    const store = stores.find(s => s.id === appointment.storeId);
+    const patient = patients?.find(p => p.id === appointment.patientId);
+    const store = stores?.find(s => s.id === appointment.storeId);
     const emailSubject = `Appointment Confirmation - ${patient?.firstName || 'Patient'} ${patient?.lastName || ''}`;
     const emailBody = `Appointment Details:%0D%0A%0D%0APatient: ${patient?.firstName || 'Unknown'} ${patient?.lastName || 'Patient'}%0D%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0D%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0D%0AService: ${appointment.service}%0D%0ADuration: ${appointment.duration} minutes%0D%0ALocation: ${store?.name || 'OptiStore Pro'}%0D%0AStatus: ${appointment.status}%0D%0A%0D%0AGenerated from OptiStore Pro Medical Center`;
     window.open(`mailto:?subject=${emailSubject}&body=${emailBody}`);
@@ -590,8 +590,8 @@ export default function Appointments() {
   };
 
   const shareByWhatsApp = (appointment: any) => {
-    const patient = patients.find(p => p.id === appointment.patientId);
-    const store = stores.find(s => s.id === appointment.storeId);
+    const patient = patients?.find(p => p.id === appointment.patientId);
+    const store = stores?.find(s => s.id === appointment.storeId);
     const message = `*Appointment Confirmation*%0A%0APatient: ${patient?.firstName || 'Unknown'} ${patient?.lastName || 'Patient'}%0ADate: ${new Date(appointment.appointmentDate).toLocaleDateString()}%0ATime: ${new Date(appointment.appointmentDate).toLocaleTimeString()}%0AService: ${appointment.service}%0ALocation: ${store?.name || 'OptiStore Pro'}%0A%0AGenerated from OptiStore Pro Medical Center`;
     window.open(`https://wa.me/?text=${message}`);
     
@@ -1285,9 +1285,9 @@ export default function Appointments() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold">Patient Information</h3>
                   <div className="space-y-2">
-                    <p><strong>Name:</strong> {patients.find(p => p.id === selectedAppointment.patientId)?.firstName || 'Unknown'} {patients.find(p => p.id === selectedAppointment.patientId)?.lastName || 'Patient'}</p>
-                    <p><strong>Phone:</strong> {patients.find(p => p.id === selectedAppointment.patientId)?.phone || 'N/A'}</p>
-                    <p><strong>Email:</strong> {patients.find(p => p.id === selectedAppointment.patientId)?.email || 'N/A'}</p>
+                    <p><strong>Name:</strong> {patients?.find(p => p.id === selectedAppointment.patientId)?.firstName || 'Unknown'} {patients?.find(p => p.id === selectedAppointment.patientId)?.lastName || 'Patient'}</p>
+                    <p><strong>Phone:</strong> {patients?.find(p => p.id === selectedAppointment.patientId)?.phone || 'N/A'}</p>
+                    <p><strong>Email:</strong> {patients?.find(p => p.id === selectedAppointment.patientId)?.email || 'N/A'}</p>
                   </div>
                 </div>
                 
@@ -1299,7 +1299,7 @@ export default function Appointments() {
                     <p><strong>Duration:</strong> {selectedAppointment.duration} minutes</p>
                     <p><strong>Service:</strong> {selectedAppointment.service}</p>
                     <p><strong>Status:</strong> {selectedAppointment.status}</p>
-                    <p><strong>Store:</strong> {stores.find(s => s.id === selectedAppointment.storeId)?.name || 'OptiStore Pro'}</p>
+                    <p><strong>Store:</strong> {stores?.find(s => s.id === selectedAppointment.storeId)?.name || 'OptiStore Pro'}</p>
                   </div>
                 </div>
               </div>
