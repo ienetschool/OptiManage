@@ -100,7 +100,7 @@ export default function Sidebar() {
                 <Users className="h-4 w-4 flex-shrink-0" />
                 {!collapsed && (
                   <>
-                    <span className="ml-3 flex-1 text-left">Patient Management</span>
+                    <span className="ml-3 flex-1 text-left">Patient Management (5 ITEMS FIXED)</span>
                     <ChevronDown className={cn(
                       "h-4 w-4 transition-transform",
                       isExpanded("Patient Management") && "rotate-180"

@@ -1,0 +1,12 @@
+TESTING IF FILE CHANGES ARE WORKING - Created at $(date)
+
+If you can see this file, then file changes are working and the issue is elsewhere.
+
+The Sidebar.tsx should have:
+- Patient Registration
+- Prescriptions  
+- Specs Workflow
+- Specs Order Creation
+- Lens Cutting & Fitting
+
+All 5 items are hardcoded in lines 117-150 of client/src/components/layout/Sidebar.tsx
