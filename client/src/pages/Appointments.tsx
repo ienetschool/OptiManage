@@ -867,7 +867,7 @@ export default function Appointments() {
                                 <SelectContent>
                                   {patients.map((patient) => (
                                     <SelectItem key={patient.id} value={patient.id}>
-                                      {patient.first_name || patient.firstName} {patient.last_name || patient.lastName} ({patient.patient_code || patient.patientCode})
+                                      {patient.firstName || patient.first_name || 'Unknown'} {patient.lastName || patient.last_name || ''} ({patient.patientCode || patient.patient_code || patient.id.slice(-6)})
                                     </SelectItem>
                                   ))}
                                 </SelectContent>

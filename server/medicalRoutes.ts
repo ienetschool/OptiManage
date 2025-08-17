@@ -42,7 +42,21 @@ export function registerMedicalRoutes(app: Express) {
   app.get("/api/patients", isAuthenticated, async (req, res) => {
     try {
       const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
-      res.json(patientsList);
+      
+      // Transform snake_case database fields to camelCase for frontend compatibility
+      const transformedPatients = patientsList.map(patient => ({
+        ...patient,
+        firstName: patient.first_name || patient.firstName,
+        lastName: patient.last_name || patient.lastName,
+        patientCode: patient.patient_code || patient.patientCode,
+        emergencyContactName: patient.emergency_contact_name || patient.emergencyContactName,
+        emergencyContactPhone: patient.emergency_contact_phone || patient.emergencyContactPhone,
+        emergencyContactRelation: patient.emergency_contact_relation || patient.emergencyContactRelation,
+        dateOfBirth: patient.date_of_birth || patient.dateOfBirth,
+        isActive: patient.is_active || patient.isActive
+      }));
+      
+      res.json(transformedPatients);
     } catch (error) {
       console.error("Error fetching patients:", error);
       res.status(500).json({ message: "Failed to fetch patients" });
