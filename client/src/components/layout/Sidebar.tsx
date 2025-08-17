@@ -42,6 +42,7 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import SidebarTest from "./SidebarTest";
 
 // Updated navigation with specs order creation module - FIXED VERSION
 const navigationItems = [
@@ -269,7 +270,9 @@ export default function Sidebar() {
           })}
         </nav>
       </ScrollArea>
-
+      
+      {/* Debug Test Component */}
+      <SidebarTest />
 
     </div>
   );
