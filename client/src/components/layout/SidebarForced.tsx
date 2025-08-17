@@ -33,7 +33,8 @@ export default function SidebarForced() {
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
 
-  console.log("🔥 FORCED SIDEBAR LOADING - NEW COMPONENT");
+  console.log("🔥 FORCED SIDEBAR LOADING - NEW COMPONENT - ACTIVE NOW!");
+  console.log("🚀 Patient Management should show 5 items!");
 
   const isActiveItem = (href: string) => {
     return location === href || location.startsWith(href + "/");
