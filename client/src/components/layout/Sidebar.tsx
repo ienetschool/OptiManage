@@ -151,7 +151,8 @@ function SidebarComponent() {
   
   // Debug: Log timestamp to verify component refresh
   console.log("🕐 SIDEBAR LOADING AT:", new Date().toLocaleTimeString());
-  console.log("🚨 ORIGINAL SIDEBAR WITH FORCED HEIGHT FIXES");
+  console.log("🚨 ORIGINAL SIDEBAR WITH FORCED HEIGHT FIXES - COMPONENT REFRESHED");
+  console.log("🎯 PATIENT MANAGEMENT ITEMS:", patientManagementItems.length, "items loaded");
 
   // DIRECT HARDCODED NAVIGATION TO FORCE ALL 5 ITEMS
   const navigationItems = [
