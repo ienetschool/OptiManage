@@ -152,19 +152,61 @@ function SidebarComponent() {
   // Debug: Log timestamp to verify component refresh
   console.log("🕐 SIDEBAR LOADING AT:", new Date().toLocaleTimeString());
 
-  // Get navigation items with patient management items
-  const navigationItems = getNavigationItems(patientManagementItems);
+  // DIRECT HARDCODED NAVIGATION TO FORCE ALL 5 ITEMS
+  const navigationItems = [
+    {
+      title: "Dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      badge: null,
+    },
+    {
+      title: "Patient Management",
+      icon: Users,
+      items: patientManagementItems, // This should be all 5 items
+    },
+    {
+      title: "Billing & Invoices",
+      icon: DollarSign,
+      items: [
+        { title: "Invoice Management", href: "/invoices", icon: Receipt },
+        { title: "Payment History", href: "/payments", icon: CreditCard },
+      ],
+    },
+    {
+      title: "Inventory",
+      href: "/inventory",
+      icon: Package,
+      badge: { text: "Low Stock", variant: "destructive" as const },
+    },
+    {
+      title: "Store Management",
+      icon: Building,
+      items: [
+        { title: "All Stores", href: "/stores", icon: Store },
+        { title: "Store Settings", href: "/store-settings", icon: Settings },
+      ],
+    },
+    {
+      title: "Settings",
+      href: "/settings",
+      icon: Settings,
+    },
+  ];
   
   React.useEffect(() => {
-    console.log("🔥 DEVELOPMENT: Patient Management items loaded:", patientManagementItems.length);
+    console.log("🔥 CRITICAL DEBUG - Patient Management items:", patientManagementItems.length);
     patientManagementItems.forEach((item, index) => {
       console.log(`   ${index + 1}. ${item.title} -> ${item.href}`);
     });
     
     // Force debug - check what navigationItems contains
     const pmSection = navigationItems.find(section => section.title === "Patient Management");
-    console.log("🔍 Patient Management section found:", pmSection);
-    console.log("🔍 Items in PM section:", pmSection?.items?.length || 0);
+    console.log("🔍 Patient Management section found:", !!pmSection);
+    console.log("🔍 Items in PM section:", pmSection?.items?.length || "NONE");
+    console.log("🔍 PM Items details:", pmSection?.items);
+    
+    console.log("🎯 FULL navigationItems:", navigationItems.length);
   }, []);
 
   const toggleExpanded = (title: string) => {
