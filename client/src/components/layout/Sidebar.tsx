@@ -151,6 +151,7 @@ function SidebarComponent() {
   
   // Debug: Log timestamp to verify component refresh
   console.log("🕐 SIDEBAR LOADING AT:", new Date().toLocaleTimeString());
+  console.log("🚨 ORIGINAL SIDEBAR WITH FORCED HEIGHT FIXES");
 
   // DIRECT HARDCODED NAVIGATION TO FORCE ALL 5 ITEMS
   const navigationItems = [
@@ -232,7 +233,7 @@ function SidebarComponent() {
       collapsed ? "w-16" : "w-64"
     )}>
       {/* Navigation with integrated collapse toggle */}
-      <ScrollArea className="flex-1 px-3 py-2">
+      <ScrollArea className="flex-1 px-3 py-2" style={{ height: "100vh", overflow: "auto", maxHeight: "none" }}>
         {/* Collapse Toggle at top of navigation */}
         <div className="flex justify-end mb-2">
           <Button
@@ -245,7 +246,7 @@ function SidebarComponent() {
           </Button>
         </div>
         
-        <nav className="space-y-2">
+        <nav className="space-y-2" style={{ minHeight: "400px", maxHeight: "none" }}>
           {navigationItems.map((item) => {
             if (item.items) {
               // Group with subitems
@@ -275,8 +276,8 @@ function SidebarComponent() {
                     </Button>
                   </CollapsibleTrigger>
                   {!collapsed && (
-                    <CollapsibleContent className="mt-1">
-                      <div className="pl-4 space-y-1">
+                    <CollapsibleContent className="mt-1" style={{ minHeight: "200px", maxHeight: "none", overflow: "visible" }}>
+                      <div className="pl-4 space-y-1" style={{ minHeight: "150px", maxHeight: "none" }}>
 
                         {item.items?.map((subItem: any, index: number) => {
                           console.log(`🎯 Rendering menu item ${index}:`, subItem.title, "->", subItem.href);
