@@ -44,7 +44,8 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 // Updated navigation with specs order creation module - FIXED VERSION
-const navigationItems = [
+// Define items inside the component to fix scope issue
+const getNavigationItems = (patientItems: any[]) => [
   {
     title: "Dashboard",
     href: "/dashboard",
@@ -54,7 +55,7 @@ const navigationItems = [
   {
     title: "Patient Management",
     icon: Users,
-    items: patientManagementItems,
+    items: patientItems,
   },
   {
     title: "Billing & Invoices",
@@ -146,12 +147,20 @@ export default function Sidebar() {
     { title: "Specs Order Creation", href: "/specs-order-creation", icon: ShoppingCart },
     { title: "Lens Cutting & Fitting", href: "/lens-cutting-workflow", icon: Settings },
   ];
+
+  // Get navigation items with patient management items
+  const navigationItems = getNavigationItems(patientManagementItems);
   
   React.useEffect(() => {
     console.log("🔥 DEVELOPMENT: Patient Management items loaded:", patientManagementItems.length);
     patientManagementItems.forEach((item, index) => {
       console.log(`   ${index + 1}. ${item.title} -> ${item.href}`);
     });
+    
+    // Force debug - check what navigationItems contains
+    const pmSection = navigationItems.find(section => section.title === "Patient Management");
+    console.log("🔍 Patient Management section found:", pmSection);
+    console.log("🔍 Items in PM section:", pmSection?.items?.length || 0);
   }, []);
 
   const toggleExpanded = (title: string) => {
@@ -223,8 +232,8 @@ export default function Sidebar() {
                     <CollapsibleContent className="mt-1">
                       <div className="pl-4 space-y-1">
 
-                        {item.items?.map((subItem, index) => {
-                          console.log(`Rendering menu item ${index}:`, subItem.title, subItem.href, subItem.icon);
+                        {item.items?.map((subItem: any, index: number) => {
+                          console.log(`🎯 Rendering menu item ${index}:`, subItem.title, "->", subItem.href);
                           return (
                             <Link key={`${subItem.href}-${index}`} href={subItem.href}>
                               <Button
