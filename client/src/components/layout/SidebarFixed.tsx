@@ -108,7 +108,7 @@ export default function SidebarFixed() {
       "flex flex-col bg-white border-r border-slate-200 transition-all duration-300",
       collapsed ? "w-16" : "w-64"
     )}>
-      <ScrollArea className="flex-1 px-3 py-2">
+      <ScrollArea className="flex-1 px-3 py-2" style={{ height: "100vh", overflow: "auto" }}>
         <div className="flex justify-end mb-2">
           <Button
             variant="ghost"
@@ -120,7 +120,7 @@ export default function SidebarFixed() {
           </Button>
         </div>
         
-        <nav className="space-y-2">
+        <nav className="space-y-2" style={{ minHeight: "500px" }}>
           {navigationItems.map((item) => {
             if (item.items) {
               const isExpanded = expandedItems.includes(item.title);
@@ -149,8 +149,8 @@ export default function SidebarFixed() {
                     </Button>
                   </CollapsibleTrigger>
                   {!collapsed && (
-                    <CollapsibleContent className="mt-1">
-                      <div className="pl-4 space-y-1">
+                    <CollapsibleContent className="mt-1" style={{ minHeight: "200px", overflow: "visible" }}>
+                      <div className="pl-4 space-y-1" style={{ minHeight: "150px" }}>
                         {item.items?.map((subItem, index: number) => {
                           console.log(`🔧 Rendering: ${subItem.title}`);
                           return (
