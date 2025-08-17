@@ -30,7 +30,7 @@ import {
 import { db } from "./db";
 import { eq, sql, desc, and, or } from "drizzle-orm";
 
-// Complete storage interface for MySQL compatibility
+// Minimal storage interface for MySQL compatibility
 export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
@@ -40,7 +40,7 @@ export interface IStorage {
   getStores(): Promise<Store[]>;
   getStore(id: string): Promise<Store | undefined>;
   createStore(store: InsertStore): Promise<Store>;
-  getStoreInventory(): Promise<any[]>;
+  getStoreInventory(): Promise<any[]>; // Added missing method
 
   // Product operations
   getProducts(): Promise<Product[]>;
@@ -139,7 +139,7 @@ export class MySQLStorage implements IStorage {
   }
 
   async getCustomers(): Promise<Customer[]> {
-    return await db.select().from(customers).orderBy(desc(customers.createdAt));
+    return await db.select().from(customers);
   }
 
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
@@ -200,40 +200,23 @@ export class MySQLStorage implements IStorage {
   }
 
   async getDashboardStats(): Promise<any> {
-    try {
-      const totalPatients = await db.select({ count: sql`count(*)` }).from(patients);
-      const totalAppointments = await db.select({ count: sql`count(*)` }).from(appointments);
-      const totalSales = await db.select({ count: sql`count(*)` }).from(sales);
-      
-      return {
-        totalPatients: totalPatients[0]?.count || 0,
-        totalAppointments: totalAppointments[0]?.count || 0,
-        totalSales: totalSales[0]?.count || 0,
-        totalRevenue: 0,
-        appointmentsToday: 0,
-        lowStockItems: 0,
-        totalProducts: 3,
-        totalStores: 2,
-        recentAppointments: [],
-        recentSales: [],
-        systemHealth: 'good'
-      };
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
-      return {
-        totalPatients: 0,
-        totalAppointments: 0,
-        totalSales: 0,
-        totalRevenue: 0,
-        appointmentsToday: 0,
-        lowStockItems: 0,
-        totalProducts: 0,
-        totalStores: 0,
-        recentAppointments: [],
-        recentSales: [],
-        systemHealth: 'error'
-      };
-    }
+    const totalPatients = await db.select({ count: sql`count(*)` }).from(patients);
+    const totalAppointments = await db.select({ count: sql`count(*)` }).from(appointments);
+    const totalSales = await db.select({ count: sql`count(*)` }).from(sales);
+    
+    return {
+      totalPatients: totalPatients[0]?.count || 0,
+      totalAppointments: totalAppointments[0]?.count || 0,
+      totalSales: totalSales[0]?.count || 0,
+      totalRevenue: 0,
+      appointmentsToday: 0,
+      lowStockItems: 0,
+      totalProducts: 3,
+      totalStores: 2,
+      recentAppointments: [],
+      recentSales: [],
+      systemHealth: 'good'
+    };
   }
 }
 

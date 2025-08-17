@@ -865,11 +865,21 @@ export default function Appointments() {
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  {patients.map((patient) => (
-                                    <SelectItem key={patient.id} value={patient.id}>
-                                      {patient.firstName || patient.first_name || 'Unknown'} {patient.lastName || patient.last_name || ''} ({patient.patientCode || patient.patient_code || patient.id.slice(-6)})
+                                  {patients && patients.length > 0 ? patients.map((patient) => {
+                                    const patientId = patient.id || `patient-${Date.now()}`;
+                                    const firstName = patient.firstName || patient.first_name || 'Unknown';
+                                    const lastName = patient.lastName || patient.last_name || '';
+                                    const patientCode = patient.patientCode || patient.patient_code || patient.id?.slice(-6) || 'N/A';
+                                    return (
+                                      <SelectItem key={patientId} value={patientId}>
+                                        {firstName} {lastName} ({patientCode})
+                                      </SelectItem>
+                                    );
+                                  }) : (
+                                    <SelectItem value="no-patients" disabled>
+                                      No patients found - Please register patients first
                                     </SelectItem>
-                                  ))}
+                                  )}
                                 </SelectContent>
                               </Select>
                               <FormMessage />

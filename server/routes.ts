@@ -1135,7 +1135,13 @@ console.log('Database test page loaded successfully');
 
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
-      const validatedData = insertAppointmentSchema.parse(req.body);
+      // Convert appointmentDate string to Date object
+      const requestData = { ...req.body };
+      if (requestData.appointmentDate && typeof requestData.appointmentDate === 'string') {
+        requestData.appointmentDate = new Date(requestData.appointmentDate);
+      }
+      
+      const validatedData = insertAppointmentSchema.parse(requestData);
       
       // Only assign doctors for PAID appointments - pending appointments should not have doctor assignment
       console.log(`DEBUG: paymentStatus = "${validatedData.paymentStatus}", assignedDoctorId = "${validatedData.assignedDoctorId}"`);
