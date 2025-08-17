@@ -31,7 +31,23 @@ export default function Appointments() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Define columns for EnhancedDataTable
+  const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
+    queryKey: ["/api/appointments"],
+  });
+
+  const { data: patients = [] } = useQuery<any[]>({
+    queryKey: ["/api/patients"],
+  });
+
+  const { data: stores = [] } = useQuery<Store[]>({
+    queryKey: ["/api/stores"],
+  });
+
+  const { data: doctors = [] } = useQuery<any[]>({
+    queryKey: ["/api/doctors"],
+  });
+
+  // Define columns for EnhancedDataTable after data is loaded
   const appointmentColumns: Column[] = [
     {
       key: 'appointmentId',
@@ -147,22 +163,6 @@ export default function Appointments() {
       )
     }
   ];
-
-  const { data: appointments = [], isLoading } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments"],
-  });
-
-  const { data: patients = [] } = useQuery<any[]>({
-    queryKey: ["/api/patients"],
-  });
-
-  const { data: stores = [] } = useQuery<Store[]>({
-    queryKey: ["/api/stores"],
-  });
-
-  const { data: doctors = [] } = useQuery<any[]>({
-    queryKey: ["/api/doctors"],
-  });
 
   // Available services for appointments
   const services = [
