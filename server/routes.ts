@@ -6,6 +6,7 @@ import { setupOAuthAuth, isAuthenticated } from "./oauthAuth";
 import { registerAppointmentRoutes } from "./routes/appointmentRoutes";
 import { registerMedicalRoutes } from "./medicalRoutes";
 import { registerHRRoutes } from "./hrRoutes";
+import { registerSpecsWorkflowRoutes } from "./routes/specsWorkflowRoutes";
 import { registerDashboardRoutes } from "./routes/dashboardRoutes";
 import { registerProfileRoutes } from "./routes/profileRoutes";
 import { registerMedicalRecordsRoutes } from "./routes/medicalRoutes";
