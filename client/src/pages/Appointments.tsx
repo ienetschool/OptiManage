@@ -128,7 +128,8 @@ export default function Appointments() {
       sortable: true,
       filterable: true,
       render: (value) => {
-        const doctor = doctors.find(d => d.id === value);
+        // Safe doctor lookup to prevent scope errors
+        const doctor = doctors?.find(d => d.id === value);
         return (
           <div className="text-sm text-gray-900">
             {doctor ? `Dr. ${doctor.firstName} ${doctor.lastName}` : 'Unassigned'}
