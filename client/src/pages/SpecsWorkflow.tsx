@@ -1038,41 +1038,203 @@ export default function SpecsWorkflow() {
           </div>
         </TabsContent>
 
-        {/* Additional tabs for Steps 3-7 would be implemented similarly */}
-        <TabsContent value="cutting">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lens Cutting & Fitting Tasks</CardTitle>
-              <CardDescription>Steps 3-4: Assignment to fitters and work progress</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">Lens cutting and fitting management interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+        {/* Step 3-4: Lens Cutting & Fitting Tasks */}
+        <TabsContent value="cutting" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Assign Cutting Tasks</CardTitle>
+                <CardDescription>Step 3: Assign confirmed orders to lens fitters</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Available Orders for Assignment</h4>
+                    {specsOrders?.filter((order: any) => order.status === 'confirmed').map((order: any) => (
+                      <div key={order.id} className="p-3 border rounded mb-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{order.orderNumber}</p>
+                            <p className="text-sm text-gray-600">{order.patientName} {order.patientLastName}</p>
+                            <p className="text-sm text-gray-500">Frame: {order.frameName}</p>
+                          </div>
+                          <Button size="sm" data-testid={`assign-task-${order.id}`}>
+                            Assign to Fitter
+                          </Button>
+                        </div>
+                      </div>
+                    )) || <p className="text-gray-500">No orders ready for assignment</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Active Cutting Tasks</CardTitle>
+                <CardDescription>Step 4: Monitor lens cutting and fitting progress</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">Task #LCT001</h4>
+                      <Badge className="bg-orange-100 text-orange-800">In Progress</Badge>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p>Order: SPO250817001</p>
+                      <p>Fitter: John Doe</p>
+                      <p>Progress: 45%</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-orange-600 h-2 rounded-full w-[45%]"></div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex space-x-2">
+                      <Button size="sm" variant="outline">Update Progress</Button>
+                      <Button size="sm" variant="outline">Add Photos</Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="delivery">
-          <Card>
-            <CardHeader>
-              <CardTitle>Delivery Management</CardTitle>
-              <CardDescription>Steps 5-6: Send to store and delivery preparation</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">Delivery management interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+        {/* Step 5-6: Delivery Management */}
+        <TabsContent value="delivery" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Ready for Delivery</CardTitle>
+                <CardDescription>Step 5: Orders completed and ready for delivery</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium">SPO250817001</h4>
+                      <Badge className="bg-blue-100 text-blue-800">Ready</Badge>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p>Patient: TestUpdate UpdatedLastName</p>
+                      <p>Frame: Ray-Ban Progressive Classic</p>
+                      <p>Store: OptiStore Pro Main Branch</p>
+                      <p>Expected: Jan 24, 2025</p>
+                    </div>
+                    <div className="mt-3 flex space-x-2">
+                      <Button size="sm">Schedule Delivery</Button>
+                      <Button size="sm" variant="outline">Quality Check</Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Delivery Tracking</CardTitle>
+                <CardDescription>Step 6: Track deliveries and customer communication</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Package className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium">Delivery Methods</span>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3 p-2 border rounded">
+                      <input type="radio" name="delivery" value="pickup" className="w-4 h-4" />
+                      <div>
+                        <p className="font-medium">Store Pickup</p>
+                        <p className="text-sm text-gray-600">Customer collects from store</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-2 border rounded">
+                      <input type="radio" name="delivery" value="home" className="w-4 h-4" />
+                      <div>
+                        <p className="font-medium">Home Delivery</p>
+                        <p className="text-sm text-gray-600">Delivered to customer address</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 p-2 border rounded">
+                      <input type="radio" name="delivery" value="courier" className="w-4 h-4" />
+                      <div>
+                        <p className="font-medium">Courier Service</p>
+                        <p className="text-sm text-gray-600">Professional courier delivery</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Button className="w-full">Arrange Delivery</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
-        <TabsContent value="completed">
-          <Card>
-            <CardHeader>
-              <CardTitle>Completed Orders</CardTitle>
-              <CardDescription>Step 7: Delivery confirmation and feedback</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">Completed orders and delivery confirmation interface will be implemented here.</p>
-            </CardContent>
-          </Card>
+        {/* Step 7: Completed Orders */}
+        <TabsContent value="completed" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Delivered Orders</CardTitle>
+                <CardDescription>Step 7: Orders successfully delivered to customers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="text-center py-8 text-gray-500">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-600" />
+                    <p>No delivered orders yet</p>
+                    <p className="text-sm">Completed orders will appear here</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Customer Feedback</CardTitle>
+                <CardDescription>Delivery confirmation and customer satisfaction</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Feedback Collection</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        <span className="text-sm">Customer Rating System</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MessageSquare className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm">Written Feedback</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">Delivery Confirmation</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-2">Quality Assurance</h4>
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2">
+                        <input type="checkbox" className="w-4 h-4" />
+                        <span className="text-sm">Lens quality verified</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input type="checkbox" className="w-4 h-4" />
+                        <span className="text-sm">Frame fit confirmed</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input type="checkbox" className="w-4 h-4" />
+                        <span className="text-sm">Customer satisfaction confirmed</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

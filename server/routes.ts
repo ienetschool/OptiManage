@@ -721,6 +721,7 @@ console.log('Database test page loaded successfully');
   // Register analytics routes
   registerAnalyticsRoutes(app);
   registerSpecsWorkflowRoutes(app);
+  console.log("✅ Specs workflow routes registered successfully");
   
   // Register medical routes (includes patients, doctors, prescriptions)
   registerMedicalRoutes(app);

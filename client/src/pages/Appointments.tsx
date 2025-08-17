@@ -161,17 +161,7 @@ export default function Appointments() {
   });
 
   const { data: doctors = [] } = useQuery<any[]>({
-    queryKey: ["/api/staff"],
-    select: (data) => {
-      console.log('Raw staff data:', data);
-      const filtered = data.filter(staff => 
-        staff.role === 'doctor' || 
-        staff.position?.toLowerCase() === 'doctor' || 
-        staff.position?.toLowerCase() === 'optometrist'
-      );
-      console.log('Filtered doctors:', filtered);
-      return filtered;
-    },
+    queryKey: ["/api/doctors"],
   });
 
   // Available services for appointments
@@ -870,14 +860,14 @@ export default function Appointments() {
                               <FormLabel>Patient</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
-                                  <SelectTrigger>
+                                  <SelectTrigger data-testid="select-patient">
                                     <SelectValue placeholder="Select patient" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
                                   {patients.map((patient) => (
                                     <SelectItem key={patient.id} value={patient.id}>
-                                      {patient.firstName} {patient.lastName} ({patient.patientCode})
+                                      {patient.first_name || patient.firstName} {patient.last_name || patient.lastName} ({patient.patient_code || patient.patientCode})
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
@@ -1025,7 +1015,7 @@ export default function Appointments() {
                               <SelectContent>
                                 {doctors.map((doctor) => (
                                   <SelectItem key={doctor.id} value={doctor.id}>
-                                    Dr. {doctor.firstName} {doctor.lastName} ({doctor.position})
+                                    Dr. {doctor.firstName} {doctor.lastName} ({doctor.specialization})
                                   </SelectItem>
                                 ))}
                               </SelectContent>
