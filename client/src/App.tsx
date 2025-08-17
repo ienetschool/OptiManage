@@ -16,7 +16,7 @@ import Patients from "@/pages/Patients";
 import PatientManagement from "@/pages/PatientManagement";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import PrescriptionsFixed from "@/pages/PrescriptionsFixed";
-import SpecsWorkflow from "@/pages/SpecsWorkflow";
+import SpecsWorkflow from "@/pages/SpecsWorkflowSimple";
 import SpecsOrderCreation from "@/pages/SpecsOrderCreation";
 import LensCuttingWorkflow from "@/pages/LensCuttingWorkflow";
 import Billing from "@/pages/Billing";

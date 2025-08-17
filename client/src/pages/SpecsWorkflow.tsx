@@ -27,7 +27,8 @@ import {
   Star,
   AlertCircle,
   Timer,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 
 // Lens Prescription Form Schema
