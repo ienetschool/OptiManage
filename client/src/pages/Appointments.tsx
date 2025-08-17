@@ -47,7 +47,8 @@ export default function Appointments() {
     queryKey: ["/api/doctors"],
   });
 
-  // Define columns for EnhancedDataTable after data is loaded
+  // Define columns for EnhancedDataTable - wait for all data to load properly
+
   const appointmentColumns: Column[] = [
     {
       key: 'appointmentId',
