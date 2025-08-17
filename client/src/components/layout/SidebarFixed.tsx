@@ -24,6 +24,7 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function SidebarFixed() {
+  console.log("🔴 RED SIDEBAR FIXED LOADING - This should show RED background");
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
@@ -105,9 +106,9 @@ export default function SidebarFixed() {
 
   return (
     <div className={cn(
-      "flex flex-col bg-white border-r border-slate-200 transition-all duration-300",
+      "flex flex-col border-r border-slate-200 transition-all duration-300",
       collapsed ? "w-16" : "w-64"
-    )}>
+    )} style={{ backgroundColor: "red", minHeight: "100vh" }}>
       <ScrollArea className="flex-1 px-3 py-2" style={{ height: "100vh", overflow: "auto" }}>
         <div className="flex justify-end mb-2">
           <Button
