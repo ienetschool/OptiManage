@@ -884,9 +884,9 @@ export default function Appointments() {
                                       </SelectItem>
                                     );
                                   }).filter(Boolean) : (
-                                    <SelectItem value="no-patients" disabled>
+                                    <div className="p-2 text-sm text-gray-500 text-center">
                                       No patients found - Please register patients first
-                                    </SelectItem>
+                                    </div>
                                   )}
                                 </SelectContent>
                               </Select>
