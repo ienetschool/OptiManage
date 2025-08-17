@@ -866,16 +866,24 @@ export default function Appointments() {
                                 </FormControl>
                                 <SelectContent>
                                   {patients && patients.length > 0 ? patients.map((patient) => {
-                                    const patientId = patient.id || `patient-${Date.now()}`;
-                                    const firstName = patient.firstName || patient.first_name || 'Unknown';
-                                    const lastName = patient.lastName || patient.last_name || '';
-                                    const patientCode = patient.patientCode || patient.patient_code || patient.id?.slice(-6) || 'N/A';
+                                    // MySQL schema uses camelCase - no fallbacks needed
+                                    const patientId = patient.id || '';
+                                    const firstName = patient.firstName || 'Unknown';
+                                    const lastName = patient.lastName || '';
+                                    const patientCode = patient.patientCode || patient.id?.slice(-6) || 'N/A';
+                                    
+                                    // Ensure we have a valid patientId before rendering
+                                    if (!patientId) {
+                                      console.warn('Patient missing ID:', patient);
+                                      return null;
+                                    }
+                                    
                                     return (
                                       <SelectItem key={patientId} value={patientId}>
                                         {firstName} {lastName} ({patientCode})
                                       </SelectItem>
                                     );
-                                  }) : (
+                                  }).filter(Boolean) : (
                                     <SelectItem value="no-patients" disabled>
                                       No patients found - Please register patients first
                                     </SelectItem>
