@@ -19,6 +19,9 @@ import PrescriptionsFixed from "@/pages/PrescriptionsFixed";
 import SpecsWorkflow from "@/pages/SpecsWorkflowSimple";
 import SpecsOrderCreation from "@/pages/SpecsOrderCreationSimple";
 import LensCuttingWorkflow from "@/pages/LensCuttingWorkflowSimple";
+import SpecsWorkflowNew from "@/pages/SpecsWorkflow";
+import SpecsOrderCreationNew from "@/pages/SpecsOrderCreation";
+import LensCuttingWorkflowNew from "@/pages/LensCuttingWorkflow";
 import Billing from "@/pages/Billing";
 import Staff from "@/pages/Staff";
 import Attendance from "@/pages/Attendance";
@@ -216,6 +219,33 @@ function Router() {
           <SidebarForced />
           <div className="flex-1 flex flex-col overflow-hidden">
             <PrescriptionsFixed />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/specs-workflow">
+        <AppLayout>
+          <SidebarForced />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <SpecsWorkflowNew />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/specs-order-creation">
+        <AppLayout>
+          <SidebarForced />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <SpecsOrderCreationNew />
+          </div>
+        </AppLayout>
+      </Route>
+      
+      <Route path="/lens-cutting-workflow">
+        <AppLayout>
+          <SidebarForced />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <LensCuttingWorkflowNew />
           </div>
         </AppLayout>
       </Route>
