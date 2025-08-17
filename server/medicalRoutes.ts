@@ -30,7 +30,7 @@ export function registerMedicalRoutes(app: Express) {
       const validatedData = insertDoctorSchema.parse(req.body);
       await db.insert(doctors).values(validatedData);
       
-      const [doctor] = await db.select().from(doctors).where(eq(doctors.doctorId, validatedData.doctorId)).limit(1);
+      const [doctor] = await db.select().from(doctors).where(eq(doctors.licenseNumber, validatedData.licenseNumber)).limit(1);
       res.json(doctor);
     } catch (error) {
       console.error("Error creating doctor:", error);
@@ -43,18 +43,8 @@ export function registerMedicalRoutes(app: Express) {
     try {
       const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
       
-      // Transform snake_case database fields to camelCase for frontend compatibility
-      const transformedPatients = patientsList.map(patient => ({
-        ...patient,
-        firstName: patient.first_name || patient.firstName,
-        lastName: patient.last_name || patient.lastName,
-        patientCode: patient.patient_code || patient.patientCode,
-        emergencyContactName: patient.emergency_contact_name || patient.emergencyContactName,
-        emergencyContactPhone: patient.emergency_contact_phone || patient.emergencyContactPhone,
-        emergencyContactRelation: patient.emergency_contact_relation || patient.emergencyContactRelation,
-        dateOfBirth: patient.date_of_birth || patient.dateOfBirth,
-        isActive: patient.is_active || patient.isActive
-      }));
+      // MySQL schema already uses camelCase - no transformation needed
+      const transformedPatients = patientsList;
       
       res.json(transformedPatients);
     } catch (error) {
@@ -173,7 +163,7 @@ export function registerMedicalRoutes(app: Express) {
       const validatedData = insertMedicalAppointmentSchema.parse(validationData);
       await db.insert(medicalAppointments).values(validatedData);
       
-      const [appointment] = await db.select().from(medicalAppointments).where(eq(medicalAppointments.appointmentId, validatedData.appointmentId)).limit(1);
+      const [appointment] = await db.select().from(medicalAppointments).where(eq(medicalAppointments.appointmentNumber, validatedData.appointmentNumber)).limit(1);
       res.json(appointment);
     } catch (error) {
       console.error("Error creating medical appointment:", error);
@@ -233,7 +223,7 @@ export function registerMedicalRoutes(app: Express) {
       const validatedData = insertPrescriptionSchema.parse(validationData);
       await db.insert(prescriptions).values(validatedData);
       
-      const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.prescriptionId, validatedData.prescriptionId)).limit(1);
+      const [prescription] = await db.select().from(prescriptions).where(eq(prescriptions.prescriptionNumber, validatedData.prescriptionNumber)).limit(1);
       res.json(prescription);
     } catch (error) {
       console.error("Error creating prescription:", error);
