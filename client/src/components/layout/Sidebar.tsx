@@ -212,18 +212,22 @@ export default function Sidebar() {
                   {!collapsed && (
                     <CollapsibleContent className="mt-1">
                       <div className="pl-4 space-y-1">
-                        {item.items.map((subItem) => (
-                          <Link key={subItem.href} href={subItem.href}>
-                            <Button
-                              variant={isActiveItem(subItem.href) ? "secondary" : "ghost"}
-                              size="sm"
-                              className="w-full justify-start h-8"
-                            >
-                              <subItem.icon className="h-3 w-3 flex-shrink-0" />
-                              <span className="ml-3">{subItem.title}</span>
-                            </Button>
-                          </Link>
-                        ))}
+                        {item.items?.map((subItem, index) => {
+                          console.log(`Rendering menu item ${index}:`, subItem.title, subItem.href);
+                          return (
+                            <Link key={`${subItem.href}-${index}`} href={subItem.href}>
+                              <Button
+                                variant={isActiveItem(subItem.href) ? "secondary" : "ghost"}
+                                size="sm"
+                                className="w-full justify-start h-8"
+                                data-testid={`menu-item-${subItem.title.toLowerCase().replace(/\s+/g, '-')}`}
+                              >
+                                <subItem.icon className="h-3 w-3 flex-shrink-0" />
+                                <span className="ml-3">{subItem.title}</span>
+                              </Button>
+                            </Link>
+                          );
+                        })}
                       </div>
                     </CollapsibleContent>
                   )}
