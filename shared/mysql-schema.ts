@@ -470,6 +470,184 @@ export const leaveRequests = mysqlTable("leave_requests", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
+// Lens Prescriptions with comprehensive specs workflow
+export const lensPrescriptions = mysqlTable("lens_prescriptions", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  patientId: varchar("patient_id", { length: 36 }).notNull(),
+  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
+  prescriptionDate: date("prescription_date").notNull(),
+  
+  // Prescription Details
+  rightEyeSph: decimal("right_eye_sph", { precision: 4, scale: 2 }), // Sphere
+  rightEyeCyl: decimal("right_eye_cyl", { precision: 4, scale: 2 }), // Cylinder
+  rightEyeAxis: int("right_eye_axis"), // Axis (0-180)
+  rightEyeAdd: decimal("right_eye_add", { precision: 3, scale: 2 }), // Addition
+  
+  leftEyeSph: decimal("left_eye_sph", { precision: 4, scale: 2 }),
+  leftEyeCyl: decimal("left_eye_cyl", { precision: 4, scale: 2 }),
+  leftEyeAxis: int("left_eye_axis"),
+  leftEyeAdd: decimal("left_eye_add", { precision: 3, scale: 2 }),
+  
+  pupillaryDistance: decimal("pupillary_distance", { precision: 4, scale: 1 }), // PD
+  
+  // Lens Specifications
+  lensType: varchar("lens_type", { length: 50 }).notNull(), // Single Vision, Bifocal, Progressive
+  lensMaterial: varchar("lens_material", { length: 50 }).notNull(), // CR-39, Polycarbonate, High Index
+  
+  // Frame Recommendation
+  frameRecommendation: text("frame_recommendation"),
+  
+  // Special Instructions
+  coatings: text("coatings"), // Anti-glare, UV protection, etc.
+  tints: varchar("tints", { length: 100 }),
+  specialInstructions: text("special_instructions"),
+  
+  // Status and Workflow
+  status: varchar("status", { length: 30 }).default('prescribed'), // prescribed, order_created, in_progress, completed
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+// Specs Orders (Sales Invoice-like for lens/frame orders)
+export const specsOrders = mysqlTable("specs_orders", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  orderNumber: varchar("order_number", { length: 50 }).unique().notNull(),
+  lensPrescriptionId: varchar("lens_prescription_id", { length: 36 }).notNull(),
+  patientId: varchar("patient_id", { length: 36 }).notNull(),
+  storeId: varchar("store_id", { length: 36 }).notNull(),
+  
+  // Order Details
+  frameId: varchar("frame_id", { length: 36 }), // Reference to products table
+  frameName: varchar("frame_name", { length: 255 }),
+  framePrice: decimal("frame_price", { precision: 10, scale: 2 }),
+  
+  lensPrice: decimal("lens_price", { precision: 10, scale: 2 }),
+  coatingPrice: decimal("coating_price", { precision: 10, scale: 2 }).default('0.00'),
+  additionalCharges: decimal("additional_charges", { precision: 10, scale: 2 }).default('0.00'),
+  
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).default('0.00'),
+  discount: decimal("discount", { precision: 10, scale: 2 }).default('0.00'),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  
+  // Workflow Status
+  status: varchar("status", { length: 30 }).default('draft'), // draft, confirmed, assigned, in_progress, completed, delivered
+  priority: varchar("priority", { length: 20 }).default('normal'), // urgent, high, normal, low
+  
+  // Dates
+  orderDate: timestamp("order_date").defaultNow(),
+  expectedDelivery: date("expected_delivery"),
+  actualDelivery: date("actual_delivery"),
+  
+  // Notes
+  orderNotes: text("order_notes"),
+  internalNotes: text("internal_notes"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+// Lens Cutting Tasks (Assignment to Fitters)
+export const lensCuttingTasks = mysqlTable("lens_cutting_tasks", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  specsOrderId: varchar("specs_order_id", { length: 36 }).notNull(),
+  assignedToFitterId: varchar("assigned_to_fitter_id", { length: 36 }),
+  assignedByUserId: varchar("assigned_by_user_id", { length: 36 }).notNull(),
+  
+  // Task Details
+  taskType: varchar("task_type", { length: 50 }).default('lens_cutting'), // lens_cutting, frame_fitting, adjustment
+  frameSize: varchar("frame_size", { length: 100 }),
+  specialInstructions: text("special_instructions"),
+  estimatedTime: int("estimated_time"), // in minutes
+  
+  // Status and Progress
+  status: varchar("status", { length: 30 }).default('assigned'), // assigned, in_progress, completed, quality_check, sent_to_store
+  progress: int("progress").default(0), // 0-100 percentage
+  
+  // Dates and Deadlines
+  assignedDate: timestamp("assigned_date").defaultNow(),
+  startedDate: timestamp("started_date"),
+  completedDate: timestamp("completed_date"),
+  deadline: timestamp("deadline"),
+  
+  // Work Details
+  workRemarks: text("work_remarks"),
+  qualityCheckNotes: text("quality_check_notes"),
+  workPhotos: text("work_photos"), // JSON array of photo URLs
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+// Delivery Management
+export const deliveries = mysqlTable("deliveries", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  specsOrderId: varchar("specs_order_id", { length: 36 }).notNull(),
+  patientId: varchar("patient_id", { length: 36 }).notNull(),
+  storeId: varchar("store_id", { length: 36 }).notNull(),
+  
+  // Delivery Details
+  deliveryMethod: varchar("delivery_method", { length: 30 }).notNull(), // pickup, courier, home_delivery
+  deliveryAddress: text("delivery_address"),
+  recipientName: varchar("recipient_name", { length: 255 }),
+  recipientPhone: varchar("recipient_phone", { length: 20 }),
+  
+  // Delivery Status
+  status: varchar("status", { length: 30 }).default('ready'), // ready, out_for_delivery, delivered, failed
+  trackingNumber: varchar("tracking_number", { length: 100 }),
+  courierService: varchar("courier_service", { length: 100 }),
+  
+  // Dates
+  readyDate: timestamp("ready_date").defaultNow(),
+  scheduledDate: date("scheduled_date"),
+  deliveredDate: timestamp("delivered_date"),
+  
+  // Notes and Feedback
+  deliveryNotes: text("delivery_notes"),
+  customerFeedback: text("customer_feedback"),
+  deliveryRating: int("delivery_rating"), // 1-5 stars
+  
+  // Final checks
+  finalQualityCheck: boolean("final_quality_check").default(false),
+  finalCheckBy: varchar("final_check_by", { length: 36 }),
+  finalCheckDate: timestamp("final_check_date"),
+  finalCheckNotes: text("final_check_notes"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+// Workflow Notifications
+export const workflowNotifications = mysqlTable("workflow_notifications", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  type: varchar("type", { length: 50 }).notNull(), // lens_cutting_assigned, task_completed, ready_for_delivery, delivered
+  recipientType: varchar("recipient_type", { length: 30 }).notNull(), // fitter, store, patient, admin, doctor
+  recipientId: varchar("recipient_id", { length: 36 }),
+  recipientEmail: varchar("recipient_email", { length: 255 }),
+  recipientPhone: varchar("recipient_phone", { length: 20 }),
+  
+  // Related entities
+  specsOrderId: varchar("specs_order_id", { length: 36 }),
+  lensCuttingTaskId: varchar("lens_cutting_task_id", { length: 36 }),
+  deliveryId: varchar("delivery_id", { length: 36 }),
+  
+  // Notification Content
+  subject: varchar("subject", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  
+  // Status
+  status: varchar("status", { length: 20 }).default('pending'), // pending, sent, failed
+  sentAt: timestamp("sent_at"),
+  readAt: timestamp("read_at"),
+  
+  // Delivery channels
+  emailSent: boolean("email_sent").default(false),
+  smsSent: boolean("sms_sent").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   stores: many(stores),
@@ -720,6 +898,13 @@ export const insertSaleSchema = createInsertSchema(sales);
 export const insertStaffSchema = createInsertSchema(staff);
 export const insertNotificationSchema = createInsertSchema(notifications);
 
+// New workflow schemas
+export const insertLensPrescriptionSchema = createInsertSchema(lensPrescriptions);
+export const insertSpecsOrderSchema = createInsertSchema(specsOrders);
+export const insertLensCuttingTaskSchema = createInsertSchema(lensCuttingTasks);
+export const insertDeliverySchema = createInsertSchema(deliveries);
+export const insertWorkflowNotificationSchema = createInsertSchema(workflowNotifications);
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -745,3 +930,15 @@ export type Staff = typeof staff.$inferSelect;
 export type InsertStaff = z.infer<typeof insertStaffSchema>;
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// Workflow types
+export type LensPrescription = typeof lensPrescriptions.$inferSelect;
+export type InsertLensPrescription = z.infer<typeof insertLensPrescriptionSchema>;
+export type SpecsOrder = typeof specsOrders.$inferSelect;
+export type InsertSpecsOrder = z.infer<typeof insertSpecsOrderSchema>;
+export type LensCuttingTask = typeof lensCuttingTasks.$inferSelect;
+export type InsertLensCuttingTask = z.infer<typeof insertLensCuttingTaskSchema>;
+export type Delivery = typeof deliveries.$inferSelect;
+export type InsertDelivery = z.infer<typeof insertDeliverySchema>;
+export type WorkflowNotification = typeof workflowNotifications.$inferSelect;
+export type InsertWorkflowNotification = z.infer<typeof insertWorkflowNotificationSchema>;

@@ -1,0 +1,204 @@
+Step 1: Doctor Prescribes Lenses (Prescription Module)
+
+Features:
+
+Lens Type: Single Vision, Bifocal, Progressive, etc.
+
+Lens Material: CR-39, Polycarbonate, High Index, etc.
+
+Prescription Details: SPH, CYL, Axis, ADD, PD (Pupillary Distance), etc.
+
+Frame Recommendation: Optional based on patient preferences
+
+Special Instructions: Coatings, tints, anti-glare, etc.
+
+Action Buttons:
+
+Save Prescription
+
+Create Specs Order
+
+System Auto-Checks:
+
+Available stock for prescribed lens/material/frames
+
+Alerts if stock is low
+
+Step 2: Specs Order Creation (Sales Invoice-Like)
+
+Features:
+
+Pre-filled specs order from prescription details
+
+Real-time inventory check for lenses and frames
+
+Price auto-pulled from inventory
+
+Action Buttons:
+
+Check Inventory Availability
+
+Add to Specs Order
+
+Generate Invoice
+
+Save as Draft / Confirm Order
+
+Process:
+
+Order confirmation automatically updates the inventory
+
+Generates sales invoice for the patient
+
+Links the order to the patient’s history and accounting module
+
+Step 3: Assign Lens Cutting Task
+
+Features:
+
+Assigned to: Fitter or Lab Technician
+
+Details: Lens type, frame size, patient details, special instructions
+
+Action Buttons:
+
+Assign Task to Fitter
+
+Upload Specs Details
+
+Set Deadline
+
+Notifications:
+
+To Fitter: “New Lens Cutting Task Assigned”
+
+Step 4: Fitting in Progress
+
+Features:
+
+Details: Task completion status, adjustments required, remarks for fitting
+
+Ability to add work photo (optional)
+
+Action Buttons:
+
+Start Job
+
+Mark as Completed
+
+Add Remarks
+
+Upload Work Photo
+
+Notifications:
+
+To Store and Admin: “Lens Cutting/Fitting Completed. Sent to Store.”
+
+Step 5: Send to Store
+
+Features:
+
+Details: Job completed, item ready for delivery, tracking info (optional)
+
+Action Buttons:
+
+Send to Store
+
+Update Tracking Info
+
+Set Delivery Notes
+
+Notifications:
+
+To Store and Patient: “Specs ready for delivery. Please prepare for delivery.”
+
+Step 6: Delivery Ready & Final Checks
+
+Features:
+
+Details: Delivery method (pickup or courier), patient delivery address if needed
+
+Action Buttons:
+
+Mark as Ready for Delivery
+
+Schedule Delivery
+
+Add Final Remarks
+
+Notifications:
+
+To Patient and Admin: “Specs are ready for delivery. Pickup information or delivery ETA.”
+
+Step 7: Delivery Confirmation
+
+Features:
+
+Details: Delivery completion, recipient name
+
+Action Buttons:
+
+Mark as Delivered
+
+Collect Feedback (Optional)
+
+Notifications:
+
+To Patient, Admin, Fitter: “Specs successfully delivered.”
+
+🧩 Module Features Summary
+Feature	Description
+Specs Order Creation	Sales invoice-like order form with auto inventory checks, linked to prescription
+Lens Cutting & Fitting	Assignment system for fitters, task progress, completion marking
+Store Management	Delivery tracking, patient communication (email/SMS), delivery marking
+Inventory Sync	Automatic inventory deductions, real-time stock updates
+Accounting Sync	Auto-generated invoices linked to sales and payment processes
+Notifications	Automated emails/SMS at each stage to fitters, store, patients, and admin
+Mobile ERP Access	View and manage tasks on mobile/tablet for fitters, store, and patients
+Audit Trail	Timestamped actions and updates for better tracking and accountability
+Patient History Link	Direct connection to patient’s medical and order history in ERP
+🔐 User Roles & Permissions
+Role	Permissions
+Doctor	View/Update Prescriptions, Create Specs Orders, View Patient History
+Receptionist	Create and Manage Orders, View/Update Patient Info, View Inventory
+Fitter	View Assigned Tasks, Mark Jobs as In Progress/Completed, Add Remarks
+Store	Receive Orders, Schedule Delivery, Mark as Delivered, Add Delivery Notes
+Admin	Full Access to All Modules (Inventory, Accounting, Orders, etc.), Assign Tasks, View Reports
+Patient	View Prescription, Order Status, Delivery Information (No editing rights)
+📧 Email Notification Templates
+
+To Fitter:
+Subject: New Lens Cutting Task Assigned
+Body: “You have been assigned a new lens fitting job for Patient [Name]. Please check your dashboard for details.”
+
+To Store:
+Subject: Lens Cutting Task Completed
+Body: “The lens cutting task for Patient [Name] has been completed. It is now ready for delivery. Please prepare accordingly.”
+
+To Patient:
+Subject: Your Specs are Ready for Delivery
+Body: “Dear [Patient Name], your spectacles are now ready for delivery. Please collect them or expect delivery on [Date].”
+
+To Admin/Fitter/Store (Final Delivery):
+Subject: Specs Successfully Delivered
+Body: “Patient [Name] has received their spectacles. Thank you for processing the order.”
+
+🧩 Mobile ERP Features
+
+Fitter Tasks: View assigned tasks, mark as complete, add remarks, and upload images.
+
+Store Management: View ready-to-ship specs, mark delivery status, send delivery updates to patients.
+
+Patient Portal: View order and prescription status, track delivery.
+
+🚀 Final Workflow Summary
+
+Doctor: Prescribes specs → Fills in specs details → Clicks “Create Specs Order”
+
+System: Creates order, checks stock, generates invoice, links to patient history
+
+Fitter: Receives lens cutting task → Marks as completed → Sends to store
+
+Store: Receives task, schedules delivery → Marks as delivered
+
+Patient: Receives order → Confirms delivery → Option to leave feedback

@@ -55,6 +55,7 @@ const navigationItems = [
     items: [
       { title: "Patient Registration", href: "/patients", icon: Calendar },
       { title: "Prescriptions", href: "/prescriptions", icon: Pill },
+      { title: "Specs Workflow", href: "/specs-workflow", icon: Eye },
     ],
   },
   {

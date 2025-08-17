@@ -14,6 +14,7 @@ import accountingRoutes from "./routes/accountingRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
 import { registerInstallRoutes } from "./installRoutes";
+import { registerSpecsWorkflowRoutes } from "./routes/specsWorkflowRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -718,6 +719,7 @@ console.log('Database test page loaded successfully');
   
   // Register analytics routes
   registerAnalyticsRoutes(app);
+  registerSpecsWorkflowRoutes(app);
   
   // Register medical routes (includes patients, doctors, prescriptions)
   registerMedicalRoutes(app);
