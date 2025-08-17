@@ -1,0 +1,240 @@
+Objective:
+
+To integrate a Specs Order Creation Module with Lens Cutting & Fitting Process as sub-modules. The goal is to create a clear and efficient workflow that includes prescription creation, inventory checks, task assignments, fitting stages, and delivery.
+
+Module 1: Specs Order Creation (Standalone)
+
+This module is responsible for creating the specs order based on the prescription details. It should operate like a sales invoice, with inventory checks, pricing, and patient history linkage.
+
+Features of Specs Order Creation:
+
+Auto-Fill Prescription Details:
+
+Populate lens type, material, frame, and prescription data.
+
+Inventory Check:
+
+Real-time stock check for the prescribed lenses, frames, and accessories.
+
+Pricing:
+
+Auto-pull pricing from the inventory database.
+
+Patient History Link:
+
+Link the order to the patient's history and medical records.
+
+Invoice Generation:
+
+Generate a sales invoice for the patient, including taxes and payment details.
+
+Action Buttons:
+
+Check Inventory Availability: Verify stock availability for all items.
+
+Add to Order: Add selected lenses, frames, and accessories to the order.
+
+Generate Invoice: Create an invoice for the patient based on selected items.
+
+Save as Draft: Save the order for future edits.
+
+Confirm Order: Finalize the order and generate patient history record.
+
+System Features:
+
+Auto-Check Inventory: Real-time validation to ensure stock availability.
+
+Invoice System Integration: Automatically generate and save invoices linked to patient records.
+
+Sub-Modules of Specs Order Creation:
+
+These sub-modules handle specific tasks related to the Lens Cutting & Fitting Process after an order has been created. Each stage involves progress tracking, notifications, and task assignments.
+
+Sub-Module 1: Assign Lens Cutting Task
+
+After the specs order has been created, the Lens Cutting Task needs to be assigned to a fitter or lab technician.
+
+Features:
+
+Task Assignment: Assign the lens cutting task to a fitter or technician.
+
+Task Details: Include lens type, material, frame, and any special instructions (e.g., coatings).
+
+Deadline Setting: Set a deadline for task completion.
+
+Action Buttons:
+
+Assign Task to Fitter: Assign the task to the fitter for lens cutting.
+
+Set Deadline: Set the deadline for task completion.
+
+Upload Task Details: Upload additional specs or instructions if necessary.
+
+Notifications:
+
+To Fitter: "You have a new lens cutting task assigned for Patient [Name]. Please check your dashboard for details."
+
+Sub-Module 2: Fitting in Progress
+
+Once the fitter begins working on the lenses, the status should be marked as In Progress. The fitter will also have the option to add remarks, upload photos, and update the task progress.
+
+Features:
+
+Status Update: Mark the task as "In Progress" once it starts.
+
+Remarks: Add notes on task progress, any issues, or additional instructions.
+
+Photo Upload: Option to upload images showing the work progress.
+
+Action Buttons:
+
+Start Job: Start the lens fitting task.
+
+Mark as Completed: Mark the task as completed once finished.
+
+Add Remarks: Add any relevant progress notes.
+
+Upload Work Photo: Upload photos of the fitting process.
+
+Notifications:
+
+To Admin/Store: "Lens cutting task for Patient [Name] is now in progress."
+
+To Fitter: "Your job for Patient [Name] has been marked as completed."
+
+Sub-Module 3: Send to Store
+
+Once the lens cutting and fitting are complete, the next step is to send the specs to the store for delivery preparation.
+
+Features:
+
+Task Completion: Marks the task as complete and sends the specs to the store.
+
+Delivery Tracking: Optionally add tracking information.
+
+Delivery Notes: Attach any specific delivery instructions for the store.
+
+Action Buttons:
+
+Send to Store: Mark the task as completed and send specs to the store.
+
+Add Delivery Notes: Attach special instructions for store staff regarding delivery.
+
+Update Tracking Info: Add or update delivery tracking details.
+
+Notifications:
+
+To Store: "Lens cutting task for Patient [Name] is complete. Please prepare for delivery."
+
+To Admin: "Lens cutting and fitting for Patient [Name] completed and sent to the store."
+
+Sub-Module 4: Delivery Ready & Final Checks
+
+This step marks the final checks before delivery. The store will confirm that the specs are ready to be delivered or picked up.
+
+Features:
+
+Final Confirmation: Confirm that the specs are ready for delivery.
+
+Delivery Method: Choose between pickup or courier.
+
+Final Remarks: Add final remarks about the order and its readiness.
+
+Action Buttons:
+
+Mark as Ready for Delivery: Confirm that the specs are ready for delivery.
+
+Schedule Delivery: Set a delivery date and time for courier or patient pickup.
+
+Add Final Remarks: Add final notes on the order.
+
+Notifications:
+
+To Patient: "Your spectacles are now ready for delivery or pickup. Please check the details."
+
+To Admin: "Specs for Patient [Name] are ready for delivery."
+
+To Store: "Confirm delivery scheduling for Patient [Name]."
+
+Sub-Module 5: Delivery Confirmation
+
+Finally, when the specs are delivered, the store confirms the delivery and any patient feedback.
+
+Features:
+
+Delivery Confirmation: Confirm that the patient has received their specs.
+
+Feedback Collection: Optionally collect feedback on the specs and the overall experience.
+
+Action Buttons:
+
+Mark as Delivered: Confirm the specs were delivered successfully.
+
+Collect Feedback: Collect feedback from the patient regarding the delivery experience.
+
+Notifications:
+
+To Patient: "Your spectacles have been successfully delivered. We hope you’re satisfied with your order."
+
+To Admin: "Specs for Patient [Name] have been delivered."
+
+To Store/Fitter: "Specs successfully delivered to Patient [Name]."
+
+📋 Features Summary:
+Module/Sub-Module	Description
+Specs Order Creation	Generates specs order based on prescription, pricing, and inventory check
+Lens Cutting Task	Assigns lens cutting tasks to fitters and tracks task progress
+Fitting in Progress	Marks the fitting task as in progress and allows progress updates
+Send to Store	Sends completed specs to the store and prepares them for delivery
+Delivery Ready & Final Checks	Final preparation of specs for delivery, including scheduling
+Delivery Confirmation	Confirms the successful delivery of the specs to the patient
+🔐 User Roles & Permissions
+Role	Permissions
+Doctor	View and update prescriptions, create specs orders, and view patient history
+Receptionist	Create and manage orders, view/update patient info, and create/modify invoices
+Fitter	View assigned tasks, mark jobs as in progress/completed, and add remarks/photos
+Store	Receive tasks, schedule deliveries, mark orders as delivered, and add delivery-related info
+Admin	Full access to all modules (prescriptions, inventory, billing, orders, etc.), assign tasks, view reports
+Patient	View prescription, order status, and delivery information (No editing rights)
+📧 Email Notification Templates
+
+To Fitter:
+
+Subject: New Lens Cutting Task Assigned
+
+Body: "You have been assigned a new lens fitting task for Patient [Name]. Please check your dashboard for details."
+
+To Store:
+
+Subject: Lens Cutting Task Completed
+
+Body: "The lens cutting task for Patient [Name] has been completed. Please prepare accordingly for delivery."
+
+To Patient:
+
+Subject: Your Specs Are Ready for Delivery
+
+Body: "Dear [Patient Name], your spectacles are now ready for delivery. Please collect them or expect delivery on [Date]."
+
+Integration Steps in Code:
+
+Database Integration:
+
+Create a Specs Orders Table that links to prescription data, inventory, and patient history.
+
+Add fields for inventory tracking and delivery status.
+
+Task Assignment System:
+
+Implement an assignment system for assigning tasks (lens cutting, fitting) to fitters and technicians.
+
+Create a notification system to alert fitters and store staff about new tasks, progress updates, and delivery confirmations.
+
+Role-Based Access Control (RBAC):
+
+Implement RBAC to limit access to various modules based on the user role. E.g., only Admins can view invoices, while fitters can view assigned tasks.
+
+With this structure, the Specs Order Creation Module is a separate module, and the Lens Cutting & Fitting Process becomes a series of sub-modules, each with its own distinct actions and responsibilities. This makes it easier to track progress, assign tasks, and ensure smooth operation at every stage of the process.
+
+Get smarter responses, upload files and images, and more.
+Log in

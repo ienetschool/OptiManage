@@ -38,7 +38,8 @@ import {
   Globe,
   Palette,
   Link as LinkIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  ShoppingCart
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -56,6 +57,8 @@ const navigationItems = [
       { title: "Patient Registration", href: "/patients", icon: Calendar },
       { title: "Prescriptions", href: "/prescriptions", icon: Pill },
       { title: "Specs Workflow", href: "/specs-workflow", icon: Eye },
+      { title: "Specs Order Creation", href: "/specs-order-creation", icon: ShoppingCart },
+      { title: "Lens Cutting & Fitting", href: "/lens-cutting-workflow", icon: Settings },
     ],
   },
   {

@@ -741,6 +741,11 @@ console.log('Database test page loaded successfully');
   registerSpecsWorkflowRoutes(app);
   console.log("✅ Specs workflow routes registered successfully");
   
+  // Import and use specs order routes
+  const specsOrderRoutes = await import('./specsOrderRoutes');
+  app.use(specsOrderRoutes.default);
+  console.log("✅ Specs order routes registered successfully");
+  
   // Register medical routes (includes patients, doctors, prescriptions)
   registerMedicalRoutes(app);
   
