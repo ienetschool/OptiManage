@@ -22,6 +22,7 @@ import LensCuttingWorkflow from "@/pages/LensCuttingWorkflowSimple";
 import SpecsWorkflowNew from "@/pages/SpecsWorkflow";
 import SpecsOrderCreationNew from "@/pages/SpecsOrderCreation";
 import LensCuttingWorkflowNew from "@/pages/LensCuttingWorkflow";
+import DashboardNew from "@/pages/DashboardNew";
 import Billing from "@/pages/Billing";
 import Staff from "@/pages/Staff";
 import Attendance from "@/pages/Attendance";
@@ -57,9 +58,10 @@ import Services from "@/pages/Services";
 import Login from "@/pages/Login";
 import AuthPage from "@/pages/AuthPage";
 import QuickLogin from "@/pages/QuickLogin";
-// USING ORIGINAL SIDEBAR - REPLACED WITH WORKING CONTENT
-import Sidebar from "@/components/layout/Sidebar";
+// CLEAN REBUILD - NEW NAVIGATION COMPONENT
+import Navigation from "@/components/layout/Navigation";
 import AppLayout from "@/components/layout/AppLayout";
+import AppLayoutNew from "@/components/layout/AppLayoutNew";
 import InstallWizardSimple from "@/pages/InstallWizardSimple";
 import TestPage from "@/pages/TestPage";
 import PublicLayout from "@/components/layout/PublicLayout";
@@ -153,17 +155,14 @@ function Router() {
 
       {/* Dashboard routes */}
       <Route path="/dashboard">
-        <AppLayout>
-          <Sidebar />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <Dashboard />
-          </div>
-        </AppLayout>
+        <AppLayoutNew>
+          <DashboardNew />
+        </AppLayoutNew>
       </Route>
       
       <Route path="/stores">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Stores />
           </div>
@@ -172,7 +171,7 @@ function Router() {
       
       <Route path="/inventory">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Inventory />
           </div>
@@ -185,7 +184,7 @@ function Router() {
       
       <Route path="/customers">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Customers />
           </div>
@@ -195,7 +194,7 @@ function Router() {
       <Route path="/patients">
         {isAuthenticated ? (
           <AppLayout>
-            <Sidebar />
+            <Navigation />
             <div className="flex-1 flex flex-col overflow-hidden">
               <Patients />
             </div>
@@ -207,7 +206,7 @@ function Router() {
       
       <Route path="/patient-management">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <PatientManagement />
           </div>
@@ -216,7 +215,7 @@ function Router() {
       
       <Route path="/prescriptions">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <PrescriptionsFixed />
           </div>
@@ -225,7 +224,7 @@ function Router() {
       
       <Route path="/specs-workflow">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <SpecsWorkflowNew />
           </div>
@@ -234,7 +233,7 @@ function Router() {
       
       <Route path="/specs-order-creation">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <SpecsOrderCreationNew />
           </div>
@@ -243,7 +242,7 @@ function Router() {
       
       <Route path="/lens-cutting-workflow">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <LensCuttingWorkflowNew />
           </div>
@@ -252,7 +251,7 @@ function Router() {
       
       <Route path="/specs-workflow">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <SpecsWorkflow />
           </div>
@@ -261,7 +260,7 @@ function Router() {
       
       <Route path="/specs-order-creation">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <SpecsOrderCreation />
           </div>
@@ -270,7 +269,7 @@ function Router() {
       
       <Route path="/lens-cutting-workflow">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <LensCuttingWorkflow />
           </div>
@@ -279,7 +278,7 @@ function Router() {
       
       <Route path="/invoices">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <InvoiceManagement />
           </div>
@@ -288,7 +287,7 @@ function Router() {
       
       <Route path="/billing">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Billing />
           </div>
@@ -297,7 +296,7 @@ function Router() {
       
       <Route path="/staff">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Staff />
           </div>
@@ -306,7 +305,7 @@ function Router() {
 
       <Route path="/attendance">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Attendance />
           </div>
@@ -315,7 +314,7 @@ function Router() {
 
       <Route path="/payroll">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Payroll />
           </div>
@@ -324,7 +323,7 @@ function Router() {
       
       <Route path="/attendance">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Attendance />
           </div>
@@ -333,7 +332,7 @@ function Router() {
       
       <Route path="/payroll">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Payroll />
           </div>
@@ -342,7 +341,7 @@ function Router() {
       
       <Route path="/leave-management">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <LeaveManagement />
           </div>
@@ -351,7 +350,7 @@ function Router() {
       
       <Route path="/reports">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Reports />
           </div>
@@ -360,7 +359,7 @@ function Router() {
 
       <Route path="/custom-reports">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <CustomReports />
           </div>
@@ -369,7 +368,7 @@ function Router() {
       
       <Route path="/analytics">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Analytics />
           </div>
@@ -378,7 +377,7 @@ function Router() {
       
       <Route path="/store-performance">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <StorePerformance />
           </div>
@@ -387,7 +386,7 @@ function Router() {
       
       <Route path="/communication">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Communication />
           </div>
@@ -396,7 +395,7 @@ function Router() {
       
       <Route path="/notifications">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Notifications />
           </div>
@@ -405,7 +404,7 @@ function Router() {
       
       <Route path="/profile">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Profile />
           </div>
@@ -416,7 +415,7 @@ function Router() {
       
       <Route path="/settings">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Settings />
           </div>
@@ -425,7 +424,7 @@ function Router() {
       
       <Route path="/support">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Support />
           </div>
@@ -434,7 +433,7 @@ function Router() {
       
       <Route path="/store-settings">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <StoreSettings />
           </div>
@@ -445,7 +444,7 @@ function Router() {
       
       <Route path="/payments">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Payments />
           </div>
@@ -454,7 +453,7 @@ function Router() {
 
       <Route path="/pages">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Pages />
           </div>
@@ -463,7 +462,7 @@ function Router() {
 
       <Route path="/themes">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Themes />
           </div>
@@ -472,7 +471,7 @@ function Router() {
 
       <Route path="/domains">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Domains />
           </div>
@@ -481,7 +480,7 @@ function Router() {
 
       <Route path="/seo">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-y-auto">
             <SEO />
           </div>
@@ -490,7 +489,7 @@ function Router() {
 
       <Route path="/advanced-reports">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <AdvancedReports />
           </div>
@@ -500,7 +499,7 @@ function Router() {
       {/* Homepage - redirect to dashboard */}
       <Route path="/">
         <AppLayout>
-          <Sidebar />
+          <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
             <Dashboard />
           </div>
