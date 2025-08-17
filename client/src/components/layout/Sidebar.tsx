@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -143,6 +143,12 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
+  
+  // Force debug log for Patient Management items
+  React.useEffect(() => {
+    const patientMgmt = navigationItems.find(item => item.title === "Patient Management");
+    console.log("DEBUG - Patient Management items:", patientMgmt?.items);
+  }, []);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
