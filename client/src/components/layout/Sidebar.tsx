@@ -309,60 +309,37 @@ function SidebarComponent() {
                         }}
                       >
 
-                        {/* FORCE RENDER ALL ITEMS - BYPASS ANY RENDERING ISSUES */}
-                        {item.title === "Patient Management" ? (
-                          // HARDCODED PATIENT MANAGEMENT ITEMS TO FORCE VISIBILITY
-                          <>
-                            <Link href="/patients">
-                              <Button variant="ghost" size="sm" className="w-full justify-start h-8">
-                                <Calendar className="h-3 w-3 flex-shrink-0" />
-                                <span className="ml-3">Patient Registration</span>
-                              </Button>
-                            </Link>
-                            <Link href="/prescriptions">
-                              <Button variant="ghost" size="sm" className="w-full justify-start h-8">
-                                <Pill className="h-3 w-3 flex-shrink-0" />
-                                <span className="ml-3">Prescriptions</span>
-                              </Button>
-                            </Link>
-                            <Link href="/specs-workflow">
-                              <Button variant="ghost" size="sm" className="w-full justify-start h-8">
-                                <Eye className="h-3 w-3 flex-shrink-0" />
-                                <span className="ml-3">Specs Workflow</span>
-                              </Button>
-                            </Link>
-                            <Link href="/specs-order-creation">
-                              <Button variant="ghost" size="sm" className="w-full justify-start h-8">
-                                <ShoppingCart className="h-3 w-3 flex-shrink-0" />
-                                <span className="ml-3">Specs Order Creation</span>
-                              </Button>
-                            </Link>
-                            <Link href="/lens-cutting-workflow">
-                              <Button variant="ghost" size="sm" className="w-full justify-start h-8">
-                                <Settings className="h-3 w-3 flex-shrink-0" />
-                                <span className="ml-3">Lens Cutting & Fitting</span>
-                              </Button>
-                            </Link>
-                          </>
-                        ) : (
-                          // NORMAL RENDERING FOR OTHER SECTIONS
-                          item.items?.map((subItem: any, index: number) => {
-                            console.log(`🎯 RENDERING MENU ITEM ${index + 1} of ${item.items.length}:`, subItem.title, "->", subItem.href);
-                            return (
-                              <Link key={`${subItem.href}-${index}`} href={subItem.href}>
-                                <Button
-                                  variant={isActiveItem(subItem.href) ? "secondary" : "ghost"}
-                                  size="sm"
-                                  className="w-full justify-start h-8"
-                                  data-testid={`menu-item-${subItem.title.toLowerCase().replace(/\s+/g, '-')}`}
-                                >
-                                  <subItem.icon className="h-3 w-3 flex-shrink-0" />
-                                  <span className="ml-3">{subItem.title}</span>
-                                </Button>
-                              </Link>
-                            );
-                          })
-                        )}
+                        {/* EMERGENCY FIX - ALWAYS SHOW ALL 5 ITEMS */}
+                        <Link href="/patients">
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8">
+                            <Calendar className="h-3 w-3 flex-shrink-0" />
+                            <span className="ml-3">Patient Registration</span>
+                          </Button>
+                        </Link>
+                        <Link href="/prescriptions">
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8">
+                            <Pill className="h-3 w-3 flex-shrink-0" />
+                            <span className="ml-3">Prescriptions</span>
+                          </Button>
+                        </Link>
+                        <Link href="/specs-workflow">
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8">
+                            <Eye className="h-3 w-3 flex-shrink-0" />
+                            <span className="ml-3">Specs Workflow</span>
+                          </Button>
+                        </Link>
+                        <Link href="/specs-order-creation">
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8">
+                            <ShoppingCart className="h-3 w-3 flex-shrink-0" />
+                            <span className="ml-3">Specs Order Creation</span>
+                          </Button>
+                        </Link>
+                        <Link href="/lens-cutting-workflow">
+                          <Button variant="ghost" size="sm" className="w-full justify-start h-8">
+                            <Settings className="h-3 w-3 flex-shrink-0" />
+                            <span className="ml-3">Lens Cutting & Fitting</span>
+                          </Button>
+                        </Link>
                       </div>
                     </CollapsibleContent>
                   )}
