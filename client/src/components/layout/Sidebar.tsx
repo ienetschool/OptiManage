@@ -212,8 +212,9 @@ export default function Sidebar() {
                   {!collapsed && (
                     <CollapsibleContent className="mt-1">
                       <div className="pl-4 space-y-1">
+
                         {item.items?.map((subItem, index) => {
-                          console.log(`Rendering menu item ${index}:`, subItem.title, subItem.href);
+                          console.log(`Rendering menu item ${index}:`, subItem.title, subItem.href, subItem.icon);
                           return (
                             <Link key={`${subItem.href}-${index}`} href={subItem.href}>
                               <Button
