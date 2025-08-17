@@ -43,7 +43,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-// Updated navigation with specs order creation module
+// Updated navigation with specs order creation module - FIXED VERSION
 const navigationItems = [
   {
     title: "Dashboard",
