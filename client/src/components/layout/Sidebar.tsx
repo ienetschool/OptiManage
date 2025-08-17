@@ -42,7 +42,6 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import SidebarTest from "./SidebarTest";
 
 // Updated navigation with specs order creation module - FIXED VERSION
 const navigationItems = [
@@ -145,11 +144,7 @@ export default function Sidebar() {
   const [location] = useLocation();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Patient Management", "Billing & Invoices", "Store Management"]);
   
-  // Force debug log for Patient Management items
-  React.useEffect(() => {
-    const patientMgmt = navigationItems.find(item => item.title === "Patient Management");
-    console.log("DEBUG - Patient Management items:", patientMgmt?.items);
-  }, []);
+  // Production-ready Patient Management with all 5 items
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev =>
@@ -271,8 +266,7 @@ export default function Sidebar() {
         </nav>
       </ScrollArea>
       
-      {/* Debug Test Component */}
-      <SidebarTest />
+      {/* Removed debug component - production ready */}
 
     </div>
   );
