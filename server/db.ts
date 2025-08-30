@@ -1,8 +1,8 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from "@shared/schema";
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
+import * as schema from "@shared/mysql-schema";
 
-// Use Replit's built-in PostgreSQL database
+// Use MySQL database from secrets
 const DATABASE_URL = process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
@@ -11,12 +11,7 @@ if (!DATABASE_URL) {
   );
 }
 
-console.log(`Connecting to PostgreSQL database: ${DATABASE_URL.includes('localhost') ? 'localhost' : 'Replit PostgreSQL'}`);
+console.log(`Connecting to MySQL database: ${DATABASE_URL.includes('mysql://') ? 'MySQL Server' : 'Database Server'}`);
 
-export const connection = postgres(DATABASE_URL, {
-  max: 20,
-  idle_timeout: 20,
-  connect_timeout: 10,
-});
-
-export const db = drizzle(connection, { schema });
+export const connection = mysql.createPool(DATABASE_URL);
+export const db = drizzle(connection, { schema, mode: 'default' });
