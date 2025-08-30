@@ -14,6 +14,8 @@ import {
   emailTemplates,
   communicationLog,
   patients,
+  medicalInvoices,
+  medicalInvoiceItems,
   type User,
   type InsertUser,
   type Store,
@@ -57,6 +59,12 @@ export interface IStorage {
   getAppointmentsByDate(date: string): Promise<Appointment[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
 
+  // Sales operations
+  getSales(): Promise<Sale[]>;
+  
+  // Invoice operations  
+  getInvoices(): Promise<any[]>;
+  
   // Basic operations for medical practice
   getDashboardStats(): Promise<any>;
 }
@@ -233,6 +241,51 @@ export class MySQLStorage implements IStorage {
         recentSales: [],
         systemHealth: 'error'
       };
+    }
+  }
+
+  // Sales operations
+  async getSales(): Promise<Sale[]> {
+    try {
+      return await db.select().from(sales).orderBy(desc(sales.createdAt));
+    } catch (error) {
+      console.error('Error fetching sales:', error);
+      return [];
+    }
+  }
+
+  // Invoice operations
+  async getInvoices(): Promise<any[]> {
+    try {
+      // Get invoices from medical_invoices table
+      const dbInvoices = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
+      
+      // Transform to expected format
+      const transformedInvoices = dbInvoices.map(invoice => ({
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        patientId: invoice.patientId,
+        appointmentId: invoice.appointmentId,
+        date: invoice.issueDate,
+        dueDate: invoice.dueDate,
+        subtotal: parseFloat(invoice.subtotal || "0"),
+        taxRate: parseFloat(invoice.tax || "0"),
+        taxAmount: parseFloat(invoice.tax || "0"),
+        discountAmount: 0,
+        total: parseFloat(invoice.total || "0"),
+        status: invoice.status || 'pending',
+        paymentMethod: 'unknown',
+        paymentDate: null,
+        notes: invoice.notes,
+        items: [], // Items would be fetched separately if needed
+        createdAt: invoice.createdAt,
+        updatedAt: invoice.updatedAt
+      }));
+      
+      return transformedInvoices;
+    } catch (error) {
+      console.error('Error fetching invoices:', error);
+      return [];
     }
   }
 }
