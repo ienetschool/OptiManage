@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ModernForm, FormSection, ValidationMessage, FormTab } from "@/components/ui/modern-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -25,41 +25,34 @@ import {
   Eye,
   Stethoscope
 } from "lucide-react";
-import { insertPatientSchema, type Patient, type InsertPatient } from "@shared/mysql-schema";
+import { insertPatientSchema, type Patient } from "@shared/mysql-schema";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 
-// Enhanced patient schema with validation
-const modernPatientSchema = insertPatientSchema.extend({
+// Simplified patient form schema using only existing database fields
+const modernPatientFormSchema = z.object({
+  patientCode: z.string().min(1, "Patient code is required"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address").optional().or(z.literal("")),
+  phone: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  gender: z.string().optional(),
+  address: z.string().optional(),
   emergencyContactName: z.string().optional(),
   emergencyContactPhone: z.string().optional(),
   emergencyContactRelation: z.string().optional(),
+  insuranceProvider: z.string().optional(),
+  insuranceNumber: z.string().optional(),
+  bloodType: z.string().optional(),
+  allergies: z.string().optional(),
   medicalHistory: z.string().optional(),
   currentMedications: z.string().optional(),
-  allergies: z.string().optional(),
-  visualAcuityOD: z.string().optional(),
-  visualAcuityOS: z.string().optional(),
-  refractionOD: z.string().optional(),
-  refractionOS: z.string().optional(),
-  previousGlasses: z.boolean().optional(),
-  previousContacts: z.boolean().optional(),
-  insuranceVerified: z.boolean().optional(),
-  consentFormsSigned: z.boolean().optional(),
-  preferredLanguage: z.string().optional(),
-  communicationPreference: z.string().optional(),
-}).refine((data) => {
-  // Custom validation rules
-  if (data.emergencyContactName && !data.emergencyContactPhone) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Emergency contact phone is required when emergency contact name is provided",
-  path: ["emergencyContactPhone"]
+  notes: z.string().optional(),
 });
 
-type ModernPatientFormData = z.infer<typeof modernPatientSchema>;
+type ModernPatientFormData = z.infer<typeof modernPatientFormSchema>;
 
 interface ModernPatientFormProps {
   patient?: Patient;
@@ -77,33 +70,26 @@ export default function ModernPatientForm({
   const queryClient = useQueryClient();
 
   const form = useForm<ModernPatientFormData>({
-    resolver: zodResolver(modernPatientSchema),
+    resolver: zodResolver(modernPatientFormSchema),
     defaultValues: {
+      patientCode: patient?.patientCode || `PAT${Date.now()}`,
       firstName: patient?.firstName || "",
       lastName: patient?.lastName || "",
       email: patient?.email || "",
       phone: patient?.phone || "",
       dateOfBirth: patient?.dateOfBirth ? format(new Date(patient.dateOfBirth), "yyyy-MM-dd") : "",
+      gender: patient?.gender || "",
       address: patient?.address || "",
-      emergencyContactName: "",
-      emergencyContactPhone: "",
-      emergencyContactRelation: "",
-      medicalHistory: "",
-      currentMedications: "",
-      allergies: "",
+      emergencyContactName: patient?.emergencyContactName || "",
+      emergencyContactPhone: patient?.emergencyContactPhone || "",
+      emergencyContactRelation: patient?.emergencyContactRelation || "",
       insuranceProvider: patient?.insuranceProvider || "",
       insuranceNumber: patient?.insuranceNumber || "",
-      visualAcuityOD: "",
-      visualAcuityOS: "",
-      refractionOD: "",
-      refractionOS: "",
-      previousGlasses: false,
-      previousContacts: false,
-      insuranceVerified: false,
-      consentFormsSigned: false,
-      preferredLanguage: "English",
-      communicationPreference: "email",
-      notes: patient?.notes || ""
+      bloodType: patient?.bloodType || "",
+      allergies: patient?.allergies || "",
+      medicalHistory: patient?.medicalHistory || "",
+      currentMedications: patient?.currentMedications || "",
+      notes: patient?.notes || "",
     }
   });
 
@@ -119,8 +105,8 @@ export default function ModernPatientForm({
 
     const newTabStates = {
       personal: {
-        completed: !!(values.firstName && values.lastName && values.email && values.phone && values.dateOfBirth),
-        hasErrors: !!(errors.firstName || errors.lastName || errors.email || errors.phone || errors.dateOfBirth)
+        completed: !!(values.firstName && values.lastName && values.email && values.phone),
+        hasErrors: !!(errors.firstName || errors.lastName || errors.email || errors.phone)
       },
       contact: {
         completed: !!(values.address && values.emergencyContactName && values.emergencyContactPhone),
@@ -130,17 +116,9 @@ export default function ModernPatientForm({
         completed: !!(values.medicalHistory || values.currentMedications || values.allergies),
         hasErrors: !!(errors.medicalHistory || errors.currentMedications || errors.allergies)
       },
-      vision: {
-        completed: !!(values.visualAcuityOD && values.visualAcuityOS),
-        hasErrors: !!(errors.visualAcuityOD || errors.visualAcuityOS)
-      },
       insurance: {
-        completed: !!(values.insuranceProvider && values.insuranceNumber && values.insuranceVerified),
+        completed: !!(values.insuranceProvider && values.insuranceNumber),
         hasErrors: !!(errors.insuranceProvider || errors.insuranceNumber)
-      },
-      preferences: {
-        completed: !!(values.preferredLanguage && values.communicationPreference && values.consentFormsSigned),
-        hasErrors: !!(errors.preferredLanguage || errors.communicationPreference)
       }
     };
 
@@ -175,28 +153,12 @@ export default function ModernPatientForm({
       hasErrors: tabStates.medical?.hasErrors
     },
     {
-      id: "vision",
-      title: "Vision Assessment",
-      icon: <Eye className="h-4 w-4" />,
-      description: "Eye examination",
-      completed: tabStates.vision?.completed,
-      hasErrors: tabStates.vision?.hasErrors
-    },
-    {
       id: "insurance",
       title: "Insurance",
       icon: <Shield className="h-4 w-4" />,
       description: "Insurance details",
       completed: tabStates.insurance?.completed,
       hasErrors: tabStates.insurance?.hasErrors
-    },
-    {
-      id: "preferences",
-      title: "Preferences",
-      icon: <FileText className="h-4 w-4" />,
-      description: "Communication & consent",
-      completed: tabStates.preferences?.completed,
-      hasErrors: tabStates.preferences?.hasErrors
     }
   ];
 
@@ -204,11 +166,18 @@ export default function ModernPatientForm({
     mutationFn: async (data: ModernPatientFormData) => {
       const endpoint = patient ? `/api/patients/${patient.id}` : "/api/patients";
       const method = patient ? "PATCH" : "POST";
-      return apiRequest(endpoint, { 
-        method, 
-        body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' }
+      
+      const response = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save patient');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
@@ -245,6 +214,20 @@ export default function ModernPatientForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="patientCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Patient Code *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter patient code" {...field} data-testid="input-patientCode" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
@@ -276,7 +259,7 @@ export default function ModernPatientForm({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address *</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="Enter email address" {...field} data-testid="input-email" />
                     </FormControl>
@@ -290,7 +273,7 @@ export default function ModernPatientForm({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number *</FormLabel>
+                    <FormLabel>Phone Number</FormLabel>
                     <FormControl>
                       <Input placeholder="Enter phone number" {...field} data-testid="input-phone" />
                     </FormControl>
@@ -304,7 +287,7 @@ export default function ModernPatientForm({
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date of Birth *</FormLabel>
+                    <FormLabel>Date of Birth</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} data-testid="input-dateOfBirth" />
                     </FormControl>
@@ -315,21 +298,48 @@ export default function ModernPatientForm({
 
               <FormField
                 control={form.control}
-                name="preferredLanguage"
+                name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preferred Language</FormLabel>
+                    <FormLabel>Gender</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger data-testid="select-preferredLanguage">
-                          <SelectValue placeholder="Select language" />
+                        <SelectTrigger data-testid="select-gender">
+                          <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="English">English</SelectItem>
-                        <SelectItem value="Spanish">Spanish</SelectItem>
-                        <SelectItem value="French">French</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bloodType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Blood Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-bloodType">
+                          <SelectValue placeholder="Select blood type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="A+">A+</SelectItem>
+                        <SelectItem value="A-">A-</SelectItem>
+                        <SelectItem value="B+">B+</SelectItem>
+                        <SelectItem value="B-">B-</SelectItem>
+                        <SelectItem value="AB+">AB+</SelectItem>
+                        <SelectItem value="AB-">AB-</SelectItem>
+                        <SelectItem value="O+">O+</SelectItem>
+                        <SelectItem value="O-">O-</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -355,7 +365,7 @@ export default function ModernPatientForm({
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address *</FormLabel>
+                    <FormLabel>Address</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="Enter full address" 
@@ -375,7 +385,7 @@ export default function ModernPatientForm({
                   name="emergencyContactName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Emergency Contact Name *</FormLabel>
+                      <FormLabel>Emergency Contact Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter emergency contact name" {...field} data-testid="input-emergencyContactName" />
                       </FormControl>
@@ -389,7 +399,7 @@ export default function ModernPatientForm({
                   name="emergencyContactPhone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Emergency Contact Phone *</FormLabel>
+                      <FormLabel>Emergency Contact Phone</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter emergency contact phone" {...field} data-testid="input-emergencyContactPhone" />
                       </FormControl>
@@ -418,30 +428,6 @@ export default function ModernPatientForm({
                         <SelectItem value="sibling">Sibling</SelectItem>
                         <SelectItem value="friend">Friend</SelectItem>
                         <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="communicationPreference"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Preferred Communication Method</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger data-testid="select-communicationPreference">
-                          <SelectValue placeholder="Select communication preference" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="phone">Phone</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="mail">Mail</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -526,128 +512,6 @@ export default function ModernPatientForm({
                   </FormItem>
                 )}
               />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="previousGlasses"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Previous Glasses</FormLabel>
-                        <FormDescription>Has the patient worn glasses before?</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-previousGlasses"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="previousContacts"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Previous Contacts</FormLabel>
-                        <FormDescription>Has the patient worn contact lenses before?</FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                          data-testid="switch-previousContacts"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </FormSection>
-        );
-
-      case "vision":
-        return (
-          <FormSection
-            title="Vision Assessment"
-            description="Record vision test results and eye examination findings"
-            completed={tabStates.vision?.completed}
-            hasErrors={tabStates.vision?.hasErrors}
-          >
-            <div className="space-y-6">
-              <div>
-                <h4 className="text-md font-semibold mb-4">Visual Acuity</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="visualAcuityOD"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Right Eye (OD)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 20/20" {...field} data-testid="input-visualAcuityOD" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="visualAcuityOS"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Left Eye (OS)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., 20/20" {...field} data-testid="input-visualAcuityOS" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-md font-semibold mb-4">Refraction</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="refractionOD"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Right Eye (OD)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., -2.00 -0.50 x 90" {...field} data-testid="input-refractionOD" />
-                        </FormControl>
-                        <FormDescription>Sphere, Cylinder, Axis</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="refractionOS"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Left Eye (OS)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., -2.00 -0.50 x 90" {...field} data-testid="input-refractionOS" />
-                        </FormControl>
-                        <FormDescription>Sphere, Cylinder, Axis</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
             </div>
           </FormSection>
         );
@@ -693,69 +557,6 @@ export default function ModernPatientForm({
 
               <FormField
                 control={form.control}
-                name="insuranceVerified"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Insurance Verified</FormLabel>
-                      <FormDescription>
-                        Has the insurance been verified and benefits confirmed?
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        data-testid="switch-insuranceVerified"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {watchedValues.insuranceVerified && (
-                <ValidationMessage
-                  message="Insurance has been verified and benefits confirmed"
-                  type="success"
-                />
-              )}
-            </div>
-          </FormSection>
-        );
-
-      case "preferences":
-        return (
-          <FormSection
-            title="Preferences & Consent"
-            description="Communication preferences and required consent forms"
-            completed={tabStates.preferences?.completed}
-            hasErrors={tabStates.preferences?.hasErrors}
-          >
-            <div className="space-y-4">
-              <FormField
-                control={form.control}
-                name="consentFormsSigned"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Consent Forms Signed *</FormLabel>
-                      <FormDescription>
-                        Patient has signed all required consent forms and privacy notices
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        data-testid="switch-consentFormsSigned"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
@@ -775,13 +576,6 @@ export default function ModernPatientForm({
                   </FormItem>
                 )}
               />
-
-              {!watchedValues.consentFormsSigned && (
-                <ValidationMessage
-                  message="Consent forms must be signed before patient registration can be completed"
-                  type="warning"
-                />
-              )}
             </div>
           </FormSection>
         );
