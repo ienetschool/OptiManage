@@ -42,6 +42,7 @@ import { apiRequest } from "@/lib/queryClient";
 const appointmentSchema = z.object({
   // Patient & Service
   patientId: z.string().min(1, "Please select a patient"),
+  storeId: z.string().min(1, "Store ID is required"),
   serviceType: z.enum([
     "consultation", 
     "eye-exam", 
@@ -166,6 +167,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
     resolver: zodResolver(appointmentSchema),
     defaultValues: editingAppointment ? {
       patientId: editingAppointment.patientId,
+      storeId: editingAppointment.storeId || "store001", // Default store
       appointmentDate: editingAppointment.appointmentDate,
       appointmentTime: editingAppointment.appointmentTime,
       serviceType: editingAppointment.appointmentType || editingAppointment.serviceType || "consultation",
@@ -187,6 +189,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
       insuranceAuthorization: editingAppointment.insuranceAuthorization || "",
     } : {
       patientId: "",
+      storeId: "store001", // Default store
       appointmentDate: "",
       appointmentTime: "",
       serviceType: "consultation",
@@ -264,7 +267,8 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
       
       const appointmentData = {
         ...data,
-        appointmentType: data.serviceType, // Map to the expected field
+        service: data.serviceType, // Required by MySQL schema
+        appointmentType: data.serviceType, // Map to the expected field for compatibility
         patientName: selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Unknown Patient",
         patientCode: selectedPatient?.patientCode || "",
         doctorName: selectedDoctor ? `${selectedDoctor.firstName} ${selectedDoctor.lastName}` : "",
