@@ -34,7 +34,8 @@ import {
   Check,
   UserCheck,
   Phone,
-  Mail
+  Mail,
+  Gift
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -84,6 +85,9 @@ const appointmentSchema = z.object({
   urgencyLevel: z.enum(["routine", "urgent", "emergency"]).default("routine"),
   referralSource: z.string().optional(),
   insuranceAuthorization: z.string().optional(),
+  
+  // Coupon Code
+  couponCode: z.string().optional(),
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
@@ -187,6 +191,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
       urgencyLevel: editingAppointment.urgencyLevel || "routine",
       referralSource: editingAppointment.referralSource || "",
       insuranceAuthorization: editingAppointment.insuranceAuthorization || "",
+      couponCode: editingAppointment.couponCode || "",
     } : {
       patientId: "",
       storeId: "store001", // Default store
@@ -209,8 +214,47 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
       urgencyLevel: "routine",
       referralSource: "",
       insuranceAuthorization: "",
+      couponCode: "",
     },
   });
+
+  // Service pricing configuration
+  const servicePricing = {
+    "consultation": { fee: 75, description: "Initial Consultation" },
+    "eye-exam": { fee: 120, description: "Comprehensive Eye Examination" },
+    "contact-fitting": { fee: 95, description: "Contact Lens Fitting" },
+    "follow-up": { fee: 50, description: "Follow-up Visit" },
+    "prescription-update": { fee: 60, description: "Prescription Update" },
+    "emergency": { fee: 150, description: "Emergency Visit" },
+    "routine-checkup": { fee: 80, description: "Routine Checkup" },
+    "glasses-fitting": { fee: 45, description: "Glasses Fitting" },
+    "surgery": { fee: 500, description: "Eye Surgery" },
+    "laser-treatment": { fee: 800, description: "Laser Treatment" },
+    "injection": { fee: 200, description: "Eye Injection" },
+    "screening": { fee: 65, description: "Vision Screening" },
+    "other": { fee: 100, description: "Other Services" }
+  };
+
+  // Available coupons for patients
+  const availableCoupons = {
+    "WELCOME10": { discount: 10, type: "percentage", description: "10% off for new patients" },
+    "NEWPATIENT": { discount: 15, type: "fixed", description: "$15 off first visit" },
+    "LOYALTY20": { discount: 20, type: "percentage", description: "20% loyalty discount" },
+    "SENIOR15": { discount: 15, type: "percentage", description: "15% senior discount" }
+  };
+
+  // Auto-calculate fee when service type changes
+  const selectedServiceType = form.watch("serviceType");
+  const currentFee = form.watch("appointmentFee");
+  
+  React.useEffect(() => {
+    if (selectedServiceType && servicePricing[selectedServiceType]) {
+      const newFee = servicePricing[selectedServiceType].fee;
+      if (currentFee === 0 || !currentFee) {
+        form.setValue("appointmentFee", newFee);
+      }
+    }
+  }, [selectedServiceType, form]);
 
   // Step validation
   const validateStep = async (stepIndex: number): Promise<boolean> => {
@@ -274,6 +318,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
         doctorName: selectedDoctor ? `${selectedDoctor.firstName} ${selectedDoctor.lastName}` : "",
         fee: data.appointmentFee, // Map for compatibility
         appointmentNumber: editingAppointment?.appointmentNumber || `APT-${Date.now()}`,
+        couponCode: data.couponCode || "", // Add coupon code for server processing
       };
       
       return apiRequest(method, endpoint, appointmentData);
@@ -858,6 +903,59 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Coupon Code Section */}
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Gift className="h-5 w-5 text-green-600" />
+                    <h5 className="font-semibold text-green-800">Coupon Code & Discounts</h5>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="couponCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
+                            <Gift className="h-4 w-4" />
+                            <span>Coupon Code</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Enter coupon code"
+                              className="h-12 border-2 border-gray-200 focus:border-green-500 rounded-lg uppercase"
+                              onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                              data-testid="input-couponCode"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">
+                            Valid codes: WELCOME10, NEWPATIENT, LOYALTY20, SENIOR15
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex flex-col justify-center">
+                      <div className="bg-white p-3 rounded-lg border border-green-200">
+                        <p className="text-sm font-medium text-gray-700 mb-2">Service Fee Breakdown:</p>
+                        {selectedServiceType && servicePricing[selectedServiceType] && (
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span>{servicePricing[selectedServiceType].description}:</span>
+                              <span>${servicePricing[selectedServiceType].fee}</span>
+                            </div>
+                            <div className="flex justify-between text-green-600 font-medium">
+                              <span>Current Fee:</span>
+                              <span>${form.watch("appointmentFee") || 0}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

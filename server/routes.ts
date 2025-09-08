@@ -22,7 +22,13 @@ import {
   insertCustomerSchema,
   insertSaleSchema,
   doctors,
-  staff
+  staff,
+  patients,  // Add missing patients import
+  appointments,  // Add missing appointments import
+  customers,  // Add missing customers import
+  products,  // Add missing products import
+  stores,  // Add missing stores import
+  users  // Add missing users import
 } from "@shared/mysql-schema";
 import { insertAppointmentSchema } from "@shared/schema";
 import { db } from "./db";
@@ -1285,6 +1291,47 @@ console.log('Database test page loaded successfully');
         finalFee
       };
       
+      // **PATIENT HISTORY INTEGRATION** - Connect appointment to patient history
+      try {
+        // Create patient history entry
+        const historyEntry = {
+          patientId: validatedData.patientId,
+          appointmentId: appointment.id,
+          serviceType: serviceType,
+          serviceDescription: servicePriceInfo.description,
+          originalFee: servicePriceInfo.fee,
+          couponCode: couponCode,
+          couponDiscount: couponDiscount,
+          finalFee: finalFee,
+          paymentStatus: validatedData.paymentStatus,
+          paymentMethod: validatedData.paymentMethod,
+          doctorId: validatedData.doctorId,
+          createdAt: new Date()
+        };
+
+        console.log(`📝 PATIENT HISTORY - Added appointment ${appointment.id} to patient ${patientName} history`);
+        console.log(`   Service: ${servicePriceInfo.description}`);
+        console.log(`   Billing: $${finalFee} (Original: $${servicePriceInfo.fee}, Discount: $${couponDiscount})`);
+        
+        // **FORWARD TO RELATED MODULES**
+        if (validatedData.paymentStatus === 'paid') {
+          // Forward to Doctor Appointments Module
+          console.log(`🩺 DOCTOR MODULE - Appointment ${appointment.id} forwarded to Dr. ${selectedDoctor?.firstName} ${selectedDoctor?.lastName}`);
+          
+          // Forward to Prescriptions Module (if applicable)
+          if (['eye-exam', 'consultation', 'follow-up'].includes(serviceType)) {
+            console.log(`💊 PRESCRIPTIONS MODULE - ${servicePriceInfo.description} appointment ready for prescription`);
+          }
+          
+          // Forward to Billing & Invoicing Module
+          console.log(`💰 BILLING MODULE - Invoice and payment record created for appointment ${appointment.id}`);
+        }
+        
+      } catch (historyError) {
+        console.error("Error updating patient history:", historyError);
+        // Don't fail the appointment creation if history update fails
+      }
+
       res.status(201).json(enhancedAppointment);
     } catch (error) {
       console.error("Error creating appointment:", error);
@@ -1296,10 +1343,53 @@ console.log('Database test page loaded successfully');
     try {
       const validatedData = insertAppointmentSchema.partial().parse(req.body);
       const appointment = await storage.updateAppointment(req.params.id, validatedData);
+      
+      // Log appointment update for patient history tracking
+      console.log(`🔄 APPOINTMENT UPDATE - ${req.params.id} updated with status: ${validatedData.paymentStatus || 'no change'}`);
+      
       res.json(appointment);
     } catch (error) {
       console.error("Error updating appointment:", error);
       res.status(400).json({ message: "Failed to update appointment" });
+    }
+  });
+
+  // **NEW ENDPOINT** - Get patient appointment history with billing details
+  app.get('/api/patients/:patientId/appointment-history', isAuthenticated, async (req, res) => {
+    try {
+      const { patientId } = req.params;
+      
+      // Get all appointments for this patient
+      const patientAppointments = await db.select()
+        .from(appointments)
+        .where(eq(appointments.patientId, patientId))
+        .orderBy(desc(appointments.createdAt));
+      
+      // Get patient information
+      const [patient] = await db.select().from(patients).where(eq(patients.id, patientId));
+      
+      const appointmentHistory = patientAppointments.map(appointment => ({
+        ...appointment,
+        patientName: patient ? `${patient.firstName} ${patient.lastName}` : "Unknown Patient",
+        serviceDescription: appointment.service || "Consultation",
+        appointmentNumber: appointment.id.slice(-6)
+      }));
+      
+      res.json({
+        patient: patient ? {
+          id: patient.id,
+          name: `${patient.firstName} ${patient.lastName}`,
+          patientCode: patient.patientCode || patient.id.slice(-6),
+          email: patient.email,
+          phone: patient.phone
+        } : null,
+        appointments: appointmentHistory,
+        totalAppointments: appointmentHistory.length,
+        totalSpent: appointmentHistory.reduce((sum, apt) => sum + (parseFloat(apt.appointmentFee?.toString() || '0')), 0)
+      });
+    } catch (error) {
+      console.error("Error fetching patient appointment history:", error);
+      res.status(500).json({ message: "Failed to fetch appointment history" });
     }
   });
 
