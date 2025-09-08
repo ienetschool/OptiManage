@@ -113,42 +113,42 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       subtitle: "Personal information",
       icon: User,
       color: "from-blue-500 to-blue-600",
-      fields: ["firstName", "lastName", "dateOfBirth", "gender", "bloodType", "maritalStatus", "occupation"]
+      fields: ["firstName", "lastName", "dateOfBirth", "gender"]
     },
     {
       title: "Contact",
       subtitle: "Contact details",
       icon: Phone,
       color: "from-green-500 to-green-600", 
-      fields: ["phone", "email", "address", "city", "state", "zipCode", "country"]
+      fields: ["phone"]
     },
     {
       title: "Emergency",
       subtitle: "Emergency contacts",
       icon: AlertTriangle,
       color: "from-orange-500 to-orange-600",
-      fields: ["emergencyContactName", "emergencyContactPhone", "emergencyContactRelation"]
+      fields: []
     },
     {
       title: "Medical",
       subtitle: "Medical history",
       icon: Heart,
       color: "from-red-500 to-red-600",
-      fields: ["allergies", "currentMedications", "medicalHistory", "familyHistory", "smokingStatus", "alcoholConsumption"]
+      fields: []
     },
     {
       title: "Eye Care",
       subtitle: "Vision history",
       icon: Eye,
       color: "from-purple-500 to-purple-600",
-      fields: ["lastEyeExam", "currentGlassesRx", "contactLensWearer", "eyeConditions"]
+      fields: []
     },
     {
       title: "Insurance",
       subtitle: "Insurance details",
       icon: Shield,
       color: "from-indigo-500 to-indigo-600",
-      fields: ["insuranceProvider", "insuranceNumber", "groupNumber", "policyHolderName", "relationToPolicyHolder"]
+      fields: []
     }
   ];
 
@@ -237,6 +237,17 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
   // Step validation
   const validateStep = async (stepIndex: number): Promise<boolean> => {
     const stepFields = steps[stepIndex].fields;
+    
+    // If no required fields for this step, mark as valid
+    if (stepFields.length === 0) {
+      setCompletedSteps(prev => {
+        const newSet = new Set(prev);
+        newSet.add(stepIndex);
+        return newSet;
+      });
+      return true;
+    }
+    
     const isValid = await form.trigger(stepFields as any);
     
     if (isValid) {
@@ -374,22 +385,22 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
     const StepIcon = step.icon;
 
     return (
-      <Card className="bg-white border-0 shadow-xl min-h-[500px]">
-        <CardContent className="p-8">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className={`p-3 rounded-full bg-gradient-to-r ${step.color} text-white shadow-lg`}>
-              <StepIcon className="h-6 w-6" />
+      <Card className="bg-white border-0 shadow-lg min-h-[400px]">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className={`p-2 rounded-full bg-gradient-to-r ${step.color} text-white shadow-md`}>
+              <StepIcon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
-              <p className="text-gray-600">{step.subtitle}</p>
+              <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
+              <p className="text-gray-600 text-sm">{step.subtitle}</p>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {currentStep === 0 && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="firstName"
@@ -404,7 +415,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="Enter first name" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-firstName"
                           />
                         </FormControl>
@@ -427,7 +438,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="Enter last name" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-lastName"
                           />
                         </FormControl>
@@ -451,7 +462,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                             {...field} 
                             type="date"
                             max={new Date().toISOString().split('T')[0]}
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-dateOfBirth"
                           />
                         </FormControl>
@@ -472,7 +483,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                         </FormLabel>
                         <FormControl>
                           <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-gender">
+                            <SelectTrigger className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-gender">
                               <SelectValue placeholder="Select gender" />
                             </SelectTrigger>
                             <SelectContent>
@@ -573,7 +584,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
 
             {currentStep === 1 && (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="phone"
@@ -588,7 +599,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="(555) 123-4567" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-phone"
                           />
                         </FormControl>
@@ -611,7 +622,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                             {...field} 
                             type="email"
                             placeholder="john@example.com" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-email"
                           />
                         </FormControl>
@@ -635,7 +646,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                         <Textarea 
                           {...field} 
                           placeholder="Enter complete street address..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
+                          className="min-h-[80px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
                           data-testid="textarea-address"
                         />
                       </FormControl>
@@ -644,7 +655,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="city"
@@ -1287,14 +1298,14 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto" data-testid="modern-patient-form">
+    <div className="w-full max-w-4xl mx-auto" data-testid="modern-patient-form">
       {/* Header */}
-      <DialogHeader className="mb-8 text-center">
-        <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <DialogHeader className="mb-6 text-center">
+        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           {editingPatient ? 'Update Patient Information' : 'Register New Patient'}
         </DialogTitle>
-        <DialogDescription className="text-gray-600 text-lg">
-          {editingPatient ? 'Update comprehensive patient information' : 'Complete patient registration with comprehensive medical information'}
+        <DialogDescription className="text-gray-600">
+          {editingPatient ? 'Update patient information' : 'Complete patient registration with medical information'}
         </DialogDescription>
       </DialogHeader>
 
