@@ -246,15 +246,27 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
   // Auto-calculate fee when service type changes
   const selectedServiceType = form.watch("serviceType");
   const currentFee = form.watch("appointmentFee");
+  const couponCode = form.watch("couponCode");
   
   React.useEffect(() => {
     if (selectedServiceType && servicePricing[selectedServiceType]) {
-      const newFee = servicePricing[selectedServiceType].fee;
-      if (currentFee === 0 || !currentFee) {
-        form.setValue("appointmentFee", newFee);
+      let basePrice = servicePricing[selectedServiceType].fee;
+      let finalFee = basePrice;
+      
+      // Apply coupon discount if present
+      if (couponCode && availableCoupons[couponCode.toUpperCase()]) {
+        const coupon = availableCoupons[couponCode.toUpperCase()];
+        if (coupon.type === "percentage") {
+          const discount = (basePrice * coupon.discount) / 100;
+          finalFee = Math.max(0, basePrice - discount);
+        } else {
+          finalFee = Math.max(0, basePrice - coupon.discount);
+        }
       }
+      
+      form.setValue("appointmentFee", finalFee);
     }
-  }, [selectedServiceType, form]);
+  }, [selectedServiceType, couponCode, form]);
 
   // Step validation
   const validateStep = async (stepIndex: number): Promise<boolean> => {
@@ -945,10 +957,18 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                           <div className="space-y-1 text-sm">
                             <div className="flex justify-between">
                               <span>{servicePricing[selectedServiceType].description}:</span>
-                              <span>${servicePricing[selectedServiceType].fee}</span>
+                              <span className="font-medium">${servicePricing[selectedServiceType].fee}</span>
                             </div>
-                            <div className="flex justify-between text-green-600 font-medium">
-                              <span>Current Fee:</span>
+                            {couponCode && availableCoupons[couponCode.toUpperCase()] && (
+                              <div className="flex justify-between text-red-600">
+                                <span>Coupon ({couponCode}):</span>
+                                <span>-${availableCoupons[couponCode.toUpperCase()].type === "percentage" 
+                                  ? ((servicePricing[selectedServiceType].fee * availableCoupons[couponCode.toUpperCase()].discount) / 100).toFixed(2)
+                                  : availableCoupons[couponCode.toUpperCase()].discount.toFixed(2)}</span>
+                              </div>
+                            )}
+                            <div className="border-t pt-1 flex justify-between text-green-600 font-bold">
+                              <span>Final Amount:</span>
                               <span>${form.watch("appointmentFee") || 0}</span>
                             </div>
                           </div>

@@ -1331,24 +1331,21 @@ console.log('Database test page loaded successfully');
               invoiceNumber: invoiceNumber,
               patientId: validatedData.patientId,
               appointmentId: appointment.id,
-              storeId: validatedData.storeId,
-              invoiceDate: new Date(),
+              issueDate: new Date(), // MySQL schema uses issueDate
               dueDate: new Date(),
               subtotal: finalFee,
-              taxAmount: tax,
-              discountAmount: couponDiscount,
+              tax: tax, // MySQL schema uses 'tax' not 'taxAmount'
               total: total,
-              paymentStatus: 'paid',
-              paymentMethod: validatedData.paymentMethod || 'cash',
-              appliedCouponCode: couponCode || null,
-              couponDiscount: couponDiscount,
-              notes: `${servicePriceInfo.description}${couponCode ? ` | Coupon: ${couponCode}` : ''}`,
+              status: 'paid', // MySQL schema uses 'status' not 'paymentStatus'
+              notes: `${servicePriceInfo.description}${couponCode ? ` | Coupon: ${couponCode} (-$${couponDiscount.toFixed(2)})` : ''}`,
               customFields: JSON.stringify([{
                 description: servicePriceInfo.description,
+                serviceType: serviceType,
                 quantity: 1,
                 unitPrice: servicePriceInfo.fee,
-                discount: couponDiscount,
-                total: finalFee
+                couponCode: couponCode,
+                couponDiscount: couponDiscount,
+                finalAmount: finalFee
               }])
             };
 

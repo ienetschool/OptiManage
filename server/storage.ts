@@ -260,25 +260,40 @@ export class MySQLStorage implements IStorage {
       // Import medicalInvoices schema
       const { medicalInvoices } = await import("@shared/mysql-schema");
       
-      // Fetch actual invoices from database
-      const invoices = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
+      // Fetch actual invoices from database with explicit column selection to avoid schema mismatch
+      const invoices = await db.select({
+        id: medicalInvoices.id,
+        invoiceNumber: medicalInvoices.invoiceNumber,
+        patientId: medicalInvoices.patientId,
+        appointmentId: medicalInvoices.appointmentId,
+        issueDate: medicalInvoices.issueDate,
+        dueDate: medicalInvoices.dueDate,
+        subtotal: medicalInvoices.subtotal,
+        tax: medicalInvoices.tax,
+        total: medicalInvoices.total,
+        status: medicalInvoices.status,
+        notes: medicalInvoices.notes,
+        customFields: medicalInvoices.customFields,
+        createdAt: medicalInvoices.createdAt,
+        updatedAt: medicalInvoices.updatedAt
+      }).from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
       
-      // Transform invoices to match expected format
+      // Transform invoices to match expected format using MySQL schema fields
       const transformedInvoices = invoices.map(invoice => ({
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
         patientId: invoice.patientId,
         customerId: null, // Not in medical invoice schema
-        storeId: invoice.storeId,
+        storeId: invoice.storeId || "store001",
         appointmentId: invoice.appointmentId,
-        issueDate: invoice.invoiceDate || invoice.createdAt,
+        issueDate: invoice.issueDate || invoice.createdAt,
         dueDate: invoice.dueDate || invoice.createdAt,
         subtotal: parseFloat(invoice.subtotal?.toString() || '0'),
-        taxAmount: parseFloat(invoice.taxAmount?.toString() || '0'),
-        discountAmount: parseFloat(invoice.discountAmount?.toString() || '0'),
+        taxAmount: parseFloat(invoice.tax?.toString() || '0'), // MySQL schema uses 'tax' not 'taxAmount'
+        discountAmount: 0, // Not in current MySQL schema
         totalAmount: parseFloat(invoice.total?.toString() || '0'),
-        status: invoice.paymentStatus || 'pending',
-        paymentMethod: invoice.paymentMethod || 'cash',
+        status: invoice.status || 'pending',
+        paymentMethod: 'cash', // Default since not in current MySQL schema
         notes: invoice.notes,
         items: invoice.customFields,
         createdAt: invoice.createdAt,
