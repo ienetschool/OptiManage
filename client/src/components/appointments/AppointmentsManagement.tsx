@@ -395,17 +395,34 @@ const AppointmentsManagement: React.FC = () => {
                           className="hover:bg-blue-50 border-b border-gray-100"
                           data-testid={`row-appointment-${appointment.id}`}
                         >
+                          {/* Appointment # */}
+                          <TableCell>
+                            <div className="text-sm text-gray-600">
+                              #{appointment.appointmentNumber || appointment.id.slice(-6)}
+                            </div>
+                          </TableCell>
+                          
+                          {/* Patient Name */}
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                                {appointment.patientName.split(' ').map(n => n[0]).join('')}
+                                {(appointment.patientName || 'U U').split(' ').map(n => n[0]).join('')}
                               </div>
                               <div>
-                                <div className="font-medium text-gray-900">{appointment.patientName}</div>
-                                <div className="text-sm text-gray-500">ID: {appointment.patientId.slice(-6)}</div>
+                                <div className="font-medium text-gray-900">{appointment.patientName || 'Unknown Patient'}</div>
+                                <div className="text-sm text-gray-500">ID: {(appointment.patientId || 'unknown').slice(-6)}</div>
                               </div>
                             </div>
                           </TableCell>
+                          
+                          {/* Service */}
+                          <TableCell>
+                            <Badge variant="outline" className="capitalize">
+                              {(appointment.appointmentType || appointment.serviceType || 'consultation').replace('-', ' ')}
+                            </Badge>
+                          </TableCell>
+                          
+                          {/* Date & Time */}
                           <TableCell>
                             <div className="space-y-1">
                               <div className="flex items-center space-x-2">
@@ -420,27 +437,33 @@ const AppointmentsManagement: React.FC = () => {
                               </div>
                             </div>
                           </TableCell>
+                          
+                          {/* Fee */}
                           <TableCell>
-                            <Badge variant="outline" className="capitalize">
-                              {appointment.appointmentType.replace('-', ' ')}
+                            <div className="font-medium">
+                              ${appointment.appointmentFee?.toFixed(2) || '0.00'}
+                            </div>
+                          </TableCell>
+                          
+                          {/* Payment */}
+                          <TableCell>
+                            <Badge className={`capitalize border-0 ${
+                              appointment.paymentStatus === 'paid' ? 'bg-green-100 text-green-800' :
+                              appointment.paymentStatus === 'partial' ? 'bg-yellow-100 text-yellow-800' :
+                              appointment.paymentStatus === 'cancelled' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {appointment.paymentStatus || 'pending'}
                             </Badge>
                           </TableCell>
+                          
+                          {/* Status */}
                           <TableCell>
                             <Badge className={`${getStatusColor(appointment.status)} capitalize border-0`}>
                               {appointment.status.replace('-', ' ')}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <Badge className={`${getPriorityColor(appointment.priority)} capitalize border-0`}>
-                              {appointment.priority}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <Stethoscope className="h-4 w-4 text-gray-500" />
-                              <span className="text-sm">{appointment.doctorName || 'Unassigned'}</span>
-                            </div>
-                          </TableCell>
+                          {/* Actions */}
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
