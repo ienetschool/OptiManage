@@ -289,7 +289,6 @@ export const staff = mysqlTable("staff", {
   department: varchar("department", { length: 100 }),
   storeId: varchar("store_id", { length: 36 }),
   hireDate: date("hire_date"),
-  salary: decimal("salary", { precision: 10, scale: 2 }),
   isActive: boolean("is_active").default(true),
   customFields: json("custom_fields"),
   createdAt: timestamp("created_at").defaultNow(),
