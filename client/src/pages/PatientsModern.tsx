@@ -515,7 +515,7 @@ const PatientsModern: React.FC = () => {
 
       {/* Patient Registration Modal */}
       <Dialog open={showPatientForm} onOpenChange={setShowPatientForm}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto modern-glass-effect">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto modern-glass-effect">
           <ModernPatientForm 
             onSuccess={() => {
               setShowPatientForm(false);

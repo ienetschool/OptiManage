@@ -192,6 +192,9 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       eyeConditions: editingPatient.eyeConditions || "",
       insuranceProvider: editingPatient.insuranceProvider || "",
       insuranceNumber: editingPatient.insuranceNumber || "",
+      nationalIdNumber: editingPatient.nationalIdNumber || "",
+      nisNumber: editingPatient.nisNumber || "",
+      insuranceCoupons: editingPatient.insuranceCoupons || [],
       groupNumber: editingPatient.groupNumber || "",
       policyHolderName: editingPatient.policyHolderName || "",
       relationToPolicyHolder: editingPatient.relationToPolicyHolder || undefined,
@@ -230,6 +233,9 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       eyeConditions: "",
       insuranceProvider: "",
       insuranceNumber: "",
+      nationalIdNumber: "",
+      nisNumber: "",
+      insuranceCoupons: [],
       groupNumber: "",
       policyHolderName: "",
       relationToPolicyHolder: undefined,
@@ -578,7 +584,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                         <Input 
                           {...field} 
                           placeholder="Enter occupation" 
-                          className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                          className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                           data-testid="input-occupation"
                         />
                       </FormControl>
@@ -673,7 +679,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="City" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-city"
                           />
                         </FormControl>
@@ -691,7 +697,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="State" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-state"
                           />
                         </FormControl>
@@ -709,7 +715,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="12345" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-zipCode"
                           />
                         </FormControl>
@@ -746,7 +752,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="Full name" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-emergencyContactName"
                           />
                         </FormControl>
@@ -768,7 +774,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="(555) 123-4567" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-emergencyContactPhone"
                           />
                         </FormControl>
@@ -791,7 +797,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                         <Input 
                           {...field} 
                           placeholder="e.g., Spouse, Parent, Sibling, Friend" 
-                          className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                          className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                           data-testid="input-emergencyContactRelation"
                         />
                       </FormControl>
@@ -977,7 +983,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                             {...field} 
                             type="date"
                             max={new Date().toISOString().split('T')[0]}
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-lastEyeExam"
                           />
                         </FormControl>
@@ -1068,7 +1074,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="insuranceProvider"
@@ -1081,8 +1087,8 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                         <FormControl>
                           <Input 
                             {...field} 
-                            placeholder="e.g., Blue Cross Blue Shield, Aetna, UnitedHealth" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            placeholder="Enter insurance provider" 
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-insuranceProvider"
                           />
                         </FormControl>
@@ -1098,13 +1104,13 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                       <FormItem>
                         <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
                           <CreditCard className="h-4 w-4" />
-                          <span>Member ID</span>
+                          <span>Policy Number</span>
                         </FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
-                            placeholder="Insurance member ID number" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            placeholder="Enter policy number" 
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-insuranceNumber"
                           />
                         </FormControl>
@@ -1115,16 +1121,16 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
 
                   <FormField
                     control={form.control}
-                    name="groupNumber"
+                    name="nationalIdNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">Group Number</FormLabel>
+                        <FormLabel className="font-semibold text-gray-700">National ID Number</FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
-                            placeholder="Insurance group number" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-groupNumber"
+                            placeholder="Enter national ID number" 
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            data-testid="input-nationalIdNumber"
                           />
                         </FormControl>
                         <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
@@ -1134,19 +1140,19 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
 
                   <FormField
                     control={form.control}
-                    name="policyHolderName"
+                    name="nisNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">Policy Holder Name</FormLabel>
+                        <FormLabel className="font-semibold text-gray-700">NIS Number</FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
-                            placeholder="Policy holder full name" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-policyHolderName"
+                            placeholder="Enter NIS number" 
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            data-testid="input-nisNumber"
                           />
                         </FormControl>
-                        <FormDescription className="text-sm text-gray-500">If different from patient</FormDescription>
+                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
                       </FormItem>
                     )}
                   />
@@ -1160,7 +1166,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                       <FormLabel className="font-semibold text-gray-700">Relationship to Policy Holder</FormLabel>
                       <FormControl>
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-relationToPolicyHolder">
+                          <SelectTrigger className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-relationToPolicyHolder">
                             <SelectValue placeholder="Select relationship" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1176,6 +1182,24 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                   )}
                 />
 
+                {/* Insurance Coupons & Benefits Section */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <CreditCard className="h-5 w-5 text-blue-600" />
+                    <h4 className="font-semibold text-blue-800">Insurance Coupons & Benefits</h4>
+                  </div>
+                  <p className="text-sm text-blue-600 mb-3">Add insurance coupons, government subsidies, or special benefits available to this patient.</p>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    className="bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
+                    data-testid="button-add-insurance-coupon"
+                  >
+                    <span className="mr-1">+</span> Add Insurance Coupon
+                  </Button>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
@@ -1187,7 +1211,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="Doctor, friend, or referral source" 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-referredBy"
                           />
                         </FormControl>
@@ -1206,7 +1230,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                           <Input 
                             {...field} 
                             placeholder="English, Spanish, etc." 
-                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
+                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
                             data-testid="input-preferredLanguage"
                           />
                         </FormControl>
@@ -1305,7 +1329,7 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto" data-testid="modern-patient-form">
+    <div className="w-full max-w-3xl mx-auto" data-testid="modern-patient-form">
       {/* Header */}
       <DialogHeader className="mb-6 text-center">
         <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
