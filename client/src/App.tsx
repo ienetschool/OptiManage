@@ -12,7 +12,6 @@ import InventoryModern from "@/pages/InventoryModern";
 import Appointments from "@/pages/Appointments";
 import CustomersModern from "@/pages/CustomersModern";
 import PatientsModern from "@/pages/PatientsModern";
-import PatientManagement from "@/pages/PatientManagement";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import PrescriptionsFixed from "@/pages/PrescriptionsFixed";
 import SpecsWorkflow from "@/pages/SpecsWorkflowSimple";
@@ -207,7 +206,7 @@ function Router() {
         <AppLayout>
           <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <PatientManagement />
+            <PatientsModern />
           </div>
         </AppLayout>
       </Route>
