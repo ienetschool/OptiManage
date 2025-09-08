@@ -256,48 +256,43 @@ export class MySQLStorage implements IStorage {
 
   // Invoice operations
   async getInvoices(): Promise<any[]> {
+    console.log("🚨 ROUTE: /api/invoices called");
     try {
-      // Import medicalInvoices schema
-      const { medicalInvoices } = await import("@shared/mysql-schema");
+      // Import SQL helper
+      const { sql } = await import("drizzle-orm");
       
-      // Fetch actual invoices from database with explicit column selection to avoid schema mismatch
-      const invoices = await db.select({
-        id: medicalInvoices.id,
-        invoiceNumber: medicalInvoices.invoiceNumber,
-        patientId: medicalInvoices.patientId,
-        appointmentId: medicalInvoices.appointmentId,
-        issueDate: medicalInvoices.issueDate,
-        dueDate: medicalInvoices.dueDate,
-        subtotal: medicalInvoices.subtotal,
-        tax: medicalInvoices.tax,
-        total: medicalInvoices.total,
-        status: medicalInvoices.status,
-        notes: medicalInvoices.notes,
-        customFields: medicalInvoices.customFields,
-        createdAt: medicalInvoices.createdAt,
-        updatedAt: medicalInvoices.updatedAt
-      }).from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
+      // Use raw SQL query to avoid Drizzle column mapping issues
+      const invoicesResult = await db.execute(sql`
+        SELECT 
+          id, invoice_number, patient_id, appointment_id, 
+          issue_date, due_date, subtotal, tax, total, 
+          status, notes, custom_fields, created_at, updated_at
+        FROM medical_invoices 
+        ORDER BY created_at DESC
+      `);
       
-      // Transform invoices to match expected format using MySQL schema fields
+      const invoices = Array.isArray(invoicesResult) ? invoicesResult : invoicesResult.rows || [];
+      
+      // Transform invoices to match expected format using raw query results
       const transformedInvoices = invoices.map(invoice => ({
         id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        patientId: invoice.patientId,
+        invoiceNumber: invoice.invoice_number,
+        patientId: invoice.patient_id,
         customerId: null, // Not in medical invoice schema
-        storeId: invoice.storeId || "store001",
-        appointmentId: invoice.appointmentId,
-        issueDate: invoice.issueDate || invoice.createdAt,
-        dueDate: invoice.dueDate || invoice.createdAt,
+        storeId: "store001", // Default store
+        appointmentId: invoice.appointment_id,
+        issueDate: invoice.issue_date || invoice.created_at,
+        dueDate: invoice.due_date || invoice.created_at,
         subtotal: parseFloat(invoice.subtotal?.toString() || '0'),
-        taxAmount: parseFloat(invoice.tax?.toString() || '0'), // MySQL schema uses 'tax' not 'taxAmount'
+        taxAmount: parseFloat(invoice.tax?.toString() || '0'),
         discountAmount: 0, // Not in current MySQL schema
         totalAmount: parseFloat(invoice.total?.toString() || '0'),
         status: invoice.status || 'pending',
         paymentMethod: 'cash', // Default since not in current MySQL schema
         notes: invoice.notes,
-        items: invoice.customFields,
-        createdAt: invoice.createdAt,
-        updatedAt: invoice.updatedAt
+        items: invoice.custom_fields,
+        createdAt: invoice.created_at,
+        updatedAt: invoice.updated_at
       }));
       
       console.log(`✅ INVOICES FETCHED - Found ${transformedInvoices.length} invoices in database`);
