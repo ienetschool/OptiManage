@@ -189,6 +189,15 @@ function Router() {
         </AppLayout>
       </Route>
       
+      <Route path="/appointments">
+        <AppLayout>
+          <Navigation />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <Appointments />
+          </div>
+        </AppLayout>
+      </Route>
+      
       <Route path="/patients">
         {isAuthenticated ? (
           <AppLayout>

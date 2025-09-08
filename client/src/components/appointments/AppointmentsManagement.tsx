@@ -638,7 +638,7 @@ const AppointmentsManagement: React.FC = () => {
 
       {/* Create/Edit Appointment Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto modern-glass-effect">
           <ComprehensiveAppointmentForm
             onSuccess={() => setShowCreateDialog(false)}
             onCancel={() => setShowCreateDialog(false)}

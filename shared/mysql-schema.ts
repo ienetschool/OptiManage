@@ -152,15 +152,6 @@ export const patients = mysqlTable("patients", {
   insuranceProvider: varchar("insurance_provider", { length: 255 }),
   insuranceNumber: varchar("insurance_number", { length: 100 }),
   bloodType: varchar("blood_type", { length: 5 }),
-  familyMedicalHistory: text("family_medical_history"),
-  previousEyeConditions: text("previous_eye_conditions"),
-  nationalIdNumber: varchar("national_id_number", { length: 50 }),
-  nisNumber: varchar("nis_number", { length: 50 }),
-  username: varchar("username", { length: 50 }),
-  password: varchar("password", { length: 255 }),
-  loyaltyTier: varchar("loyalty_tier", { length: 20 }).default("bronze"),
-  loyaltyPoints: int("loyalty_points").default(0),
-  membershipDate: date("membership_date"),
   allergies: text("allergies"),
   medicalHistory: text("medical_history"),
   currentMedications: text("current_medications"),
@@ -901,10 +892,6 @@ export const insertPatientSchema = createInsertSchema(patients, {
   email: z.string().email().optional(),
   phone: z.string().min(10).optional(),
   bloodType: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]).optional(),
-  loyaltyTier: z.enum(["bronze", "silver", "gold", "platinum"]).optional(),
-  loyaltyPoints: z.number().int().min(0).optional(),
-  password: z.string().min(8).optional(),
-  username: z.string().min(3).optional(),
 });
 export const insertDoctorSchema = createInsertSchema(doctors);
 export const insertMedicalAppointmentSchema = createInsertSchema(medicalAppointments);
