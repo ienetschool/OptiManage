@@ -444,19 +444,33 @@ const PatientsModern: React.FC = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="modern-glass-effect">
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setSelectedPatient(patient)}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                setSelectedPatient(patient);
+                                setShowPatientForm(true);
+                              }}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Patient
                               </DropdownMenuItem>
-                              <DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => {
+                                toast({
+                                  title: "Schedule Appointment",
+                                  description: "Appointment scheduling will be implemented soon.",
+                                });
+                              }}>
                                 <Calendar className="h-4 w-4 mr-2" />
                                 Schedule Appointment
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem className="text-red-600" onClick={() => {
+                                toast({
+                                  title: "Delete Patient",
+                                  description: "Patient deletion will be implemented soon.",
+                                  variant: "destructive",
+                                });
+                              }}>
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete Patient
                               </DropdownMenuItem>
@@ -521,12 +535,89 @@ const PatientsModern: React.FC = () => {
       <Dialog open={showPatientForm} onOpenChange={setShowPatientForm}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto modern-glass-effect">
           <ModernPatientForm 
+            editingPatient={selectedPatient}
             onSuccess={() => {
               setShowPatientForm(false);
+              setSelectedPatient(null);
               queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
             }}
-            onCancel={() => setShowPatientForm(false)}
+            onCancel={() => {
+              setShowPatientForm(false);
+              setSelectedPatient(null);
+            }}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Patient Details Modal */}
+      <Dialog open={!!selectedPatient && !showPatientForm} onOpenChange={(open) => !open && setSelectedPatient(null)}>
+        <DialogContent className="max-w-2xl modern-glass-effect">
+          {selectedPatient && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
+                  {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedPatient.firstName} {selectedPatient.lastName}</h2>
+                  <p className="text-gray-600">Patient ID: {selectedPatient.patientCode}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h3 className="font-semibold text-gray-700">Contact Information</h3>
+                  <div className="space-y-2 mt-2">
+                    <div className="flex items-center">
+                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                      <span>{selectedPatient.phone}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                      <span>{selectedPatient.email}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <MapPin className="h-4 w-4 mr-2 text-gray-400" />
+                      <span>{selectedPatient.address}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-gray-700">Patient Details</h3>
+                  <div className="space-y-2 mt-2">
+                    <div><strong>Age:</strong> {calculateAge(selectedPatient.dateOfBirth)} years</div>
+                    <div><strong>Gender:</strong> {selectedPatient.gender}</div>
+                    <div><strong>Date of Birth:</strong> {new Date(selectedPatient.dateOfBirth).toLocaleDateString()}</div>
+                  </div>
+                </div>
+              </div>
+
+              {selectedPatient.emergencyContactName && (
+                <div>
+                  <h3 className="font-semibold text-gray-700">Emergency Contact</h3>
+                  <div className="mt-2">
+                    <div><strong>Name:</strong> {selectedPatient.emergencyContactName}</div>
+                    <div><strong>Phone:</strong> {selectedPatient.emergencyContactPhone}</div>
+                  </div>
+                </div>
+              )}
+
+              {(selectedPatient.allergies || selectedPatient.medicalHistory) && (
+                <div>
+                  <h3 className="font-semibold text-gray-700">Medical Information</h3>
+                  <div className="space-y-2 mt-2">
+                    {selectedPatient.allergies && (
+                      <div><strong>Allergies:</strong> {selectedPatient.allergies}</div>
+                    )}
+                    {selectedPatient.medicalHistory && (
+                      <div><strong>Medical History:</strong> {selectedPatient.medicalHistory}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
