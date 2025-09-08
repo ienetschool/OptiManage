@@ -261,11 +261,14 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             name="doctorId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Assign Doctor</FormLabel>
+                <FormLabel className="flex items-center space-x-1">
+                  <span>Assign Doctor</span>
+                  <span className="text-red-500">*</span>
+                </FormLabel>
                 <FormControl>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger data-testid="select-doctor">
-                      <SelectValue placeholder="Select doctor (optional)" />
+                      <SelectValue placeholder="Select doctor *" />
                     </SelectTrigger>
                     <SelectContent>
                       {doctors.map((doctor) => (
@@ -277,7 +280,7 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
                   </Select>
                 </FormControl>
                 <FormDescription>
-                  Leave empty if not assigned yet
+                  Doctor assignment is required
                 </FormDescription>
               </FormItem>
             )}

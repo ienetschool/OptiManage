@@ -444,11 +444,14 @@ const CompactAppointmentForm: React.FC<CompactAppointmentFormProps> = ({
                       name="doctorId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-medium">Doctor</FormLabel>
+                          <FormLabel className="font-medium flex items-center space-x-1">
+                            <span>Doctor</span>
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <SelectTrigger className="h-11" data-testid="select-doctor">
-                                <SelectValue placeholder="Select doctor (optional)" />
+                                <SelectValue placeholder="Select doctor *" />
                               </SelectTrigger>
                               <SelectContent>
                                 {doctors.map((doctor) => (
@@ -469,7 +472,7 @@ const CompactAppointmentForm: React.FC<CompactAppointmentFormProps> = ({
                             </Select>
                           </FormControl>
                           <FormDescription className="text-xs">
-                            Optional
+                            Required
                           </FormDescription>
                         </FormItem>
                       )}

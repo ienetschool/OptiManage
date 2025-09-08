@@ -698,11 +698,12 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                         <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
                           <Stethoscope className="h-4 w-4" />
                           <span>Doctor</span>
+                          <span className="text-red-500">*</span>
                         </FormLabel>
                         <FormControl>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-doctor">
-                              <SelectValue placeholder="Select doctor (optional)" />
+                              <SelectValue placeholder="Select doctor *" />
                             </SelectTrigger>
                             <SelectContent>
                               {doctors.map((doctor) => (
@@ -723,7 +724,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                           </Select>
                         </FormControl>
                         <FormDescription className="text-sm text-gray-500">
-                          Optional - Can be assigned later
+                          Doctor assignment is required for all appointments
                         </FormDescription>
                       </FormItem>
                     )}

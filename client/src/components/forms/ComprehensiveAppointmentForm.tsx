@@ -605,11 +605,14 @@ const ComprehensiveAppointmentForm: React.FC<ComprehensiveAppointmentFormProps> 
                           name="doctorId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="font-medium text-green-600">Assign Doctor</FormLabel>
+                              <FormLabel className="font-medium text-green-600 flex items-center space-x-1">
+                                <span>Assign Doctor</span>
+                                <span className="text-red-500">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Select onValueChange={field.onChange} value={field.value}>
                                   <SelectTrigger className="h-12 border-2" data-testid="select-doctor">
-                                    <SelectValue placeholder="Select doctor (optional)" />
+                                    <SelectValue placeholder="Select doctor *" />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {doctors.map((doctor) => (
@@ -630,7 +633,7 @@ const ComprehensiveAppointmentForm: React.FC<ComprehensiveAppointmentFormProps> 
                                 </Select>
                               </FormControl>
                               <FormDescription>
-                                Leave empty if not assigned yet
+                                Doctor assignment is required
                               </FormDescription>
                             </FormItem>
                           )}
