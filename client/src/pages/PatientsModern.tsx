@@ -549,73 +549,231 @@ const PatientsModern: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Patient Details Modal */}
+      {/* Comprehensive Patient Details Modal */}
       <Dialog open={!!selectedPatient && !showPatientForm} onOpenChange={(open) => !open && setSelectedPatient(null)}>
-        <DialogContent className="max-w-2xl modern-glass-effect">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto modern-glass-effect">
           {selectedPatient && (
             <div className="space-y-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-sky-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                  {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold">{selectedPatient.firstName} {selectedPatient.lastName}</h2>
-                  <p className="text-gray-600">Patient ID: {selectedPatient.patientCode}</p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold text-gray-700">Contact Information</h3>
-                  <div className="space-y-2 mt-2">
-                    <div className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2 text-gray-400" />
-                      <span>{selectedPatient.phone}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2 text-gray-400" />
-                      <span>{selectedPatient.email}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2 text-gray-400" />
-                      <span>{selectedPatient.address}</span>
+              {/* Header Section */}
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-lg -m-6 mb-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center text-white font-bold text-2xl backdrop-blur">
+                    {selectedPatient.firstName[0]}{selectedPatient.lastName[0]}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-3xl font-bold">{selectedPatient.firstName} {selectedPatient.lastName}</h2>
+                    <p className="text-blue-100">Patient ID: {selectedPatient.patientCode}</p>
+                    <div className="flex items-center space-x-4 mt-2 text-sm">
+                      <span>{calculateAge(selectedPatient.dateOfBirth)} years old</span>
+                      <span>•</span>
+                      <span className="capitalize">{selectedPatient.gender}</span>
+                      <span>•</span>
+                      <span>Born {new Date(selectedPatient.dateOfBirth).toLocaleDateString()}</span>
                     </div>
                   </div>
+                  <div className="text-right">
+                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                      {selectedPatient.isActive !== false ? 'Active Patient' : 'Inactive'}
+                    </Badge>
+                  </div>
                 </div>
+              </div>
+
+              {/* Main Content Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
-                <div>
-                  <h3 className="font-semibold text-gray-700">Patient Details</h3>
-                  <div className="space-y-2 mt-2">
-                    <div><strong>Age:</strong> {calculateAge(selectedPatient.dateOfBirth)} years</div>
-                    <div><strong>Gender:</strong> {selectedPatient.gender}</div>
-                    <div><strong>Date of Birth:</strong> {new Date(selectedPatient.dateOfBirth).toLocaleDateString()}</div>
-                  </div>
-                </div>
+                {/* Personal Information */}
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <User className="h-5 w-5 mr-2 text-blue-600" />
+                      Personal Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Blood Type:</span>
+                        <div className="font-semibold">{selectedPatient.bloodType || 'Not specified'}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Gender:</span>
+                        <div className="font-semibold capitalize">{selectedPatient.gender}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="font-medium text-gray-600">Date of Birth:</span>
+                        <div className="font-semibold">{new Date(selectedPatient.dateOfBirth).toLocaleDateString()}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Contact Information */}
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <Phone className="h-5 w-5 mr-2 text-green-600" />
+                      Contact Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center">
+                        <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                        <span>{selectedPatient.phone || 'Not provided'}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                        <span>{selectedPatient.email || 'Not provided'}</span>
+                      </div>
+                      <div className="flex items-start">
+                        <MapPin className="h-4 w-4 mr-2 mt-0.5 text-gray-400 flex-shrink-0" />
+                        <span className="break-words">{selectedPatient.address || 'Not provided'}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Emergency Contact */}
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <AlertCircle className="h-5 w-5 mr-2 text-red-600" />
+                      Emergency Contact
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Name:</span>
+                        <div className="font-semibold">{selectedPatient.emergencyContactName || 'Not provided'}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Phone:</span>
+                        <div className="font-semibold">{selectedPatient.emergencyContactPhone || 'Not provided'}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Relation:</span>
+                        <div className="font-semibold">{selectedPatient.emergencyContactRelation || 'Not specified'}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Medical Information */}
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <Heart className="h-5 w-5 mr-2 text-red-500" />
+                      Medical Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Allergies:</span>
+                        <div className="mt-1 p-2 bg-red-50 rounded text-red-800 text-xs">
+                          {selectedPatient.allergies || 'No known allergies'}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Current Medications:</span>
+                        <div className="mt-1 p-2 bg-blue-50 rounded text-blue-800 text-xs">
+                          {selectedPatient.currentMedications || 'No current medications'}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Insurance Information */}
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <Shield className="h-5 w-5 mr-2 text-blue-600" />
+                      Insurance Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-600">Provider:</span>
+                        <div className="font-semibold">{selectedPatient.insuranceProvider || 'Not provided'}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">Policy Number:</span>
+                        <div className="font-semibold">{selectedPatient.insuranceNumber || 'Not provided'}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">National ID:</span>
+                        <div className="font-semibold">{selectedPatient.nationalIdNumber || 'Not provided'}</div>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">NIS Number:</span>
+                        <div className="font-semibold">{selectedPatient.nisNumber || 'Not provided'}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Additional Notes */}
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <FileText className="h-5 w-5 mr-2 text-purple-600" />
+                      Additional Notes
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm">
+                      <div className="p-3 bg-gray-50 rounded-lg min-h-[80px]">
+                        {selectedPatient.notes || 'No additional notes'}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {selectedPatient.emergencyContactName && (
-                <div>
-                  <h3 className="font-semibold text-gray-700">Emergency Contact</h3>
-                  <div className="mt-2">
-                    <div><strong>Name:</strong> {selectedPatient.emergencyContactName}</div>
-                    <div><strong>Phone:</strong> {selectedPatient.emergencyContactPhone}</div>
-                  </div>
-                </div>
+              {/* Medical History Section */}
+              {selectedPatient.medicalHistory && (
+                <Card className="modern-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center text-lg">
+                      <Clipboard className="h-5 w-5 mr-2 text-orange-600" />
+                      Medical History
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                      <div className="text-sm text-orange-800 whitespace-pre-wrap">
+                        {selectedPatient.medicalHistory}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
-              {(selectedPatient.allergies || selectedPatient.medicalHistory) && (
-                <div>
-                  <h3 className="font-semibold text-gray-700">Medical Information</h3>
-                  <div className="space-y-2 mt-2">
-                    {selectedPatient.allergies && (
-                      <div><strong>Allergies:</strong> {selectedPatient.allergies}</div>
-                    )}
-                    {selectedPatient.medicalHistory && (
-                      <div><strong>Medical History:</strong> {selectedPatient.medicalHistory}</div>
-                    )}
+              {/* Record Information */}
+              <Card className="modern-card border-gray-200">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center text-lg">
+                    <Clock className="h-5 w-5 mr-2 text-gray-600" />
+                    Record Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div>
+                      <span className="font-medium">Created:</span>
+                      <div>{selectedPatient.createdAt ? new Date(selectedPatient.createdAt).toLocaleString() : 'Unknown'}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">Last Updated:</span>
+                      <div>{selectedPatient.updatedAt ? new Date(selectedPatient.updatedAt).toLocaleString() : 'Unknown'}</div>
+                    </div>
                   </div>
-                </div>
-              )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>
