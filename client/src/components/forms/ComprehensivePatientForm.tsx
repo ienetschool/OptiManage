@@ -433,7 +433,7 @@ const ComprehensivePatientForm: React.FC<ComprehensivePatientFormProps> = ({
                   {/* Step Header */}
                   <div className="flex items-center space-x-3 mb-6">
                     <div className={`p-3 rounded-full ${steps[currentStep].color} bg-white shadow-md`}>
-                      <steps[currentStep].icon className="h-6 w-6" />
+                      {React.createElement(steps[currentStep].icon, { className: "h-6 w-6" })}
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-gray-900">

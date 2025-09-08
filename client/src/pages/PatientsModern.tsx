@@ -53,7 +53,7 @@ import {
   ModernTabHeader,
   ModernProgressBar 
 } from "@/components/ui/modern-components";
-import UltraModernPatientForm from "@/components/forms/UltraModernPatientForm";
+import ComprehensivePatientForm from "@/components/forms/ComprehensivePatientForm";
 import AppointmentsManagement from "@/components/appointments/AppointmentsManagement";
 import { useToast } from "@/hooks/use-toast";
 
@@ -516,7 +516,7 @@ const PatientsModern: React.FC = () => {
       {/* Patient Registration Modal */}
       <Dialog open={showPatientForm} onOpenChange={setShowPatientForm}>
         <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto modern-glass-effect">
-          <UltraModernPatientForm 
+          <ComprehensivePatientForm 
             onSuccess={() => {
               setShowPatientForm(false);
               queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
