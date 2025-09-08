@@ -95,8 +95,8 @@ export function registerMedicalRoutes(app: Express) {
         }
       }
       
-      // Create schema without patientCode validation
-      const modifiedSchema = insertPatientSchema.omit({ patientCode: true });
+      // Create schema without patientCode validation - skip for now
+      const modifiedSchema = insertPatientSchema;
       
       // Validate input
       const validatedData = modifiedSchema.parse(validationData);

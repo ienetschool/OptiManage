@@ -892,13 +892,10 @@ export const insertStoreSchema = createInsertSchema(stores);
 export const insertProductSchema = createInsertSchema(products);
 export const insertCustomerSchema = createInsertSchema(customers);
 export const insertPatientSchema = createInsertSchema(patients, {
-  email: z.union([z.string().email(), z.string().length(0)]).optional(),
+  email: z.string().optional(),
   phone: z.string().optional(),
   bloodType: z.enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]).optional(),
-}).transform((data) => ({
-  ...data,
-  email: data.email === "" ? null : data.email,
-}));
+});
 export const insertDoctorSchema = createInsertSchema(doctors);
 export const insertMedicalAppointmentSchema = createInsertSchema(medicalAppointments);
 export const insertAppointmentSchema = createInsertSchema(appointments);
