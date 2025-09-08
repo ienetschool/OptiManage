@@ -161,7 +161,7 @@ const InventoryModern: React.FC = () => {
     totalValue: enhancedInventory.reduce((sum, item) => sum + item.totalValue, 0),
     lowStock: enhancedInventory.filter(item => item.status === 'low_stock').length,
     outOfStock: enhancedInventory.filter(item => item.status === 'out_of_stock').length,
-    categories: [...new Set(enhancedInventory.map(item => item.category))].length
+    categories: Array.from(new Set(enhancedInventory.map(item => item.category))).length
   };
 
   // Tab configuration
@@ -196,7 +196,7 @@ const InventoryModern: React.FC = () => {
   };
 
   const getStockColor = (current: number, min: number) => {
-    if (current === 0) return 'red';
+    if (current === 0) return 'amber';
     if (current <= min) return 'amber';
     return 'emerald';
   };
@@ -294,7 +294,7 @@ const InventoryModern: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {[...new Set(enhancedInventory.map(item => item.category))].map(category => (
+                    {Array.from(new Set(enhancedInventory.map(item => item.category))).map(category => (
                       <SelectItem key={category} value={category}>{category}</SelectItem>
                     ))}
                   </SelectContent>
