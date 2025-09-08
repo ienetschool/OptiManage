@@ -21,7 +21,11 @@ import {
   TrendingUp,
   Clock,
   Star,
-  Activity
+  Activity,
+  User,
+  Shield,
+  FileText,
+  Clipboard
 } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,14 +72,35 @@ interface Patient {
   patientCode: string;
   gender: string;
   isActive?: boolean;
+  
+  // Emergency Contact Information
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  emergencyContactRelation?: string;
+  
+  // Medical Information
+  bloodType?: string;
   allergies?: string;
+  currentMedications?: string;
   medicalHistory?: string;
+  
+  // Insurance Information
+  insuranceProvider?: string;
+  insuranceNumber?: string;
+  nationalIdNumber?: string;
+  nisNumber?: string;
+  
+  // Appointment & Visit Information
   lastVisit?: string;
   nextAppointment?: string;
   totalVisits?: number;
-  insuranceProvider?: string;
+  
+  // Additional Information
+  notes?: string;
+  
+  // Timestamps
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const PatientsModern: React.FC = () => {
