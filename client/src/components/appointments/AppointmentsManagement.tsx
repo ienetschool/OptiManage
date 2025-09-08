@@ -55,22 +55,28 @@ import {
   ModernTabHeader,
   ModernProgressBar 
 } from "@/components/ui/modern-components";
+import AppointmentForm from "@/components/appointments/AppointmentForm";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 interface Appointment {
   id: string;
+  appointmentNumber?: string;
   patientId: string;
   patientName: string;
   appointmentDate: string;
   appointmentTime: string;
   appointmentType: string;
+  serviceType?: string;
   status: 'scheduled' | 'confirmed' | 'in-progress' | 'completed' | 'cancelled' | 'no-show';
   duration: number;
   notes?: string;
   doctorName?: string;
+  doctorId?: string;
   reason?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
+  appointmentFee?: number;
+  paymentStatus?: 'pending' | 'paid' | 'partial' | 'cancelled';
   createdAt: string;
   updatedAt: string;
 }
@@ -84,7 +90,7 @@ interface Patient {
 }
 
 const AppointmentsManagement: React.FC = () => {
-  const [activeView, setActiveView] = useState("calendar");
+  const [activeView, setActiveView] = useState("list");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -108,9 +114,9 @@ const AppointmentsManagement: React.FC = () => {
   // Filter appointments
   const filteredAppointments = appointments.filter(appointment => {
     const matchesSearch = 
-      appointment.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.doctorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.reason?.toLowerCase().includes(searchTerm.toLowerCase());
+      (appointment.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (appointment.doctorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (appointment.reason || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || appointment.status === statusFilter;
     const matchesType = typeFilter === "all" || appointment.appointmentType === typeFilter;
@@ -367,12 +373,13 @@ const AppointmentsManagement: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50">
-                      <TableHead className="font-semibold">Patient</TableHead>
+                      <TableHead className="font-semibold">Appointment #</TableHead>
+                      <TableHead className="font-semibold">Patient Name</TableHead>
+                      <TableHead className="font-semibold">Service</TableHead>
                       <TableHead className="font-semibold">Date & Time</TableHead>
-                      <TableHead className="font-semibold">Type</TableHead>
+                      <TableHead className="font-semibold">Fee</TableHead>
+                      <TableHead className="font-semibold">Payment</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Priority</TableHead>
-                      <TableHead className="font-semibold">Doctor</TableHead>
                       <TableHead className="font-semibold text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -454,7 +461,10 @@ const AppointmentsManagement: React.FC = () => {
                                   View Details
                                 </DropdownMenuItem>
                                 <DropdownMenuItem 
-                                  onClick={() => setSelectedAppointment(appointment)}
+                                  onClick={() => {
+                                    setSelectedAppointment(appointment);
+                                    setShowCreateDialog(true);
+                                  }}
                                   data-testid={`action-edit-${appointment.id}`}
                                 >
                                   <Edit className="h-4 w-4 mr-2" />
@@ -603,8 +613,16 @@ const AppointmentsManagement: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {/* Create/Edit Appointment Dialog would go here */}
-      {/* This would be a separate component for appointment creation/editing */}
+      {/* Create/Edit Appointment Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <AppointmentForm
+            onSuccess={() => setShowCreateDialog(false)}
+            onCancel={() => setShowCreateDialog(false)}
+            editingAppointment={selectedAppointment}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -23,16 +23,17 @@ import {
   Plus,
   UserPlus,
   Heart,
-  Activity
+  Activity,
+  DollarSign
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
-// Enhanced Appointment Schema
+// Enhanced Appointment Schema - matching the old UI structure
 const appointmentSchema = z.object({
   patientId: z.string().min(1, "Please select a patient"),
   appointmentDate: z.string().min(1, "Appointment date is required"),
   appointmentTime: z.string().min(1, "Appointment time is required"),
-  appointmentType: z.enum([
+  serviceType: z.enum([
     "consultation", 
     "eye-exam", 
     "contact-fitting", 
@@ -41,16 +42,14 @@ const appointmentSchema = z.object({
     "emergency", 
     "routine-checkup",
     "glasses-fitting",
+    "surgery",
     "other"
-  ], { required_error: "Please select appointment type" }),
-  duration: z.number().min(15, "Duration must be at least 15 minutes").max(240, "Duration cannot exceed 4 hours"),
-  doctorName: z.string().optional(),
-  reason: z.string().min(5, "Please provide a reason for the appointment").max(500, "Reason too long"),
+  ], { required_error: "Please select service type" }),
+  doctorId: z.string().optional(),
+  appointmentFee: z.number().min(0, "Fee must be non-negative").default(0),
+  paymentStatus: z.enum(["pending", "paid", "partial", "cancelled"], { required_error: "Please select payment status" }).default("pending"),
   notes: z.string().optional(),
-  priority: z.enum(["low", "medium", "high", "urgent"], { required_error: "Please select priority" }),
-  status: z.enum(["scheduled", "confirmed"], { required_error: "Please select status" }).default("scheduled"),
-  reminderEnabled: z.boolean().default(true),
-  followUpRequired: z.boolean().default(false)
+  status: z.enum(["scheduled", "confirmed", "in-progress", "completed", "cancelled", "no-show"], { required_error: "Please select status" }).default("scheduled"),
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
@@ -61,6 +60,7 @@ interface Patient {
   lastName: string;
   email: string;
   phone: string;
+  patientCode?: string;
 }
 
 interface AppointmentFormProps {
@@ -74,7 +74,6 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
   onCancel, 
   editingAppointment 
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -90,28 +89,22 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       patientId: editingAppointment.patientId,
       appointmentDate: editingAppointment.appointmentDate,
       appointmentTime: editingAppointment.appointmentTime,
-      appointmentType: editingAppointment.appointmentType,
-      duration: editingAppointment.duration || 60,
-      doctorName: editingAppointment.doctorName || "",
-      reason: editingAppointment.reason || "",
+      serviceType: editingAppointment.appointmentType || editingAppointment.serviceType || "consultation",
+      doctorId: editingAppointment.doctorId || "",
+      appointmentFee: editingAppointment.appointmentFee || 0,
+      paymentStatus: editingAppointment.paymentStatus || "pending",
       notes: editingAppointment.notes || "",
-      priority: editingAppointment.priority || "medium",
       status: editingAppointment.status || "scheduled",
-      reminderEnabled: true,
-      followUpRequired: false
     } : {
       patientId: "",
       appointmentDate: "",
       appointmentTime: "",
-      appointmentType: "consultation",
-      duration: 60,
-      doctorName: "",
-      reason: "",
+      serviceType: "consultation",
+      doctorId: "",
+      appointmentFee: 0,
+      paymentStatus: "pending",
       notes: "",
-      priority: "medium",
       status: "scheduled",
-      reminderEnabled: true,
-      followUpRequired: false
     },
   });
 
@@ -127,7 +120,9 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
       const selectedPatient = patients.find(p => p.id === data.patientId);
       const appointmentData = {
         ...data,
-        patientName: selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Unknown Patient"
+        appointmentType: data.serviceType, // Map to the expected field
+        patientName: selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Unknown Patient",
+        patientCode: selectedPatient?.patientCode || "",
       };
       
       return apiRequest(endpoint, method, appointmentData);
@@ -156,30 +151,31 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
     appointmentMutation.mutate(data);
   };
 
-  // Appointment type options with descriptions
-  const appointmentTypes = [
-    { value: "consultation", label: "Initial Consultation", description: "First-time patient consultation", icon: User },
-    { value: "eye-exam", label: "Comprehensive Eye Exam", description: "Complete vision and eye health assessment", icon: Activity },
-    { value: "contact-fitting", label: "Contact Lens Fitting", description: "Contact lens fitting and training", icon: Heart },
-    { value: "follow-up", label: "Follow-up Visit", description: "Follow-up after treatment or procedure", icon: CheckCircle },
-    { value: "prescription-update", label: "Prescription Update", description: "Update glasses or contact prescription", icon: Calendar },
-    { value: "emergency", label: "Emergency Visit", description: "Urgent eye care needs", icon: AlertTriangle },
-    { value: "routine-checkup", label: "Routine Checkup", description: "Regular preventive eye care", icon: Stethoscope },
-    { value: "glasses-fitting", label: "Glasses Fitting", description: "Glasses adjustment and fitting", icon: Activity },
-    { value: "other", label: "Other", description: "Other appointment types", icon: Plus }
+  // Service type options - matching the old UI
+  const serviceTypes = [
+    { value: "consultation", label: "Initial Consultation", icon: User },
+    { value: "eye-exam", label: "Comprehensive Eye Exam", icon: Activity },
+    { value: "contact-fitting", label: "Contact Lens Fitting", icon: Heart },
+    { value: "follow-up", label: "Follow-up Visit", icon: CheckCircle },
+    { value: "prescription-update", label: "Prescription Update", icon: Calendar },
+    { value: "emergency", label: "Emergency Visit", icon: AlertTriangle },
+    { value: "routine-checkup", label: "Routine Checkup", icon: Stethoscope },
+    { value: "glasses-fitting", label: "Glasses Fitting", icon: Activity },
+    { value: "surgery", label: "Surgery", icon: Activity },
+    { value: "other", label: "Other", icon: Plus }
   ];
 
   // Doctor options
   const doctors = [
-    "Dr. Sarah Johnson",
-    "Dr. Michael Chen", 
-    "Dr. Emily Rodriguez",
-    "Dr. David Kim",
-    "Dr. Lisa Thompson"
+    { id: "dr1", name: "Dr. Sarah Johnson" },
+    { id: "dr2", name: "Dr. Michael Chen" }, 
+    { id: "dr3", name: "Dr. Emily Rodriguez" },
+    { id: "dr4", name: "Dr. David Kim" },
+    { id: "dr5", name: "Dr. Lisa Thompson" }
   ];
 
   return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6" data-testid="appointment-form">
+    <div className="max-w-2xl mx-auto p-6 space-y-6" data-testid="appointment-form">
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -187,361 +183,228 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
         className="text-center space-y-4"
       >
         <DialogHeader>
-          <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            className="flex items-center justify-center space-x-2"
-          >
-            <Calendar className="h-8 w-8 text-cyan-600" />
-            <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              {editingAppointment ? 'Update Appointment' : 'Schedule New Appointment'}
-            </DialogTitle>
-          </motion.div>
-          <DialogDescription className="text-lg text-gray-600">
-            {editingAppointment ? 'Update appointment details and preferences' : 'Schedule a new appointment with comprehensive details'}
+          <DialogTitle className="text-2xl font-bold text-gray-900">
+            {editingAppointment ? 'Update Appointment' : 'Schedule New Appointment'}
+          </DialogTitle>
+          <DialogDescription className="text-gray-600">
+            {editingAppointment ? 'Update appointment details' : 'Schedule an appointment for a patient'}
           </DialogDescription>
         </DialogHeader>
       </motion.div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
-          {/* Step 1: Patient and Basic Details */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-6"
-          >
-            <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-6 rounded-lg border-l-4 border-cyan-500">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <User className="h-5 w-5 text-cyan-600" />
-                <span>Patient & Appointment Details</span>
-              </h3>
+          {/* Patient and Service Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="patientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center space-x-1">
+                    <span>Patient</span>
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger data-testid="select-patient">
+                        <SelectValue placeholder="Select patient" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {patients.map((patient) => (
+                          <SelectItem key={patient.id} value={patient.id}>
+                            {patient.firstName} {patient.lastName}
+                            {patient.patientCode && ` (${patient.patientCode})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="patientId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <User className="h-4 w-4" />
-                        <span>Select Patient</span>
-                        <span className="text-red-500 text-lg">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="h-12" data-testid="select-patient">
-                            <SelectValue placeholder="Choose a patient" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {patients.map((patient) => (
-                              <SelectItem key={patient.id} value={patient.id}>
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-semibold">
-                                    {patient.firstName[0]}{patient.lastName[0]}
-                                  </div>
-                                  <div>
-                                    <div className="font-medium">{patient.firstName} {patient.lastName}</div>
-                                    <div className="text-sm text-gray-500">{patient.email}</div>
-                                  </div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="serviceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center space-x-1">
+                    <span>Service Type</span>
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger data-testid="select-service">
+                        <SelectValue placeholder="Select service" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {serviceTypes.map((service) => (
+                          <SelectItem key={service.value} value={service.value}>
+                            {service.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-                <FormField
-                  control={form.control}
-                  name="appointmentType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Stethoscope className="h-4 w-4" />
-                        <span>Appointment Type</span>
-                        <span className="text-red-500 text-lg">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="h-12" data-testid="select-appointment-type">
-                            <SelectValue placeholder="Select appointment type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {appointmentTypes.map((type) => {
-                              const IconComponent = type.icon;
-                              return (
-                                <SelectItem key={type.value} value={type.value}>
-                                  <div className="flex items-center space-x-3">
-                                    <IconComponent className="h-4 w-4 text-cyan-600" />
-                                    <div>
-                                      <div className="font-medium">{type.label}</div>
-                                      <div className="text-sm text-gray-500">{type.description}</div>
-                                    </div>
-                                  </div>
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* Doctor Assignment */}
+          <FormField
+            control={form.control}
+            name="doctorId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assign Doctor</FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger data-testid="select-doctor">
+                      <SelectValue placeholder="Select doctor (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {doctors.map((doctor) => (
+                        <SelectItem key={doctor.id} value={doctor.id}>
+                          {doctor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormDescription>
+                  Leave empty if not assigned yet
+                </FormDescription>
+              </FormItem>
+            )}
+          />
 
-                <FormField
-                  control={form.control}
-                  name="appointmentDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Calendar className="h-4 w-4" />
-                        <span>Appointment Date</span>
-                        <span className="text-red-500 text-lg">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="date"
-                          min={new Date().toISOString().split('T')[0]}
-                          className="h-12"
-                          data-testid="input-appointment-date"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* Date and Time Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="appointmentDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center space-x-1">
+                    <span>Appointment Date</span>
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="date"
+                      min={new Date().toISOString().split('T')[0]}
+                      data-testid="input-appointment-date"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="appointmentTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Clock className="h-4 w-4" />
-                        <span>Appointment Time</span>
-                        <span className="text-red-500 text-lg">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="time"
-                          className="h-12"
-                          data-testid="input-appointment-time"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="appointmentTime"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center space-x-1">
+                    <span>Appointment Time</span>
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="time"
+                      data-testid="input-appointment-time"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-                <FormField
-                  control={form.control}
-                  name="duration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Clock className="h-4 w-4" />
-                        <span>Duration (minutes)</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                          <SelectTrigger className="h-12" data-testid="select-duration">
-                            <SelectValue placeholder="Select duration" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="15">15 minutes</SelectItem>
-                            <SelectItem value="30">30 minutes</SelectItem>
-                            <SelectItem value="45">45 minutes</SelectItem>
-                            <SelectItem value="60">1 hour</SelectItem>
-                            <SelectItem value="90">1.5 hours</SelectItem>
-                            <SelectItem value="120">2 hours</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+          {/* Fee and Payment Status Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="appointmentFee"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Appointment Fee</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input 
+                        {...field} 
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        className="pl-10"
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        data-testid="input-fee"
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="doctorName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Stethoscope className="h-4 w-4" />
-                        <span>Assigned Doctor</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="h-12" data-testid="select-doctor">
-                            <SelectValue placeholder="Assign doctor (optional)" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {doctors.map((doctor) => (
-                              <SelectItem key={doctor} value={doctor}>
-                                {doctor}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormDescription>
-                        Leave empty if not assigned yet
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
+            <FormField
+              control={form.control}
+              name="paymentStatus"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Status</FormLabel>
+                  <FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger data-testid="select-payment-status">
+                        <SelectValue placeholder="Payment status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending Payment</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="partial">Partial Payment</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
 
-            {/* Step 2: Additional Details */}
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border-l-4 border-blue-500">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
-                <Activity className="h-5 w-5 text-blue-600" />
-                <span>Additional Details</span>
-              </h3>
-
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="priority"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                          <AlertTriangle className="h-4 w-4" />
-                          <span>Priority Level</span>
-                          <span className="text-red-500 text-lg">*</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12" data-testid="select-priority">
-                              <SelectValue placeholder="Select priority" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="low">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                  <span>Low Priority</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="medium">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                  <span>Medium Priority</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="high">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                                  <span>High Priority</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="urgent">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                  <span>Urgent</span>
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+          {/* Notes */}
+          <FormField
+            control={form.control}
+            name="notes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Notes</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    {...field} 
+                    placeholder="Additional notes for the appointment..."
+                    className="min-h-[80px]"
+                    data-testid="textarea-notes"
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                          <CheckCircle className="h-4 w-4" />
-                          <span>Initial Status</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12" data-testid="select-status">
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="scheduled">Scheduled</SelectItem>
-                              <SelectItem value="confirmed">Confirmed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormDescription>
-                          Set the initial appointment status
-                        </FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="reason"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Heart className="h-4 w-4" />
-                        <span>Reason for Appointment</span>
-                        <span className="text-red-500 text-lg">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Please describe the reason for this appointment, symptoms, or specific concerns..."
-                          className="min-h-[100px]"
-                          data-testid="textarea-reason"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Provide details about the purpose of this appointment
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
-                        <Plus className="h-4 w-4" />
-                        <span>Additional Notes</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Any additional notes, special requirements, or instructions..."
-                          className="min-h-[80px]"
-                          data-testid="textarea-notes"
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Optional notes for staff or doctor reference
-                      </FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-          </motion.div>
+                </FormControl>
+                <FormDescription>
+                  Optional notes for staff or doctor reference
+                </FormDescription>
+              </FormItem>
+            )}
+          />
 
           {/* Action Buttons */}
-          <div className="flex justify-between items-center pt-6 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button
               type="button"
               variant="outline"
@@ -554,17 +417,17 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({
             <Button
               type="submit"
               disabled={appointmentMutation.isPending}
-              className="flex items-center space-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700"
+              className="bg-blue-600 hover:bg-blue-700"
               data-testid="button-submit"
             >
               {appointmentMutation.isPending ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   <span>{editingAppointment ? 'Updating...' : 'Scheduling...'}</span>
                 </>
               ) : (
                 <>
-                  <Calendar className="h-4 w-4" />
+                  <Calendar className="h-4 w-4 mr-2" />
                   <span>{editingAppointment ? 'Update Appointment' : 'Schedule Appointment'}</span>
                 </>
               )}
