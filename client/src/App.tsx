@@ -8,10 +8,10 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
 import Dashboard from "@/pages/Dashboard";
 import Stores from "@/pages/Stores";
-import Inventory from "@/pages/Inventory";
+import InventoryModern from "@/pages/InventoryModern";
 
 import Appointments from "@/pages/Appointments";
-import Customers from "@/pages/Customers";
+import CustomersModern from "@/pages/CustomersModern";
 import PatientsModern from "@/pages/PatientsModern";
 import PatientManagement from "@/pages/PatientManagement";
 import InvoiceManagement from "@/pages/InvoiceManagement";
@@ -173,7 +173,7 @@ function Router() {
         <AppLayout>
           <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Inventory />
+            <InventoryModern />
           </div>
         </AppLayout>
       </Route>
@@ -186,7 +186,7 @@ function Router() {
         <AppLayout>
           <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Customers />
+            <CustomersModern />
           </div>
         </AppLayout>
       </Route>
