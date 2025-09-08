@@ -77,6 +77,13 @@ const patientSchema = z.object({
   // Insurance & Payment
   insuranceProvider: z.string().optional(),
   insuranceNumber: z.string().optional(),
+  nationalIdNumber: z.string().optional(),
+  nisNumber: z.string().optional(),
+  insuranceCoupons: z.array(z.object({
+    couponType: z.string(),
+    couponValue: z.string(),
+    validUntil: z.string()
+  })).optional(),
   groupNumber: z.string().optional(),
   policyHolderName: z.string().optional(),
   relationToPolicyHolder: z.enum(["self", "spouse", "child", "other"]).optional(),
