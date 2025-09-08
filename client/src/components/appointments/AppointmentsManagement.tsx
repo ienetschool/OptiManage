@@ -207,12 +207,10 @@ const AppointmentsManagement: React.FC = () => {
         title="Appointments Management"
         description="Schedule, track, and manage patient appointments efficiently"
         icon={Calendar}
-        gradient="from-cyan-500 to-blue-600"
       >
         <ModernActionButton
           onClick={() => setShowCreateDialog(true)}
           icon={Plus}
-          variant="primary"
           data-testid="button-create-appointment"
         >
           Schedule New Appointment
@@ -225,46 +223,64 @@ const AppointmentsManagement: React.FC = () => {
           title="Total Appointments"
           value={stats.total}
           icon={CalendarDays}
-          trend="+12%"
-          trendDirection="up"
-          color="from-blue-500 to-cyan-600"
+          color="blue"
         />
         <ModernStatsCard
           title="Today's Appointments"
           value={stats.today}
           icon={Clock}
-          trend="+5%"
-          trendDirection="up"
-          color="from-green-500 to-emerald-600"
+          color="emerald"
         />
         <ModernStatsCard
           title="Confirmed"
           value={stats.confirmed}
           icon={CheckCircle}
-          trend="+8%"
-          trendDirection="up"
-          color="from-emerald-500 to-green-600"
+          color="emerald"
         />
         <ModernStatsCard
           title="Completed"
           value={stats.completed}
           icon={UserCheck}
-          trend="+15%"
-          trendDirection="up"
-          color="from-purple-500 to-pink-600"
+          color="purple"
         />
       </div>
 
       {/* Main Content */}
       <Tabs value={activeView} onValueChange={setActiveView} className="w-full">
-        <ModernTabHeader
-          tabs={[
-            { value: "list", label: "Appointments List", icon: Users, count: filteredAppointments.length },
-            { value: "calendar", label: "Calendar View", icon: Calendar },
-            { value: "today", label: "Today's Schedule", icon: Clock, count: stats.today },
-            { value: "analytics", label: "Analytics", icon: TrendingUp }
-          ]}
-        />
+        <TabsList className="grid w-full grid-cols-4 bg-white border rounded-lg p-1 shadow-sm">
+          <TabsTrigger 
+            value="list" 
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            data-testid="tab-list"
+          >
+            <Users className="h-4 w-4" />
+            <span>List ({filteredAppointments.length})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendar" 
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            data-testid="tab-calendar"
+          >
+            <Calendar className="h-4 w-4" />
+            <span>Calendar</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="today" 
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            data-testid="tab-today"
+          >
+            <Clock className="h-4 w-4" />
+            <span>Today ({stats.today})</span>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="analytics" 
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            data-testid="tab-analytics"
+          >
+            <TrendingUp className="h-4 w-4" />
+            <span>Analytics</span>
+          </TabsTrigger>
+        </TabsList>
 
         {/* Search and Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">

@@ -80,6 +80,7 @@ interface Patient {
 
 const PatientsModern: React.FC = () => {
   const [activeTab, setActiveTab] = useState("all");
+  const [activeMainTab, setActiveMainTab] = useState("patients"); // New state for main tabs
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("name");
@@ -190,6 +191,31 @@ const PatientsModern: React.FC = () => {
           Register New Patient
         </ModernActionButton>
       </ModernPageHeader>
+
+      {/* Main Tabs - Patients and Appointments */}
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 bg-white border rounded-lg p-1 shadow-sm mb-6">
+          <TabsTrigger 
+            value="patients" 
+            className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
+            data-testid="main-tab-patients"
+          >
+            <Users className="h-5 w-5" />
+            <span>Patients</span>
+            <Badge variant="secondary" className="ml-2">{stats.total}</Badge>
+          </TabsTrigger>
+          <TabsTrigger 
+            value="appointments" 
+            className="flex items-center space-x-2 data-[state=active]:bg-cyan-500 data-[state=active]:text-white"
+            data-testid="main-tab-appointments"
+          >
+            <Calendar className="h-5 w-5" />
+            <span>Appointments</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Patients Tab Content */}
+        <TabsContent value="patients" className="space-y-6">
 
       {/* Statistics Cards */}
       <motion.div 
@@ -479,6 +505,13 @@ const PatientsModern: React.FC = () => {
           </Button>
         </motion.div>
       )}
+        </TabsContent>
+
+        {/* Appointments Tab Content */}
+        <TabsContent value="appointments" className="space-y-6">
+          <AppointmentsManagement />
+        </TabsContent>
+      </Tabs>
 
       {/* Patient Registration Modal */}
       <Dialog open={showPatientForm} onOpenChange={setShowPatientForm}>
