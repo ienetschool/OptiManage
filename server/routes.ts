@@ -1152,9 +1152,31 @@ console.log('Database test page loaded successfully');
           console.error("Error fetching patient for appointment:", error);
         }
         
-        // Extract fields from customFields if they exist
+        // Extract fields from customFields if they exist, with fallbacks
         const customFields = appointment.customFields || {};
-        const appointmentFee = customFields.appointmentFee || 0;
+        
+        // Extract or set reasonable defaults for fees based on service type
+        const serviceFees = {
+          'consultation': 150,
+          'eye-exam': 200,
+          'contact-fitting': 175,
+          'follow-up': 100,
+          'emergency': 300,
+          'routine-checkup': 125,
+          'glasses-fitting': 50,
+          'surgery': 2500,
+          'laser-treatment': 1800,
+          'injection': 400,
+          'screening': 80
+        };
+        
+        let appointmentFee = customFields.appointmentFee;
+        if (!appointmentFee || appointmentFee === 0) {
+          appointmentFee = serviceFees[appointment.service] || 150;
+        }
+        
+        console.log(`📋 APPOINTMENT FEE: Service "${appointment.service}" -> $${appointmentFee}`);
+        
         const assignedDoctorId = customFields.assignedDoctorId || null;
         const paymentStatus = customFields.paymentStatus || 'pending';
         const appointmentTime = customFields.appointmentTime || null;
