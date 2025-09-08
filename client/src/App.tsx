@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/Landing";
-import Dashboard from "@/pages/Dashboard";
 import Stores from "@/pages/Stores";
 import InventoryModern from "@/pages/InventoryModern";
 
@@ -501,7 +500,7 @@ function Router() {
         <AppLayout>
           <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Dashboard />
+            <DashboardModern />
           </div>
         </AppLayout>
       </Route>
