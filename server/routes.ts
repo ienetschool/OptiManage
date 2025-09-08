@@ -1119,7 +1119,7 @@ console.log('Database test page loaded successfully');
     }
   });
 
-  // Appointment routes
+  // Appointment routes with enhanced patient and service information
   app.get('/api/appointments', isAuthenticated, async (req, res) => {
     try {
       const { date } = req.query;
@@ -1131,12 +1131,55 @@ console.log('Database test page loaded successfully');
         appointments = await storage.getAppointments();
       }
       
-      res.json(appointments);
+      // Enhance appointments with patient names and service details
+      const enhancedAppointments = await Promise.all(appointments.map(async (appointment) => {
+        let patientName = "Unknown Patient";
+        let patientCode = "";
+        
+        // Try to get patient information
+        try {
+          const [patient] = await db.select().from(patients).where(eq(patients.id, appointment.patientId));
+          if (patient) {
+            patientName = `${patient.firstName} ${patient.lastName}`;
+            patientCode = patient.patientCode || patient.id.slice(-6);
+          }
+        } catch (error) {
+          console.error("Error fetching patient for appointment:", error);
+        }
+        
+        return {
+          ...appointment,
+          patientName,
+          patientCode,
+          appointmentNumber: appointment.id.slice(-6),
+          serviceType: appointment.service || "consultation",
+          appointmentType: appointment.service || "consultation"
+        };
+      }));
+      
+      res.json(enhancedAppointments);
     } catch (error) {
       console.error("Error fetching appointments:", error);
       res.status(500).json({ message: "Failed to fetch appointments" });
     }
   });
+
+  // Service pricing configuration
+  const servicePricing = {
+    "consultation": { fee: 75, description: "Initial Consultation" },
+    "eye-exam": { fee: 120, description: "Comprehensive Eye Examination" },
+    "contact-fitting": { fee: 95, description: "Contact Lens Fitting" },
+    "follow-up": { fee: 50, description: "Follow-up Visit" },
+    "prescription-update": { fee: 60, description: "Prescription Update" },
+    "emergency": { fee: 150, description: "Emergency Visit" },
+    "routine-checkup": { fee: 80, description: "Routine Checkup" },
+    "glasses-fitting": { fee: 45, description: "Glasses Fitting" },
+    "surgery": { fee: 500, description: "Eye Surgery" },
+    "laser-treatment": { fee: 800, description: "Laser Treatment" },
+    "injection": { fee: 200, description: "Eye Injection" },
+    "screening": { fee: 65, description: "Vision Screening" },
+    "other": { fee: 100, description: "Other Services" }
+  };
 
   app.post('/api/appointments', isAuthenticated, async (req, res) => {
     try {
@@ -1144,6 +1187,41 @@ console.log('Database test page loaded successfully');
       const requestData = { ...req.body };
       if (requestData.appointmentDate && typeof requestData.appointmentDate === 'string') {
         requestData.appointmentDate = new Date(requestData.appointmentDate);
+      }
+      
+      // Auto-calculate fee based on service type
+      const serviceType = requestData.service || requestData.serviceType || "consultation";
+      const servicePriceInfo = servicePricing[serviceType] || servicePricing["consultation"];
+      
+      // Apply coupon deduction if provided
+      let finalFee = servicePriceInfo.fee;
+      let couponDiscount = 0;
+      let couponCode = "";
+      
+      if (requestData.couponCode) {
+        // Simple coupon system - can be enhanced with database lookup
+        const coupons = {
+          "WELCOME10": { discount: 10, type: "percentage" },
+          "NEWPATIENT": { discount: 15, type: "fixed" },
+          "LOYALTY20": { discount: 20, type: "percentage" },
+          "SENIOR15": { discount: 15, type: "percentage" }
+        };
+        
+        const coupon = coupons[requestData.couponCode.toUpperCase()];
+        if (coupon) {
+          couponCode = requestData.couponCode.toUpperCase();
+          if (coupon.type === "percentage") {
+            couponDiscount = (finalFee * coupon.discount) / 100;
+          } else {
+            couponDiscount = coupon.discount;
+          }
+          finalFee = Math.max(0, finalFee - couponDiscount);
+        }
+      }
+      
+      // Override fee if not provided or is 0
+      if (!requestData.appointmentFee || requestData.appointmentFee === 0) {
+        requestData.appointmentFee = finalFee;
       }
       
       const validatedData = insertAppointmentSchema.parse(requestData);
@@ -1166,16 +1244,48 @@ console.log('Database test page loaded successfully');
       
       const appointment = await storage.createAppointment(validatedData);
       
-      // Generate invoice for paid appointments - simplified logging only
+      // Enhanced billing and invoice generation
       if (validatedData.paymentStatus === 'paid' && validatedData.appointmentFee) {
         const fee = parseFloat(validatedData.appointmentFee.toString());
+        const tax = fee * 0.08; // 8% tax
+        const total = fee + tax;
         const invoiceNumber = `INV-APT-${Date.now()}`;
-        const total = (fee * 1.08).toFixed(2);
         
-        console.log(`✅ PAID APPOINTMENT - Invoice generated: ${invoiceNumber} for appointment ${appointment.id}, Amount: $${total}, Method: ${validatedData.paymentMethod || 'cash'}`);
+        console.log(`✅ PAID APPOINTMENT - Invoice generated: ${invoiceNumber} for appointment ${appointment.id}`);
+        console.log(`   Service: ${servicePriceInfo.description}`);
+        console.log(`   Base Fee: $${servicePriceInfo.fee.toFixed(2)}`);
+        if (couponDiscount > 0) {
+          console.log(`   Coupon (${couponCode}): -$${couponDiscount.toFixed(2)}`);
+        }
+        console.log(`   Final Amount: $${fee.toFixed(2)}`);
+        console.log(`   Tax: $${tax.toFixed(2)}`);
+        console.log(`   Total: $${total.toFixed(2)}`);
+        console.log(`   Payment Method: ${validatedData.paymentMethod || 'cash'}`);
       }
       
-      res.status(201).json(appointment);
+      // Get patient information for response
+      let patientName = "Unknown Patient";
+      try {
+        const [patient] = await db.select().from(patients).where(eq(patients.id, validatedData.patientId));
+        if (patient) {
+          patientName = `${patient.firstName} ${patient.lastName}`;
+        }
+      } catch (error) {
+        console.error("Error fetching patient:", error);
+      }
+      
+      // Enhanced response with billing details
+      const enhancedAppointment = {
+        ...appointment,
+        patientName,
+        serviceDescription: servicePriceInfo.description,
+        originalFee: servicePriceInfo.fee,
+        couponDiscount,
+        couponCode,
+        finalFee
+      };
+      
+      res.status(201).json(enhancedAppointment);
     } catch (error) {
       console.error("Error creating appointment:", error);
       res.status(400).json({ message: "Failed to create appointment" });
