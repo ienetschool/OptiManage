@@ -83,7 +83,7 @@ const PatientsModern: React.FC = () => {
   const [activeMainTab, setActiveMainTab] = useState("patients"); // New state for main tabs
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [sortBy, setSortBy] = useState("name");
+  const [sortBy, setSortBy] = useState("newest");
   const [showPatientForm, setShowPatientForm] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -122,8 +122,11 @@ const PatientsModern: React.FC = () => {
         return new Date(b.dateOfBirth).getTime() - new Date(a.dateOfBirth).getTime();
       case "visits":
         return (b.totalVisits || 0) - (a.totalVisits || 0);
+      case "newest":
+        return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
       default:
-        return 0;
+        // Default to newest first (by registration date)
+        return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
     }
   });
 
@@ -299,6 +302,7 @@ const PatientsModern: React.FC = () => {
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
                     <SelectItem value="name">Name</SelectItem>
                     <SelectItem value="date">Date Added</SelectItem>
                     <SelectItem value="visits">Visit Count</SelectItem>
