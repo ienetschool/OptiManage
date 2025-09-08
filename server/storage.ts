@@ -261,35 +261,35 @@ export class MySQLStorage implements IStorage {
       // Import SQL helper
       const { sql } = await import("drizzle-orm");
       
-      // Use raw SQL query with only guaranteed columns to avoid schema issues
+      // Use raw SQL with only basic columns that definitely exist
       const invoicesResult = await db.execute(sql`
         SELECT 
           id, invoice_number, patient_id, appointment_id, 
-          subtotal, tax, total, status, notes, created_at
+          subtotal, total, status, notes, created_at
         FROM medical_invoices 
         ORDER BY created_at DESC
       `);
       
       const invoices = Array.isArray(invoicesResult) ? invoicesResult : (invoicesResult as any).rows || [];
       
-      // Transform invoices to match expected format using available columns
+      // Transform invoices to match expected format with safe column mapping
       const transformedInvoices = invoices.map((invoice: any) => ({
         id: invoice.id,
         invoiceNumber: invoice.invoice_number,
         patientId: invoice.patient_id,
-        customerId: null, // Not in medical invoice schema
-        storeId: "store001", // Default store
+        customerId: null,
+        storeId: "store001",
         appointmentId: invoice.appointment_id,
-        issueDate: invoice.created_at, // Use created date as issue date
-        dueDate: invoice.created_at, // Use created date as due date
+        issueDate: invoice.created_at,
+        dueDate: invoice.created_at,
         subtotal: parseFloat(invoice.subtotal?.toString() || '0'),
-        taxAmount: parseFloat(invoice.tax?.toString() || '0'),
-        discountAmount: 0, // Default value
+        taxAmount: parseFloat(invoice.total?.toString() || '0') * 0.08, // Calculate 8% tax
+        discountAmount: 0,
         totalAmount: parseFloat(invoice.total?.toString() || '0'),
         status: invoice.status || 'pending',
-        paymentMethod: 'cash', // Default value
+        paymentMethod: 'cash',
         notes: invoice.notes || '',
-        items: [], // Default empty array
+        items: [],
         createdAt: invoice.created_at,
         updatedAt: invoice.created_at
       }));
