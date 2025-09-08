@@ -54,6 +54,7 @@ import {
   ModernProgressBar 
 } from "@/components/ui/modern-components";
 import UltraModernPatientForm from "@/components/forms/UltraModernPatientForm";
+import AppointmentsManagement from "@/components/appointments/AppointmentsManagement";
 import { useToast } from "@/hooks/use-toast";
 
 interface Patient {
