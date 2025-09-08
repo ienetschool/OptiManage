@@ -22,7 +22,7 @@ import LensCuttingWorkflow from "@/pages/LensCuttingWorkflowSimple";
 import SpecsWorkflowNew from "@/pages/SpecsWorkflow";
 import SpecsOrderCreationNew from "@/pages/SpecsOrderCreation";
 import LensCuttingWorkflowNew from "@/pages/LensCuttingWorkflow";
-import DashboardNew from "@/pages/DashboardNew";
+import DashboardModern from "@/pages/DashboardModern";
 import Billing from "@/pages/Billing";
 import Staff from "@/pages/Staff";
 import Attendance from "@/pages/Attendance";
@@ -99,7 +99,7 @@ function Router() {
       </Route>
       <Route path="/patient-portal/patients">
         <PatientPortalLayout title="Patient Information" description="View and update your patient details">
-          <PatientsSimple />
+          <PatientsModern />
         </PatientPortalLayout>
       </Route>
 
@@ -156,7 +156,7 @@ function Router() {
       {/* Dashboard routes */}
       <Route path="/dashboard">
         <AppLayoutNew>
-          <DashboardNew />
+          <DashboardModern />
         </AppLayoutNew>
       </Route>
       
