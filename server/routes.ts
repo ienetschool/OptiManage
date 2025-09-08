@@ -15,7 +15,6 @@ import accountingRoutes from "./routes/accountingRoutes";
 import { registerStoreSettingsRoutes } from "./routes/storeSettingsRoutes";
 import { registerAnalyticsRoutes } from "./routes/analyticsRoutes";
 import { registerInstallRoutes } from "./installRoutes";
-import { registerSpecsWorkflowRoutes } from "./routes/specsWorkflowRoutes";
 import { 
   insertStoreSchema,
   insertProductSchema,
@@ -32,7 +31,7 @@ import {
 } from "@shared/mysql-schema";
 import { insertAppointmentSchema } from "@shared/schema";
 import { db } from "./db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc } from "drizzle-orm";
 import { z } from "zod";
 import { addTestRoutes } from "./testAuth";
 
@@ -1291,45 +1290,93 @@ console.log('Database test page loaded successfully');
         finalFee
       };
       
-      // **PATIENT HISTORY INTEGRATION** - Connect appointment to patient history
+      // **CONNECT TO RELATED MODULES** - Create medical appointment and invoice records
       try {
-        // Create patient history entry
-        const historyEntry = {
-          patientId: validatedData.patientId,
-          appointmentId: appointment.id,
-          serviceType: serviceType,
-          serviceDescription: servicePriceInfo.description,
-          originalFee: servicePriceInfo.fee,
-          couponCode: couponCode,
-          couponDiscount: couponDiscount,
-          finalFee: finalFee,
-          paymentStatus: validatedData.paymentStatus,
-          paymentMethod: validatedData.paymentMethod,
-          doctorId: validatedData.doctorId,
-          createdAt: new Date()
-        };
+        // **1. CREATE MEDICAL APPOINTMENT for Doctor Module**
+        if (validatedData.assignedDoctorId && validatedData.paymentStatus === 'paid') {
+          try {
+            const medicalAppointmentData = {
+              appointmentNumber: `APT-${Date.now()}`,
+              patientId: validatedData.patientId,
+              doctorId: validatedData.assignedDoctorId,
+              storeId: validatedData.storeId,
+              appointmentDate: validatedData.appointmentDate,
+              duration: validatedData.duration || 30,
+              appointmentType: servicePriceInfo.description,
+              status: 'scheduled',
+              chiefComplaint: validatedData.reasonForVisit || '',
+              notes: validatedData.notes || '',
+              fee: finalFee,
+              isPaid: true
+            };
 
-        console.log(`📝 PATIENT HISTORY - Added appointment ${appointment.id} to patient ${patientName} history`);
-        console.log(`   Service: ${servicePriceInfo.description}`);
-        console.log(`   Billing: $${finalFee} (Original: $${servicePriceInfo.fee}, Discount: $${couponDiscount})`);
-        
-        // **FORWARD TO RELATED MODULES**
-        if (validatedData.paymentStatus === 'paid') {
-          // Forward to Doctor Appointments Module
-          console.log(`🩺 DOCTOR MODULE - Appointment ${appointment.id} forwarded to Dr. ${selectedDoctor?.firstName} ${selectedDoctor?.lastName}`);
-          
-          // Forward to Prescriptions Module (if applicable)
-          if (['eye-exam', 'consultation', 'follow-up'].includes(serviceType)) {
-            console.log(`💊 PRESCRIPTIONS MODULE - ${servicePriceInfo.description} appointment ready for prescription`);
+            // Import medicalAppointments from schema if not already imported
+            const { medicalAppointments } = await import("@shared/mysql-schema");
+            await db.insert(medicalAppointments).values(medicalAppointmentData);
+            
+            console.log(`🩺 DOCTOR MODULE - Medical appointment created for Doctor ID: ${validatedData.assignedDoctorId}`);
+          } catch (medicalError) {
+            console.error("Error creating medical appointment:", medicalError);
           }
-          
-          // Forward to Billing & Invoicing Module
-          console.log(`💰 BILLING MODULE - Invoice and payment record created for appointment ${appointment.id}`);
+        }
+
+        // **2. CREATE ACTUAL INVOICE for Invoice Management**
+        if (validatedData.paymentStatus === 'paid' && finalFee > 0) {
+          try {
+            const invoiceNumber = `INV-APT-${Date.now()}`;
+            const tax = finalFee * 0.08;
+            const total = finalFee + tax;
+
+            const invoiceData = {
+              invoiceNumber: invoiceNumber,
+              patientId: validatedData.patientId,
+              appointmentId: appointment.id,
+              storeId: validatedData.storeId,
+              invoiceDate: new Date(),
+              dueDate: new Date(),
+              subtotal: finalFee,
+              taxAmount: tax,
+              discountAmount: couponDiscount,
+              total: total,
+              paymentStatus: 'paid',
+              paymentMethod: validatedData.paymentMethod || 'cash',
+              appliedCouponCode: couponCode || null,
+              couponDiscount: couponDiscount,
+              notes: `${servicePriceInfo.description}${couponCode ? ` | Coupon: ${couponCode}` : ''}`,
+              customFields: JSON.stringify([{
+                description: servicePriceInfo.description,
+                quantity: 1,
+                unitPrice: servicePriceInfo.fee,
+                discount: couponDiscount,
+                total: finalFee
+              }])
+            };
+
+            // Import medicalInvoices from schema
+            const { medicalInvoices } = await import("@shared/mysql-schema");
+            await db.insert(medicalInvoices).values(invoiceData);
+            
+            console.log(`💰 INVOICE CREATED - ${invoiceNumber} for ${patientName}, Amount: $${total.toFixed(2)}`);
+            console.log(`   Service: ${servicePriceInfo.description}`);
+            console.log(`   Base Fee: $${servicePriceInfo.fee}, Discount: $${couponDiscount}, Final: $${finalFee}`);
+            
+            // Add invoice details to response
+            enhancedAppointment.invoiceNumber = invoiceNumber;
+            enhancedAppointment.invoiceTotal = total;
+            
+          } catch (invoiceError) {
+            console.error("Error creating invoice:", invoiceError);
+          }
+        }
+
+        // **3. FORWARD TO PRESCRIPTIONS MODULE**
+        if (['eye-exam', 'consultation', 'follow-up'].includes(serviceType) && validatedData.paymentStatus === 'paid') {
+          console.log(`💊 PRESCRIPTIONS MODULE - ${servicePriceInfo.description} appointment ready for prescription creation`);
         }
         
-      } catch (historyError) {
-        console.error("Error updating patient history:", historyError);
-        // Don't fail the appointment creation if history update fails
+      } catch (moduleError) {
+        console.error("Error connecting to related modules:", moduleError);
+        // Don't fail the appointment creation if module integration fails
       }
 
       res.status(201).json(enhancedAppointment);

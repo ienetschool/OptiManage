@@ -257,10 +257,35 @@ export class MySQLStorage implements IStorage {
   // Invoice operations
   async getInvoices(): Promise<any[]> {
     try {
-      // For now, return empty array since medical_invoices table may not exist yet
-      // Will be populated when the table is created with proper schema
-      const transformedInvoices: any[] = [];
+      // Import medicalInvoices schema
+      const { medicalInvoices } = await import("@shared/mysql-schema");
       
+      // Fetch actual invoices from database
+      const invoices = await db.select().from(medicalInvoices).orderBy(desc(medicalInvoices.createdAt));
+      
+      // Transform invoices to match expected format
+      const transformedInvoices = invoices.map(invoice => ({
+        id: invoice.id,
+        invoiceNumber: invoice.invoiceNumber,
+        patientId: invoice.patientId,
+        customerId: null, // Not in medical invoice schema
+        storeId: invoice.storeId,
+        appointmentId: invoice.appointmentId,
+        issueDate: invoice.invoiceDate || invoice.createdAt,
+        dueDate: invoice.dueDate || invoice.createdAt,
+        subtotal: parseFloat(invoice.subtotal?.toString() || '0'),
+        taxAmount: parseFloat(invoice.taxAmount?.toString() || '0'),
+        discountAmount: parseFloat(invoice.discountAmount?.toString() || '0'),
+        totalAmount: parseFloat(invoice.total?.toString() || '0'),
+        status: invoice.paymentStatus || 'pending',
+        paymentMethod: invoice.paymentMethod || 'cash',
+        notes: invoice.notes,
+        items: invoice.customFields,
+        createdAt: invoice.createdAt,
+        updatedAt: invoice.updatedAt
+      }));
+      
+      console.log(`✅ INVOICES FETCHED - Found ${transformedInvoices.length} invoices in database`);
       return transformedInvoices;
     } catch (error) {
       console.error('Error fetching invoices:', error);
