@@ -64,7 +64,7 @@ const appointmentSchema = z.object({
   appointmentDate: z.string().min(1, "Appointment date is required"),
   appointmentTime: z.string().min(1, "Appointment time is required"),
   duration: z.number().min(15, "Duration must be at least 15 minutes").max(240, "Duration cannot exceed 4 hours").default(30),
-  doctorId: z.string().optional(),
+  doctorId: z.string().min(1, "Please select a doctor"),
   priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
   
   // Payment

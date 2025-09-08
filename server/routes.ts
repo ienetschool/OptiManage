@@ -1234,17 +1234,12 @@ console.log('Database test page loaded successfully');
       // Only assign doctors for PAID appointments - pending appointments should not have doctor assignment
       console.log(`DEBUG: paymentStatus = "${validatedData.paymentStatus}", assignedDoctorId = "${validatedData.assignedDoctorId}"`);
       
+      // Doctor assignment is now mandatory - always preserve it
       if (validatedData.assignedDoctorId) {
-        if (validatedData.paymentStatus === 'paid') {
-          console.log(`✅ PAID APPOINTMENT - Doctor ${validatedData.assignedDoctorId} assigned automatically`);
-        } else if (validatedData.paymentStatus === 'pending') {
-          // For pending payments, remove doctor assignment - doctor will be assigned when payment is completed
-          console.log(`⚠️ PENDING PAYMENT - Removing doctor assignment. Doctor will be assigned when payment is completed.`);
-          validatedData.assignedDoctorId = null;
-        } else {
-          // For other payment statuses, preserve assignment but log
-          console.log(`Doctor ${validatedData.assignedDoctorId} assigned to ${validatedData.paymentStatus} appointment`);
-        }
+        console.log(`✅ DOCTOR ASSIGNED - Doctor ${validatedData.assignedDoctorId} assigned to ${validatedData.paymentStatus} appointment`);
+      } else {
+        console.log(`❌ NO DOCTOR - Appointment creation will fail due to missing doctor assignment`);
+        return res.status(400).json({ message: "Doctor assignment is required" });
       }
       
       const appointment = await storage.createAppointment(validatedData);
