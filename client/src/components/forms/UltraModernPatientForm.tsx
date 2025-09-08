@@ -70,6 +70,12 @@ const patientSchema = z.object({
   policyNumber: z.string().optional(),
   groupNumber: z.string().optional(),
   
+  // Appointment Information
+  appointmentDate: z.string().optional(),
+  appointmentTime: z.string().optional(),
+  appointmentType: z.string().optional(),
+  appointmentNotes: z.string().optional(),
+  
   // Additional Notes
   notes: z.string().optional(),
   preferredContactMethod: z.enum(["phone", "email", "sms"], { required_error: "Please select preferred contact method" }),
@@ -113,6 +119,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
       insuranceProvider: "",
       policyNumber: "",
       groupNumber: "",
+      appointmentDate: "",
+      appointmentTime: "",
+      appointmentType: "",
+      appointmentNotes: "",
       notes: "",
       preferredContactMethod: "phone",
       isActive: true,
@@ -182,6 +192,14 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
       description: "Insurance details",
       fields: ["insuranceProvider", "policyNumber", "groupNumber"],
       color: "from-indigo-500 to-blue-600"
+    },
+    {
+      id: "appointments",
+      title: "Appointments",
+      icon: Calendar,
+      description: "Schedule appointment",
+      fields: ["appointmentDate", "appointmentTime", "appointmentType", "appointmentNotes"],
+      color: "from-cyan-500 to-blue-600"
     },
     {
       id: "notes",
@@ -365,9 +383,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="firstName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="flex items-center space-x-2">
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
                                 <User className="h-4 w-4" />
-                                <span>First Name *</span>
+                                <span>First Name</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input {...field} placeholder="Enter first name" className="h-12" data-testid="input-firstName" />
@@ -382,9 +401,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="lastName"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="flex items-center space-x-2">
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
                                 <User className="h-4 w-4" />
-                                <span>Last Name *</span>
+                                <span>Last Name</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input {...field} placeholder="Enter last name" className="h-12" data-testid="input-lastName" />
@@ -399,9 +419,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="dateOfBirth"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="flex items-center space-x-2">
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
                                 <Calendar className="h-4 w-4" />
-                                <span>Date of Birth *</span>
+                                <span>Date of Birth</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input 
@@ -421,7 +442,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="gender"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Gender *</FormLabel>
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
+                                <span>Gender</span>
+                                <span className="text-red-500 text-lg">*</span>
+                              </FormLabel>
                               <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger className="h-12" data-testid="select-gender">
@@ -472,7 +496,8 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                             <FormItem>
                               <FormLabel className="flex items-center space-x-2">
                                 <Phone className="h-4 w-4" />
-                                <span>Phone Number *</span>
+                                <span>Phone Number</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input 
@@ -494,7 +519,8 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                             <FormItem>
                               <FormLabel className="flex items-center space-x-2">
                                 <Mail className="h-4 w-4" />
-                                <span>Email Address *</span>
+                                <span>Email Address</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input 
@@ -517,7 +543,8 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                             <FormItem className="md:col-span-2">
                               <FormLabel className="flex items-center space-x-2">
                                 <MapPin className="h-4 w-4" />
-                                <span>Street Address *</span>
+                                <span>Street Address</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input 
@@ -537,7 +564,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="city"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>City *</FormLabel>
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
+                                <span>City</span>
+                                <span className="text-red-500 text-lg">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
@@ -556,7 +586,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="state"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>State *</FormLabel>
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
+                                <span>State</span>
+                                <span className="text-red-500 text-lg">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
@@ -575,7 +608,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="zipCode"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>ZIP Code *</FormLabel>
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
+                                <span>ZIP Code</span>
+                                <span className="text-red-500 text-lg">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
@@ -624,7 +660,8 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                             <FormItem>
                               <FormLabel className="flex items-center space-x-2">
                                 <User className="h-4 w-4" />
-                                <span>Emergency Contact Name *</span>
+                                <span>Emergency Contact Name</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input 
@@ -646,7 +683,8 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                             <FormItem>
                               <FormLabel className="flex items-center space-x-2">
                                 <Phone className="h-4 w-4" />
-                                <span>Emergency Contact Phone *</span>
+                                <span>Emergency Contact Phone</span>
+                                <span className="text-red-500 text-lg">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input 
@@ -666,7 +704,10 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                           name="emergencyContactRelation"
                           render={({ field }) => (
                             <FormItem className="md:col-span-2">
-                              <FormLabel>Relationship *</FormLabel>
+                              <FormLabel className="flex items-center space-x-2 text-gray-700 font-medium">
+                                <span>Relationship</span>
+                                <span className="text-red-500 text-lg">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input 
                                   {...field} 
@@ -824,6 +865,108 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
                                   data-testid="input-groupNumber"
                                 />
                               </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {/* Appointments Tab */}
+                    {tab.id === "appointments" && (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <FormField
+                            control={form.control}
+                            name="appointmentDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center space-x-2">
+                                  <Calendar className="h-4 w-4" />
+                                  <span>Appointment Date</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    type="date"
+                                    className="h-12"
+                                    data-testid="input-appointmentDate"
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  Schedule initial appointment during registration
+                                </FormDescription>
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name="appointmentTime"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="flex items-center space-x-2">
+                                  <Clock className="h-4 w-4" />
+                                  <span>Appointment Time</span>
+                                </FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    type="time"
+                                    className="h-12"
+                                    data-testid="input-appointmentTime"
+                                  />
+                                </FormControl>
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name="appointmentType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Appointment Type</FormLabel>
+                              <FormControl>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <SelectTrigger className="h-12" data-testid="select-appointmentType">
+                                    <SelectValue placeholder="Select appointment type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="consultation">Initial Consultation</SelectItem>
+                                    <SelectItem value="eye-exam">Comprehensive Eye Exam</SelectItem>
+                                    <SelectItem value="contact-fitting">Contact Lens Fitting</SelectItem>
+                                    <SelectItem value="follow-up">Follow-up Visit</SelectItem>
+                                    <SelectItem value="prescription-update">Prescription Update</SelectItem>
+                                    <SelectItem value="emergency">Emergency Visit</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                              <FormDescription>
+                                Select the type of appointment to schedule
+                              </FormDescription>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="appointmentNotes"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Appointment Notes</FormLabel>
+                              <FormControl>
+                                <Textarea 
+                                  {...field} 
+                                  placeholder="Any special requirements, symptoms, or notes for the appointment"
+                                  className="min-h-[120px]"
+                                  data-testid="textarea-appointmentNotes"
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Provide any relevant information for the scheduled appointment
+                              </FormDescription>
                             </FormItem>
                           )}
                         />
