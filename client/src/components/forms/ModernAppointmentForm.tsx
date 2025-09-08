@@ -136,28 +136,28 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
       subtitle: "Select patient and service",
       icon: UserCheck,
       color: "from-blue-500 to-blue-600",
-      fields: ["patientId", "serviceType", "reasonForVisit"]
+      fields: ["patientId", "serviceType"]
     },
     {
       title: "Schedule",
       subtitle: "Date, time & doctor",
       icon: CalendarDays,
       color: "from-green-500 to-green-600", 
-      fields: ["appointmentDate", "appointmentTime", "duration", "doctorId", "priority", "urgencyLevel"]
+      fields: ["appointmentDate", "appointmentTime"]
     },
     {
       title: "Payment",
       subtitle: "Fees & payment details",
       icon: CreditCard,
       color: "from-purple-500 to-purple-600",
-      fields: ["appointmentFee", "paymentStatus", "paymentMethod", "insuranceAuthorization"]
+      fields: []
     },
     {
       title: "Details",
       subtitle: "Medical details & notes",
       icon: FileText,
       color: "from-orange-500 to-orange-600",
-      fields: ["chiefComplaint", "symptoms", "notes", "followUpRequired", "followUpDate", "status", "referralSource"]
+      fields: []
     }
   ];
 
@@ -212,6 +212,17 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
   // Step validation
   const validateStep = async (stepIndex: number): Promise<boolean> => {
     const stepFields = steps[stepIndex].fields;
+    
+    // If no required fields for this step, mark as valid
+    if (stepFields.length === 0) {
+      setCompletedSteps(prev => {
+        const newSet = new Set(prev);
+        newSet.add(stepIndex);
+        return newSet;
+      });
+      return true;
+    }
+    
     const isValid = await form.trigger(stepFields as any);
     
     if (isValid) {
@@ -397,21 +408,21 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
     const StepIcon = step.icon;
 
     return (
-      <Card className="bg-white border-0 shadow-xl min-h-[500px]">
-        <CardContent className="p-8">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className={`p-3 rounded-full bg-gradient-to-r ${step.color} text-white shadow-lg`}>
-              <StepIcon className="h-6 w-6" />
+      <Card className="bg-white border-0 shadow-lg min-h-[400px]">
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className={`p-2 rounded-full bg-gradient-to-r ${step.color} text-white shadow-md`}>
+              <StepIcon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
-              <p className="text-gray-600">{step.subtitle}</p>
+              <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
+              <p className="text-gray-600 text-sm">{step.subtitle}</p>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {currentStep === 0 && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
                   <div className="flex">
                     <UserCheck className="h-5 w-5 text-blue-400 mr-2" />
@@ -422,7 +433,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="patientId"
@@ -541,7 +552,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="appointmentDate"
@@ -734,7 +745,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <FormField
                     control={form.control}
                     name="appointmentFee"
@@ -931,7 +942,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
                   )}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="referralSource"
@@ -1049,14 +1060,14 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto" data-testid="modern-appointment-form">
+    <div className="w-full max-w-4xl mx-auto" data-testid="modern-appointment-form">
       {/* Header */}
-      <DialogHeader className="mb-8 text-center">
-        <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <DialogHeader className="mb-6 text-center">
+        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           {editingAppointment ? 'Update Appointment' : 'Schedule New Appointment'}
         </DialogTitle>
-        <DialogDescription className="text-gray-600 text-lg">
-          {editingAppointment ? 'Update comprehensive appointment details' : 'Complete appointment scheduling with detailed information'}
+        <DialogDescription className="text-gray-600">
+          {editingAppointment ? 'Update appointment details' : 'Complete appointment scheduling with information'}
         </DialogDescription>
       </DialogHeader>
 
