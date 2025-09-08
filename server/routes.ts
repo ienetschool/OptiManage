@@ -1152,13 +1152,39 @@ console.log('Database test page loaded successfully');
           console.error("Error fetching patient for appointment:", error);
         }
         
+        // Extract fields from customFields if they exist
+        const customFields = appointment.customFields || {};
+        const appointmentFee = customFields.appointmentFee || 0;
+        const assignedDoctorId = customFields.assignedDoctorId || null;
+        const paymentStatus = customFields.paymentStatus || 'pending';
+        const appointmentTime = customFields.appointmentTime || null;
+        
+        // Get doctor name if assigned
+        let doctorName = null;
+        if (assignedDoctorId) {
+          try {
+            const [doctor] = await db.select().from(doctors).where(eq(doctors.id, assignedDoctorId));
+            if (doctor) {
+              doctorName = `${doctor.firstName} ${doctor.lastName}`;
+            }
+          } catch (error) {
+            console.error("Error fetching doctor for appointment:", error);
+          }
+        }
+
         return {
           ...appointment,
           patientName,
           patientCode,
           appointmentNumber: appointment.id.slice(-6),
           serviceType: appointment.service || "consultation",
-          appointmentType: appointment.service || "consultation"
+          appointmentType: appointment.service || "consultation",
+          // Add extracted fields for display
+          appointmentFee: appointmentFee,
+          assignedDoctorId: assignedDoctorId,
+          doctorName: doctorName,
+          paymentStatus: paymentStatus,
+          appointmentTime: appointmentTime
         };
       }));
       
@@ -1235,8 +1261,11 @@ console.log('Database test page loaded successfully');
       console.log(`DEBUG: paymentStatus = "${validatedData.paymentStatus}", assignedDoctorId = "${validatedData.assignedDoctorId}"`);
       
       // Store doctor assignment in customFields since assignedDoctorId doesn't exist in DB
+      // Map form field names to correct field names
+      const assignedDoctorId = validatedData.assignedDoctorId || validatedData.doctorId || null;
+      
       const customFieldsData = {
-        assignedDoctorId: validatedData.assignedDoctorId || null,
+        assignedDoctorId: assignedDoctorId,
         appointmentFee: validatedData.appointmentFee || 0,
         paymentStatus: validatedData.paymentStatus || 'pending',
         paymentMethod: validatedData.paymentMethod || null,
@@ -1247,7 +1276,7 @@ console.log('Database test page loaded successfully');
       
       // Validate doctor is assigned
       if (!customFieldsData.assignedDoctorId) {
-        console.log(`❌ NO DOCTOR - Doctor assignment is required`);
+        console.log(`❌ NO DOCTOR - Doctor assignment is required. Received:`, validatedData);
         return res.status(400).json({ message: "Doctor assignment is required" });
       }
       
