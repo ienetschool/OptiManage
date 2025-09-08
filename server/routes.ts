@@ -1353,13 +1353,13 @@ console.log('Database test page loaded successfully');
             const { medicalInvoices } = await import("@shared/mysql-schema");
             const { sql } = await import("drizzle-orm");
             
-            // Use raw SQL with only guaranteed columns
+            // Use minimal columns to avoid schema issues
             await db.execute(sql`
               INSERT INTO medical_invoices 
-              (invoice_number, patient_id, appointment_id, subtotal, total, status, notes)
+              (invoice_number, patient_id, appointment_id, subtotal, total)
               VALUES 
               (${invoiceData.invoiceNumber}, ${invoiceData.patientId}, ${invoiceData.appointmentId}, 
-               ${invoiceData.subtotal}, ${invoiceData.total}, ${invoiceData.status}, ${invoiceData.notes})
+               ${invoiceData.subtotal}, ${invoiceData.total})
             `);
             
             console.log(`💰 INVOICE CREATED - ${invoiceNumber} for ${patientName}, Amount: $${total.toFixed(2)}`);

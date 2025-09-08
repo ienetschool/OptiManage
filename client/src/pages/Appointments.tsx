@@ -142,9 +142,12 @@ export default function Appointments() {
       key: 'appointmentFee',
       title: 'Fee',
       sortable: true,
-      render: (value) => (
-        <div className="text-sm font-medium">${value ? Number(value).toFixed(2) : '0.00'}</div>
-      )
+      render: (value, appointment) => {
+        const fee = value || appointment.fee || appointment.appointmentFee || 0;
+        return (
+          <div className="text-sm font-medium">${Number(fee).toFixed(2)}</div>
+        );
+      }
     },
     {
       key: 'paymentStatus',

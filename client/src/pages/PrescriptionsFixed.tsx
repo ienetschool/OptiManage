@@ -765,13 +765,21 @@ OptiStore Pro Team`;
                     <p className="text-sm text-gray-600">Appointments waiting for prescription creation</p>
                   </div>
                   <Badge variant="outline" className="px-3 py-1">
-                    {appointments.filter(apt => apt.assignedDoctorId && 
-                      !prescriptions.some(p => p.appointmentId === apt.id)).length} Pending
+                    {appointments.filter(apt => 
+                      apt.assignedDoctorId && 
+                      apt.assignedDoctorId !== null && 
+                      apt.assignedDoctorId !== '' &&
+                      !prescriptions.some(p => p.appointmentId === apt.id)
+                    ).length} Pending
                   </Badge>
                 </div>
 
-                {appointments.filter(apt => apt.assignedDoctorId && 
-                  !prescriptions.some(p => p.appointmentId === apt.id)).length === 0 ? (
+                {appointments.filter(apt => 
+                  apt.assignedDoctorId && 
+                  apt.assignedDoctorId !== null && 
+                  apt.assignedDoctorId !== '' &&
+                  !prescriptions.some(p => p.appointmentId === apt.id)
+                ).length === 0 ? (
                   <div className="text-center py-12">
                     <CalendarCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending appointments</h3>
