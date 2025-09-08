@@ -357,264 +357,556 @@ export default function ScreenshotPatientForm({ onSuccess, onCancel }: Screensho
                         </FormItem>
                       )}
                     />
-              
-              <div className="space-y-2">
-                <Label className="text-red-600 font-medium">Last Name *</Label>
-                <Input
-                  {...register("lastName", { required: "Last name is required" })}
-                  placeholder="Enter last name"
-                  className="h-11"
-                  data-testid="input-lastName"
-                />
-                {errors.lastName && <p className="text-red-500 text-sm">{errors.lastName.message}</p>}
-              </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-red-600 font-medium flex items-center gap-1">
+                            Last Name <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter last name"
+                              className="h-12 text-base border-2 focus:border-blue-500"
+                              data-testid="input-lastName"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="space-y-2">
-                <Label className="text-red-600 font-medium">Date of Birth *</Label>
-                <Input
-                  type="date"
-                  {...register("dateOfBirth", { required: "Date of birth is required" })}
-                  className="h-11"
-                  data-testid="input-dateOfBirth"
-                />
-                {errors.dateOfBirth && <p className="text-red-500 text-sm">{errors.dateOfBirth.message}</p>}
-              </div>
-              
-              <div className="space-y-2">
-                <Label className="text-red-600 font-medium">Gender *</Label>
-                <Select onValueChange={(value) => form.setValue("gender", value)} value={watchedValues.gender}>
-                  <SelectTrigger className="h-11" data-testid="select-gender">
-                    <SelectValue placeholder="Male" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.gender && <p className="text-red-500 text-sm">{errors.gender.message}</p>}
-              </div>
+                    <FormField
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-red-600 font-medium flex items-center gap-1">
+                            <Calendar className="h-4 w-4" />
+                            Date of Birth <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="date"
+                              className="h-12 text-base border-2 focus:border-blue-500"
+                              data-testid="input-dateOfBirth"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-red-600 font-medium flex items-center gap-1">
+                            Gender <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-12 text-base border-2 focus:border-blue-500" data-testid="select-gender">
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="male">Male</SelectItem>
+                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="space-y-2 md:col-span-2">
-                <Label>Blood Group</Label>
-                <Select onValueChange={(value) => form.setValue("bloodType", value)} value={watchedValues.bloodType}>
-                  <SelectTrigger className="h-11" data-testid="select-bloodType">
-                    <SelectValue placeholder="Select blood group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A+">A+</SelectItem>
-                    <SelectItem value="A-">A-</SelectItem>
-                    <SelectItem value="B+">B+</SelectItem>
-                    <SelectItem value="B-">B-</SelectItem>
-                    <SelectItem value="AB+">AB+</SelectItem>
-                    <SelectItem value="AB-">AB-</SelectItem>
-                    <SelectItem value="O+">O+</SelectItem>
-                    <SelectItem value="O-">O-</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={onCancel} data-testid="button-cancel">
-                Cancel
-              </Button>
-              <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-contact">
-                Next: Contact Info →
-              </Button>
-            </div>
-          </TabsContent>
+                    <FormField
+                      control={form.control}
+                      name="bloodType"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="font-medium flex items-center gap-1">
+                            <Activity className="h-4 w-4" />
+                            Blood Group
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-12 text-base border-2 focus:border-blue-500" data-testid="select-bloodType">
+                                <SelectValue placeholder="Select blood group (optional)" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="A+">A+</SelectItem>
+                              <SelectItem value="A-">A-</SelectItem>
+                              <SelectItem value="B+">B+</SelectItem>
+                              <SelectItem value="B-">B-</SelectItem>
+                              <SelectItem value="AB+">AB+</SelectItem>
+                              <SelectItem value="AB-">AB-</SelectItem>
+                              <SelectItem value="O+">O+</SelectItem>
+                              <SelectItem value="O-">O-</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            Blood group information helps in medical emergencies
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={onCancel} data-testid="button-cancel">
+                      Cancel
+                    </Button>
+                    <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-contact">
+                      Next: Contact Info →
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
 
-          {/* Contact Information Tab */}
-          <TabsContent value="contact" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Phone Number</Label>
-                <Input
-                  {...register("phone")}
-                  placeholder="Enter phone number"
-                  className="h-11"
-                  data-testid="input-phone"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Email Address</Label>
-                <Input
-                  type="email"
-                  {...register("email")}
-                  placeholder="Enter email address"
-                  className="h-11"
-                  data-testid="input-email"
-                />
-              </div>
+              {/* Contact Information Tab */}
+              <TabsContent value="contact" className="space-y-6 mt-0">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="bg-green-50 p-4 rounded-lg border-l-4 border-green-400">
+                    <h3 className="font-semibold text-green-900 flex items-center gap-2">
+                      <Phone className="h-5 w-5" />
+                      Contact Information
+                    </h3>
+                    <p className="text-green-700 text-sm mt-1">
+                      How can we reach the patient when needed?
+                    </p>
+                  </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label>Address</Label>
-                <Textarea
-                  {...register("address")}
-                  placeholder="Enter full address"
-                  rows={3}
-                  data-testid="textarea-address"
-                />
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium flex items-center gap-1">
+                            <Phone className="h-4 w-4" />
+                            Phone Number
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="+1 (555) 123-4567"
+                              className="h-12 text-base border-2 focus:border-green-500"
+                              data-testid="input-phone"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium flex items-center gap-1">
+                            <Mail className="h-4 w-4" />
+                            Email Address
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="email"
+                              placeholder="patient@example.com"
+                              className="h-12 text-base border-2 focus:border-green-500"
+                              data-testid="input-email"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="space-y-2">
-                <Label>Emergency Contact Name</Label>
-                <Input
-                  {...register("emergencyContactName")}
-                  placeholder="Enter emergency contact name"
-                  className="h-11"
-                  data-testid="input-emergencyContactName"
-                />
-              </div>
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="font-medium flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            Home Address
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="Enter complete address with street, city, state, and postal code"
+                              rows={3}
+                              className="text-base border-2 focus:border-green-500"
+                              data-testid="textarea-address"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
+                      ← Previous
+                    </Button>
+                    <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-emergency">
+                      Next: Emergency Contact →
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
 
-              <div className="space-y-2">
-                <Label>Emergency Contact Phone</Label>
-                <Input
-                  {...register("emergencyContactPhone")}
-                  placeholder="Enter emergency contact phone"
-                  className="h-11"
-                  data-testid="input-emergencyContactPhone"
-                />
-              </div>
+              {/* Emergency Contact Tab */}
+              <TabsContent value="emergency" className="space-y-6 mt-0">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
+                    <h3 className="font-semibold text-orange-900 flex items-center gap-2">
+                      <Users className="h-5 w-5" />
+                      Emergency Contact Information
+                    </h3>
+                    <p className="text-orange-700 text-sm mt-1">
+                      Who should we contact in case of an emergency?
+                    </p>
+                  </div>
 
-              <div className="space-y-2 md:col-span-2">
-                <Label>Relationship to Patient</Label>
-                <Select onValueChange={(value) => form.setValue("emergencyContactRelation", value)} value={watchedValues.emergencyContactRelation}>
-                  <SelectTrigger className="h-11" data-testid="select-emergencyContactRelation">
-                    <SelectValue placeholder="Select relationship" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="spouse">Spouse</SelectItem>
-                    <SelectItem value="parent">Parent</SelectItem>
-                    <SelectItem value="child">Child</SelectItem>
-                    <SelectItem value="sibling">Sibling</SelectItem>
-                    <SelectItem value="friend">Friend</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            
-            <div className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
-                ← Previous
-              </Button>
-              <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-medical">
-                Next: Medical →
-              </Button>
-            </div>
-          </TabsContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Emergency Contact Name</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Enter contact person's full name"
+                              className="h-12 text-base border-2 focus:border-orange-500"
+                              data-testid="input-emergencyContactName"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-          {/* Medical Information Tab */}
-          <TabsContent value="medical" className="space-y-6 mt-6">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label>Medical History</Label>
-                <Textarea
-                  {...register("medicalHistory")}
-                  placeholder="Enter any relevant medical history, previous surgeries, conditions..."
-                  rows={4}
-                  data-testid="textarea-medicalHistory"
-                />
-              </div>
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Emergency Contact Phone</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="+1 (555) 987-6543"
+                              className="h-12 text-base border-2 focus:border-orange-500"
+                              data-testid="input-emergencyContactPhone"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="space-y-2">
-                <Label>Current Medications</Label>
-                <Textarea
-                  {...register("currentMedications")}
-                  placeholder="List all current medications, dosages, and frequency..."
-                  rows={3}
-                  data-testid="textarea-currentMedications"
-                />
-              </div>
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactRelation"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="font-medium">Relationship to Patient</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="h-12 text-base border-2 focus:border-orange-500" data-testid="select-emergencyContactRelation">
+                                <SelectValue placeholder="Select relationship" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="spouse">Spouse</SelectItem>
+                              <SelectItem value="parent">Parent</SelectItem>
+                              <SelectItem value="child">Child</SelectItem>
+                              <SelectItem value="sibling">Sibling</SelectItem>
+                              <SelectItem value="grandparent">Grandparent</SelectItem>
+                              <SelectItem value="friend">Friend</SelectItem>
+                              <SelectItem value="guardian">Legal Guardian</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
+                      ← Previous
+                    </Button>
+                    <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-medical">
+                      Next: Medical Info →
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
 
-              <div className="space-y-2">
-                <Label>Allergies & Reactions</Label>
-                <Textarea
-                  {...register("allergies")}
-                  placeholder="List any known allergies or adverse reactions..."
-                  rows={3}
-                  data-testid="textarea-allergies"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
-                ← Previous
-              </Button>
-              <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-insurance">
-                Next: Insurance →
-              </Button>
-            </div>
-          </TabsContent>
+              {/* Medical Information Tab */}
+              <TabsContent value="medical" className="space-y-6 mt-0">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-400">
+                    <h3 className="font-semibold text-red-900 flex items-center gap-2">
+                      <Heart className="h-5 w-5" />
+                      Medical History &amp; Health Information
+                    </h3>
+                    <p className="text-red-700 text-sm mt-1">
+                      Critical medical information for safe and effective treatment
+                    </p>
+                  </div>
 
-          {/* Insurance Information Tab */}
-          <TabsContent value="insurance" className="space-y-6 mt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Insurance Provider</Label>
-                <Input
-                  {...register("insuranceProvider")}
-                  placeholder="Enter insurance provider"
-                  className="h-11"
-                  data-testid="input-insuranceProvider"
-                />
-              </div>
+                  <div className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="allergies"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium text-red-700">
+                            🚨 Allergies &amp; Adverse Reactions
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="List any known allergies to medications, foods, materials, or environmental factors..."
+                              rows={3}
+                              className="text-base border-2 border-red-200 focus:border-red-500"
+                              data-testid="textarea-allergies"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-red-600">
+                            Please be specific about allergic reactions and severity
+                          </FormDescription>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-              <div className="space-y-2">
-                <Label>Insurance Number</Label>
-                <Input
-                  {...register("insuranceNumber")}
-                  placeholder="Enter insurance number"
-                  className="h-11"
-                  data-testid="input-insuranceNumber"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
-                ← Previous
-              </Button>
-              <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-loyalty">
-                Next: Loyalty →
-              </Button>
-            </div>
-          </TabsContent>
+                    <FormField
+                      control={form.control}
+                      name="currentMedications"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Current Medications</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="List all current medications including prescriptions, over-the-counter drugs, vitamins, and supplements with dosages..."
+                              rows={4}
+                              className="text-base border-2 focus:border-red-500"
+                              data-testid="textarea-currentMedications"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
 
-          {/* Loyalty Information Tab */}
-          <TabsContent value="loyalty" className="space-y-6 mt-6">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label>Additional Notes</Label>
-                <Textarea
-                  {...register("notes")}
-                  placeholder="Enter any additional notes or comments..."
-                  rows={4}
-                  data-testid="textarea-notes"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
-                ← Previous
-              </Button>
-              <Button 
-                type="submit" 
-                className="bg-blue-600 hover:bg-blue-700" 
-                disabled={createPatientMutation.isPending}
-                data-testid="button-register"
-              >
-                {createPatientMutation.isPending ? "Registering..." : "Register Patient"}
-              </Button>
-            </div>
-          </TabsContent>
-        </form>
+                    <FormField
+                      control={form.control}
+                      name="medicalHistory"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Medical History</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              placeholder="Previous surgeries, major illnesses, chronic conditions, family medical history..."
+                              rows={4}
+                              className="text-base border-2 focus:border-red-500"
+                              data-testid="textarea-medicalHistory"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
+                      ← Previous
+                    </Button>
+                    <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-insurance">
+                      Next: Insurance →
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              {/* Insurance Information Tab */}
+              <TabsContent value="insurance" className="space-y-6 mt-0">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-400">
+                    <h3 className="font-semibold text-purple-900 flex items-center gap-2">
+                      <Shield className="h-5 w-5" />
+                      Insurance Information
+                    </h3>
+                    <p className="text-purple-700 text-sm mt-1">
+                      Insurance details for billing and coverage verification
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="insuranceProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Insurance Provider</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="e.g., Blue Cross Blue Shield, Aetna, Cigna"
+                              className="h-12 text-base border-2 focus:border-purple-500"
+                              data-testid="input-insuranceProvider"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="insuranceNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-medium">Policy/Member Number</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder="Insurance policy or member ID number"
+                              className="h-12 text-base border-2 focus:border-purple-500"
+                              data-testid="input-insuranceNumber"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-600" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
+                      ← Previous
+                    </Button>
+                    <Button type="button" onClick={nextTab} className="bg-blue-600 hover:bg-blue-700" data-testid="button-next-notes">
+                      Next: Notes →
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              {/* Notes Tab */}
+              <TabsContent value="notes" className="space-y-6 mt-0">
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  <div className="bg-gray-50 p-4 rounded-lg border-l-4 border-gray-400">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <FileText className="h-5 w-5" />
+                      Additional Notes &amp; Comments
+                    </h3>
+                    <p className="text-gray-700 text-sm mt-1">
+                      Any additional information that might be helpful for patient care
+                    </p>
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-medium">Additional Notes</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            {...field}
+                            placeholder="Special considerations, preferences, accessibility needs, communication preferences, or any other relevant information..."
+                            rows={6}
+                            className="text-base border-2 focus:border-gray-500"
+                            data-testid="textarea-notes"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          This information helps our team provide personalized care
+                        </FormDescription>
+                        <FormMessage className="text-red-600" />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-between pt-6 border-t">
+                    <Button type="button" variant="outline" onClick={prevTab} data-testid="button-prev">
+                      ← Previous
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      className="bg-green-600 hover:bg-green-700 min-w-[200px]" 
+                      disabled={createPatientMutation.isPending}
+                      data-testid="button-register"
+                    >
+                      {createPatientMutation.isPending ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Registering...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5" />
+                          Complete Registration
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                </motion.div>
+              </TabsContent>
+            </AnimatePresence>
+          </form>
+        </Form>
       </Tabs>
-    </>
+    </div>
   );
 }
