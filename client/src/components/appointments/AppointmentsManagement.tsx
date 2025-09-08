@@ -55,7 +55,7 @@ import {
   ModernTabHeader,
   ModernProgressBar 
 } from "@/components/ui/modern-components";
-import AppointmentForm from "@/components/appointments/AppointmentForm";
+import ComprehensiveAppointmentForm from "@/components/forms/ComprehensiveAppointmentForm";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -639,7 +639,7 @@ const AppointmentsManagement: React.FC = () => {
       {/* Create/Edit Appointment Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-          <AppointmentForm
+          <ComprehensiveAppointmentForm
             onSuccess={() => setShowCreateDialog(false)}
             onCancel={() => setShowCreateDialog(false)}
             editingAppointment={selectedAppointment}

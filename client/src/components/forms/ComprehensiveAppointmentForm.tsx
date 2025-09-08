@@ -202,7 +202,11 @@ const ComprehensiveAppointmentForm: React.FC<ComprehensiveAppointmentFormProps> 
     const isValid = await form.trigger(stepFields as any);
     
     if (isValid) {
-      setCompletedSteps(prev => new Set([...prev, stepIndex]));
+      setCompletedSteps(prev => {
+        const newSet = new Set(prev);
+        newSet.add(stepIndex);
+        return newSet;
+      });
     }
     
     return isValid;
