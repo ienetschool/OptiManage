@@ -258,7 +258,7 @@ const ComprehensiveAppointmentForm: React.FC<ComprehensiveAppointmentFormProps> 
         appointmentNumber: editingAppointment?.appointmentNumber || `APT-${Date.now()}`,
       };
       
-      return apiRequest(endpoint, method, appointmentData);
+      return apiRequest(method, endpoint, appointmentData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
