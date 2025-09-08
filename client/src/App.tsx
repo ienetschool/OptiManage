@@ -12,7 +12,7 @@ import Inventory from "@/pages/Inventory";
 
 import Appointments from "@/pages/Appointments";
 import Customers from "@/pages/Customers";
-import Patients from "@/pages/Patients";
+import PatientsSimple from "@/pages/PatientsSimple";
 import PatientManagement from "@/pages/PatientManagement";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import PrescriptionsFixed from "@/pages/PrescriptionsFixed";
@@ -99,7 +99,7 @@ function Router() {
       </Route>
       <Route path="/patient-portal/patients">
         <PatientPortalLayout title="Patient Information" description="View and update your patient details">
-          <Patients />
+          <PatientsSimple />
         </PatientPortalLayout>
       </Route>
 
@@ -196,7 +196,7 @@ function Router() {
           <AppLayout>
             <Navigation />
             <div className="flex-1 flex flex-col overflow-hidden">
-              <Patients />
+              <PatientsSimple />
             </div>
           </AppLayout>
         ) : (

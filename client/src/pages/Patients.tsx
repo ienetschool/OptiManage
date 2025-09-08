@@ -1753,9 +1753,9 @@ export default function Patients() {
               </Button>
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
-                  <Button>
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    New Patient
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 py-4 text-lg shadow-xl border-2 border-white/20 transform hover:scale-105 transition-all duration-200">
+                    <UserPlus className="mr-3 h-6 w-6" />
+                    ➕ REGISTER NEW PATIENT
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
@@ -1919,20 +1919,7 @@ export default function Patients() {
                 <FileText className="mr-2 h-4 w-4" />
                 Export
               </Button>
-              <Dialog open={appointmentOpen} onOpenChange={setAppointmentOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <CalendarPlus className="mr-2 h-4 w-4" />
-                    New Appointment
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>Schedule New Appointment</DialogTitle>
-                    <DialogDescription>
-                      Schedule an appointment for a patient
-                    </DialogDescription>
-                  </DialogHeader>
+            </div>
                   
                   <form onSubmit={onAppointmentSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
