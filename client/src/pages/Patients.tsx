@@ -53,7 +53,7 @@ import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import ScreenshotPatientForm from "@/components/forms/ScreenshotPatientForm";
+import UltraModernPatientForm from "@/components/forms/UltraModernPatientForm";
 import { 
   insertPatientSchema, 
   type Patient, 
@@ -1758,8 +1758,8 @@ export default function Patients() {
                     New Patient
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <ScreenshotPatientForm 
+                <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
+                  <UltraModernPatientForm 
                     onSuccess={() => setOpen(false)}
                     onCancel={() => setOpen(false)}
                   />
