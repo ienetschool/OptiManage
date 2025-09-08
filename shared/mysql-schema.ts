@@ -208,7 +208,7 @@ export const medicalAppointments = mysqlTable("medical_appointments", {
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
 
-// Appointments (General appointments system)
+// Appointments (General appointments system) - Match actual database schema
 export const appointments = mysqlTable("appointments", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
   patientId: varchar("patient_id", { length: 36 }).notNull(),
@@ -221,6 +221,9 @@ export const appointments = mysqlTable("appointments", {
   customFields: json("custom_fields"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+  // New fields need to be added to actual database table manually
+  // assignedDoctorId: varchar("assigned_doctor_id", { length: 36 }), // TODO: Add to DB
+  // appointmentFee: decimal("appointment_fee", { precision: 10, scale: 2 }), // TODO: Add to DB
 });
 
 // Prescriptions
@@ -898,7 +901,13 @@ export const insertPatientSchema = createInsertSchema(patients, {
 });
 export const insertDoctorSchema = createInsertSchema(doctors);
 export const insertMedicalAppointmentSchema = createInsertSchema(medicalAppointments);
-export const insertAppointmentSchema = createInsertSchema(appointments);
+export const insertAppointmentSchema = createInsertSchema(appointments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  assignedDoctorId: z.string().min(1, "Doctor assignment is required"),
+});
 export const insertPrescriptionSchema = createInsertSchema(prescriptions);
 export const insertSaleSchema = createInsertSchema(sales);
 export const insertStaffSchema = createInsertSchema(staff);

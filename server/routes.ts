@@ -1234,15 +1234,38 @@ console.log('Database test page loaded successfully');
       // Only assign doctors for PAID appointments - pending appointments should not have doctor assignment
       console.log(`DEBUG: paymentStatus = "${validatedData.paymentStatus}", assignedDoctorId = "${validatedData.assignedDoctorId}"`);
       
-      // Doctor assignment is now mandatory - always preserve it
-      if (validatedData.assignedDoctorId) {
-        console.log(`✅ DOCTOR ASSIGNED - Doctor ${validatedData.assignedDoctorId} assigned to ${validatedData.paymentStatus} appointment`);
-      } else {
-        console.log(`❌ NO DOCTOR - Appointment creation will fail due to missing doctor assignment`);
+      // Store doctor assignment in customFields since assignedDoctorId doesn't exist in DB
+      const customFieldsData = {
+        assignedDoctorId: validatedData.assignedDoctorId || null,
+        appointmentFee: validatedData.appointmentFee || 0,
+        paymentStatus: validatedData.paymentStatus || 'pending',
+        paymentMethod: validatedData.paymentMethod || null,
+        appointmentTime: validatedData.appointmentTime || null,
+        reasonForVisit: validatedData.reasonForVisit || null,
+        couponCode: validatedData.couponCode || null
+      };
+      
+      // Validate doctor is assigned
+      if (!customFieldsData.assignedDoctorId) {
+        console.log(`❌ NO DOCTOR - Doctor assignment is required`);
         return res.status(400).json({ message: "Doctor assignment is required" });
       }
       
-      const appointment = await storage.createAppointment(validatedData);
+      console.log(`✅ DOCTOR ASSIGNED - Doctor ${customFieldsData.assignedDoctorId} assigned, Fee: $${customFieldsData.appointmentFee}`);
+      
+      // Create appointment with current database schema
+      const appointmentData = {
+        patientId: validatedData.patientId,
+        storeId: validatedData.storeId,
+        service: validatedData.serviceType || validatedData.service || "consultation",
+        appointmentDate: new Date(validatedData.appointmentDate),
+        duration: validatedData.duration || 30,
+        status: validatedData.status || 'scheduled',
+        notes: validatedData.notes || validatedData.reasonForVisit || '',
+        customFields: customFieldsData
+      };
+      
+      const appointment = await storage.createAppointment(appointmentData);
       
       // Enhanced billing and invoice generation
       if (validatedData.paymentStatus === 'paid' && validatedData.appointmentFee) {
