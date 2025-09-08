@@ -121,10 +121,7 @@ const UltraModernPatientForm: React.FC<UltraModernPatientFormProps> = ({ onSucce
 
   // Create patient mutation
   const createPatientMutation = useMutation({
-    mutationFn: (data: PatientFormData) => apiRequest("/api/patients", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: (data: PatientFormData) => apiRequest("/api/patients", "POST", data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       toast({
