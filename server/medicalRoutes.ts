@@ -41,12 +41,33 @@ export function registerMedicalRoutes(app: Express) {
   // Patients Routes
   app.get("/api/patients", isAuthenticated, async (req, res) => {
     try {
-      const patientsList = await db.select().from(patients).orderBy(desc(patients.createdAt));
+      const patientsList = await db.select({
+        id: patients.id,
+        patientCode: patients.patientCode,
+        firstName: patients.firstName,
+        lastName: patients.lastName,
+        email: patients.email,
+        phone: patients.phone,
+        dateOfBirth: patients.dateOfBirth,
+        gender: patients.gender,
+        address: patients.address,
+        emergencyContactName: patients.emergencyContactName,
+        emergencyContactPhone: patients.emergencyContactPhone,
+        emergencyContactRelation: patients.emergencyContactRelation,
+        insuranceProvider: patients.insuranceProvider,
+        insuranceNumber: patients.insuranceNumber,
+        bloodType: patients.bloodType,
+        allergies: patients.allergies,
+        medicalHistory: patients.medicalHistory,
+        currentMedications: patients.currentMedications,
+        notes: patients.notes,
+        isActive: patients.isActive,
+        customFields: patients.customFields,
+        createdAt: patients.createdAt,
+        updatedAt: patients.updatedAt,
+      }).from(patients).orderBy(desc(patients.createdAt));
       
-      // MySQL schema already uses camelCase - no transformation needed
-      const transformedPatients = patientsList;
-      
-      res.json(transformedPatients);
+      res.json(patientsList);
     } catch (error) {
       console.error("Error fetching patients:", error);
       res.status(500).json({ message: "Failed to fetch patients" });
