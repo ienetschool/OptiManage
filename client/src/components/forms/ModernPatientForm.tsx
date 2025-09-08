@@ -324,11 +324,17 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
   });
 
   const onSubmit = async (data: PatientFormData) => {
-    console.log("Form submission started", data);
+    console.log("=== FORM SUBMISSION STARTED ===");
+    console.log("Form data received:", data);
+    console.log("Patient mutation status:", patientMutation.status);
     
-    // Skip validation for now and submit directly
-    console.log("Submitting patient data...");
-    patientMutation.mutate(data);
+    try {
+      console.log("About to call patientMutation.mutate...");
+      patientMutation.mutate(data);
+      console.log("patientMutation.mutate called successfully");
+    } catch (error) {
+      console.error("Error in onSubmit:", error);
+    }
   };
 
   const renderStepIndicator = () => (
@@ -1369,7 +1375,14 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
 
             {currentStep === steps.length - 1 ? (
               <Button
-                type="submit"
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log("Register Patient button clicked!");
+                  const formData = form.getValues();
+                  console.log("Current form data:", formData);
+                  onSubmit(formData);
+                }}
                 disabled={patientMutation.isPending}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 shadow-lg transition-all"
                 data-testid="button-submit"
