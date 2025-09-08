@@ -53,6 +53,7 @@ import EnhancedDataTable, { Column } from "@/components/EnhancedDataTable";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import ScreenshotPatientForm from "@/components/forms/ScreenshotPatientForm";
 import { 
   insertPatientSchema, 
   type Patient, 
@@ -200,13 +201,14 @@ export default function Patients() {
 
 
   // Patient form
-  const form = useForm<InsertPatient>({
-    resolver: zodResolver(insertPatientSchema.omit({ patientCode: true })),
+  // Modern patient form with proper schema
+  const form = useForm({
     defaultValues: {
       firstName: "",
       lastName: "",
-      dateOfBirth: undefined,
-      gender: "male",
+      dateOfBirth: "",
+      gender: "",
+      bloodType: "",
       phone: "",
       email: "",
       address: "",
@@ -215,12 +217,10 @@ export default function Patients() {
       emergencyContactRelation: "",
       allergies: "",
       medicalHistory: "",
+      currentMedications: "",
       insuranceProvider: "",
       insuranceNumber: "",
-      bloodType: "",
-      currentMedications: "",
       notes: "",
-      isActive: true,
     },
   });
 
@@ -1759,60 +1759,11 @@ export default function Patients() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Register New Patient</DialogTitle>
-                    <DialogDescription>
-                      Complete patient registration with comprehensive medical information
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-5">
-                      <TabsTrigger value="basic" className="relative">
-                        Basic Info
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" title="Required fields"></span>
-                      </TabsTrigger>
-                      <TabsTrigger value="contact" className="relative">
-                        Contact
-                        <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" title="Required fields"></span>
-                      </TabsTrigger>
-                      <TabsTrigger value="medical">Medical</TabsTrigger>
-                      <TabsTrigger value="insurance">Insurance</TabsTrigger>
-                      <TabsTrigger value="loyalty">Loyalty</TabsTrigger>
-                    </TabsList>
-
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Basic Information Tab */}
-                        <TabsContent value="basic" className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="firstName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-red-600 font-semibold">First Name *</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Enter first name" className="border-red-300 focus:border-red-500" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={form.control}
-                              name="lastName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-red-600 font-semibold">Last Name *</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} placeholder="Enter last name" className="border-red-300 focus:border-red-500" />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                  <ScreenshotPatientForm 
+                    onSuccess={() => setOpen(false)}
+                    onCancel={() => setOpen(false)}
+                  />
+                </DialogContent>
 
                             <FormField
                               control={form.control}
@@ -1853,7 +1804,7 @@ export default function Patients() {
 
                             <FormField
                               control={form.control}
-                              name="bloodGroup"
+                              name="bloodType"
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Blood Group</FormLabel>
