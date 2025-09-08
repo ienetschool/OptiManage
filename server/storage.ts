@@ -261,38 +261,37 @@ export class MySQLStorage implements IStorage {
       // Import SQL helper
       const { sql } = await import("drizzle-orm");
       
-      // Use raw SQL query to avoid Drizzle column mapping issues
+      // Use raw SQL query with only guaranteed columns to avoid schema issues
       const invoicesResult = await db.execute(sql`
         SELECT 
           id, invoice_number, patient_id, appointment_id, 
-          issue_date, due_date, subtotal, tax, total, 
-          status, notes, custom_fields, created_at, updated_at
+          subtotal, tax, total, status, notes, created_at
         FROM medical_invoices 
         ORDER BY created_at DESC
       `);
       
-      const invoices = Array.isArray(invoicesResult) ? invoicesResult : invoicesResult.rows || [];
+      const invoices = Array.isArray(invoicesResult) ? invoicesResult : (invoicesResult as any).rows || [];
       
-      // Transform invoices to match expected format using raw query results
-      const transformedInvoices = invoices.map(invoice => ({
+      // Transform invoices to match expected format using available columns
+      const transformedInvoices = invoices.map((invoice: any) => ({
         id: invoice.id,
         invoiceNumber: invoice.invoice_number,
         patientId: invoice.patient_id,
         customerId: null, // Not in medical invoice schema
         storeId: "store001", // Default store
         appointmentId: invoice.appointment_id,
-        issueDate: invoice.issue_date || invoice.created_at,
-        dueDate: invoice.due_date || invoice.created_at,
+        issueDate: invoice.created_at, // Use created date as issue date
+        dueDate: invoice.created_at, // Use created date as due date
         subtotal: parseFloat(invoice.subtotal?.toString() || '0'),
         taxAmount: parseFloat(invoice.tax?.toString() || '0'),
-        discountAmount: 0, // Not in current MySQL schema
+        discountAmount: 0, // Default value
         totalAmount: parseFloat(invoice.total?.toString() || '0'),
         status: invoice.status || 'pending',
-        paymentMethod: 'cash', // Default since not in current MySQL schema
-        notes: invoice.notes,
-        items: invoice.custom_fields,
+        paymentMethod: 'cash', // Default value
+        notes: invoice.notes || '',
+        items: [], // Default empty array
         createdAt: invoice.created_at,
-        updatedAt: invoice.updated_at
+        updatedAt: invoice.created_at
       }));
       
       console.log(`✅ INVOICES FETCHED - Found ${transformedInvoices.length} invoices in database`);

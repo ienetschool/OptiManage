@@ -1349,9 +1349,19 @@ console.log('Database test page loaded successfully');
               }])
             };
 
-            // Import medicalInvoices from schema
+            // Import medicalInvoices from schema and SQL
             const { medicalInvoices } = await import("@shared/mysql-schema");
-            await db.insert(medicalInvoices).values(invoiceData);
+            const { sql } = await import("drizzle-orm");
+            
+            // Use raw SQL with basic columns to avoid schema mapping issues
+            await db.execute(sql`
+              INSERT INTO medical_invoices 
+              (invoice_number, patient_id, appointment_id, subtotal, tax, total, status, notes)
+              VALUES 
+              (${invoiceData.invoiceNumber}, ${invoiceData.patientId}, ${invoiceData.appointmentId}, 
+               ${invoiceData.subtotal}, ${invoiceData.tax}, ${invoiceData.total}, ${invoiceData.status}, 
+               ${invoiceData.notes})
+            `);
             
             console.log(`💰 INVOICE CREATED - ${invoiceNumber} for ${patientName}, Amount: $${total.toFixed(2)}`);
             console.log(`   Service: ${servicePriceInfo.description}`);
