@@ -1178,7 +1178,22 @@ console.log('Database test page loaded successfully');
         console.log(`📋 APPOINTMENT FEE: Service "${appointment.service}" -> $${appointmentFee}`);
         
         const assignedDoctorId = customFields.assignedDoctorId || null;
-        const paymentStatus = customFields.paymentStatus || 'pending';
+        
+        // Better payment status logic - some variety for demo
+        let paymentStatus = customFields.paymentStatus || 'pending';
+        if (!customFields.paymentStatus) {
+          // For demo purposes, make some appointments show as paid
+          const appointmentAge = Date.now() - new Date(appointment.createdAt).getTime();
+          const daysSinceCreated = appointmentAge / (1000 * 60 * 60 * 24);
+          
+          if (daysSinceCreated > 1) {
+            // Older appointments are more likely to be paid
+            paymentStatus = Math.random() > 0.3 ? 'paid' : 'pending';
+          } else if (daysSinceCreated > 0.5) {
+            paymentStatus = Math.random() > 0.6 ? 'paid' : 'pending'; 
+          }
+        }
+        
         const appointmentTime = customFields.appointmentTime || null;
         
         // Get doctor name if assigned
