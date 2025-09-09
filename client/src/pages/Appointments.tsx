@@ -210,7 +210,20 @@ export default function Appointments() {
 
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: InsertAppointment) => {
-      await apiRequest("POST", "/api/appointments", data);
+      // Clean up undefined values
+      const cleanData = {
+        ...data,
+        assignedDoctorId: data.assignedDoctorId || null,
+        customFields: {
+          assignedDoctorId: data.assignedDoctorId || null,
+          appointmentFee: data.appointmentFee,
+          paymentStatus: data.paymentStatus,
+          paymentMethod: data.paymentMethod,
+          appointmentTime: data.appointmentTime
+        }
+      };
+      console.log("🚀 Submitting appointment data:", cleanData);
+      await apiRequest("POST", "/api/appointments", cleanData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
