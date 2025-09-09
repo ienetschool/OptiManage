@@ -1363,3 +1363,169 @@ export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
 export type InsertLeaveRequest = z.infer<typeof insertLeaveRequestSchema>;
 export type InsertPayroll = z.infer<typeof insertPayrollSchema>;
 export type InsertNotificationHR = z.infer<typeof insertNotificationHRSchema>;
+
+// ===== COMPREHENSIVE PATIENT MANAGEMENT SCHEMA =====
+
+// Patient Insurance Information
+export const patientInsurance = pgTable("patient_insurance", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientId: uuid("patient_id").notNull(),
+  policyNumber: varchar("policy_number", { length: 100 }).notNull(),
+  providerName: varchar("provider_name", { length: 200 }).notNull(),
+  coverageAmount: decimal("coverage_amount", { precision: 12, scale: 2 }),
+  effectiveDate: timestamp("effective_date").notNull(),
+  expirationDate: timestamp("expiration_date").notNull(),
+  groupNumber: varchar("group_number", { length: 100 }),
+  memberNumber: varchar("member_number", { length: 100 }),
+  copayAmount: decimal("copay_amount", { precision: 6, scale: 2 }),
+  deductibleAmount: decimal("deductible_amount", { precision: 8, scale: 2 }),
+  isPrimary: boolean("is_primary").default(true),
+  isActive: boolean("is_active").default(true),
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Patient Coupons System
+export const patientCoupons = pgTable("patient_coupons", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientId: uuid("patient_id").notNull(),
+  couponCode: varchar("coupon_code", { length: 50 }).unique().notNull(),
+  couponType: varchar("coupon_type", { length: 50 }).notNull(), // 'percentage', 'fixed_amount', 'service_discount'
+  discountValue: decimal("discount_value", { precision: 8, scale: 2 }).notNull(),
+  applicableServices: jsonb("applicable_services"), // Array of service types
+  minimumPurchaseAmount: decimal("minimum_purchase_amount", { precision: 8, scale: 2 }),
+  maximumDiscountAmount: decimal("maximum_discount_amount", { precision: 8, scale: 2 }),
+  issueDate: timestamp("issue_date").defaultNow(),
+  expirationDate: timestamp("expiration_date").notNull(),
+  redemptionLimit: integer("redemption_limit").default(1), // How many times can be used
+  timesRedeemed: integer("times_redeemed").default(0),
+  isActive: boolean("is_active").default(true),
+  createdBy: varchar("created_by", { length: 100 }),
+  notes: text("notes"),
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Coupon Redemption Audit Trail
+export const couponRedemptions = pgTable("coupon_redemptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  couponId: uuid("coupon_id").notNull(),
+  patientId: uuid("patient_id").notNull(),
+  transactionType: varchar("transaction_type", { length: 50 }).notNull(), // 'appointment', 'lab_test', 'pharmacy', 'optical', 'invoice'
+  transactionId: uuid("transaction_id").notNull(), // Reference to the specific transaction
+  originalAmount: decimal("original_amount", { precision: 10, scale: 2 }).notNull(),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  finalAmount: decimal("final_amount", { precision: 10, scale: 2 }).notNull(),
+  redemptionDate: timestamp("redemption_date").defaultNow(),
+  staffUserId: varchar("staff_user_id", { length: 100 }),
+  notes: text("notes"),
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Patient Payment History
+export const patientPayments = pgTable("patient_payments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  patientId: uuid("patient_id").notNull(),
+  transactionType: varchar("transaction_type", { length: 50 }).notNull(),
+  transactionId: uuid("transaction_id").notNull(),
+  paymentAmount: decimal("payment_amount", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+  paymentDate: timestamp("payment_date").defaultNow(),
+  paymentStatus: varchar("payment_status", { length: 20 }).default("completed"),
+  notes: text("notes"),
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow()
+});
+
+// Enhanced Patient Demographics (extending existing patients table concept)
+export const comprehensivePatients = pgTable("comprehensive_patients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  // Basic Demographics  
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  middleName: varchar("middle_name", { length: 100 }),
+  dateOfBirth: date("date_of_birth").notNull(),
+  gender: varchar("gender", { length: 20 }),
+  email: varchar("email", { length: 200 }),
+  phone: varchar("phone", { length: 20 }).notNull(),
+  alternatePhone: varchar("alternate_phone", { length: 20 }),
+  
+  // Address Information
+  streetAddress: varchar("street_address", { length: 200 }),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 50 }),
+  zipCode: varchar("zip_code", { length: 20 }),
+  country: varchar("country", { length: 100 }).default("USA"),
+  
+  // Emergency Contact
+  emergencyContactName: varchar("emergency_contact_name", { length: 200 }),
+  emergencyContactPhone: varchar("emergency_contact_phone", { length: 20 }),
+  emergencyContactRelation: varchar("emergency_contact_relation", { length: 50 }),
+  
+  // Medical Information
+  bloodType: varchar("blood_type", { length: 5 }),
+  allergies: jsonb("allergies"), // Array of allergy information
+  medications: jsonb("medications"), // Current medications
+  medicalHistory: jsonb("medical_history"), // Past medical conditions
+  
+  // Administrative
+  patientCode: varchar("patient_code", { length: 50 }).unique(),
+  preferredLanguage: varchar("preferred_language", { length: 50 }).default("English"),
+  communicationPreferences: jsonb("communication_preferences"), // Email, SMS, Phone preferences
+  isActive: boolean("is_active").default(true),
+  registrationDate: timestamp("registration_date").defaultNow(),
+  lastVisitDate: timestamp("last_visit_date"),
+  
+  // Tracking
+  customFields: jsonb("custom_fields"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Create Zod schemas for new tables
+export const insertPatientInsuranceSchema = createInsertSchema(patientInsurance).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPatientCouponSchema = createInsertSchema(patientCoupons).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCouponRedemptionSchema = createInsertSchema(couponRedemptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPatientPaymentSchema = createInsertSchema(patientPayments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertComprehensivePatientSchema = createInsertSchema(comprehensivePatients).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// New types
+export type PatientInsurance = typeof patientInsurance.$inferSelect;
+export type InsertPatientInsurance = z.infer<typeof insertPatientInsuranceSchema>;
+
+export type PatientCoupon = typeof patientCoupons.$inferSelect;
+export type InsertPatientCoupon = z.infer<typeof insertPatientCouponSchema>;
+
+export type CouponRedemption = typeof couponRedemptions.$inferSelect;
+export type InsertCouponRedemption = z.infer<typeof insertCouponRedemptionSchema>;
+
+export type PatientPayment = typeof patientPayments.$inferSelect;
+export type InsertPatientPayment = z.infer<typeof insertPatientPaymentSchema>;
+
+export type ComprehensivePatient = typeof comprehensivePatients.$inferSelect;
+export type InsertComprehensivePatient = z.infer<typeof insertComprehensivePatientSchema>;
