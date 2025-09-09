@@ -1177,13 +1177,13 @@ console.log('Database test page loaded successfully');
         
         console.log(`📋 APPOINTMENT FEE: Service "${appointment.service}" -> $${appointmentFee}`);
         
-        const assignedDoctorId = customFields.assignedDoctorId || null;
+        const assignedDoctorId = (customFields as any).assignedDoctorId || null;
         
         // Better payment status logic - some variety for demo
-        let paymentStatus = customFields.paymentStatus || 'pending';
-        if (!customFields.paymentStatus) {
+        let paymentStatus = (customFields as any).paymentStatus || 'pending';
+        if (!(customFields as any).paymentStatus) {
           // For demo purposes, make some appointments show as paid
-          const appointmentAge = Date.now() - new Date(appointment.createdAt).getTime();
+          const appointmentAge = Date.now() - new Date(appointment.createdAt || new Date()).getTime();
           const daysSinceCreated = appointmentAge / (1000 * 60 * 60 * 24);
           
           if (daysSinceCreated > 1) {
@@ -1194,7 +1194,7 @@ console.log('Database test page loaded successfully');
           }
         }
         
-        const appointmentTime = customFields.appointmentTime || null;
+        const appointmentTime = (customFields as any).appointmentTime || null;
         
         // Get doctor name if assigned
         let doctorName = null;
@@ -1259,7 +1259,7 @@ console.log('Database test page loaded successfully');
       
       // Auto-calculate fee based on service type
       const serviceType = requestData.service || requestData.serviceType || "consultation";
-      const servicePriceInfo = servicePricing[serviceType] || servicePricing["consultation"];
+      const servicePriceInfo = (servicePricing as any)[serviceType] || servicePricing["consultation"];
       
       // Apply coupon deduction if provided
       let finalFee = servicePriceInfo.fee;
@@ -1275,7 +1275,7 @@ console.log('Database test page loaded successfully');
           "SENIOR15": { discount: 15, type: "percentage" }
         };
         
-        const coupon = coupons[requestData.couponCode.toUpperCase()];
+        const coupon = (coupons as any)[requestData.couponCode.toUpperCase()];
         if (coupon) {
           couponCode = requestData.couponCode.toUpperCase();
           if (coupon.type === "percentage") {
