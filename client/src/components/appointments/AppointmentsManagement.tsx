@@ -187,7 +187,7 @@ const AppointmentsManagement: React.FC = () => {
   // Update appointment status mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Appointment['status'] }) => 
-      apiRequest(`/api/appointments/${id}`, "PATCH", { status }),
+      apiRequest("PATCH", `/api/appointments/${id}`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
