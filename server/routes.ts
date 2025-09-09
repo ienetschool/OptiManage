@@ -2956,6 +2956,220 @@ console.log('Database test page loaded successfully');
   // Add accounting API routes
   app.use('/api/accounting', accountingRoutes);
 
+  // ===== COMPREHENSIVE PATIENT MANAGEMENT ROUTES =====
+
+  // Enhanced Patient Registration
+  app.post("/api/patients/comprehensive", async (req, res) => {
+    try {
+      const patientData = req.body;
+      
+      // Generate patient code if not provided
+      if (!patientData.patientCode) {
+        patientData.patientCode = `PAT-${Date.now()}`;
+      }
+      
+      // Store comprehensive data in customFields
+      const comprehensiveData = {
+        personalInfo: {
+          middleName: patientData.middleName,
+          gender: patientData.gender,
+          alternatePhone: patientData.alternatePhone,
+          preferredLanguage: patientData.preferredLanguage || 'English'
+        },
+        address: {
+          streetAddress: patientData.streetAddress,
+          city: patientData.city,
+          state: patientData.state,
+          zipCode: patientData.zipCode,
+          country: patientData.country || 'USA'
+        },
+        emergencyContact: {
+          name: patientData.emergencyContactName,
+          phone: patientData.emergencyContactPhone,
+          relation: patientData.emergencyContactRelation
+        },
+        medicalInfo: {
+          bloodType: patientData.bloodType,
+          allergies: patientData.allergies || [],
+          medications: patientData.medications || [],
+          medicalHistory: patientData.medicalHistory || []
+        },
+        insurance: patientData.insurance || [],
+        coupons: patientData.coupons || [],
+        communicationPreferences: patientData.communicationPreferences || {
+          email: true,
+          sms: false,
+          phone: true
+        }
+      };
+      
+      const basicPatientData = {
+        firstName: patientData.firstName,
+        lastName: patientData.lastName,
+        email: patientData.email,
+        phone: patientData.phone,
+        dateOfBirth: patientData.dateOfBirth,
+        customFields: comprehensiveData
+      };
+      
+      const result = await storage.createPatient(basicPatientData);
+      
+      console.log(`✅ COMPREHENSIVE PATIENT CREATED: ${result.firstName} ${result.lastName} (${result.patientCode})`);
+      res.json(result);
+    } catch (error) {
+      console.error("Error creating comprehensive patient:", error);
+      res.status(500).json({ message: "Failed to create patient" });
+    }
+  });
+  
+  // Patient Coupon Management
+  app.post("/api/patients/:id/coupons", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const couponData = req.body;
+      
+      const patient = await storage.getPatient(id);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      // Generate unique coupon code if not provided
+      if (!couponData.couponCode) {
+        couponData.couponCode = `CPN-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+      }
+      
+      const newCoupon = {
+        id: `coupon-${Date.now()}`,
+        couponCode: couponData.couponCode,
+        couponType: couponData.couponType,
+        discountValue: couponData.discountValue,
+        applicableServices: couponData.applicableServices || ['all'],
+        minimumPurchaseAmount: couponData.minimumPurchaseAmount || 0,
+        maximumDiscountAmount: couponData.maximumDiscountAmount,
+        issueDate: new Date().toISOString(),
+        expirationDate: couponData.expirationDate,
+        redemptionLimit: couponData.redemptionLimit || 1,
+        timesRedeemed: 0,
+        isActive: true,
+        createdBy: req.user?.id || 'system',
+        notes: couponData.notes || ''
+      };
+      
+      // Update patient's coupon history
+      const currentCustomFields = patient.customFields || {};
+      const currentCoupons = currentCustomFields.coupons || [];
+      currentCoupons.push(newCoupon);
+      
+      const updatedCustomFields = {
+        ...currentCustomFields,
+        coupons: currentCoupons
+      };
+      
+      await storage.updatePatient(id, { customFields: updatedCustomFields });
+      
+      console.log(`🎫 COUPON CREATED: ${newCoupon.couponCode} for patient ${patient.firstName} ${patient.lastName}`);
+      res.json(newCoupon);
+    } catch (error) {
+      console.error("Error creating patient coupon:", error);
+      res.status(500).json({ message: "Failed to create coupon" });
+    }
+  });
+  
+  // Coupon Redemption  
+  app.post("/api/coupons/:couponCode/redeem", async (req, res) => {
+    try {
+      const { couponCode } = req.params;
+      const { patientId, transactionType, transactionId, originalAmount } = req.body;
+      
+      console.log(`🎫 REDEEM ATTEMPT: Coupon ${couponCode} for transaction ${transactionType}:${transactionId}`);
+      
+      const patient = await storage.getPatient(patientId);
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+      
+      const coupons = patient.customFields?.coupons || [];
+      const coupon = coupons.find(c => c.couponCode === couponCode && c.isActive);
+      
+      if (!coupon) {
+        return res.status(404).json({ message: "Coupon not found or inactive" });
+      }
+      
+      // Validate coupon
+      if (new Date(coupon.expirationDate) < new Date()) {
+        return res.status(400).json({ message: "Coupon has expired" });
+      }
+      
+      if (coupon.timesRedeemed >= coupon.redemptionLimit) {
+        return res.status(400).json({ message: "Coupon redemption limit reached" });
+      }
+      
+      if (originalAmount < (coupon.minimumPurchaseAmount || 0)) {
+        return res.status(400).json({ 
+          message: `Minimum purchase amount of $${coupon.minimumPurchaseAmount} required` 
+        });
+      }
+      
+      // Calculate discount
+      let discountAmount = 0;
+      if (coupon.couponType === 'percentage') {
+        discountAmount = (originalAmount * coupon.discountValue) / 100;
+      } else if (coupon.couponType === 'fixed_amount') {
+        discountAmount = coupon.discountValue;
+      }
+      
+      // Apply maximum discount limit
+      if (coupon.maximumDiscountAmount && discountAmount > coupon.maximumDiscountAmount) {
+        discountAmount = coupon.maximumDiscountAmount;
+      }
+      
+      const finalAmount = Math.max(0, originalAmount - discountAmount);
+      
+      // Create redemption record
+      const redemption = {
+        id: `redemption-${Date.now()}`,
+        couponId: coupon.id,
+        patientId,
+        transactionType,
+        transactionId,
+        originalAmount,
+        discountAmount,
+        finalAmount,
+        redemptionDate: new Date().toISOString(),
+        staffUserId: req.user?.id || 'system'
+      };
+      
+      // Update coupon usage
+      coupon.timesRedeemed += 1;
+      
+      // Update patient records
+      const currentCustomFields = patient.customFields || {};
+      const redemptions = currentCustomFields.couponRedemptions || [];
+      redemptions.push(redemption);
+      
+      const updatedCustomFields = {
+        ...currentCustomFields,
+        coupons: coupons,
+        couponRedemptions: redemptions
+      };
+      
+      await storage.updatePatient(patientId, { customFields: updatedCustomFields });
+      
+      console.log(`✅ COUPON REDEEMED: ${couponCode} - $${discountAmount} discount applied`);
+      res.json({
+        success: true,
+        redemption,
+        originalAmount,
+        discountAmount,
+        finalAmount,
+        couponCode
+      });
+    } catch (error) {
+      console.error("Error redeeming coupon:", error);
+      res.status(500).json({ message: "Failed to redeem coupon" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
