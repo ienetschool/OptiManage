@@ -327,6 +327,7 @@ const ModernAppointmentForm: React.FC<ModernAppointmentFormProps> = ({
         ...data,
         service: data.serviceType, // Required by MySQL schema
         appointmentType: data.serviceType, // Map to the expected field for compatibility
+        assignedDoctorId: data.doctorId, // Map doctorId to assignedDoctorId for backend
         patientName: selectedPatient ? `${selectedPatient.firstName} ${selectedPatient.lastName}` : "Unknown Patient",
         patientCode: selectedPatient?.patientCode || "",
         doctorName: selectedDoctor ? `${selectedDoctor.firstName} ${selectedDoctor.lastName}` : "",
