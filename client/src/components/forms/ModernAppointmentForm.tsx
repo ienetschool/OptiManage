@@ -86,8 +86,10 @@ const appointmentSchema = z.object({
   referralSource: z.string().optional(),
   insuranceAuthorization: z.string().optional(),
   
-  // Coupon Code
+  // Coupon Integration
   couponCode: z.string().optional(),
+  appliedDiscount: z.number().min(0).default(0),
+  finalAmount: z.number().min(0).default(0),
 });
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;

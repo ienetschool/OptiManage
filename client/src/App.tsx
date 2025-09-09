@@ -12,6 +12,7 @@ import InventoryModern from "@/pages/InventoryModern";
 import Appointments from "@/pages/Appointments";
 import CustomersModern from "@/pages/CustomersModern";
 import PatientsModern from "@/pages/PatientsModern";
+import PatientProfile from "@/pages/PatientProfile";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import PrescriptionsFixed from "@/pages/PrescriptionsFixed";
 import SpecsWorkflow from "@/pages/SpecsWorkflowSimple";
@@ -204,6 +205,19 @@ function Router() {
             <Navigation />
             <div className="flex-1 flex flex-col overflow-hidden">
               <PatientsModern />
+            </div>
+          </AppLayout>
+        ) : (
+          <QuickLogin />
+        )}
+      </Route>
+      
+      <Route path="/patients/:patientId">
+        {isAuthenticated ? (
+          <AppLayout>
+            <Navigation />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <PatientProfile />
             </div>
           </AppLayout>
         ) : (
