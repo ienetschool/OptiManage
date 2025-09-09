@@ -165,7 +165,7 @@ const AppointmentsManagement: React.FC = () => {
 
   // Delete appointment mutation
   const deleteAppointmentMutation = useMutation({
-    mutationFn: (id: string) => apiRequest(`/api/appointments/${id}`, "DELETE"),
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/appointments/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
       toast({
