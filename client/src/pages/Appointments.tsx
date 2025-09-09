@@ -184,13 +184,18 @@ export default function Appointments() {
   ];
 
   const form = useForm<InsertAppointment>({
-    resolver: zodResolver(insertAppointmentSchema),
+    resolver: zodResolver(insertAppointmentSchema.extend({
+      assignedDoctorId: insertAppointmentSchema.shape.assignedDoctorId.refine(
+        val => val !== undefined && val !== "",
+        { message: "Doctor assignment is required" }
+      )
+    })),
     defaultValues: {
       patientId: "",
       customerId: "",
       storeId: "",
       staffId: undefined,
-      assignedDoctorId: undefined,
+      assignedDoctorId: "",
       appointmentDate: new Date(),
       duration: 60,
       service: "",
