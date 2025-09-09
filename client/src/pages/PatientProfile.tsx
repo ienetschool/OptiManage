@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "wouter";
+import PatientAppointments from "@/components/PatientAppointments";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -560,20 +561,7 @@ export default function PatientProfile() {
         </TabsContent>
 
         <TabsContent value="appointments" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Recent Appointments
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-3" />
-                <p className="text-gray-500">No appointments found</p>
-              </div>
-            </CardContent>
-          </Card>
+          <PatientAppointments patientId={patientId} />
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">
