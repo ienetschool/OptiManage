@@ -1491,6 +1491,8 @@ console.log('Database test page loaded successfully');
     }
   });
 
+  // Remove duplicate - endpoint already exists below
+
   // **NEW ENDPOINT** - Get patient appointment history with billing details
   app.get('/api/patients/:patientId/appointment-history', isAuthenticated, async (req, res) => {
     try {
