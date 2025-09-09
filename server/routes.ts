@@ -1170,9 +1170,9 @@ console.log('Database test page loaded successfully');
           'screening': 80
         };
         
-        let appointmentFee = customFields.appointmentFee;
+        let appointmentFee = (customFields as any).appointmentFee;
         if (!appointmentFee || appointmentFee === 0) {
-          appointmentFee = serviceFees[appointment.service] || 150;
+          appointmentFee = (serviceFees as any)[appointment.service] || 150;
         }
         
         console.log(`📋 APPOINTMENT FEE: Service "${appointment.service}" -> $${appointmentFee}`);

@@ -58,6 +58,7 @@ export interface IStorage {
   getAppointments(): Promise<Appointment[]>;
   getAppointmentsByDate(date: string): Promise<Appointment[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
+  updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment>;
 
   // Sales operations
   getSales(): Promise<Sale[]>;
@@ -205,6 +206,19 @@ export class MySQLStorage implements IStorage {
       console.error('Error creating appointment:', error);
       throw error;
     }
+  }
+
+  async updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment> {
+    const appointmentData = {
+      ...appointment,
+      updatedAt: new Date()
+    };
+    await db
+      .update(appointments)
+      .set(appointmentData)
+      .where(eq(appointments.id, id));
+    const [updatedAppointment] = await db.select().from(appointments).where(eq(appointments.id, id)).limit(1);
+    return updatedAppointment!;
   }
 
   async getDashboardStats(): Promise<any> {
