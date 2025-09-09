@@ -1028,11 +1028,14 @@ export default function Appointments() {
                         name="assignedDoctorId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Assigned Doctor</FormLabel>
+                            <FormLabel className="flex items-center space-x-1">
+                              <span>Assigned Doctor</span>
+                              <span className="text-red-500">*</span>
+                            </FormLabel>
                             <Select onValueChange={field.onChange} value={field.value || ""}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select doctor" />
+                                  <SelectValue placeholder="Select doctor *" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
