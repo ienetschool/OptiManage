@@ -34,7 +34,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 export default function SEO() {
-  const [siteTitle, setSiteTitle] = useState("OptiStore Pro - Professional Eye Care Management");
+  const [siteTitle, setSiteTitle] = useState("IeOMS - Professional Eye Care Management");
   const [siteDescription, setSiteDescription] = useState("Complete optical store management system with patient records, appointments, inventory tracking, and more.");
   const [keywords, setKeywords] = useState("optical store, eye care, vision care, glasses, contact lenses");
   const [selectedStore, setSelectedStore] = useState("primary");
@@ -65,7 +65,7 @@ export default function SEO() {
     {
       id: "1",
       page: "/",
-      title: "OptiStore Pro - Professional Eye Care",
+      title: "IeOMS - Professional Eye Care",
       status: "good",
       issues: [],
       score: 95,

@@ -35,9 +35,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { 
   insertStaffSchema, 
-  type Staff, 
+  type Staff as BaseStaff, 
   type InsertStaff 
 } from "@shared/schema";
+
+// Extended Staff interface with additional properties
+interface Staff extends BaseStaff {
+  salary?: number;
+  bankName?: string;
+  bankAccountNumber?: string;
+  nidNumber?: string;
+  photoUrl?: string;
+}
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -334,7 +343,7 @@ export default function StaffPage() {
               <div class="card-front">
                 <div class="blue-curve"></div>
                 <div class="company-header">
-                  <div class="company-name">OPTISTORE PRO</div>
+                  <div class="company-name">IeOMS</div>
                   <div class="company-slogan">Medical Excellence</div>
                 </div>
                 
@@ -397,7 +406,7 @@ export default function StaffPage() {
                 </div>
                 
                 <div style="text-align: center; margin-top: 30px;">
-                  <div class="company-name">OPTISTORE PRO</div>
+                  <div class="company-name">IeOMS</div>
                   <div style="font-size: 10px; opacity: 0.8; margin-top: 5px;">
                     123 Medical Plaza, Suite 400<br>
                     Healthcare District, City 12345<br>
@@ -601,7 +610,7 @@ export default function StaffPage() {
           <body>
             <div class="id-card">
               <div class="header">
-                <div class="company-name">OptiStore Pro Medical Center</div>
+                <div class="company-name">IeOMS Medical Center</div>
                 <div class="company-details">
                   <div>123 Healthcare Boulevard, Medical District</div>
                   <div>Phone: +1 (555) 123-4567 | Email: info@optistorepro.com</div>
@@ -658,7 +667,7 @@ export default function StaffPage() {
               </div>
               
               <div class="footer">
-                <div style="font-weight: 600; margin-bottom: 5px;">OptiStore Pro Medical Center</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">IeOMS Medical Center</div>
                 <div style="font-size: 8px;">Authorized Personnel Only • Valid ID Required</div>
                 <div style="font-size: 8px; margin-top: 3px;">Emergency: +1 (555) 123-4567</div>
               </div>
@@ -683,7 +692,7 @@ export default function StaffPage() {
                       department: '${staff.department}',
                       phone: '${staff.phone || "N/A"}',
                       bloodGroup: '${staff.bloodGroup || "N/A"}',
-                      company: 'OptiStore Pro Medical Center'
+                      company: 'IeOMS Medical Center'
                     });
                     QRCode.toCanvas(canvas, staffData, { 
                       width: 76, 
@@ -735,7 +744,7 @@ export default function StaffPage() {
 
   // Auto-generate credentials
   const handleGenerateCredentials = (firstName: string, lastName: string) => {
-    const existingUsernames = mockStaffData.map(staff => staff.username).filter(Boolean);
+    const existingUsernames = mockStaffData.map(staff => staff.username).filter((username): username is string => Boolean(username));
     const username = generateUsername(firstName, lastName, existingUsernames);
     const password = generatePassword(12);
     
@@ -852,6 +861,9 @@ export default function StaffPage() {
 
   const { data: stores = [] } = useQuery({
     queryKey: ["/api/stores"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const form = useForm<InsertStaff>({
@@ -1614,11 +1626,13 @@ export default function StaffPage() {
                                       className="rounded border-gray-300"
                                       onChange={(e) => {
                                         const currentPermissions = form.getValues("permissions") || [];
-                                        if (e.target.checked) {
-                                          form.setValue("permissions", [...currentPermissions, permission.key]);
-                                        } else {
-                                          form.setValue("permissions", currentPermissions.filter(p => p !== permission.key));
-                                        }
+                        if (Array.isArray(currentPermissions)) {
+                          if (e.target.checked) {
+                            form.setValue("permissions", [...currentPermissions, permission.key]);
+                          } else {
+                            form.setValue("permissions", currentPermissions.filter((p: any) => p !== permission.key));
+                          }
+                        }
                                       }}
                                     />
                                     <Label htmlFor={permission.key} className="text-sm font-normal cursor-pointer">
@@ -2208,7 +2222,6 @@ export default function StaffPage() {
                       value={`${window.location.origin}/staff?view=${selectedStaff.id}`}
                       size={80}
                       level="L"
-                      includeMargin={false}
                     />
                   </div>
                   <p className="text-xs text-slate-500 mt-2">Scan for staff info</p>
@@ -2350,7 +2363,7 @@ export default function StaffPage() {
                                 <div class="print-date">Generated on: ${new Date().toLocaleDateString()}</div>
                                 
                                 <div class="header">
-                                  <div class="company-name">OptiStore Pro Medical Center</div>
+                                  <div class="company-name">IeOMS Medical Center</div>
                                   <div class="document-title">Staff Information Report</div>
                                 </div>
                                 
@@ -2428,7 +2441,7 @@ export default function StaffPage() {
                                       <h3>Additional Information</h3>
                                       <div class="info-item">
                                         <span class="info-label">Salary:</span>
-                                        <span class="info-value">${selectedStaff.salary ? '$' + selectedStaff.salary.toLocaleString() : 'Confidential'}</span>
+                                        <span class="info-value">${(selectedStaff as Staff).salary ? '$' + (selectedStaff as Staff).salary!.toLocaleString() : 'Confidential'}</span>
                                       </div>
                                       <div class="info-item">
                                         <span class="info-label">Years of Service:</span>
@@ -2439,8 +2452,8 @@ export default function StaffPage() {
                                 </div>
                                 
                                 <div class="footer">
-                                  <p><strong>OptiStore Pro Medical Center</strong></p>
-                                  <p>123 Healthcare Boulevard, Medical District | Phone: +1 (555) 123-4567</p>
+                                  <p><strong>IeOMS Medical Center</strong></p>
+                                  <p>Sandy Babb Street, Kitty, Georgetown, Guyana | Phone: +592 750-3901</p>
                                   <p>This document contains confidential information and is intended for authorized personnel only.</p>
                                 </div>
                                 
@@ -2565,14 +2578,14 @@ export default function StaffPage() {
                     <div className="space-y-3">
                       <div>
                         <Label className="text-sm font-medium text-slate-600">Bank Details</Label>
-                        <p className="text-sm">{selectedStaff.bankName || 'Not provided'}</p>
-                        {selectedStaff.bankAccountNumber && (
-                          <p className="text-sm font-mono">{selectedStaff.bankAccountNumber}</p>
+                        <p className="text-sm">{(selectedStaff as Staff).bankName || 'Not provided'}</p>
+                        {(selectedStaff as Staff).bankAccountNumber && (
+                          <p className="text-sm font-mono">{(selectedStaff as Staff).bankAccountNumber}</p>
                         )}
                       </div>
                       <div>
                         <Label className="text-sm font-medium text-slate-600">NID Number</Label>
-                        <p className="font-mono">{selectedStaff.nidNumber || 'Not provided'}</p>
+                        <p className="font-mono">{(selectedStaff as Staff).nidNumber || 'Not provided'}</p>
                       </div>
                     </div>
                   </div>
@@ -2582,15 +2595,15 @@ export default function StaffPage() {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-green-50 p-4 rounded-lg">
                       <Label className="text-sm font-medium text-green-600">Basic Salary</Label>
-                      <p className="text-2xl font-bold text-green-700">₹{selectedStaff.salary || '50,000'}</p>
+                      <p className="text-2xl font-bold text-green-700">₹{(selectedStaff as Staff).salary || '50,000'}</p>
                     </div>
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <Label className="text-sm font-medium text-blue-600">Allowances</Label>
-                      <p className="text-2xl font-bold text-blue-700">₹{(selectedStaff.salary || 50000) * 0.3}</p>
+                      <p className="text-2xl font-bold text-blue-700">₹{((selectedStaff as Staff).salary || 50000) * 0.3}</p>
                     </div>
                     <div className="bg-purple-50 p-4 rounded-lg">
                       <Label className="text-sm font-medium text-purple-600">Net Salary</Label>
-                      <p className="text-2xl font-bold text-purple-700">₹{(selectedStaff.salary || 50000) * 1.2}</p>
+                      <p className="text-2xl font-bold text-purple-700">₹{((selectedStaff as Staff).salary || 50000) * 1.2}</p>
                     </div>
                   </div>
                   <div className="text-sm text-slate-600">
@@ -2737,7 +2750,7 @@ export default function StaffPage() {
                                       <h2 style="color: #2563eb; margin-bottom: 20px;">📋 Employment Contract</h2>
                                       
                                       <div style="background: #f8fafc; padding: 20px; border-radius: 6px; margin-bottom: 15px;">
-                                        <h3>OptiStore Pro Medical Center</h3>
+                                        <h3>IeOMS Medical Center</h3>
                                         <p><strong>Employee:</strong> Dr. Smita Ghosh</p>
                                         <p><strong>Position:</strong> Senior Ophthalmologist</p>
                                         <p><strong>Department:</strong> Eye Care</p>

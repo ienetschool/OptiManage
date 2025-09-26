@@ -41,10 +41,10 @@ interface A4InvoiceTemplateProps {
 
 export default function A4InvoiceTemplate({ 
   invoice, 
-  storeName = "OptiStore Pro",
-  storeAddress = "123 Healthcare Blvd, Medical District, New York, NY 10001",
-  storePhone = "(555) 123-4567",
-  storeEmail = "info@optistorepro.com"
+  storeName = "IeOMS",
+  storeAddress = "Sandy Babb Street, Kitty, Georgetown, Guyana",
+  storePhone = "+592 750-3901",
+  storeEmail = "info.indiaespectacular@gmail.com"
 }: A4InvoiceTemplateProps) {
   const taxRate = invoice.tax > 0 ? (invoice.tax / (invoice.subtotal - invoice.discount) * 100).toFixed(1) : "0";
   

@@ -12,12 +12,12 @@ interface DatabaseConfig {
 export default function InstallWizard() {
   const [currentStep, setCurrentStep] = useState(1); // Start at step 1
   const [databaseConfig, setDatabaseConfig] = useState<DatabaseConfig>({
-    dbType: 'postgresql',
-    dbHost: 'localhost',
-    dbPort: '5432',
-    dbUser: 'ledbpt_opt',
-    dbPassword: '',
-    dbName: 'ieopt'
+    dbType: 'mysql',
+    dbHost: '5.181.218.15',
+    dbPort: '3306',
+    dbUser: 'ledbpt_optie',
+    dbPassword: 'g79h94LAP',
+    dbName: 'opticpro'
   });
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [connectionMessage, setConnectionMessage] = useState('');
@@ -103,9 +103,9 @@ export default function InstallWizard() {
       case 1:
         return (
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to OptiStore Pro</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">Welcome to OptiPro</h2>
             <p className="text-gray-600 mb-8">
-              Let's set up your medical practice management system
+              Let's set up your optical practice management system
             </p>
             <button 
               onClick={nextStep}
@@ -305,7 +305,7 @@ export default function InstallWizard() {
           <div className="text-center">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Installation Complete</h2>
             <p className="text-gray-600 mb-8">
-              Your OptiStore Pro system has been successfully configured!
+              Your OptiPro system has been successfully configured!
             </p>
             <button 
               onClick={() => window.location.href = '/'}
@@ -323,8 +323,8 @@ export default function InstallWizard() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">OptiStore Pro Installation Wizard</h1>
-          <p className="text-lg text-gray-600">Complete 7-stage setup for your medical practice management system</p>
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">OptiPro Installation Wizard</h1>
+          <p className="text-lg text-gray-600">Complete 7-stage setup for your optical practice management system</p>
         </div>
 
         {/* Progress Bar */}

@@ -1,7 +1,7 @@
 export default function TestPage() {
   return (
     <div style={{padding: '20px', fontFamily: 'Arial', maxWidth: '800px', margin: '0 auto'}}>
-      <h1 style={{color: '#333', marginBottom: '20px'}}>OptiStore Pro Installation Test</h1>
+      <h1 style={{color: '#333', marginBottom: '20px'}}>IeOMS Installation Test</h1>
       
       <div style={{backgroundColor: '#f5f5f5', padding: '20px', borderRadius: '8px', marginBottom: '20px'}}>
         <h2 style={{color: '#666', marginBottom: '10px'}}>Database Connection Test</h2>

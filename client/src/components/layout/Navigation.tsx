@@ -51,6 +51,7 @@ const navigationItems: NavItem[] = [
     icon: Users,
     children: [
       { title: "Patient Registration", href: "/patients", icon: Users },
+      { title: "Appointments", href: "/appointments", icon: Calendar },
       { title: "Prescriptions", href: "/prescriptions", icon: Pill },
       { title: "Specs Workflow", href: "/specs-workflow", icon: Eye },
       { title: "Specs Order Creation", href: "/specs-order-creation", icon: ShoppingCart },
@@ -210,7 +211,7 @@ export default function Navigation({ collapsed = false, onToggle }: NavigationPr
               <Eye className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold">OptiStore Pro</h2>
+              <h2 className="text-sm font-semibold">IeOMS</h2>
               <p className="text-xs text-muted-foreground">Practice Management</p>
             </div>
           </div>

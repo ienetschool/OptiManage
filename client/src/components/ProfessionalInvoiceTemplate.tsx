@@ -39,6 +39,7 @@ interface ProfessionalInvoiceTemplateProps {
     notes?: string;
     couponDiscount?: number;
     appliedCouponCode?: string;
+    shippingCost?: number;
   };
   storeName?: string;
   storeAddress?: string;
@@ -49,10 +50,10 @@ interface ProfessionalInvoiceTemplateProps {
 
 export default function ProfessionalInvoiceTemplate({ 
   invoice, 
-  storeName = "OptiStore Pro",
+  storeName = "IeOMS",
   storeAddress = "123 Vision Street, Eyecare City, EC 12345",
   storePhone = "(555) 123-4567",
-  storeEmail = "billing@optistorepro.com",
+  storeEmail = "info.indiaespectacular@gmail.com",
   onClose
 }: ProfessionalInvoiceTemplateProps) {
   
@@ -294,7 +295,7 @@ export default function ProfessionalInvoiceTemplate({
                       <td style={{ padding: '8px 16px 8px 0', textAlign: 'right' }}>Tax ({((taxAmount / invoice.subtotal) * 100).toFixed(0)}%):</td>
                       <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold' }}>${taxAmount.toFixed(2)}</td>
                     </tr>
-                    {invoice.shippingCost && (
+                    {invoice.shippingCost && invoice.shippingCost > 0 && (
                       <tr>
                         <td style={{ padding: '8px 16px 8px 0', textAlign: 'right' }}>Shipping:</td>
                         <td style={{ padding: '8px 0', textAlign: 'right', fontWeight: 'bold' }}>${invoice.shippingCost.toFixed(2)}</td>

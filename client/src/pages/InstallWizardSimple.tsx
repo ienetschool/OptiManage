@@ -49,7 +49,7 @@ export default function InstallWizardSimple() {
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            OptiStore Pro Installation Wizard
+            IeOMS Installation Wizard
           </h1>
           <p className="text-gray-600">Database Connection Testing</p>
         </div>

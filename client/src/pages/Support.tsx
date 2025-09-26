@@ -433,7 +433,7 @@ export default function Support() {
                     <Book className="text-blue-600 h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-slate-900 mb-2">User Guide</h3>
-                  <p className="text-sm text-slate-600 mb-4">Complete guide to using OptiStore Pro</p>
+                  <p className="text-sm text-slate-600 mb-4">Complete guide to using IeOMS</p>
                   <Button variant="outline" className="w-full">
                     <ExternalLink className="mr-2 h-4 w-4" />
                     View Guide
@@ -533,7 +533,7 @@ export default function Support() {
                     Speak directly with our support team for immediate assistance.
                   </p>
                   <div className="space-y-2">
-                    <p className="font-semibold">1-800-OPTI-PRO</p>
+                    <p className="font-semibold">+592 750-3901</p>
                     <p className="text-sm text-slate-600">
                       Monday - Friday: 8:00 AM - 6:00 PM EST<br />
                       Saturday: 9:00 AM - 2:00 PM EST
@@ -558,7 +558,7 @@ export default function Support() {
                     Send us an email and we'll respond within 24 hours.
                   </p>
                   <div className="space-y-2">
-                    <p className="font-semibold">support@optipro.com</p>
+                    <p className="font-semibold">info.indiaespectacular@gmail.com</p>
                     <p className="text-sm text-slate-600">
                       Response time: Within 24 hours<br />
                       Priority tickets: Within 4 hours

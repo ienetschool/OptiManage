@@ -10,7 +10,7 @@ export default function PrintPreview() {
     date: "2025-08-05",
     dueDate: "2025-09-04",
     customerName: "Patient XYZ",
-    storeName: "OptiStore Pro",
+    storeName: "IeOMS",
     items: [
       { productName: "ABC Crane", quantity: 1, unitPrice: 999, total: 999 },
       { productName: "Ray-Ban@23225", quantity: 1, unitPrice: 1877, total: 1877 }
@@ -223,7 +223,7 @@ export default function PrintPreview() {
               <div className="company-tagline">Premium Vision Care Solutions</div>
               <div className="company-address">
                 123 Vision Street, Eyecare City, EC 12345<br/>
-                Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com
               </div>
             </div>
             <div className="invoice-info">
@@ -313,7 +313,7 @@ export default function PrintPreview() {
         {/* Footer */}
         <div className="footer">
           <p>Thank you for your business!</p>
-          <p>For questions about this invoice, please contact us at billing@optistorepro.com</p>
+          <p>For questions about this invoice, please contact us at info.indiaespectacular@gmail.com</p>
         </div>
       </div>
     </div>

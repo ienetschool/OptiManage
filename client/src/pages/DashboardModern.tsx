@@ -101,7 +101,7 @@ const DashboardModern: React.FC = () => {
   });
 
   const { data: appointments = [] } = useQuery<Appointment[]>({
-    queryKey: ["/api/appointments"],
+    queryKey: ["/api/medical-appointments"],
   });
 
   // Mock chart data
@@ -527,7 +527,7 @@ const DashboardModern: React.FC = () => {
         <ModernAlert
           type="info"
           title="System Update Available"
-          message="A new version of OptiStore Pro is available with enhanced features and security improvements."
+          message="A new version of IeOMS is available with enhanced features and security improvements."
         />
         <ModernAlert
           type="success"

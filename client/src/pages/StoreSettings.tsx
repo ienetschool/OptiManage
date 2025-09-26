@@ -443,7 +443,7 @@ export default function StoreSettings() {
                         <Input 
                           value={formData?.smsFrom ?? storeSettings?.smsFrom ?? ""} 
                           onChange={(e) => setFormData({...formData, smsFrom: e.target.value})}
-                          placeholder="+1234567890"
+                          placeholder="+592 750-3901"
                         />
                       </div>
                     </div>
@@ -516,7 +516,7 @@ export default function StoreSettings() {
                         <Input 
                           value={formData?.smtpFromEmail ?? storeSettings?.smtpFromEmail ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpFromEmail: e.target.value})}
-                          placeholder="noreply@yourstore.com"
+                          placeholder="info.indiaespectacular@gmail.com"
                         />
                       </div>
                       <div className="space-y-2">
@@ -524,7 +524,7 @@ export default function StoreSettings() {
                         <Input 
                           value={formData?.smtpFromName ?? storeSettings?.smtpFromName ?? ""} 
                           onChange={(e) => setFormData({...formData, smtpFromName: e.target.value})}
-                          placeholder="Your Store Name"
+                          placeholder="Sandy Babb Street, Kitty, Georgetown, Guyana"
                         />
                       </div>
                     </div>

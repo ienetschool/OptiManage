@@ -19,6 +19,8 @@ import {
   insertDeliverySchema,
   insertWorkflowNotificationSchema,
 } from "@shared/mysql-schema";
+import QRCode from "qrcode";
+import { randomBytes } from "crypto";
 
 // Comprehensive 7-Step Lens Prescription and Specs Order Management Workflow
 export function registerSpecsWorkflowRoutes(app: Express) {
@@ -523,6 +525,239 @@ export function registerSpecsWorkflowRoutes(app: Express) {
     } catch (error) {
       console.error("Error confirming delivery:", error);
       res.status(500).json({ error: "Failed to confirm delivery" });
+    }
+  });
+
+  // New: Ship delivery (set courier/tracking/shipping charges)
+  app.patch("/api/deliveries/:id/ship", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const schema = z.object({
+        courierService: z.string().optional(),
+        trackingNumber: z.string().optional(),
+        shippingCharges: z.union([z.string(), z.number()]).optional(),
+        scheduledDate: z.string().datetime().optional(),
+      });
+      const body = schema.parse(req.body);
+
+      await db
+        .update(deliveries)
+        .set({
+          courierService: body.courierService,
+          trackingNumber: body.trackingNumber,
+          shippingCharges: body.shippingCharges !== undefined ? String(body.shippingCharges) : undefined,
+          scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : undefined,
+          status: "out_for_delivery",
+          updatedAt: new Date(),
+        })
+        .where(eq(deliveries.id, id));
+
+      // Fetch identifiers for notifications
+      const [deliveryRow] = await db
+        .select({ specsOrderId: deliveries.specsOrderId, patientId: deliveries.patientId })
+        .from(deliveries)
+        .where(eq(deliveries.id, id));
+
+      await sendWorkflowNotification({
+        type: "shipment_started",
+        recipientType: "patient",
+        specsOrderId: deliveryRow?.specsOrderId,
+        deliveryId: id,
+        subject: "Your spectacles are on the way",
+        message: "Your order has been handed over to the courier. You can track it with the provided tracking number.",
+      });
+
+      res.json({ success: true, message: "Delivery marked as out for delivery" });
+    } catch (error) {
+      console.error("Error updating shipment details:", error);
+      res.status(500).json({ error: "Failed to update shipment details" });
+    }
+  });
+
+  // New: Generate QR token for in-store pickup
+  app.post("/api/deliveries/:id/generate-qr", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const ttlHours = Number(req.query.ttlHours ?? 168);
+      const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
+      const token = randomBytes(24).toString("hex");
+
+      // Persist token & expiry
+      await db
+        .update(deliveries)
+        .set({
+          qrPickupToken: token,
+          qrTokenExpiresAt: expiresAt,
+          qrTokenUsedAt: null as any,
+          updatedAt: new Date(),
+        })
+        .where(eq(deliveries.id, id));
+
+      const qrPayload = {
+        kind: "delivery_pickup",
+        deliveryId: id,
+        token,
+        exp: expiresAt.toISOString(),
+      };
+      const value = JSON.stringify(qrPayload);
+      const dataUrl = await QRCode.toDataURL(value);
+
+      res.json({ token, expiresAt, qrData: qrPayload, qrCodeDataUrl: dataUrl });
+    } catch (error) {
+      console.error("Error generating pickup QR:", error);
+      res.status(500).json({ error: "Failed to generate pickup QR" });
+    }
+  });
+
+  // New: Verify QR token at pickup counter and mark delivered
+  app.post("/api/deliveries/verify-qr", async (req, res) => {
+    try {
+      const schema = z.object({
+        deliveryId: z.string().min(1),
+        token: z.string().min(10),
+        recipientName: z.string().optional(),
+      });
+      const { deliveryId, token, recipientName } = schema.parse(req.body);
+
+      const [row] = await db
+        .select({
+          id: deliveries.id,
+          specsOrderId: deliveries.specsOrderId,
+          qrPickupToken: deliveries.qrPickupToken,
+          qrTokenExpiresAt: deliveries.qrTokenExpiresAt,
+          qrTokenUsedAt: deliveries.qrTokenUsedAt,
+        })
+        .from(deliveries)
+        .where(eq(deliveries.id, deliveryId));
+
+      if (!row || !row.qrPickupToken || row.qrPickupToken !== token) {
+        return res.status(400).json({ valid: false, reason: "Invalid token" });
+      }
+      if (row.qrTokenUsedAt) {
+        return res.status(400).json({ valid: false, reason: "Token already used" });
+      }
+      if (row.qrTokenExpiresAt && new Date(row.qrTokenExpiresAt).getTime() < Date.now()) {
+        return res.status(400).json({ valid: false, reason: "Token expired" });
+      }
+
+      await db
+        .update(deliveries)
+        .set({
+          qrTokenUsedAt: new Date(),
+          status: "delivered",
+          deliveredDate: new Date(),
+          recipientName: recipientName ?? undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(deliveries.id, deliveryId));
+
+      await sendWorkflowNotification({
+        type: "delivered",
+        recipientType: "patient",
+        specsOrderId: row.specsOrderId,
+        deliveryId: deliveryId,
+        subject: "Pickup Confirmed",
+        message: "Pickup verified successfully. Thank you!",
+      });
+
+      res.json({ valid: true, message: "Pickup verified and delivery completed" });
+    } catch (error) {
+      console.error("Error verifying pickup QR:", error);
+      res.status(500).json({ error: "Failed to verify pickup QR" });
+    }
+  });
+
+  // ==================== LENS CUTTING TASK QC & PAYOUT ====================
+
+  // Update QC result for a lens cutting task
+  app.patch("/api/lens-cutting-tasks/:id/qc", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const schema = z.object({
+        qcStatus: z.enum(["pass", "fail"]),
+        qcReason: z.string().optional(),
+        qcCheckedBy: z.string().optional(),
+        reworkRequired: z.boolean().optional(),
+        reworkReason: z.string().optional(),
+      });
+      const body = schema.parse(req.body);
+
+      await db
+        .update(lensCuttingTasks)
+        .set({
+          qcStatus: body.qcStatus,
+          qcReason: body.qcReason,
+          qcCheckedBy: body.qcCheckedBy,
+          qcCheckedAt: new Date(),
+          reworkRequired: body.reworkRequired ?? false,
+          reworkReason: body.reworkReason,
+          status: "quality_check",
+          updatedAt: new Date(),
+        })
+        .where(eq(lensCuttingTasks.id, id));
+
+      const [task] = await db
+        .select({ specsOrderId: lensCuttingTasks.specsOrderId, assignedToFitterId: lensCuttingTasks.assignedToFitterId })
+        .from(lensCuttingTasks)
+        .where(eq(lensCuttingTasks.id, id));
+
+      await sendWorkflowNotification({
+        type: "qc_result",
+        recipientType: "admin",
+        specsOrderId: task?.specsOrderId,
+        lensCuttingTaskId: id,
+        subject: `QC ${body.qcStatus === "pass" ? "Passed" : "Failed"}`,
+        message: body.qcStatus === "pass" ? "Task passed quality check." : `Task failed QC${body.qcReason ? ": " + body.qcReason : ""}`,
+      });
+
+      res.json({ success: true, message: "QC updated successfully" });
+    } catch (error) {
+      console.error("Error updating QC:", error);
+      res.status(500).json({ error: "Failed to update QC" });
+    }
+  });
+
+  // Update payout status for a lens cutting task
+  app.patch("/api/lens-cutting-tasks/:id/payout", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const schema = z.object({
+        payoutStatus: z.enum(["Pending", "Paid", "Hold"]).optional(),
+        payoutReleasedAt: z.string().datetime().optional(),
+        jobCharge: z.union([z.string(), z.number()]).optional(),
+      });
+      const body = schema.parse(req.body);
+
+      await db
+        .update(lensCuttingTasks)
+        .set({
+          payoutStatus: body.payoutStatus,
+          payoutReleasedAt: body.payoutReleasedAt ? new Date(body.payoutReleasedAt) : undefined,
+          jobCharge: body.jobCharge !== undefined ? String(body.jobCharge) : undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(lensCuttingTasks.id, id));
+
+      if (body.payoutStatus === "Paid") {
+        const [task] = await db
+          .select({ specsOrderId: lensCuttingTasks.specsOrderId })
+          .from(lensCuttingTasks)
+          .where(eq(lensCuttingTasks.id, id));
+
+        await sendWorkflowNotification({
+          type: "payout_released",
+          recipientType: "admin",
+          specsOrderId: task?.specsOrderId,
+          lensCuttingTaskId: id,
+          subject: "Payout Released",
+          message: "Technician payout marked as paid for this task.",
+        });
+      }
+
+      res.json({ success: true, message: "Payout updated successfully" });
+    } catch (error) {
+      console.error("Error updating payout:", error);
+      res.status(500).json({ error: "Failed to update payout" });
     }
   });
 

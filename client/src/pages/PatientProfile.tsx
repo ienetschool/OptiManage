@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "wouter";
-import PatientAppointments from "@/components/PatientAppointments";
+import AppointmentsUnified from "./AppointmentsUnified";
+import PatientHistorySection from "@/components/PatientHistorySection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,26 @@ import { useToast } from "@/hooks/use-toast";
 
 interface PatientProfileProps {
   patientId: string;
+}
+
+interface Patient {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  patientCode: string;
+  isActive: boolean;
+  createdAt: string;
+  customFields?: {
+    personalInfo?: any;
+    address?: any;
+    emergencyContact?: any;
+    medicalInfo?: any;
+    insurance?: any[];
+    communicationPreferences?: any;
+  };
 }
 
 interface Coupon {
@@ -77,7 +98,7 @@ export default function PatientProfile() {
   const { toast } = useToast();
 
   // Fetch comprehensive patient data
-  const { data: patient, isLoading, refetch } = useQuery({
+  const { data: patient, isLoading, refetch } = useQuery<Patient>({
     queryKey: [`/api/patients/${patientId}/comprehensive`],
     enabled: !!patientId
   });
@@ -561,31 +582,36 @@ export default function PatientProfile() {
         </TabsContent>
 
         <TabsContent value="appointments" className="space-y-6">
-          <PatientAppointments patientId={patientId} />
-        </TabsContent>
-
-        <TabsContent value="history" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <History className="h-5 w-5" />
-                Patient History
+                <Calendar className="h-5 w-5" />
+                Patient Appointments
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center py-8">
               <div className="space-y-4">
-                <div className="flex items-center gap-3 p-3 border rounded-lg">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <div>
-                    <p className="font-medium">Patient registered</p>
-                    <p className="text-sm text-gray-600">
-                      {new Date(patient.createdAt).toLocaleString()}
-                    </p>
-                  </div>
+                <Calendar className="h-16 w-16 mx-auto text-gray-400" />
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">View All Appointments</h3>
+                  <p className="text-gray-600 mt-2">
+                    Access the full appointments management system to view, schedule, and manage appointments.
+                  </p>
                 </div>
+                <Button 
+                  onClick={() => window.location.href = '/appointments'}
+                  className="mt-4"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Go to Appointments Page
+                </Button>
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-6">
+          <PatientHistorySection patientId={patientId} patient={patient} />
         </TabsContent>
       </Tabs>
     </div>

@@ -34,7 +34,7 @@ export default function Footer() {
                 <Eye className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold">OptiStore Pro</h3>
+                <h3 className="text-xl font-bold">IeOMS</h3>
                 <p className="text-sm text-slate-400">Modern Eye Care</p>
               </div>
             </div>
@@ -134,17 +134,17 @@ export default function Footer() {
               <div className="flex items-center space-x-3">
                 <MapPin className="h-4 w-4 text-blue-400 flex-shrink-0" />
                 <span className="text-slate-300 text-sm">
-                  123 Vision Street<br />
-                  Eye Care City, EC 12345
+                  Sandy Babb Street, Kitty<br />
+                  Georgetown, Guyana
                 </span>
               </div>
               <div className="flex items-center space-x-3">
                 <Phone className="h-4 w-4 text-green-400 flex-shrink-0" />
-                <span className="text-slate-300 text-sm">(555) 123-4567</span>
+                <span className="text-slate-300 text-sm">+592 750-3901</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="h-4 w-4 text-red-400 flex-shrink-0" />
-                <span className="text-slate-300 text-sm">info@optistorepro.com</span>
+                <span className="text-slate-300 text-sm">info.indiaespectacular@gmail.com</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Clock className="h-4 w-4 text-yellow-400 flex-shrink-0" />
@@ -204,7 +204,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-6 text-sm text-slate-400">
-              <span>© 2025 OptiStore Pro. All rights reserved.</span>
+              <span>© 2025 IeNet. All rights reserved.</span>
               <div className="flex items-center space-x-4">
                 <Link href="/privacy" className="hover:text-white transition-colors">
                   Privacy Policy

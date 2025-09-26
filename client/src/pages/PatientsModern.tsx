@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -58,7 +58,6 @@ import {
   ModernProgressBar 
 } from "@/components/ui/modern-components";
 import ModernPatientForm from "@/components/forms/ModernPatientForm";
-import AppointmentsManagement from "@/components/appointments/AppointmentsManagement";
 import { useToast } from "@/hooks/use-toast";
 
 interface Patient {
@@ -105,7 +104,6 @@ interface Patient {
 
 const PatientsModern: React.FC = () => {
   const [activeTab, setActiveTab] = useState("all");
-  const [activeMainTab, setActiveMainTab] = useState("patients"); // New state for main tabs
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -116,6 +114,9 @@ const PatientsModern: React.FC = () => {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Handle URL parameters for tab switching (now handled in state initialization)
+  // useEffect is no longer needed since we initialize state based on URL
 
   // Fetch patients
   const { data: patients = [], isLoading, error } = useQuery<Patient[]>({
@@ -220,30 +221,11 @@ const PatientsModern: React.FC = () => {
         </ModernActionButton>
       </ModernPageHeader>
 
-      {/* Main Tabs - Patients and Appointments */}
-      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 bg-white border rounded-lg p-1 shadow-sm mb-6">
-          <TabsTrigger 
-            value="patients" 
-            className="flex items-center space-x-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white"
-            data-testid="main-tab-patients"
-          >
-            <Users className="h-5 w-5" />
-            <span>Patients</span>
-            <Badge variant="secondary" className="ml-2">{stats.total}</Badge>
-          </TabsTrigger>
-          <TabsTrigger 
-            value="appointments" 
-            className="flex items-center space-x-2 data-[state=active]:bg-cyan-500 data-[state=active]:text-white"
-            data-testid="main-tab-appointments"
-          >
-            <Calendar className="h-5 w-5" />
-            <span>Appointments</span>
-          </TabsTrigger>
-        </TabsList>
+      {/* Main Content - Patients Only */}
+      <div className="w-full">
 
-        {/* Patients Tab Content */}
-        <TabsContent value="patients" className="space-y-6">
+        {/* Patients Content */}
+        <div className="space-y-6">
 
       {/* Statistics Cards */}
       <motion.div 
@@ -548,13 +530,8 @@ const PatientsModern: React.FC = () => {
           </Button>
         </motion.div>
       )}
-        </TabsContent>
-
-        {/* Appointments Tab Content */}
-        <TabsContent value="appointments" className="space-y-6">
-          <AppointmentsManagement />
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
 
       {/* Patient Registration Modal */}
       <Dialog open={showPatientForm} onOpenChange={setShowPatientForm}>

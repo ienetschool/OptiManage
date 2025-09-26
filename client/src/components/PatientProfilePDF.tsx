@@ -75,7 +75,7 @@ export const generateMultiPagePatientPDF = (
             size: A4; 
             margin: 20mm 15mm; 
             @top-center {
-              content: "OptiStore Pro Medical Center - Patient: ${patient.firstName} ${patient.lastName}";
+              content: "IeOMS Medical Center - Patient: ${patient.firstName} ${patient.lastName}";
               font-size: 10pt;
               color: #666;
             }
@@ -318,7 +318,7 @@ export const generateMultiPagePatientPDF = (
       <body>
         <!-- Page 1: Patient Overview -->
         <div class="profile-header">
-          <div class="clinic-name">OptiStore Pro Medical Center</div>
+          <div class="clinic-name">IeOMS Medical Center</div>
           <div class="patient-name">${patient.firstName} ${patient.lastName}</div>
           <div>Complete Medical Profile Report</div>
           <div style="font-size: 10pt; margin-top: 10px;">
@@ -552,7 +552,7 @@ export const generateMultiPagePatientPDF = (
         <!-- Page 2: Appointments History -->
         <div class="page-break">
           <div class="profile-header">
-            <div class="clinic-name">OptiStore Pro Medical Center</div>
+            <div class="clinic-name">IeOMS Medical Center</div>
             <div class="patient-name">Appointment History - ${patient.firstName} ${patient.lastName}</div>
             <div style="font-size: 10pt;">Complete appointment records and clinical visits</div>
           </div>
@@ -611,7 +611,7 @@ export const generateMultiPagePatientPDF = (
         <!-- Page 3: Prescriptions History -->
         <div class="page-break">
           <div class="profile-header">
-            <div class="clinic-name">OptiStore Pro Medical Center</div>
+            <div class="clinic-name">IeOMS Medical Center</div>
             <div class="patient-name">Prescription History - ${patient.firstName} ${patient.lastName}</div>
             <div style="font-size: 10pt;">Complete prescription records and medications</div>
           </div>
@@ -656,7 +656,7 @@ export const generateMultiPagePatientPDF = (
         <!-- Page 4: Billing & Financial History -->
         <div class="page-break">
           <div class="profile-header">
-            <div class="clinic-name">OptiStore Pro Medical Center</div>
+            <div class="clinic-name">IeOMS Medical Center</div>
             <div class="patient-name">Billing History - ${patient.firstName} ${patient.lastName}</div>
             <div style="font-size: 10pt;">Complete financial records and invoice history</div>
           </div>
@@ -731,7 +731,7 @@ export const generateMultiPagePatientPDF = (
 
         <!-- Footer for all pages -->
         <div style="margin-top: 40px; padding: 20px; background: #f8fafc; border-radius: 8px; text-align: center; border-top: 3px solid #667eea;">
-          <div style="color: #2d3748; font-weight: 600; margin-bottom: 10px; font-size: 12pt;">OptiStore Pro Medical Center</div>
+          <div style="color: #2d3748; font-weight: 600; margin-bottom: 10px; font-size: 12pt;">IeOMS Medical Center</div>
           <div style="color: #4a5568; font-size: 10pt; margin-bottom: 5px;">123 Healthcare Blvd, Medical District, New York, NY 10001</div>
           <div style="color: #4a5568; font-size: 10pt; margin-bottom: 5px;">Phone: (555) 123-4567 | Email: info@optistorepro.com</div>
           <div style="color: #9ca3af; font-size: 9pt; margin-top: 15px; font-style: italic;">

@@ -33,10 +33,10 @@ interface AppointmentInvoiceTemplateProps {
 
 export default function AppointmentInvoiceTemplate({ 
   appointment, 
-  storeName = "OptiStore Pro",
-  storeAddress = "123 Vision Street, Eyecare City, EC 12345",
-  storePhone = "(555) 123-4567",
-  storeEmail = "appointments@optistorepro.com",
+  storeName = "IeOMS",
+  storeAddress = "Sandy Babb Street, Kitty, Georgetown, Guyana",
+  storePhone = "+592 750-3901",
+  storeEmail = "info.indiaespectacular@gmail.com",
   onClose
 }: AppointmentInvoiceTemplateProps) {
   

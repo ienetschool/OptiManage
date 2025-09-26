@@ -53,6 +53,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import PrescriptionSearchFilter from "@/components/PrescriptionSearchFilter";
 
 export default function PrescriptionsFixed() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -63,6 +64,7 @@ export default function PrescriptionsFixed() {
   const [activeTab, setActiveTab] = useState("doctor-appointments");
   const [sortBy, setSortBy] = useState("date");
   const [currentServiceType, setCurrentServiceType] = useState("eye_examination");
+  const [searchFilteredPrescriptions, setSearchFilteredPrescriptions] = useState<any[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -80,7 +82,7 @@ export default function PrescriptionsFixed() {
   });
 
   const { data: appointments = [] } = useQuery<any[]>({
-    queryKey: ["/api/appointments"],
+    queryKey: ["/api/medical-appointments"],
   });
 
   // Create prescription form
@@ -290,7 +292,7 @@ Service: ${prescription.prescriptionType?.replace('_', ' ')}
 Please contact us if you have any questions.
 
 Best regards,
-OptiStore Pro Team`;
+IeOMS Team`;
 
     const mailtoLink = `mailto:${patient?.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoLink);
@@ -421,7 +423,7 @@ OptiStore Pro Team`;
     if (patient) {
       // Find appointment data for this patient to get the assigned doctor
       try {
-        const appointmentsResponse = await fetch('/api/appointments');
+        const appointmentsResponse = await fetch('/api/medical-appointments');
         const appointments = await appointmentsResponse.json();
         const patientAppointment = appointments.find((app: any) => 
           app.patientId === patient.id && app.serviceType === prescription.prescriptionType
@@ -566,7 +568,7 @@ OptiStore Pro Team`;
           const patientB = patients.find(p => p.id === b.patientId);
           return `${patientA?.firstName} ${patientA?.lastName}`.localeCompare(`${patientB?.firstName} ${patientB?.lastName}`);
         case "status":
-          return a.status.localeCompare(b.status);
+          return (a.status || '').localeCompare(b.status || '');
         case "number":
           return (a.prescriptionNumber || '').localeCompare(b.prescriptionNumber || '');
         default:
@@ -683,75 +685,76 @@ OptiStore Pro Team`;
           </div>
         </div>
 
-        {/* Search and Filters */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder={activeTab === "doctor-appointments" ? "Search appointments..." : "Search prescriptions..."}
-                className="pl-10 w-64"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        {/* Advanced Search and Filters */}
+        {activeTab !== "doctor-appointments" && (
+          <PrescriptionSearchFilter
+            prescriptions={prescriptions.map(p => ({
+              ...p,
+              patientName: patients.find(patient => patient.id === p.patientId)?.firstName + ' ' + patients.find(patient => patient.id === p.patientId)?.lastName || 'Unknown Patient',
+              patientCode: patients.find(patient => patient.id === p.patientId)?.patientCode || 'N/A',
+              doctorName: staff.find(s => s.id === p.doctorId)?.firstName + ' ' + staff.find(s => s.id === p.doctorId)?.lastName || 'Unknown Doctor',
+              doctorSpecialization: staff.find(s => s.id === p.doctorId)?.specialization || 'General',
+              prescriptionDate: p.createdAt ? p.createdAt.toISOString() : new Date().toISOString(),
+              lastModified: p.updatedAt ? p.updatedAt.toISOString() : (p.createdAt ? p.createdAt.toISOString() : new Date().toISOString()),
+              createdBy: staff.find(s => s.id === p.doctorId)?.firstName + ' ' + staff.find(s => s.id === p.doctorId)?.lastName || 'System',
+              priority: 'medium',
+              medications: [],
+              tags: []
+            }))}
+            onFilteredResults={(filtered: any[]) => setSearchFilteredPrescriptions(filtered)}
+            onExport={(filtered) => {
+              // Export functionality can be implemented here
+              toast({
+                title: "Export Started",
+                description: `Exporting ${filtered.length} prescriptions...`,
+              });
+            }}
+            className="mb-6"
+          />
+        )}
+        
+        {/* Simple Search for Doctor Appointments */}
+        {activeTab === "doctor-appointments" && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search appointments..."
+                  className="pl-10 w-64"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Appointments</SelectItem>
+                  <SelectItem value="assigned_to_doctor">Assigned to Doctor</SelectItem>
+                  <SelectItem value="scheduled">Scheduled</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Sort by Date</SelectItem>
+                  <SelectItem value="patient">Sort by Patient</SelectItem>
+                  <SelectItem value="service">Sort by Service</SelectItem>
+                  <SelectItem value="doctor">Sort by Doctor</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-{activeTab !== "doctor-appointments" ? (
-              <>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="filled">Filled</SelectItem>
-                    <SelectItem value="expired">Expired</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date">Sort by Date</SelectItem>
-                    <SelectItem value="patient">Sort by Patient</SelectItem>
-                    <SelectItem value="status">Sort by Status</SelectItem>
-                    <SelectItem value="number">Sort by Number</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            ) : (
-              <>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Appointments</SelectItem>
-                    <SelectItem value="assigned_to_doctor">Assigned to Doctor</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="date">Sort by Date</SelectItem>
-                    <SelectItem value="patient">Sort by Patient</SelectItem>
-                    <SelectItem value="service">Sort by Service</SelectItem>
-                    <SelectItem value="doctor">Sort by Doctor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
+            <Button variant="outline">
+              <Download className="mr-2 h-4 w-4" />
+              Export
+            </Button>
           </div>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
-        </div>
+        )}
 
         {/* Conditional Content based on Active Tab */}
         {activeTab === "doctor-appointments" ? (
@@ -1963,7 +1966,7 @@ OptiStore Pro Team`;
               <div className="border-b-2 border-blue-600 pb-4 mb-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h1 className="text-2xl font-bold text-blue-800">OptiStore Pro</h1>
+                    <h1 className="text-2xl font-bold text-blue-800">IeOMS</h1>
                     <p className="text-gray-600">Medical Prescription</p>
                     <p className="text-sm text-gray-500">Professional Eye Care Services</p>
                   </div>
@@ -2166,7 +2169,7 @@ OptiStore Pro Team`;
               <div className="border-t border-gray-300 pt-4 mt-8">
                 <div className="grid grid-cols-2 gap-8 text-xs text-gray-600">
                   <div>
-                    <p className="font-semibold">OptiStore Pro</p>
+                    <p className="font-semibold">IeOMS</p>
                     <p>Professional Eye Care Services</p>
                     <p>Phone: +1 (555) 123-4567</p>
                     <p>Email: info@optistorepro.com</p>

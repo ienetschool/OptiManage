@@ -1,4 +1,4 @@
-import { Switch, Route, useLocation } from "wouter";
+import { Switch, Route, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,12 +9,13 @@ import Landing from "@/pages/Landing";
 import Stores from "@/pages/Stores";
 import InventoryModern from "@/pages/InventoryModern";
 
-import Appointments from "@/pages/Appointments";
+import AppointmentsUnified from "@/pages/AppointmentsUnified";
 import CustomersModern from "@/pages/CustomersModern";
 import PatientsModern from "@/pages/PatientsModern";
 import PatientProfile from "@/pages/PatientProfile";
 import InvoiceManagement from "@/pages/InvoiceManagement";
 import PrescriptionsFixed from "@/pages/PrescriptionsFixed";
+import PatientPrescriptions from "@/pages/PatientPrescriptions";
 import SpecsWorkflow from "@/pages/SpecsWorkflowSimple";
 import SpecsOrderCreation from "@/pages/SpecsOrderCreationSimple";
 import LensCuttingWorkflow from "@/pages/LensCuttingWorkflowSimple";
@@ -60,7 +61,7 @@ import QuickLogin from "@/pages/QuickLogin";
 // CLEAN REBUILD - NEW NAVIGATION COMPONENT
 import Navigation from "@/components/layout/Navigation";
 import AppLayout from "@/components/layout/AppLayout";
-import AppLayoutNew from "@/components/layout/AppLayoutNew";
+// import AppLayoutNew from "@/components/layout/AppLayoutNew";
 import InstallWizardSimple from "@/pages/InstallWizardSimple";
 import TestPage from "@/pages/TestPage";
 import PublicLayout from "@/components/layout/PublicLayout";
@@ -104,7 +105,7 @@ function Router() {
 
       <Route path="/patient-portal/prescriptions">
         <PatientPortalLayout title="Prescriptions" description="View your current and past prescriptions">
-          <PrescriptionsFixed />
+          <PatientPrescriptions />
         </PatientPortalLayout>
       </Route>
       <Route path="/patient-portal/invoices">
@@ -114,13 +115,15 @@ function Router() {
       </Route>
       <Route path="/patient-portal/appointments">
         <PatientPortalLayout title="Appointments" description="Schedule and manage your appointments">
-          <Appointments />
+          <AppointmentsUnified viewMode="all" />
         </PatientPortalLayout>
       </Route>
 
       {/* Public marketing pages */}
-      <Route path="/login" component={Login} />
-      <Route path="/auth" component={Login} />
+      <Route path="/login">
+        <Redirect to="/auth" />
+      </Route>
+      <Route path="/auth" component={AuthPage} />
       <Route path="/auth-page" component={AuthPage} />
       <Route path="/about">
         <PublicLayout><About /></PublicLayout>
@@ -147,16 +150,11 @@ function Router() {
         <PublicLayout><BookAppointment /></PublicLayout>
       </Route>
       
-      {/* Public website homepage */}
-      <Route path="/home">
-        <PublicLayout><Home /></PublicLayout>
-      </Route>
-
       {/* Dashboard routes */}
       <Route path="/dashboard">
-        <AppLayoutNew>
+        <AppLayout>
           <DashboardModern />
-        </AppLayoutNew>
+        </AppLayout>
       </Route>
       
       <Route path="/stores">
@@ -194,7 +192,7 @@ function Router() {
         <AppLayout>
           <Navigation />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <Appointments />
+            <AppointmentsUnified viewMode="all" />
           </div>
         </AppLayout>
       </Route>
@@ -517,14 +515,17 @@ function Router() {
         </AppLayout>
       </Route>
 
-      {/* Homepage - redirect to dashboard */}
+      {/* Home redirect route */}
+      <Route path="/home">
+        {() => {
+          window.location.href = "/";
+          return null;
+        }}
+      </Route>
+      
+      {/* Public website homepage - now at root */}
       <Route path="/">
-        <AppLayout>
-          <Navigation />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <DashboardModern />
-          </div>
-        </AppLayout>
+        <PublicLayout><Home /></PublicLayout>
       </Route>
       
       <Route component={NotFound} />

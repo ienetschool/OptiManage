@@ -1,0 +1,49 @@
+=== OptiPro Server Deployment Instructions ===
+
+Server Details:
+- IP: 5.181.218.15
+- User: root
+- Password: XG0Z43@nH5Hz.T
+- Deploy Path: /var/www/vhosts/vivaindia.com/ieoptic.ienet.online
+
+Deployment Steps:
+
+1. Upload the deployment package to server:
+   scp optipro_deploy_20250917_141010.tar.gz root@5.181.218.15:/var/www/vhosts/vivaindia.com/ieoptic.ienet.online/
+
+2. SSH into the server:
+   ssh root@5.181.218.15
+
+3. Navigate to deployment directory:
+   cd /var/www/vhosts/vivaindia.com/ieoptic.ienet.online
+
+4. Extract the deployment package:
+   tar -xzf optipro_deploy_20250917_141010.tar.gz
+
+5. Install Node.js dependencies:
+   npm install --production
+
+6. Start the application:
+   # Option 1: Direct start
+   npm start
+   
+   # Option 2: With PM2 (recommended)
+   npm install -g pm2
+   pm2 start server/index.ts --name "optipro"
+   pm2 startup
+   pm2 save
+
+7. Configure web server (Apache/Nginx) to proxy to port 5000
+
+8. Access the application:
+   https://Ieoptipro.ienet.online/
+
+9. Complete installation wizard:
+   https://Ieoptipro.ienet.online/install.html
+
+Database Configuration:
+- Host: 5.181.218.15:3306
+- Database: opticpro
+- Username: ledbpt_optie
+- Password: g79h94LAP
+

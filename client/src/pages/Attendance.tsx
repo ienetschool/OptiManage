@@ -626,7 +626,7 @@ export default function Attendance() {
                           const sampleQRData = JSON.stringify({ 
                             staffCode: realStaffCode,
                             type: "attendance",
-                            store: "OptiStore Pro",
+                            store: "IeOMS",
                             timestamp: new Date().toISOString()
                           });
                           handleQRScan(sampleQRData);
@@ -656,7 +656,7 @@ export default function Attendance() {
                           const wrongTypeQR = JSON.stringify({ 
                             staffCode: "STF-304783",
                             type: "inventory",
-                            store: "OptiStore Pro"
+                            store: "IeOMS"
                           });
                           handleQRScan(wrongTypeQR);
                           setQrScannerOpen(false);

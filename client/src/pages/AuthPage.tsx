@@ -92,24 +92,42 @@ export default function AuthPage() {
     try {
       console.log('Quick login initiated at:', new Date().toLocaleString());
       
-      // For development, simulate auth check and redirect
-      toast({
-        title: "Quick Login Successful",
-        description: "Redirecting to OptiStore Pro Dashboard...",
-        variant: "default",
+      // Call the actual login API endpoint
+      const response = await fetch('/api/login', {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
-      // Small delay to show the toast and simulate auth
-      setTimeout(() => {
-        console.log('Redirecting to dashboard after successful quick login');
-        window.location.href = '/dashboard';
-      }, 1200);
+      if (!response.ok) {
+        throw new Error(`Login failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Quick Login Successful",
+          description: "Redirecting to IeOMS Dashboard...",
+          variant: "default",
+        });
+        
+        // Small delay to show the toast before redirect
+        setTimeout(() => {
+          console.log('Redirecting to dashboard after successful quick login');
+          window.location.href = data.redirect || '/dashboard';
+        }, 1200);
+      } else {
+        throw new Error(data.message || 'Login failed');
+      }
       
     } catch (error) {
       console.error('Quick login error:', error);
       toast({
         title: "Quick Login Failed", 
-        description: "Unable to authenticate. Please try again or use regular login.",
+        description: error instanceof Error ? error.message : "Unable to authenticate. Please try again or use regular login.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -123,7 +141,7 @@ export default function AuthPage() {
           <div className="mx-auto w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
             <Eye className="h-6 w-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold">OptiStore Pro</CardTitle>
+          <CardTitle className="text-2xl font-bold">IeOMS</CardTitle>
           <CardDescription>
             Access your medical practice management system
           </CardDescription>

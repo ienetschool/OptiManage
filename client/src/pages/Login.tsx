@@ -49,7 +49,7 @@ export default function Login() {
       if (response.ok) {
         toast({
           title: "Login Successful",
-          description: "Welcome back to OptiStore Pro!",
+          description: "Welcome back to IeOMS!",
         });
         window.location.href = "/dashboard";
       } else {
@@ -102,7 +102,7 @@ export default function Login() {
       if (response.ok) {
         toast({
           title: "Account Created",
-          description: "Welcome to OptiStore Pro!",
+          description: "Welcome to IeOMS!",
         });
         window.location.href = "/dashboard";
       } else {
@@ -140,7 +140,7 @@ export default function Login() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </div>
-            <CardTitle className="text-2xl font-bold text-slate-900">OptiStore Pro</CardTitle>
+            <CardTitle className="text-2xl font-bold text-slate-900">IeOMS</CardTitle>
             <CardDescription className="text-slate-600">
               Medical Practice Management System
             </CardDescription>
@@ -356,7 +356,7 @@ export default function Login() {
 
         <div className="text-center mt-6 text-sm text-slate-600">
           <p>Secure medical practice management platform</p>
-          <p className="mt-1">© 2025 OptiStore Pro. All rights reserved.</p>
+          <p className="mt-1">© 2025 IeNet. All rights reserved.</p>
         </div>
       </div>
     </div>

@@ -62,11 +62,11 @@ export default function Header() {
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-1">
               <Phone className="h-3 w-3" />
-              <span>(555) 123-4567</span>
+              <span>+592 750-3901</span>
             </div>
             <div className="flex items-center space-x-1">
               <Mail className="h-3 w-3" />
-              <span>info@optistorepro.com</span>
+              <span>info.indiaespectacular@gmail.com</span>
             </div>
             <div className="flex items-center space-x-1">
               <Clock className="h-3 w-3" />
@@ -95,7 +95,7 @@ export default function Header() {
                   <Eye className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900">OptiStore Pro</h1>
+                  <h1 className="text-xl font-bold text-slate-900">IeOMS</h1>
                   <p className="text-xs text-slate-500">Modern Eye Care</p>
                 </div>
               </div>

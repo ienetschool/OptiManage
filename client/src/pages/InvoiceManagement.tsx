@@ -624,7 +624,7 @@ export default function InvoiceManagement() {
     
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
-    const storeName = store?.name || 'OptiStore Pro';
+    const storeName = store?.name || 'IeOMS';
     
     // Use QR code library directly for better print compatibility
     const generateQRCodeDataURL = async () => {
@@ -681,12 +681,12 @@ export default function InvoiceManagement() {
               <img src="${dataURL}" alt="Invoice QR Code" style="width: 76px; height: 76px;" />
             </div>
             <div class="company-info" style="text-align: center; flex-grow: 1;">
-              <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
+              <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">IeOMS</div>
               <div class="company-tagline" style="font-size: 11pt; opacity: 0.9; margin-bottom: 10px;">Optical Retail Management</div>
               <div class="company-address" style="font-size: 9pt; opacity: 0.8; line-height: 1.3;">
                 123 Vision Street<br>
                 Eyecare City, EC 12345<br>
-                Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com
               </div>
             </div>
             <div class="invoice-info" style="text-align: right;">
@@ -777,7 +777,7 @@ export default function InvoiceManagement() {
             <!-- Footer -->
             <div style="text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #6b7280; font-size: 12px;">
               <p>Thank you for your business!</p>
-              <p>For questions about this invoice, contact us at billing@optistorepro.com</p>
+              <p>For questions about this invoice, contact us at info.indiaespectacular@gmail.com</p>
             </div>
           </div>
         </div>
@@ -841,7 +841,7 @@ export default function InvoiceManagement() {
   const generateProfessionalInvoiceFallback = (invoice: Invoice) => {
     const customer = customers.find(c => c.id === invoice.customerId);
     const store = stores.find(s => s.id === invoice.storeId);
-    const storeName = store?.name || 'OptiStore Pro';
+    const storeName = store?.name || 'IeOMS';
     
     // Create style for print with color preservation
     const style = document.createElement('style');
@@ -918,9 +918,9 @@ export default function InvoiceManagement() {
             <!-- QR Code will be injected here -->
           </div>
           <div class="company-info" style="text-align: center; flex-grow: 1;">
-            <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">OptiStore Pro</div>
+            <div class="company-name" style="font-size: 24pt; font-weight: 700; margin-bottom: 5px;">IeOMS</div>
             <div class="company-tagline" style="font-size: 11pt; opacity: 0.9; margin-bottom: 10px;">Optical Retail Management</div>
-            <div class="company-address" style="font-size: 10pt; opacity: 0.8;">123 Vision Street<br/>Eyecare City, EC 12345<br/>Phone: (555) 123-4567 | Email: billing@optistorepro.com</div>
+            <div class="company-address" style="font-size: 10pt; opacity: 0.8;">Sandy Babb Street, Kitty<br/>Georgetown, Guyana<br/>Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com</div>
           </div>
           <div style="width: 80px;"></div>
         </div>
@@ -1913,10 +1913,10 @@ export default function InvoiceManagement() {
                 appliedCouponCode: (selectedInvoice as any)?.appliedCouponCode,
                 couponDiscount: (selectedInvoice as any)?.couponDiscount || 0
               }}
-              storeName={stores?.find(s => s.id === selectedInvoice?.storeId)?.name || 'OptiStore Pro'}
+              storeName={stores?.find(s => s.id === selectedInvoice?.storeId)?.name || 'IeOMS'}
               storeAddress="123 Vision Street, Eyecare City, EC 12345"
               storePhone="(555) 123-4567"
-              storeEmail="billing@optistorepro.com"
+              storeEmail="info.indiaespectacular@gmail.com"
               onClose={() => setShowInvoicePreview(false)}
             />
           )}

@@ -86,7 +86,7 @@ export default function Prescriptions() {
   });
 
   const { data: regularAppointments = [] } = useQuery<any[]>({
-    queryKey: ["/api/appointments"],
+    queryKey: ["/api/medical-appointments"],
   });
 
   const appointments = [
@@ -141,10 +141,7 @@ export default function Prescriptions() {
 
   const createPrescriptionMutation = useMutation({
     mutationFn: async (data: InsertPrescription) => {
-      return await apiRequest('/api/prescriptions', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+      return await apiRequest('POST', '/api/prescriptions', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/prescriptions'] });
@@ -262,7 +259,7 @@ Service: ${prescription.prescriptionType?.replace('_', ' ')}
 Please contact us if you have any questions.
 
 Best regards,
-OptiStore Pro Team`;
+IeOMS Team`;
 
     const mailtoLink = `mailto:${patient?.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailtoLink);
@@ -1143,7 +1140,7 @@ OptiStore Pro Team`;
                           control={form.control}
                           name="status"
                           render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value || undefined}>
                               <SelectTrigger>
                                 <SelectValue />
                               </SelectTrigger>

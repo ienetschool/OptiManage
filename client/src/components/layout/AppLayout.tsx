@@ -37,13 +37,15 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import LiveChat from "@/components/LiveChat";
+import Navigation from "@/components/layout/Navigation";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [quickSaleOpen, setQuickSaleOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
@@ -315,7 +317,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">OP</span>
               </div>
-              <span className="font-bold text-lg text-slate-900 hidden sm:block">OptiStore Pro</span>
+              <span className="font-bold text-lg text-slate-900 hidden sm:block">IeOMS</span>
             </div>
           </Link>
         </div>
@@ -516,13 +518,24 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main Content */}
       <div className="flex-1 flex">
-        {children}
+        {/* Sidebar Navigation */}
+        <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block`}>
+          <Navigation 
+            collapsed={sidebarCollapsed} 
+            onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} 
+          />
+        </div>
+        
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
       </div>
 
       {/* Simple Footer for CRM */}
       <footer className="bg-white border-t border-slate-200 px-6 py-2">
         <div className="flex justify-between items-center text-xs text-slate-500">
-          <span>© 2025 OptiStore Pro</span>
+          <span>© 2025 IeNet</span>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="text-xs">v2.1.0</Badge>
             <Badge variant="outline" className="text-xs text-green-600">Online</Badge>

@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath, URL } from 'node:url';
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
@@ -29,9 +30,17 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: 8080,
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });

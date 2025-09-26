@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,6 +12,7 @@ import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/di
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { 
   User, 
@@ -31,9 +33,24 @@ import {
   Users,
   Activity,
   AlertTriangle,
-  FileText
+  FileText,
+  Sparkles,
+  Zap,
+  Globe,
+  Building,
+  UserCheck,
+  RefreshCw,
+  QrCode,
+  IdCard
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import {
+  generatePatientUsername,
+  generatePatientPassword,
+  generatePatientQRData,
+  generatePatientIdCardData,
+  formatCredentialsForDisplay
+} from "@/utils/patientCredentials";
 
 // Comprehensive Patient Schema with all medical fields
 const patientSchema = z.object({
@@ -58,7 +75,7 @@ const patientSchema = z.object({
   // Emergency Contact
   emergencyContactName: z.string().min(2, "Emergency contact name required").optional(),
   emergencyContactPhone: z.string().min(10, "Emergency contact phone required").optional(),
-  emergencyContactRelation: z.string().optional(),
+  emergencyContactRelation: z.enum(["spouse", "parent", "child", "sibling", "friend", "other"]).optional(),
   
   // Medical Information
   allergies: z.string().optional(),
@@ -77,7 +94,7 @@ const patientSchema = z.object({
   // Insurance & Payment
   insuranceProvider: z.string().optional(),
   insuranceNumber: z.string().optional(),
-  nationalIdNumber: z.string().optional(),
+  nationalIdNumber: z.string().min(1, "National ID is required"), // Made mandatory
   nisNumber: z.string().optional(),
   insuranceCoupons: z.array(z.object({
     couponType: z.string(),
@@ -88,12 +105,27 @@ const patientSchema = z.object({
   policyHolderName: z.string().optional(),
   relationToPolicyHolder: z.enum(["self", "spouse", "child", "other"]).optional(),
   
+  // Government Voucher System
+  voucherType: z.string().optional(),
+  voucherNumber: z.string().optional(),
+  voucherAmount: z.number().optional(),
+  
+  // Patient Credentials System
+  username: z.string().optional(),
+  password: z.string().optional(),
+  qrCode: z.string().optional(),
+  idCard: z.string().optional(),
+  
   // Additional Information
   referredBy: z.string().optional(),
   preferredLanguage: z.string().optional(),
   notes: z.string().optional(),
-  consentToTreatment: z.boolean().default(false),
-  hipaaConsent: z.boolean().default(false),
+  consentToTreatment: z.boolean().refine(val => val === true, {
+    message: "Consent to treatment is required"
+  }),
+  hipaaConsent: z.boolean().refine(val => val === true, {
+    message: "HIPAA privacy acknowledgment is required"
+  }),
 });
 
 type PatientFormData = z.infer<typeof patientSchema>;
@@ -104,6 +136,9 @@ interface ModernPatientFormProps {
   editingPatient?: any;
 }
 
+// Customizable tab styling configuration
+
+
 const ModernPatientForm: React.FC<ModernPatientFormProps> = ({ 
   onSuccess, 
   onCancel, 
@@ -113,53 +148,65 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
   const queryClient = useQueryClient();
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [generatedCredentials, setGeneratedCredentials] = useState<{
+    username: string;
+    password: string;
+    qrData: string;
+    idCardData: string;
+  }>({ username: '', password: '', qrData: '', idCardData: '' });
 
   const steps = [
     {
       title: "Basic Info",
       subtitle: "Personal information",
       icon: User,
-      color: "from-blue-500 to-blue-600",
+      gradient: "from-violet-500 via-purple-500 to-indigo-500",
+      bgGradient: "from-violet-50 to-purple-50",
       fields: ["firstName", "lastName", "dateOfBirth", "gender"]
     },
     {
       title: "Contact",
       subtitle: "Contact details",
       icon: Phone,
-      color: "from-green-500 to-green-600", 
+      gradient: "from-emerald-500 via-teal-500 to-cyan-500",
+      bgGradient: "from-emerald-50 to-teal-50",
       fields: ["phone"]
     },
     {
       title: "Emergency",
       subtitle: "Emergency contacts",
       icon: AlertTriangle,
-      color: "from-orange-500 to-orange-600",
+      gradient: "from-orange-500 via-amber-500 to-yellow-500",
+      bgGradient: "from-orange-50 to-amber-50",
       fields: []
     },
     {
       title: "Medical",
       subtitle: "Medical history",
       icon: Heart,
-      color: "from-red-500 to-red-600",
+      gradient: "from-rose-500 via-pink-500 to-red-500",
+      bgGradient: "from-rose-50 to-pink-50",
       fields: []
     },
     {
       title: "Eye Care",
       subtitle: "Vision history",
       icon: Eye,
-      color: "from-purple-500 to-purple-600",
+      gradient: "from-blue-500 via-indigo-500 to-purple-500",
+      bgGradient: "from-blue-50 to-indigo-50",
       fields: []
     },
     {
       title: "Insurance",
       subtitle: "Insurance details",
       icon: Shield,
-      color: "from-indigo-500 to-indigo-600",
+      gradient: "from-slate-500 via-gray-500 to-zinc-500",
+      bgGradient: "from-slate-50 to-gray-50",
       fields: []
     }
   ];
 
-  // Form configuration
+  // Form configuration with enhanced default values
   const form = useForm<PatientFormData>({
     resolver: zodResolver(patientSchema),
     defaultValues: editingPatient ? {
@@ -198,6 +245,13 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       groupNumber: editingPatient.groupNumber || "",
       policyHolderName: editingPatient.policyHolderName || "",
       relationToPolicyHolder: editingPatient.relationToPolicyHolder || undefined,
+      voucherType: editingPatient.voucherType || "",
+      voucherNumber: editingPatient.voucherNumber || "",
+      voucherAmount: editingPatient.voucherAmount || undefined,
+      username: editingPatient.username || "",
+      password: editingPatient.password || "",
+      qrCode: editingPatient.qrCode || "",
+      idCard: editingPatient.idCard || "",
       referredBy: editingPatient.referredBy || "",
       preferredLanguage: editingPatient.preferredLanguage || "English",
       notes: editingPatient.notes || "",
@@ -239,6 +293,13 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       groupNumber: "",
       policyHolderName: "",
       relationToPolicyHolder: undefined,
+      voucherType: "",
+      voucherNumber: "",
+      voucherAmount: undefined,
+      username: "",
+      password: "",
+      qrCode: "",
+      idCard: "",
       referredBy: "",
       preferredLanguage: "English",
       notes: "",
@@ -246,6 +307,58 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       hipaaConsent: false,
     },
   });
+
+  // Auto-generate patient credentials
+  const handleGenerateCredentials = () => {
+    const firstName = form.getValues('firstName');
+    const lastName = form.getValues('lastName');
+    
+    if (!firstName || !lastName) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter first and last name before generating credentials.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Generate username and password
+    const username = generatePatientUsername(firstName, lastName);
+    const password = generatePatientPassword(12);
+    
+    // Generate QR code and ID card data
+    const patientData = {
+      firstName,
+      lastName,
+      phone: form.getValues('phone'),
+      email: form.getValues('email'),
+      dateOfBirth: form.getValues('dateOfBirth'),
+      bloodType: form.getValues('bloodType'),
+      username
+    };
+    
+    const qrData = generatePatientQRData(patientData);
+    const idCardData = generatePatientIdCardData(patientData);
+    
+    // Update form fields
+    form.setValue('username', username);
+    form.setValue('password', password);
+    form.setValue('qrCode', JSON.stringify(qrData));
+    form.setValue('idCard', JSON.stringify(idCardData));
+    
+    // Store generated credentials
+    setGeneratedCredentials({
+      username,
+      password,
+      qrData,
+      idCardData
+    });
+    
+    toast({
+      title: "Credentials Generated",
+      description: `Username: ${username} | Password: ${password}`,
+    });
+  };
 
   // Step validation
   const validateStep = async (stepIndex: number): Promise<boolean> => {
@@ -298,25 +411,28 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
       
       const patientData = {
         ...data,
-        patientCode: editingPatient?.patientCode || `PAT-${Date.now()}`,
+        patientCode: editingPatient?.patientCode || `PAT-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`,
       };
       
-      return apiRequest(method, endpoint, patientData);
+      return await apiRequest(method, endpoint, patientData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["patients"] });
       toast({
-        title: "✅ Success!",
-        description: `Patient has been ${editingPatient ? 'updated' : 'registered'} successfully.`,
-        duration: 3000,
+        title: editingPatient ? "Patient Updated" : "Patient Registered",
+        description: editingPatient 
+          ? "Patient information has been successfully updated."
+          : "New patient has been successfully registered.",
+        variant: "default",
+        duration: 4000,
       });
       onSuccess();
     },
     onError: (error: any) => {
+      console.error("Patient mutation error:", error);
       toast({
-        title: "❌ Error",
-        description: error.message || `Failed to ${editingPatient ? 'update' : 'register'} patient. Please try again.`,
+        title: "Registration Failed",
+        description: error.message || "Failed to register patient. Please try again.",
         variant: "destructive",
         duration: 5000,
       });
@@ -324,964 +440,742 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
   });
 
   const onSubmit = async (data: PatientFormData) => {
-    console.log("=== FORM SUBMISSION STARTED ===");
-    console.log("Form data received:", data);
-    console.log("Patient mutation status:", patientMutation.status);
-    
-    try {
-      console.log("About to call patientMutation.mutate...");
-      patientMutation.mutate(data);
-      console.log("patientMutation.mutate called successfully");
-    } catch (error) {
-      console.error("Error in onSubmit:", error);
-    }
+    patientMutation.mutate(data);
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center mb-8 px-4">
-      <div className="flex items-center space-x-2 overflow-x-auto">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isCompleted = completedSteps.has(index);
-          const isCurrent = currentStep === index;
-          
-          return (
-            <div key={index} className="flex items-center">
-              <div
-                className={`flex flex-col items-center cursor-pointer transition-all duration-300 ${
-                  isCurrent ? 'scale-110' : ''
-                }`}
-                onClick={() => setCurrentStep(index)}
-              >
-                <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold transition-all duration-300 ${
-                    isCompleted
-                      ? 'bg-green-500 shadow-lg'
-                      : isCurrent
-                      ? `bg-gradient-to-r ${step.color} shadow-lg`
-                      : 'bg-gray-300'
-                  }`}
-                >
-                  {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-                </div>
-                <span className={`text-xs mt-1 font-medium ${isCurrent ? 'text-blue-600' : 'text-gray-500'}`}>
-                  {step.title}
-                </span>
-              </div>
-              {index < steps.length - 1 && (
-                <ChevronRight className="h-4 w-4 text-gray-300 mx-2" />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const renderProgressBar = () => {
-    const progress = ((currentStep + 1) / steps.length) * 100;
+  // Enhanced step indicator with fixed styling
+  const renderStepIndicator = () => {
     return (
-      <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
-        <div
-          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500 ease-in-out"
-          style={{ width: `${progress}%` }}
-        ></div>
+      <div className="relative">
+        {/* Compact Progress line */}
+        <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gray-200 rounded-full transform -translate-y-1/2" />
+        <div 
+          className="absolute top-1/2 left-4 h-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transform -translate-y-1/2 transition-all duration-700 ease-out"
+          style={{ width: `calc(${(currentStep / (steps.length - 1)) * 100}% - 1rem)` }}
+        />
+        
+        {/* Horizontal Tab Container - Compact */}
+        <div className="relative flex justify-between items-center px-4 py-2 gap-2">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            const isCompleted = completedSteps.has(index);
+            const isCurrent = index === currentStep;
+            const isPast = index < currentStep;
+            
+            return (
+              <motion.div
+                key={index}
+                className="flex flex-col items-center cursor-pointer group"
+                onClick={() => setCurrentStep(index)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {/* Tab Icon - Compact Circle */}
+                <motion.div
+                  className={`relative w-8 h-8 rounded-full flex items-center justify-center text-white font-bold transition-all duration-300 shadow-md ${
+                    isCompleted
+                      ? 'bg-gradient-to-br from-green-400 to-emerald-500 shadow-green-200'
+                      : isCurrent
+                      ? `bg-gradient-to-br ${step.gradient} shadow-purple-200`
+                      : isPast
+                      ? 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-200'
+                      : 'bg-gradient-to-br from-gray-300 to-gray-400 shadow-gray-100'
+                  }`}
+                  animate={{
+                    scale: isCurrent ? 1.05 : 1,
+                    rotateY: isCurrent ? [0, 5, -5, 0] : 0
+                  }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Compact Icon Size */}
+                  {isCompleted ? (
+                    <Check className="h-3 w-3" />
+                  ) : (
+                    <Icon className="h-3 w-3" />
+                  )}
+                  
+                  {/* Compact Sparkle effect for current step */}
+                  {isCurrent && (
+                    <motion.div
+                      className="absolute -top-0.5 -right-0.5"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Sparkles className="h-2 w-2 text-yellow-400" />
+                    </motion.div>
+                  )}
+                </motion.div>
+                
+                {/* Tab Title - No descriptions */}
+                <div className="mt-2 text-center">
+                  <span className={`text-xs font-semibold transition-colors duration-200 ${
+                    isCurrent ? 'text-purple-600' : 'text-gray-600'
+                  }`}>
+                    {step.title}
+                  </span>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     );
   };
 
+  // Enhanced progress bar
+  const renderProgressBar = () => {
+    const progress = ((currentStep + 1) / steps.length) * 100;
+    return (
+      <div className="w-full mb-8">
+        <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <span>Step {currentStep + 1} of {steps.length}</span>
+          <span>{Math.round(progress)}% Complete</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Enhanced step rendering with modern cards
   const renderStep = () => {
     const step = steps[currentStep];
     const StepIcon = step.icon;
 
     return (
-      <Card className="bg-white border-0 shadow-lg min-h-[400px]">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className={`p-2 rounded-full bg-gradient-to-r ${step.color} text-white shadow-md`}>
-              <StepIcon className="h-5 w-5" />
+      <motion.div
+        key={currentStep}
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -50 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card className={`border-0 shadow-2xl bg-gradient-to-br ${step.bgGradient} backdrop-blur-sm`}>
+          <CardContent className="p-8">
+            {/* Step header with modern minimalist styling */}
+            <div className="flex items-center space-x-3 mb-6">
+              <motion.div 
+                className={`p-2.5 rounded-xl bg-gradient-to-br ${step.gradient} text-white shadow-md`}
+                whileHover={{ scale: 1.05, rotate: 3 }}
+                transition={{ type: "spring", stiffness: 400 }}
+              >
+                <StepIcon className="h-5 w-5" />
+              </motion.div>
+              <div>
+                <h3 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+                  {step.title}
+                </h3>
+                <p className="text-gray-500 text-sm font-medium">{step.subtitle}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
-              <p className="text-gray-600 text-sm">{step.subtitle}</p>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            {currentStep === 0 && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Step content */}
+            <div className="space-y-6">
+              {currentStep === 0 && (
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-medium text-slate-700 text-sm">
+                            <User className="h-4 w-4 text-violet-500" />
+                            <span>First Name</span>
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Enter first name" 
+                              className="h-12 border-2 border-gray-200 focus:border-violet-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-firstName"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-medium text-slate-700 text-sm">
+                            <User className="h-4 w-4 text-violet-500" />
+                            <span>Last Name</span>
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Enter last name" 
+                              className="h-12 border-2 border-gray-200 focus:border-violet-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-lastName"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-medium text-slate-700 text-sm">
+                            <Calendar className="h-4 w-4 text-violet-500" />
+                            <span>Date of Birth</span>
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="date"
+                              max={new Date().toISOString().split('T')[0]}
+                              className="h-12 border-2 border-gray-200 focus:border-violet-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-dateOfBirth"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-medium text-slate-700 text-sm">
+                            <Users className="h-4 w-4 text-violet-500" />
+                            <span>Gender</span>
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-violet-500 rounded-xl bg-white/70 backdrop-blur-sm text-base" data-testid="select-gender">
+                                <SelectValue placeholder="Select gender" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="male">Male</SelectItem>
+                                <SelectItem value="female">Female</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="bloodType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Heart className="h-5 w-5 text-red-500" />
+                            <span>Blood Group</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm text-base" data-testid="select-bloodType">
+                                <SelectValue placeholder="Select blood group" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="A+">A+</SelectItem>
+                                <SelectItem value="A-">A-</SelectItem>
+                                <SelectItem value="B+">B+</SelectItem>
+                                <SelectItem value="B-">B-</SelectItem>
+                                <SelectItem value="AB+">AB+</SelectItem>
+                                <SelectItem value="AB-">AB-</SelectItem>
+                                <SelectItem value="O+">O+</SelectItem>
+                                <SelectItem value="O-">O-</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="maritalStatus"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Star className="h-5 w-5 text-yellow-500" />
+                            <span>Marital Status</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-yellow-500 rounded-xl bg-white/70 backdrop-blur-sm text-base" data-testid="select-maritalStatus">
+                                <SelectValue placeholder="Select marital status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="single">Single</SelectItem>
+                                <SelectItem value="married">Married</SelectItem>
+                                <SelectItem value="divorced">Divorced</SelectItem>
+                                <SelectItem value="widowed">Widowed</SelectItem>
+                                <SelectItem value="other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={form.control}
-                    name="firstName"
+                    name="occupation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <User className="h-4 w-4" />
-                          <span>First Name</span>
-                          <span className="text-red-500">*</span>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <Activity className="h-5 w-5 text-blue-500" />
+                          <span>Occupation</span>
                         </FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
-                            placeholder="Enter first name" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-firstName"
+                            placeholder="Enter occupation" 
+                            className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                            data-testid="input-occupation"
                           />
                         </FormControl>
-                        <FormMessage className="text-red-500" />
+                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
                       </FormItem>
                     )}
                   />
+                </motion.div>
+              )}
+
+              {currentStep === 1 && (
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Phone className="h-5 w-5 text-emerald-500" />
+                            <span>Primary Phone</span>
+                            <span className="text-red-500">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="(555) 123-4567" 
+                              className="h-12 border-2 border-gray-200 focus:border-emerald-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-phone"
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Mail className="h-5 w-5 text-emerald-500" />
+                            <span>Email Address</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="email"
+                              placeholder="patient@example.com" 
+                              className="h-12 border-2 border-gray-200 focus:border-emerald-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-email"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
-                    name="lastName"
+                    name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <User className="h-4 w-4" />
-                          <span>Last Name</span>
-                          <span className="text-red-500">*</span>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <MapPin className="h-5 w-5 text-emerald-500" />
+                          <span>Street Address</span>
                         </FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
-                            placeholder="Enter last name" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-lastName"
+                            placeholder="123 Main Street" 
+                            className="h-12 border-2 border-gray-200 focus:border-emerald-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                            data-testid="input-address"
                           />
                         </FormControl>
-                        <FormMessage className="text-red-500" />
+                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="dateOfBirth"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Calendar className="h-4 w-4" />
-                          <span>Date of Birth</span>
-                          <span className="text-red-500">*</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            type="date"
-                            max={new Date().toISOString().split('T')[0]}
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-dateOfBirth"
-                          />
-                        </FormControl>
-                        <FormMessage className="text-red-500" />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Building className="h-5 w-5 text-emerald-500" />
+                            <span>City</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="City" 
+                              className="h-12 border-2 border-gray-200 focus:border-emerald-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-city"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="state"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Globe className="h-5 w-5 text-emerald-500" />
+                            <span>State</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="State" 
+                              className="h-12 border-2 border-gray-200 focus:border-emerald-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-state"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="zipCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <MapPin className="h-5 w-5 text-emerald-500" />
+                            <span>ZIP Code</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="12345" 
+                              className="h-12 border-2 border-gray-200 focus:border-emerald-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-zipCode"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {currentStep === 2 && (
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <User className="h-5 w-5 text-orange-500" />
+                            <span>Emergency Contact Name</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Full name" 
+                              className="h-12 border-2 border-gray-200 focus:border-orange-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-emergencyContactName"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="emergencyContactPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Phone className="h-5 w-5 text-orange-500" />
+                            <span>Emergency Contact Phone</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="(555) 123-4567" 
+                              className="h-12 border-2 border-gray-200 focus:border-orange-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-emergencyContactPhone"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
-                    name="gender"
+                    name="emergencyContactRelation"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Users className="h-4 w-4" />
-                          <span>Gender</span>
-                          <span className="text-red-500">*</span>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <Users className="h-5 w-5 text-orange-500" />
+                          <span>Relationship</span>
                         </FormLabel>
                         <FormControl>
                           <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-gender">
-                              <SelectValue placeholder="Select gender" />
+                            <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-orange-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base">
+                              <SelectValue placeholder="Select relationship" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="male">Male</SelectItem>
-                              <SelectItem value="female">Female</SelectItem>
+                              <SelectItem value="spouse">Spouse</SelectItem>
+                              <SelectItem value="parent">Parent</SelectItem>
+                              <SelectItem value="child">Child</SelectItem>
+                              <SelectItem value="sibling">Sibling</SelectItem>
+                              <SelectItem value="friend">Friend</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormControl>
-                        <FormMessage className="text-red-500" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="bloodType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Heart className="h-4 w-4" />
-                          <span>Blood Group</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-bloodType">
-                              <SelectValue placeholder="Select blood group" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="A+">A+</SelectItem>
-                              <SelectItem value="A-">A-</SelectItem>
-                              <SelectItem value="B+">B+</SelectItem>
-                              <SelectItem value="B-">B-</SelectItem>
-                              <SelectItem value="AB+">AB+</SelectItem>
-                              <SelectItem value="AB-">AB-</SelectItem>
-                              <SelectItem value="O+">O+</SelectItem>
-                              <SelectItem value="O-">O-</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
                         <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
                       </FormItem>
                     )}
                   />
+                </motion.div>
+              )}
 
+              {currentStep === 3 && (
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
                   <FormField
                     control={form.control}
-                    name="maritalStatus"
+                    name="allergies"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Star className="h-4 w-4" />
-                          <span>Marital Status</span>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <AlertTriangle className="h-5 w-5 text-red-500" />
+                          <span>Known Allergies</span>
                         </FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-maritalStatus">
-                              <SelectValue placeholder="Select marital status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="single">Single</SelectItem>
-                              <SelectItem value="married">Married</SelectItem>
-                              <SelectItem value="divorced">Divorced</SelectItem>
-                              <SelectItem value="widowed">Widowed</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <Textarea 
+                            {...field} 
+                            placeholder="List any known allergies (medications, foods, environmental)..." 
+                            className="min-h-[100px] border-2 border-gray-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base resize-none"
+                            data-testid="textarea-allergies"
+                          />
                         </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        <FormDescription className="text-sm text-gray-500">Optional - Include severity if known</FormDescription>
                       </FormItem>
                     )}
                   />
-                </div>
 
-                <FormField
-                  control={form.control}
-                  name="occupation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <Activity className="h-4 w-4" />
-                        <span>Occupation</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="Enter occupation" 
-                          className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                          data-testid="input-occupation"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-
-            {currentStep === 1 && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="currentMedications"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Phone className="h-4 w-4" />
-                          <span>Phone Number</span>
-                          <span className="text-red-500">*</span>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <Heart className="h-5 w-5 text-red-500" />
+                          <span>Current Medications</span>
                         </FormLabel>
                         <FormControl>
-                          <Input 
+                          <Textarea 
                             {...field} 
-                            placeholder="(555) 123-4567" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-phone"
+                            placeholder="List current medications with dosages..." 
+                            className="min-h-[100px] border-2 border-gray-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base resize-none"
+                            data-testid="textarea-currentMedications"
                           />
                         </FormControl>
-                        <FormMessage className="text-red-500" />
+                        <FormDescription className="text-sm text-gray-500">Optional - Include dosage and frequency</FormDescription>
                       </FormItem>
                     )}
                   />
 
                   <FormField
                     control={form.control}
-                    name="email"
+                    name="medicalHistory"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Mail className="h-4 w-4" />
-                          <span>Email Address</span>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <FileText className="h-5 w-5 text-red-500" />
+                          <span>Medical History</span>
                         </FormLabel>
                         <FormControl>
-                          <Input 
+                          <Textarea 
                             {...field} 
-                            type="email"
-                            placeholder="john@example.com" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-email"
+                            placeholder="Previous surgeries, chronic conditions, significant medical events..." 
+                            className="min-h-[120px] border-2 border-gray-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base resize-none"
+                            data-testid="textarea-medicalHistory"
                           />
                         </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                        <FormMessage className="text-red-500" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="address"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <MapPin className="h-4 w-4" />
-                        <span>Address</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Enter complete street address..."
-                          className="min-h-[80px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-address"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Optional - Street address with apartment/unit number</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="city"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">City</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="City" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-city"
-                          />
-                        </FormControl>
+                        <FormDescription className="text-sm text-gray-500">Optional - Include dates if known</FormDescription>
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="state"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">State</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="State" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-state"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="smokingStatus"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Activity className="h-5 w-5 text-red-500" />
+                            <span>Smoking Status</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm text-base" data-testid="select-smokingStatus">
+                                <SelectValue placeholder="Select smoking status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="never">Never</SelectItem>
+                                <SelectItem value="current">Current</SelectItem>
+                                <SelectItem value="former">Former</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="zipCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">ZIP Code</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="12345" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-zipCode"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </>
-            )}
-
-            {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-r-lg">
-                  <div className="flex">
-                    <AlertTriangle className="h-5 w-5 text-orange-400 mr-2" />
-                    <div>
-                      <h4 className="text-orange-800 font-semibold">Emergency Contact Information</h4>
-                      <p className="text-orange-700 text-sm">Please provide someone we can contact in case of emergency</p>
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="alcoholConsumption"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Activity className="h-5 w-5 text-red-500" />
+                            <span>Alcohol Consumption</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm text-base" data-testid="select-alcoholConsumption">
+                                <SelectValue placeholder="Select alcohol consumption" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">None</SelectItem>
+                                <SelectItem value="occasional">Occasional</SelectItem>
+                                <SelectItem value="moderate">Moderate</SelectItem>
+                                <SelectItem value="heavy">Heavy</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
+                </motion.div>
+              )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="emergencyContactName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <User className="h-4 w-4" />
-                          <span>Contact Name</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Full name" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-emergencyContactName"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional but recommended</FormDescription>
-                      </FormItem>
-                    )}
-                  />
+              {currentStep === 4 && (
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="lastEyeExam"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Calendar className="h-5 w-5 text-blue-500" />
+                            <span>Last Eye Exam</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              type="date"
+                              max={new Date().toISOString().split('T')[0]}
+                              className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-lastEyeExam"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="emergencyContactPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Phone className="h-4 w-4" />
-                          <span>Contact Phone</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="(555) 123-4567" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-emergencyContactPhone"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional but recommended</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="emergencyContactRelation"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <Users className="h-4 w-4" />
-                        <span>Relationship</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          placeholder="e.g., Spouse, Parent, Sibling, Friend" 
-                          className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                          data-testid="input-emergencyContactRelation"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Optional - Relationship to patient</FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-r-lg">
-                  <div className="flex">
-                    <Heart className="h-5 w-5 text-red-400 mr-2" />
-                    <div>
-                      <h4 className="text-red-800 font-semibold">Medical History</h4>
-                      <p className="text-red-700 text-sm">Please provide detailed medical information for proper care</p>
-                    </div>
-                  </div>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="allergies"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <AlertTriangle className="h-4 w-4" />
-                        <span>Allergies</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="List any known allergies (medications, food, environmental). Include severity and reactions..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-allergies"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Important for safe treatment</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="currentMedications"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <Activity className="h-4 w-4" />
-                        <span>Current Medications</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="List all current medications, dosages, and frequency. Include prescription and over-the-counter medications..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-currentMedications"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Include supplements and vitamins</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="smokingStatus"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">Smoking Status</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-smokingStatus">
-                              <SelectValue placeholder="Select smoking status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="never">Never smoked</SelectItem>
-                              <SelectItem value="former">Former smoker</SelectItem>
-                              <SelectItem value="current">Current smoker</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="alcoholConsumption"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">Alcohol Consumption</FormLabel>
-                        <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-alcoholConsumption">
-                              <SelectValue placeholder="Select alcohol usage" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
-                              <SelectItem value="occasional">Occasional</SelectItem>
-                              <SelectItem value="moderate">Moderate</SelectItem>
-                              <SelectItem value="heavy">Heavy</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="medicalHistory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <FileText className="h-4 w-4" />
-                        <span>Medical History</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Previous surgeries, chronic conditions, significant medical events, hospitalizations..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-medicalHistory"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="familyHistory"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <Users className="h-4 w-4" />
-                        <span>Family Medical History</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Family history of eye conditions, diabetes, heart disease, cancer, etc..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-familyHistory"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Include conditions in immediate family members</FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div className="bg-purple-50 border-l-4 border-purple-400 p-4 rounded-r-lg">
-                  <div className="flex">
-                    <Eye className="h-5 w-5 text-purple-400 mr-2" />
-                    <div>
-                      <h4 className="text-purple-800 font-semibold">Eye Care History</h4>
-                      <p className="text-purple-700 text-sm">Previous eye exams and vision care information</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="lastEyeExam"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Calendar className="h-4 w-4" />
-                          <span>Last Eye Exam</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            type="date"
-                            max={new Date().toISOString().split('T')[0]}
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-lastEyeExam"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional - When was your last comprehensive eye exam?</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="flex items-center space-x-3">
                     <FormField
                       control={form.control}
                       name="contactLensWearer"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border-2 border-gray-200 p-4 bg-white/70 backdrop-blur-sm">
                           <FormControl>
-                            <input
-                              type="checkbox"
+                            <Checkbox
                               checked={field.value}
-                              onChange={field.onChange}
-                              className="w-5 h-5 text-purple-600 border-2 border-gray-200 rounded focus:ring-purple-500"
+                              onCheckedChange={field.onChange}
+                              className="mt-1"
                               data-testid="checkbox-contactLensWearer"
                             />
                           </FormControl>
-                          <FormLabel className="font-semibold text-gray-700">
-                            Contact Lens Wearer
-                          </FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="currentGlassesRx"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <Glasses className="h-4 w-4" />
-                        <span>Current Glasses Prescription</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Current prescription details (sphere, cylinder, axis, add, prism)..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-currentGlassesRx"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Optional - Include both distance and reading prescriptions if applicable</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="eyeConditions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <Eye className="h-4 w-4" />
-                        <span>Eye Conditions & Concerns</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Any current or past eye conditions, concerns, symptoms, surgeries (glaucoma, cataracts, macular degeneration, dry eyes, etc.)..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-eyeConditions"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Include any eye-related symptoms or discomfort</FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            )}
-
-            {currentStep === 5 && (
-              <div className="space-y-6">
-                <div className="bg-indigo-50 border-l-4 border-indigo-400 p-4 rounded-r-lg">
-                  <div className="flex">
-                    <Shield className="h-5 w-5 text-indigo-400 mr-2" />
-                    <div>
-                      <h4 className="text-indigo-800 font-semibold">Insurance & Additional Information</h4>
-                      <p className="text-indigo-700 text-sm">Insurance details and final registration information</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="insuranceProvider"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <Shield className="h-4 w-4" />
-                          <span>Insurance Provider</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Enter insurance provider" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-insuranceProvider"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="insuranceNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                          <CreditCard className="h-4 w-4" />
-                          <span>Policy Number</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Enter policy number" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-insuranceNumber"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="nationalIdNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">National ID Number</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Enter national ID number" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-nationalIdNumber"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="nisNumber"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">NIS Number</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Enter NIS number" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-nisNumber"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="relationToPolicyHolder"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-semibold text-gray-700">Relationship to Policy Holder</FormLabel>
-                      <FormControl>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <SelectTrigger className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg" data-testid="select-relationToPolicyHolder">
-                            <SelectValue placeholder="Select relationship" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="self">Self</SelectItem>
-                            <SelectItem value="spouse">Spouse</SelectItem>
-                            <SelectItem value="child">Child</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-                {/* Insurance Coupons & Benefits Section */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-                  <div className="flex items-center space-x-2 mb-3">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
-                    <h4 className="font-semibold text-blue-800">Insurance Coupons & Benefits</h4>
-                  </div>
-                  <p className="text-sm text-blue-600 mb-3">Add insurance coupons, government subsidies, or special benefits available to this patient.</p>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    className="bg-white border-blue-300 text-blue-700 hover:bg-blue-50"
-                    data-testid="button-add-insurance-coupon"
-                  >
-                    <span className="mr-1">+</span> Add Insurance Coupon
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="referredBy"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">Referred By</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Doctor, friend, or referral source" 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-referredBy"
-                          />
-                        </FormControl>
-                        <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="preferredLanguage"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-semibold text-gray-700">Preferred Language</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="English, Spanish, etc." 
-                            className="h-10 border-2 border-gray-200 focus:border-blue-500 rounded-lg"
-                            data-testid="input-preferredLanguage"
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center space-x-1 font-semibold text-gray-700">
-                        <FileText className="h-4 w-4" />
-                        <span>Additional Notes</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          {...field} 
-                          placeholder="Any additional information about the patient that may be helpful for staff or doctors..."
-                          className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-lg resize-none"
-                          data-testid="textarea-notes"
-                        />
-                      </FormControl>
-                      <FormDescription className="text-sm text-gray-500">Optional notes for staff reference</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-                <div className="bg-gray-50 p-6 rounded-lg space-y-4">
-                  <h4 className="font-semibold text-gray-900">Consent Forms</h4>
-                  
-                  <div className="flex items-start space-x-3">
-                    <FormField
-                      control={form.control}
-                      name="consentToTreatment"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="w-5 h-5 text-blue-600 border-2 border-gray-200 rounded focus:ring-blue-500 mt-1"
-                              data-testid="checkbox-consentToTreatment"
-                            />
-                          </FormControl>
-                          <div>
-                            <FormLabel className="font-semibold text-gray-700">
-                              Consent to Treatment
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                              <Eye className="h-5 w-5 text-blue-500" />
+                              <span>Contact Lens Wearer</span>
                             </FormLabel>
-                            <FormDescription className="text-sm text-gray-600 mt-1">
-                              I consent to receive medical treatment and examination by the doctors and staff at this practice.
+                            <FormDescription className="text-sm text-gray-500">
+                              Check if patient currently wears contact lenses
                             </FormDescription>
                           </div>
                         </FormItem>
@@ -1289,132 +1183,673 @@ const ModernPatientForm: React.FC<ModernPatientFormProps> = ({
                     />
                   </div>
 
-                  <div className="flex items-start space-x-3">
-                    <FormField
-                      control={form.control}
-                      name="hipaaConsent"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              checked={field.value}
-                              onChange={field.onChange}
-                              className="w-5 h-5 text-blue-600 border-2 border-gray-200 rounded focus:ring-blue-500 mt-1"
-                              data-testid="checkbox-hipaaConsent"
-                            />
-                          </FormControl>
-                          <div>
-                            <FormLabel className="font-semibold text-gray-700">
-                              HIPAA Privacy Acknowledgment
-                            </FormLabel>
-                            <FormDescription className="text-sm text-gray-600 mt-1">
-                              I acknowledge that I have been provided with information about the practice's privacy policies.
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
+                  <FormField
+                    control={form.control}
+                    name="currentGlassesRx"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <Glasses className="h-5 w-5 text-blue-500" />
+                          <span>Current Glasses Prescription</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="OD: SPH -2.00 CYL -0.50 AXIS 180\nOS: SPH -1.75 CYL -0.25 AXIS 175" 
+                            className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base resize-none font-mono"
+                            data-testid="textarea-currentGlassesRx"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm text-gray-500">Optional - Include sphere, cylinder, axis for both eyes</FormDescription>
+                      </FormItem>
+                    )}
+                  />
 
-  return (
-    <div className="w-full max-w-3xl mx-auto" data-testid="modern-patient-form">
-      {/* Header */}
-      <DialogHeader className="mb-6 text-center">
-        <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          {editingPatient ? 'Update Patient Information' : 'Register New Patient'}
-        </DialogTitle>
-        <DialogDescription className="text-gray-600">
-          {editingPatient ? 'Update patient information' : 'Complete patient registration with medical information'}
-        </DialogDescription>
-      </DialogHeader>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Step Indicator */}
-          {renderStepIndicator()}
-          
-          {/* Progress Bar */}
-          {renderProgressBar()}
-
-          {/* Step Content */}
-          {renderStep()}
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between items-center pt-6 bg-gray-50 px-8 py-6 rounded-lg shadow-inner">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={currentStep === 0 ? onCancel : previousStep}
-              className="px-8 py-3 border-2 hover:bg-gray-100 transition-colors"
-              data-testid="button-previous"
-            >
-              {currentStep === 0 ? (
-                <>Cancel</>
-              ) : (
-                <>
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Previous
-                </>
+                  <FormField
+                    control={form.control}
+                    name="eyeConditions"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                          <Eye className="h-5 w-5 text-blue-500" />
+                          <span>Eye Conditions & History</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            {...field} 
+                            placeholder="Any eye conditions, surgeries, or concerns (glaucoma, cataracts, etc.)..." 
+                            className="min-h-[100px] border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base resize-none"
+                            data-testid="textarea-eyeConditions"
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm text-gray-500">Optional - Include family history of eye conditions</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
               )}
-            </Button>
 
-            <div className="text-center">
-              <span className="text-sm text-gray-500">
-                Step {currentStep + 1} of {steps.length}
-              </span>
-            </div>
+              {currentStep === 5 && (
+                <motion.div 
+                  className="space-y-6"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="insuranceProvider"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Shield className="h-5 w-5 text-slate-500" />
+                            <span>Insurance Provider</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="e.g., Blue Cross Blue Shield" 
+                              className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-insuranceProvider"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
 
-            {currentStep === steps.length - 1 ? (
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  console.log("Register Patient button clicked!");
-                  const formData = form.getValues();
-                  console.log("Current form data:", formData);
-                  onSubmit(formData);
-                }}
-                disabled={patientMutation.isPending}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 shadow-lg transition-all"
-                data-testid="button-submit"
-              >
-                {patientMutation.isPending ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    <span>{editingPatient ? 'Updating...' : 'Registering...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    <span>{editingPatient ? 'Update Patient' : 'Register Patient'}</span>
-                  </>
-                )}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={nextStep}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 shadow-lg transition-all"
-                data-testid="button-next"
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
-            )}
-          </div>
-        </form>
-      </Form>
-    </div>
-  );
-};
+                    <FormField
+                      control={form.control}
+                      name="insuranceNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <CreditCard className="h-5 w-5 text-slate-500" />
+                            <span>Policy Number</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Insurance policy number" 
+                              className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-insuranceNumber"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="groupNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <Users className="h-5 w-5 text-slate-500" />
+                            <span>Group Number</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Insurance group number" 
+                              className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-groupNumber"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="policyHolderName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <User className="h-5 w-5 text-slate-500" />
+                            <span>Policy Holder Name</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              placeholder="Name on insurance policy" 
+                              className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                              data-testid="input-policyHolderName"
+                            />
+                          </FormControl>
+                          <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="nationalIdNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                            <FileText className="h-5 w-5 text-slate-500" />
+                            <span>National ID Number</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                               {...field} 
+                               placeholder="National ID Number (Required)" 
+                               className="h-12 border-2 border-red-200 focus:border-red-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                               data-testid="input-nationalIdNumber"
+                             />
+                           </FormControl>
+                           <FormDescription className="text-sm text-red-600">Required field</FormDescription>
+                         </FormItem>
+                       )}
+                     />
+                   </div>
+
+                   <FormField
+                     control={form.control}
+                     name="relationToPolicyHolder"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                           <UserCheck className="h-5 w-5 text-slate-500" />
+                           <span>Relationship to Policy Holder</span>
+                         </FormLabel>
+                         <FormControl>
+                           <Select onValueChange={field.onChange} value={field.value}>
+                             <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm text-base" data-testid="select-relationToPolicyHolder">
+                               <SelectValue placeholder="Select relationship" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value="self">Self</SelectItem>
+                               <SelectItem value="spouse">Spouse</SelectItem>
+                               <SelectItem value="child">Child</SelectItem>
+                               <SelectItem value="other">Other</SelectItem>
+                             </SelectContent>
+                           </Select>
+                         </FormControl>
+                         <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                       </FormItem>
+                     )}
+                   />
+
+                   {/* Government Voucher System */}
+                   <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 space-y-4">
+                     <h4 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                       <CreditCard className="h-5 w-5 text-green-500" />
+                       <span>Government Voucher System</span>
+                     </h4>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                       <FormField
+                         control={form.control}
+                         name="voucherType"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <Star className="h-5 w-5 text-green-500" />
+                               <span>Voucher Type</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Select onValueChange={field.onChange} value={field.value}>
+                                 <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-green-500 rounded-xl bg-white/70 backdrop-blur-sm text-base">
+                                   <SelectValue placeholder="Select voucher type" />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                   <SelectItem value="senior">Senior Citizen</SelectItem>
+                                   <SelectItem value="disability">Disability</SelectItem>
+                                   <SelectItem value="low-income">Low Income</SelectItem>
+                                   <SelectItem value="veteran">Veteran</SelectItem>
+                                   <SelectItem value="student">Student</SelectItem>
+                                   <SelectItem value="other">Other</SelectItem>
+                                 </SelectContent>
+                               </Select>
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+
+                       <FormField
+                         control={form.control}
+                         name="voucherNumber"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <FileText className="h-5 w-5 text-green-500" />
+                               <span>Voucher Number</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Input 
+                                 {...field} 
+                                 placeholder="Voucher reference number" 
+                                 className="h-12 border-2 border-gray-200 focus:border-green-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                                 data-testid="input-voucherNumber"
+                               />
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+
+                       <FormField
+                         control={form.control}
+                         name="voucherAmount"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <CreditCard className="h-5 w-5 text-green-500" />
+                               <span>Voucher Amount</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Input 
+                                 {...field} 
+                                 type="number"
+                                 placeholder="0.00" 
+                                 className="h-12 border-2 border-gray-200 focus:border-green-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                                 data-testid="input-voucherAmount"
+                                 onChange={(e) => field.onChange(parseFloat(e.target.value) || undefined)}
+                               />
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Optional - Amount in dollars</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+                     </div>
+                   </div>
+
+                   {/* Patient Credentials System */}
+                   <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 space-y-4">
+                     <div className="flex items-center justify-between">
+                       <h4 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                         <UserCheck className="h-5 w-5 text-blue-500" />
+                         <span>Patient Credentials (Auto-Generated)</span>
+                       </h4>
+                       <Button
+                         type="button"
+                         onClick={handleGenerateCredentials}
+                         className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg transition-all duration-200 flex items-center space-x-2"
+                       >
+                         <RefreshCw className="h-4 w-4" />
+                         <span>Generate</span>
+                       </Button>
+                     </div>
+                     
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <FormField
+                         control={form.control}
+                         name="username"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <User className="h-5 w-5 text-blue-500" />
+                               <span>Username</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Input 
+                                 {...field} 
+                                 placeholder="Auto-generated username" 
+                                 className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-gray-50 backdrop-blur-sm transition-all duration-200 text-base"
+                                 data-testid="input-username"
+                                 readOnly
+                                 value={generatedCredentials?.username || field.value || ''}
+                               />
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Auto-generated based on patient name</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+
+                       <FormField
+                         control={form.control}
+                         name="password"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <Shield className="h-5 w-5 text-blue-500" />
+                               <span>Password</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Input 
+                                 {...field} 
+                                 type="password"
+                                 placeholder="Auto-generated password" 
+                                 className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                                 data-testid="input-password"
+                                 value={generatedCredentials?.password || field.value || ''}
+                               />
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Can be edited after generation</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+                     </div>
+
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                       <FormField
+                         control={form.control}
+                         name="qrCode"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <Zap className="h-5 w-5 text-blue-500" />
+                               <span>QR Code</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Input 
+                                 {...field} 
+                                 placeholder="QR code will be generated" 
+                                 className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-gray-50 backdrop-blur-sm transition-all duration-200 text-base"
+                                 data-testid="input-qrCode"
+                                 readOnly
+                                 value={field.value || (generatedCredentials?.qrData ? JSON.stringify(generatedCredentials.qrData) : '')}
+                               />
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Auto-generated QR code for patient access</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+
+                       <FormField
+                         control={form.control}
+                         name="idCard"
+                         render={({ field }) => (
+                           <FormItem>
+                             <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                               <CreditCard className="h-5 w-5 text-blue-500" />
+                               <span>ID Card</span>
+                             </FormLabel>
+                             <FormControl>
+                               <Input 
+                                 {...field} 
+                                 placeholder="Digital ID card reference" 
+                                 className="h-12 border-2 border-gray-200 focus:border-blue-500 rounded-xl bg-gray-50 backdrop-blur-sm transition-all duration-200 text-base"
+                                 data-testid="input-idCard"
+                                 readOnly
+                                 value={field.value || (generatedCredentials?.idCardData ? JSON.stringify(generatedCredentials.idCardData) : '')}
+                               />
+                             </FormControl>
+                             <FormDescription className="text-sm text-gray-500">Digital ID card for patient identification</FormDescription>
+                           </FormItem>
+                         )}
+                       />
+                     </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <FormField
+                       control={form.control}
+                       name="referredBy"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                             <Users className="h-5 w-5 text-slate-500" />
+                             <span>Referred By</span>
+                           </FormLabel>
+                           <FormControl>
+                             <Input 
+                               {...field} 
+                               placeholder="Doctor, friend, or referral source" 
+                               className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                               data-testid="input-referredBy"
+                             />
+                           </FormControl>
+                           <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                         </FormItem>
+                       )}
+                     />
+
+                     <FormField
+                       control={form.control}
+                       name="preferredLanguage"
+                       render={({ field }) => (
+                         <FormItem>
+                           <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                             <Globe className="h-5 w-5 text-slate-500" />
+                             <span>Preferred Language</span>
+                           </FormLabel>
+                           <FormControl>
+                             <Input 
+                               {...field} 
+                               placeholder="English, Spanish, etc." 
+                               className="h-12 border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base"
+                               data-testid="input-preferredLanguage"
+                             />
+                           </FormControl>
+                           <FormDescription className="text-sm text-gray-500">Optional</FormDescription>
+                         </FormItem>
+                       )}
+                     />
+                   </div>
+
+                   <FormField
+                     control={form.control}
+                     name="notes"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel className="flex items-center space-x-2 font-semibold text-gray-700 text-base">
+                           <FileText className="h-5 w-5 text-slate-500" />
+                           <span>Additional Notes</span>
+                         </FormLabel>
+                         <FormControl>
+                           <Textarea 
+                             {...field} 
+                             placeholder="Any additional information about the patient..." 
+                             className="min-h-[100px] border-2 border-gray-200 focus:border-slate-500 rounded-xl bg-white/70 backdrop-blur-sm transition-all duration-200 text-base resize-none"
+                             data-testid="textarea-notes"
+                           />
+                         </FormControl>
+                         <FormDescription className="text-sm text-gray-500">Optional notes for staff reference</FormDescription>
+                       </FormItem>
+                     )}
+                   />
+
+                   {/* Consent Forms */}
+                   <div className="bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200 rounded-2xl p-6 space-y-4">
+                     <h4 className="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                       <Shield className="h-5 w-5 text-slate-500" />
+                       <span>Consent Forms</span>
+                     </h4>
+                     
+                     <FormField
+                       control={form.control}
+                       name="consentToTreatment"
+                       render={({ field }) => (
+                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border-2 border-red-200 p-4 bg-red-50/70 backdrop-blur-sm">
+                           <FormControl>
+                             <Checkbox
+                               checked={field.value}
+                               onCheckedChange={field.onChange}
+                               className="mt-1 border-red-300 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                               data-testid="checkbox-consentToTreatment"
+                               required
+                             />
+                           </FormControl>
+                           <div className="space-y-1 leading-none">
+                             <FormLabel className="font-semibold text-red-700 text-base">
+                               Consent to Treatment <span className="text-red-500">*</span>
+                             </FormLabel>
+                             <FormDescription className="text-sm text-red-600">
+                               I consent to receive medical treatment and examination by the doctors and staff at this practice. (Required)
+                             </FormDescription>
+                             <FormMessage />
+                           </div>
+                         </FormItem>
+                       )}
+                     />
+
+                     <FormField
+                       control={form.control}
+                       name="hipaaConsent"
+                       render={({ field }) => (
+                         <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border-2 border-red-200 p-4 bg-red-50/70 backdrop-blur-sm">
+                           <FormControl>
+                             <Checkbox
+                               checked={field.value}
+                               onCheckedChange={field.onChange}
+                               className="mt-1 border-red-300 data-[state=checked]:bg-red-500 data-[state=checked]:border-red-500"
+                               data-testid="checkbox-hipaaConsent"
+                               required
+                             />
+                           </FormControl>
+                           <div className="space-y-1 leading-none">
+                             <FormLabel className="font-semibold text-red-700 text-base">
+                               HIPAA Privacy Acknowledgment <span className="text-red-500">*</span>
+                             </FormLabel>
+                             <FormDescription className="text-sm text-red-600">
+                               I acknowledge that I have been provided with information about the practice's privacy policies. (Required)
+                             </FormDescription>
+                             <FormMessage />
+                           </div>
+                         </FormItem>
+                       )}
+                     />
+                   </div>
+                 </motion.div>
+               )}
+             </div>
+           </CardContent>
+         </Card>
+       </motion.div>
+     );
+   };
+
+   return (
+     <div className="w-full max-w-5xl mx-auto" data-testid="modern-patient-form">
+       {/* Enhanced Header */}
+       <motion.div 
+         initial={{ opacity: 0, y: -20 }}
+         animate={{ opacity: 1, y: 0 }}
+         transition={{ duration: 0.5 }}
+         className="mb-6"
+       >
+         <DialogHeader>
+           {/* Title and Tabs in single row */}
+           <div className="flex items-center justify-between mb-4">
+             <motion.div 
+               className="p-2.5 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-lg flex items-center gap-3"
+               whileHover={{ scale: 1.05, rotate: 5 }}
+               transition={{ type: "spring", stiffness: 300 }}
+             >
+               <UserPlus className="h-5 w-5" />
+               <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-slate-800 via-gray-700 to-slate-600 bg-clip-text text-transparent">
+                 {editingPatient ? 'Update Patient Information' : 'Register New Patient'}
+               </DialogTitle>
+             </motion.div>
+             
+             {/* Compact Step Indicator */}
+             <div className="flex-1 max-w-md ml-8">
+               {renderStepIndicator()}
+             </div>
+           </div>
+         </DialogHeader>
+       </motion.div>
+
+       <Form {...form}>
+         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+           
+           {/* Enhanced Progress Bar */}
+           {renderProgressBar()}
+
+           {/* Step Content with Animation */}
+           <AnimatePresence mode="wait">
+             {renderStep()}
+           </AnimatePresence>
+
+           {/* Enhanced Navigation Buttons */}
+           <motion.div 
+             className="flex justify-between items-center pt-8 bg-gradient-to-r from-gray-50 via-white to-gray-50 px-8 py-6 rounded-2xl shadow-lg border border-gray-200"
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.2 }}
+           >
+             <motion.div
+               whileHover={{ scale: 1.02 }}
+               whileTap={{ scale: 0.98 }}
+             >
+               <Button
+                 type="button"
+                 variant="outline"
+                 onClick={currentStep === 0 ? onCancel : previousStep}
+                 className="px-8 py-3 h-12 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 rounded-xl text-base font-semibold"
+                 data-testid="button-previous"
+               >
+                 {currentStep === 0 ? (
+                   <>Cancel</>
+                 ) : (
+                   <>
+                     <ChevronLeft className="h-5 w-5 mr-2" />
+                     Previous
+                   </>
+                 )}
+               </Button>
+             </motion.div>
+
+             <div className="text-center">
+               <Badge variant="secondary" className="px-4 py-2 text-sm font-semibold bg-gradient-to-r from-violet-100 to-purple-100 text-violet-700 border-0">
+                 Step {currentStep + 1} of {steps.length}
+               </Badge>
+             </div>
+
+             {currentStep === steps.length - 1 ? (
+               <motion.div
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
+               >
+                 <Button
+                   type="button"
+                   onClick={(e) => {
+                     e.preventDefault();
+                     const formData = form.getValues();
+                     onSubmit(formData);
+                   }}
+                   disabled={patientMutation.isPending}
+                   className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white px-8 py-3 h-12 shadow-lg transition-all duration-200 rounded-xl text-base font-semibold"
+                   data-testid="button-submit"
+                 >
+                   {patientMutation.isPending ? (
+                     <>
+                       <motion.div 
+                         className="w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"
+                         animate={{ rotate: 360 }}
+                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                       />
+                       <span>{editingPatient ? 'Updating...' : 'Registering...'}</span>
+                     </>
+                   ) : (
+                     <>
+                       <UserPlus className="h-5 w-5 mr-2" />
+                       <span>{editingPatient ? 'Update Patient' : 'Register Patient'}</span>
+                     </>
+                   )}
+                 </Button>
+               </motion.div>
+             ) : (
+               <motion.div
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
+               >
+                 <Button
+                   type="button"
+                   onClick={nextStep}
+                   className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 hover:from-violet-700 hover:via-purple-700 hover:to-indigo-700 text-white px-8 py-3 h-12 shadow-lg transition-all duration-200 rounded-xl text-base font-semibold"
+                   data-testid="button-next"
+                 >
+                   Next
+                   <ChevronRight className="h-5 w-5 ml-2" />
+                 </Button>
+               </motion.div>
+             )}
+           </motion.div>
+         </form>
+       </Form>
+     </div>
+   );
+ };
 
 export default ModernPatientForm;

@@ -2,22 +2,21 @@ import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 
 export function useAuth() {
-  // Temporarily bypass authentication for testing
   const { data: user, isLoading, error } = useQuery({
     queryKey: ["/api/auth/user"],
     queryFn: getQueryFn({ on401: "returnNull" }),
     retry: false,
-    staleTime: 0,
-    gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
     refetchOnMount: true,
-    refetchOnReconnect: true,
-    refetchInterval: 30000, // Reduced frequency
+    refetchOnReconnect: false,
   });
 
   return {
-    user: user || { id: 'temp', username: 'admin', email: 'admin@optistore.com' }, // Temporary user
-    isLoading: false, // Skip loading state
-    isAuthenticated: true, // Always authenticated for testing
+    user,
+    isLoading,
+    isAuthenticated: !!user,
+    error
   };
 }

@@ -12,7 +12,7 @@ module.exports = {
     min_uptime: '10s',
     env: {
       NODE_ENV: 'production',
-      PORT: 8080,
+      PORT: 5001,
       DATABASE_URL: 'mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro'
     },
     error_file: './logs/err.log',

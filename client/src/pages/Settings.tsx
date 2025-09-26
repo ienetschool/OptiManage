@@ -126,11 +126,11 @@ export default function Settings() {
     queryFn: async () => {
       return {
         general: {
-          businessName: "OptiCare Medical Center",
-          businessEmail: "info@opticare.com",
-          businessPhone: "(555) 123-4567",
-          businessAddress: "123 Medical Plaza, Healthcare City, HC 12345",
-          businessWebsite: "https://www.opticare.com",
+          businessName: "IeNet",
+          businessEmail: "info.indiaespectacular@gmail.com",
+          businessPhone: "+592 750-3901",
+          businessAddress: "Sandy Babb Street, Kitty, Georgetown, Guyana",
+          businessWebsite: "https://www.ienet.com",
           taxId: "12-3456789",
           timeZone: "America/New_York",
           currency: "USD",
@@ -139,10 +139,10 @@ export default function Settings() {
         email: {
           smtpHost: "smtp.gmail.com",
           smtpPort: 587,
-          smtpUsername: "system@opticare.com",
+          smtpUsername: "info.indiaespectacular@gmail.com",
           smtpPassword: "",
-          fromEmail: "noreply@opticare.com",
-          fromName: "OptiCare Medical Center",
+          fromEmail: "info.indiaespectacular@gmail.com",
+          fromName: "IeNet",
           enableSSL: true,
         },
         oauth: {

@@ -1,9 +1,9 @@
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
-import * as schema from "@shared/mysql-schema";
+import * as schema from "../shared/mysql-schema.ts";
 
 // Use MySQL database from secrets or fallback to direct connection
-const DATABASE_URL = process.env.DATABASE_URL || 'mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro';
+const DATABASE_URL = process.env.DATABASE_URL || "mysql://ledbpt_optie:g79h94LAP@5.181.218.15:3306/opticpro";
 
 if (!DATABASE_URL) {
   throw new Error(
@@ -53,7 +53,7 @@ export async function initializeDatabase() {
 // Database health check
 export async function checkDatabaseHealth() {
   try {
-    const [result] = await connection.execute('SELECT 1 as health_check, NOW() as current_time');
+    const [result] = await connection.execute('SELECT 1 AS health_check, NOW() AS server_time');
     return { 
       healthy: true, 
       timestamp: new Date().toISOString(),
@@ -64,7 +64,7 @@ export async function checkDatabaseHealth() {
     return { 
       healthy: false, 
       timestamp: new Date().toISOString(),
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
     };
   }
 }

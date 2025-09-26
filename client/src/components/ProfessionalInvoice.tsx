@@ -46,13 +46,13 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Invoice ${invoice.invoiceNumber} - OptiStore Pro</title>
+        <title>Invoice ${invoice.invoiceNumber} - IeOMS</title>
         <style>
           @page { 
             size: A4; 
             margin: 12mm; 
             @top-center {
-              content: "OptiStore Pro - Invoice ${invoice.invoiceNumber}";
+              content: "IeOMS - Invoice ${invoice.invoiceNumber}";
               font-size: 9pt;
               color: #666;
             }
@@ -420,12 +420,11 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           <!-- Header Section -->
           <div class="invoice-header">
             <div class="company-info">
-              <div class="company-name">OptiStore Pro</div>
+              <div class="company-name">IeOMS</div>
               <div class="company-tagline">Professional Optical Care & Services</div>
               <div class="company-address">
-                123 Medical Plaza, Suite 100<br>
-                Healthcare City, HC 12345<br>
-                Phone: (555) 123-4567 | Email: info@optistorepro.com
+                Sandy Babb Street, Kitty, Georgetown, Guyana<br>
+                Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com
               </div>
             </div>
             <div class="invoice-meta">
@@ -533,7 +532,7 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           <div class="payment-info no-break">
             <h3>Payment Information</h3>
             <p><strong>Payment Methods Accepted:</strong> Cash, Credit/Debit Cards, Check, Bank Transfer</p>
-            <p><strong>Bank Details:</strong> OptiStore Pro Medical Center | Account: 1234567890 | Routing: 987654321</p>
+            <p><strong>Bank Details:</strong> IeOMS Medical Center | Account: 1234567890 | Routing: 987654321</p>
             <p><strong>Payment Terms:</strong> Net 30 days from invoice date</p>
             <p><strong>Late Fee:</strong> 1.5% monthly service charge on overdue amounts</p>
           </div>
@@ -549,8 +548,8 @@ export const generateProfessionalA4Invoice = (invoice: Invoice) => {
           <!-- Footer -->
           <div class="invoice-footer">
             <div class="footer-text">
-              <strong>Thank you for choosing OptiStore Pro!</strong><br>
-              For questions about this invoice, please contact us at (555) 123-4567 or billing@optistorepro.com
+              <strong>Thank you for choosing IeOMS!</strong><br>
+              For questions about this invoice, please contact us at +592 750-3901 or info.indiaespectacular@gmail.com
             </div>
             <div class="footer-text">
               This invoice was generated electronically on ${format(new Date(), 'MMMM dd, yyyy')} at ${format(new Date(), 'h:mm a')}

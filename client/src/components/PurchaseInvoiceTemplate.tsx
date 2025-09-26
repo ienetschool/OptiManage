@@ -91,11 +91,11 @@ export default function PurchaseInvoiceTemplate({
             <div className="mb-8">
               {/* Top Branding Section */}
               <div className="text-center mb-6">
-                <h1 className="text-3xl font-bold text-blue-600 mb-2">OptiStore Pro</h1>
+                <h1 className="text-3xl font-bold text-blue-600 mb-2">IeOMS</h1>
                 <p className="text-sm text-gray-600 mb-1">Optical Retail Management</p>
                 <p className="text-sm text-gray-600 mb-1">123 Vision Street</p>
                 <p className="text-sm text-gray-600 mb-1">Eyecare City, EC 12345</p>
-                <p className="text-sm text-gray-600">Phone: (555) 123-4567 | Email: billing@optistorepro.com</p>
+                <p className="text-sm text-gray-600">Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com</p>
               </div>
 
               {/* Header Row with Invoice Title, Bill To, Ship To, and Status */}
@@ -130,7 +130,7 @@ export default function PurchaseInvoiceTemplate({
                 <div>
                   <h3 className="font-semibold text-gray-800 mb-3 border-b border-gray-300 pb-1">Ship To:</h3>
                   <div className="text-sm text-gray-700">
-                    <div className="font-medium mb-1">OptiStore Pro - Main Location</div>
+                    <div className="font-medium mb-1">IeOMS - Main Location</div>
                     <div className="text-gray-600">
                       <div>456 Inventory Avenue</div>
                       <div>Stock City, SC 67890</div>

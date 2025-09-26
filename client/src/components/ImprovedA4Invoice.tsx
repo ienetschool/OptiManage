@@ -46,7 +46,7 @@ export const generateA4Invoice = (invoice: Invoice) => {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Invoice ${invoice.invoiceNumber} - OptiStore Pro</title>
+        <title>Invoice ${invoice.invoiceNumber} - IeOMS</title>
         <style>
           /* A4 Page Setup */
           @page { 
@@ -54,7 +54,7 @@ export const generateA4Invoice = (invoice: Invoice) => {
             margin: 15mm 20mm;
             
             @top-left {
-              content: "OptiStore Pro";
+              content: "IeOMS";
               font-size: 9pt;
               color: #666;
               font-weight: 600;
@@ -419,14 +419,13 @@ export const generateA4Invoice = (invoice: Invoice) => {
           <!-- Header Section -->
           <div class="invoice-header">
             <div class="company-section">
-              <div class="company-name">OptiStore Pro</div>
+              <div class="company-name">IeOMS</div>
               <div class="company-tagline">Professional Optical Care & Retail Solutions</div>
               <div class="company-details">
-                123 Vision Street, Medical District<br>
-                City, State 12345<br>
-                Phone: +1 (555) 123-4567<br>
-                Email: info@optistorepro.com<br>
-                Website: www.optistorepro.com
+                Sandy Babb Street, Kitty, Georgetown, Guyana<br>
+                Phone: +592 750-3901<br>
+                Email: info.indiaespectacular@gmail.com<br>
+                Website: https://www.ienet.com
               </div>
             </div>
             <div class="invoice-title-section">
@@ -571,7 +570,7 @@ export const generateA4Invoice = (invoice: Invoice) => {
           <!-- Footer -->
           <div class="footer-note">
             <strong>Thank you for your business!</strong><br>
-            For questions about this invoice, please contact us at info@optistorepro.com or +1 (555) 123-4567<br>
+            For questions about this invoice, please contact us at info.indiaespectacular@gmail.com or +592 750-3901<br>
             <em>This is a computer-generated invoice and does not require a signature.</em>
           </div>
         </div>

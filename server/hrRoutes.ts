@@ -4,16 +4,26 @@ import {
   attendance, 
   leaveRequests, 
   payroll, 
-  notificationsTable,
+  notifications,
   insertStaffSchema,
-  insertAttendanceSchema,
-  insertPayrollSchema,
-} from "@shared/mysql-schema";
+  insertNotificationSchema,
+} from "../shared/mysql-schema";
 import { db } from "./db";
 import { eq, desc, and, like, gte, lte, sql } from "drizzle-orm";
 import { isAuthenticated } from "./oauthAuth";
 import QRCode from "qrcode";
 import { format } from "date-fns";
+import { z } from "zod";
+
+// Custom staff schema with proper date handling
+const customInsertStaffSchema = insertStaffSchema.extend({
+  hireDate: z.string().optional().transform((val) => val ? new Date(val) : undefined),
+}).refine((data) => {
+  // Ensure required fields are present
+  return data.employeeId && data.firstName && data.lastName;
+}, {
+  message: "employeeId, firstName, and lastName are required"
+});
 
 export function registerHRRoutes(app: Express) {
   // Staff Management Routes
@@ -29,13 +39,32 @@ export function registerHRRoutes(app: Express) {
 
   app.post("/api/staff", isAuthenticated, async (req, res) => {
     try {
-      const validatedData = insertStaffSchema.parse(req.body);
-      await db.insert(staff).values(validatedData);
+      console.log('Received request body:', JSON.stringify(req.body, null, 2));
+      
+      // Generate employeeId if not provided
+      const employeeId = req.body.employeeId || `EMP${Date.now()}`;
+      
+      // Convert date strings to Date objects before validation
+      const processedData = {
+        ...req.body,
+        employeeId,
+        hireDate: req.body.hireDate ? req.body.hireDate : undefined, // Keep as string for custom schema
+      };
+      
+      console.log('Processed data:', JSON.stringify(processedData, null, 2));
+      
+      const validatedData = customInsertStaffSchema.parse(processedData);
+      console.log('Validated data:', JSON.stringify(validatedData, null, 2));
+      
+      const result = await db.insert(staff).values(validatedData);
       const [newStaff] = await db.select().from(staff).where(eq(staff.employeeId, validatedData.employeeId)).limit(1);
       res.json(newStaff);
     } catch (error) {
-      console.error("Error creating staff:", error);
-      res.status(500).json({ message: "Failed to create staff" });
+      console.error('Error creating staff:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+      }
+      res.status(500).json({ message: 'Failed to create staff' });
     }
   });
 

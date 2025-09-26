@@ -12,7 +12,7 @@ export default function QuickLogin() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold text-slate-900">
-            OptiStore Pro
+            IeOMS
           </CardTitle>
           <p className="text-slate-600">Medical Practice Management System</p>
         </CardHeader>

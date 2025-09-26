@@ -45,10 +45,10 @@ interface ModernA4InvoiceTemplateProps {
 
 export default function ModernA4InvoiceTemplate({ 
   invoice, 
-  storeName = "OptiStore Pro",
-  storeAddress = "123 Healthcare Blvd, Medical District, New York, NY 10001",
-  storePhone = "647-444-1234",
-  storeEmail = "info@optistorepro.com",
+  storeName = "IeOMS",
+  storeAddress = "Sandy Babb Street, Kitty, Georgetown, Guyana",
+  storePhone = "+592 750-3901",
+  storeEmail = "info.indiaespectacular@gmail.com",
   onClose
 }: ModernA4InvoiceTemplateProps) {
   
@@ -151,11 +151,10 @@ export default function ModernA4InvoiceTemplate({
               }}>
                 <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '16px' }}>{storePhone}</div>
                 <div style={{ marginBottom: '5px' }}>{storeEmail}</div>
-                <div style={{ marginBottom: '5px' }}>optistorepro.com</div>
+                <div style={{ marginBottom: '5px' }}>www.ienet.com</div>
                 <div style={{ fontSize: '13px', marginTop: '10px' }}>
-                  1 Your Address<br/>
-                  City, State, Country<br/>
-                  ZIP CODE
+                  Sandy Babb Street, Kitty<br/>
+                  Georgetown, Guyana<br/>
                 </div>
               </div>
             </div>

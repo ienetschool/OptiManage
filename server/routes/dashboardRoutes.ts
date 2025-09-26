@@ -13,26 +13,38 @@ import {
 import { count, desc, eq, gte, sum, sql, and } from "drizzle-orm";
 import { isAuthenticated } from "../oauthAuth";
 
+async function safeCount(table: any): Promise<number> {
+  try {
+    const result = await db.select({ count: count() }).from(table);
+    return Number(result[0]?.count) || 0;
+  } catch (err) {
+    console.error("safeCount error:", err);
+    return 0;
+  }
+}
+
 export function registerDashboardRoutes(app: Express) {
   // Enhanced dashboard data endpoint
   app.get("/api/dashboard", isAuthenticated, async (req, res) => {
     try {
-      // Get simple counts from the database with real data
-      const customersCount = await db.select({ count: count() }).from(customers);
-      const productsCount = await db.select({ count: count() }).from(products);
-      const storesCount = await db.select({ count: count() }).from(stores);
-      const appointmentsCount = await db.select({ count: count() }).from(appointments);
+      // Get simple counts from the database with real data, safely defaulting to 0 in dev if DB is unreachable
+      const [customersCnt, productsCnt, storesCnt, appointmentsCnt] = await Promise.all([
+        safeCount(customers),
+        safeCount(products),
+        safeCount(stores),
+        safeCount(appointments),
+      ]);
 
-      // Return dashboard data with real counts
+      // Return dashboard data with real counts (or zeros in fallback)
       const dashboardData = {
-        totalAppointments: appointmentsCount[0]?.count || 0,
-        totalPatients: customersCount[0]?.count || 0, // Using customers as patients for now
+        totalAppointments: appointmentsCnt,
+        totalPatients: customersCnt, // Using customers as patients for now
         totalSales: 0, // No sales yet
         totalRevenue: 0,
         appointmentsToday: 0,
         lowStockItems: 0,
-        totalProducts: productsCount[0]?.count || 0,
-        totalStores: storesCount[0]?.count || 0,
+        totalProducts: productsCnt,
+        totalStores: storesCnt,
         recentAppointments: [],
         recentSales: [],
         systemHealth: 98,

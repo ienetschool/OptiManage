@@ -80,7 +80,7 @@ const milestones = [
   {
     year: "2019",
     title: "Company Founded",
-    description: "OptiCare was established with a vision to revolutionize medical practice management."
+    description: "IeOMS was established with a vision to revolutionize optical practice management."
   },
   {
     year: "2020",
@@ -116,7 +116,7 @@ export default function About() {
       <section className="bg-gradient-to-r from-blue-600 to-indigo-600 py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center text-white">
-            <Badge className="bg-white bg-opacity-20 text-white mb-6">About OptiCare</Badge>
+            <Badge className="bg-white bg-opacity-20 text-white mb-6">About IeOMS</Badge>
             <h1 className="text-5xl font-bold mb-6">
               Transforming Healthcare Through Technology
             </h1>

@@ -27,18 +27,18 @@ const contactMethods = [
   {
     icon: Phone,
     title: "Phone Support",
-    description: "Speak directly with our support team",
-    contact: "(555) 123-4567",
-    availability: "Mon-Fri, 8AM-8PM EST",
-    color: "blue"
+    description: "Speak with our support team",
+    contact: "+592 750-3901",
+    action: "Call Now",
+    color: "bg-blue-500"
   },
   {
     icon: Mail,
     title: "Email Support",
-    description: "Get detailed help via email",
-    contact: "support@opticare.com",
-    availability: "24/7 Response",
-    color: "green"
+    description: "Get help via email",
+    contact: "info.indiaespectacular@gmail.com",
+    action: "Send Email",
+    color: "bg-green-500"
   },
   {
     icon: MessageCircle,
@@ -60,24 +60,11 @@ const contactMethods = [
 
 const offices = [
   {
-    city: "New York",
-    address: "123 Medical Plaza, Suite 500",
-    zipCode: "New York, NY 10001",
-    phone: "(555) 123-4567",
-    email: "ny@opticare.com"
-  },
-  {
-    city: "San Francisco",
-    address: "456 Health Avenue, Floor 10",
-    zipCode: "San Francisco, CA 94102",
-    email: "sf@opticare.com"
-  },
-  {
-    city: "Chicago",
-    address: "789 Wellness Street, Suite 300",
-    zipCode: "Chicago, IL 60601",
-    phone: "(555) 789-0123",
-    email: "chicago@opticare.com"
+    city: "Georgetown",
+    address: "Sandy Babb Street, Kitty",
+    zipCode: "Georgetown, Guyana",
+    phone: "+592 750-3901",
+    email: "info.indiaespectacular@gmail.com"
   }
 ];
 

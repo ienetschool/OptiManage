@@ -58,7 +58,7 @@ export const stores = mysqlTable("stores", {
   isActive: boolean("is_active").default(true),
   timezone: varchar("timezone", { length: 50 }).default('America/New_York'),
   openingHours: text("opening_hours"),
-  customFields: json("custom_fields"),
+  customFields: json("custom_fields").$type<Record<string, any>>().default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
 });
@@ -185,27 +185,22 @@ export const doctors = mysqlTable("doctors", {
 });
 
 // Medical Appointments
-export const medicalAppointments = mysqlTable("medical_appointments", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
-  appointmentNumber: varchar("appointment_number", { length: 50 }).unique().notNull(),
-  patientId: varchar("patient_id", { length: 36 }).notNull(),
-  doctorId: varchar("doctor_id", { length: 36 }).notNull(),
-  storeId: varchar("store_id", { length: 36 }).notNull(),
-  appointmentDate: timestamp("appointment_date").notNull(),
-  duration: int("duration").default(30),
-  appointmentType: varchar("appointment_type", { length: 100 }),
-  status: varchar("status", { length: 50 }).default('scheduled'),
-  chiefComplaint: text("chief_complaint"),
-  diagnosis: text("diagnosis"),
-  treatment: text("treatment"),
-  prescriptions: json("prescriptions"),
-  followUpDate: date("follow_up_date"),
-  notes: text("notes"),
-  fee: decimal("fee", { precision: 10, scale: 2 }),
-  isPaid: boolean("is_paid").default(false),
-  customFields: json("custom_fields"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+export const medicalAppointments = mysqlTable('medical_appointments', {
+  id: varchar('id', { length: 36 }).notNull().primaryKey().$defaultFn(() => uuid()),
+  appointmentNumber: varchar('appointment_number', { length: 50 }).notNull().unique(),
+  patientId: varchar('patient_id', { length: 36 }).notNull(),
+  doctorId: varchar('doctor_id', { length: 36 }).notNull(),
+  storeId: varchar('store_id', { length: 36 }).notNull(),
+  appointmentDate: date('appointment_date').notNull(),
+  duration: int('duration').default(30),
+  appointmentType: varchar('appointment_type', { length: 100 }),
+  appointmentFee: decimal('appointment_fee', { precision: 10, scale: 2 }).default('0.00'),
+  paidAmount: decimal('paid_amount', { precision: 10, scale: 2 }).default('0.00'),
+  remainingBalance: decimal('remaining_balance', { precision: 10, scale: 2 }).default('0.00'),
+  isPaid: boolean('is_paid').default(false),
+  customFields: json('custom_fields'),
+  createdAt: timestamp('created_at').default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
 });
 
 // Appointments (General appointments system) - Match actual database schema
@@ -235,9 +230,16 @@ export const prescriptions = mysqlTable("prescriptions", {
   appointmentId: varchar("appointment_id", { length: 36 }),
   prescriptionDate: date("prescription_date").notNull(),
   validUntil: date("valid_until"),
+  prescriptionType: varchar("prescription_type", { length: 50 }).notNull().default('general'), // medicines, eye_treatment, specs_lens, diet, surgery, other
+  diagnosis: text("diagnosis"),
   instructions: text("instructions"),
-  status: varchar("status", { length: 50 }).default('active'),
+  status: varchar("status", { length: 50 }).default('active'), // active, completed, cancelled, expired
+  priority: varchar("priority", { length: 20 }).default('medium'), // low, medium, high, urgent
   notes: text("notes"),
+  digitalSignature: text("digital_signature"), // Doctor's digital signature
+  signedAt: timestamp("signed_at"),
+  isForwarded: boolean("is_forwarded").default(false), // Track if forwarded to other modules
+  forwardedModules: json("forwarded_modules"), // Track which modules received the prescription
   customFields: json("custom_fields"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
@@ -247,13 +249,59 @@ export const prescriptions = mysqlTable("prescriptions", {
 export const prescriptionItems = mysqlTable("prescription_items", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
   prescriptionId: varchar("prescription_id", { length: 36 }).notNull(),
-  medicationName: varchar("medication_name", { length: 255 }).notNull(),
+  itemType: varchar("item_type", { length: 50 }).notNull(), // medicine, eye_treatment, specs_lens, diet_recommendation, surgery_recommendation, other_treatment
+  
+  // Medicine fields
+  medicationName: varchar("medication_name", { length: 255 }),
   dosage: varchar("dosage", { length: 100 }),
   frequency: varchar("frequency", { length: 100 }),
   duration: varchar("duration", { length: 100 }),
   quantity: int("quantity"),
+  refills: int("refills"),
+  
+  // Eye treatment fields
+  treatmentType: varchar("treatment_type", { length: 100 }), // general, specialized
+  treatmentName: varchar("treatment_name", { length: 255 }),
+  
+  // Specs & Lens fields
+  eyeType: varchar("eye_type", { length: 20 }), // left, right, both
+  spherical: decimal("spherical", { precision: 4, scale: 2 }),
+  cylindrical: decimal("cylindrical", { precision: 4, scale: 2 }),
+  axis: int("axis"),
+  addition: decimal("addition", { precision: 3, scale: 2 }),
+  lensType: varchar("lens_type", { length: 100 }), // single_vision, bifocal, progressive
+  frameType: varchar("frame_type", { length: 100 }),
+  
+  // Diet recommendation fields
+  dietType: varchar("diet_type", { length: 100 }),
+  dietInstructions: text("diet_instructions"),
+  
+  // Surgery recommendation fields
+  surgeryType: varchar("surgery_type", { length: 100 }),
+  urgency: varchar("urgency", { length: 50 }), // immediate, scheduled, optional
+  surgeonRecommendation: varchar("surgeon_recommendation", { length: 255 }),
+  
+  // General fields
   instructions: text("instructions"),
+  notes: text("notes"),
+  priority: varchar("priority", { length: 20 }).default('medium'),
+  status: varchar("status", { length: 50 }).default('pending'), // pending, completed, cancelled
+  customFields: json("custom_fields"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow(),
+});
+
+// Prescription audit log for tracking all changes and actions
+export const prescriptionAuditLog = mysqlTable("prescription_audit_log", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  prescriptionId: varchar("prescription_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(), // Who performed the action
+  userRole: varchar("user_role", { length: 50 }).notNull(), // doctor, patient, admin
+  action: varchar("action", { length: 100 }).notNull(), // created, updated, viewed, printed, downloaded, forwarded, signed
+  actionDetails: json("action_details"), // What was changed or additional context
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
+  timestamp: timestamp("timestamp").defaultNow(),
 });
 
 // Sales
@@ -566,6 +614,11 @@ export const lensCuttingTasks = mysqlTable("lens_cutting_tasks", {
   specialInstructions: text("special_instructions"),
   estimatedTime: int("estimated_time"), // in minutes
   
+  // New: Job charge & payout
+  jobCharge: decimal("job_charge", { precision: 10, scale: 2 }).default('0.00'),
+  payoutStatus: varchar("payout_status", { length: 20 }).default('Pending'), // Pending | Paid | Hold
+  payoutReleasedAt: timestamp("payout_released_at"),
+
   // Status and Progress
   status: varchar("status", { length: 30 }).default('assigned'), // assigned, in_progress, completed, quality_check, sent_to_store
   progress: int("progress").default(0), // 0-100 percentage
@@ -575,6 +628,17 @@ export const lensCuttingTasks = mysqlTable("lens_cutting_tasks", {
   startedDate: timestamp("started_date"),
   completedDate: timestamp("completed_date"),
   deadline: timestamp("deadline"),
+  
+  // QC fields
+  qcStatus: varchar("qc_status", { length: 10 }), // pass | fail
+  qcReason: text("qc_reason"),
+  qcCheckedBy: varchar("qc_checked_by", { length: 36 }),
+  qcCheckedAt: timestamp("qc_checked_at"),
+
+  // Rework tracking
+  reworkRequired: boolean("rework_required").default(false),
+  reworkReason: text("rework_reason"),
+  reworkOfTaskId: varchar("rework_of_task_id", { length: 36 }),
   
   // Work Details
   workRemarks: text("work_remarks"),
@@ -602,11 +666,17 @@ export const deliveries = mysqlTable("deliveries", {
   status: varchar("status", { length: 30 }).default('ready'), // ready, out_for_delivery, delivered, failed
   trackingNumber: varchar("tracking_number", { length: 100 }),
   courierService: varchar("courier_service", { length: 100 }),
+  shippingCharges: decimal("shipping_charges", { precision: 10, scale: 2 }).default('0.00'),
   
   // Dates
   readyDate: timestamp("ready_date").defaultNow(),
   scheduledDate: date("scheduled_date"),
   deliveredDate: timestamp("delivered_date"),
+
+  // QR Pickup
+  qrPickupToken: varchar("qr_pickup_token", { length: 64 }),
+  qrTokenExpiresAt: timestamp("qr_token_expires_at"),
+  qrTokenUsedAt: timestamp("qr_token_used_at"),
   
   // Notes and Feedback
   deliveryNotes: text("delivery_notes"),
@@ -734,11 +804,19 @@ export const prescriptionsRelations = relations(prescriptions, ({ one, many }) =
     references: [medicalAppointments.id],
   }),
   items: many(prescriptionItems),
+  auditLogs: many(prescriptionAuditLog),
 }));
 
 export const prescriptionItemsRelations = relations(prescriptionItems, ({ one }) => ({
   prescription: one(prescriptions, {
     fields: [prescriptionItems.prescriptionId],
+    references: [prescriptions.id],
+  }),
+}));
+
+export const prescriptionAuditLogRelations = relations(prescriptionAuditLog, ({ one }) => ({
+  prescription: one(prescriptions, {
+    fields: [prescriptionAuditLog.prescriptionId],
     references: [prescriptions.id],
   }),
 }));
@@ -901,12 +979,25 @@ export const insertPatientSchema = createInsertSchema(patients, {
 });
 export const insertDoctorSchema = createInsertSchema(doctors);
 export const insertMedicalAppointmentSchema = createInsertSchema(medicalAppointments);
-export const insertAppointmentSchema = createInsertSchema(appointments).omit({
+export const insertAppointmentSchema = createInsertSchema(appointments, {
+  patientId: z.string().uuid("Patient ID must be a valid UUID"),
+  storeId: z.string().min(1, "Store ID is required"),
+  service: z.string().min(1, "Service is required").max(255, "Service name too long").trim(),
+  appointmentDate: z.string().datetime("Invalid appointment date format").transform((val) => new Date(val)).or(z.date()),
+  appointmentFee: z.string().optional(),
+  paidAmount: z.string().optional(),
+  remainingBalance: z.string().optional(),
+  isPaid: z.boolean().optional(),
+  duration: z.number().int().min(15, "Duration must be at least 15 minutes").max(480, "Duration cannot exceed 8 hours").optional(),
+  status: z.enum(["scheduled", "confirmed", "in_progress", "completed", "cancelled", "no_show"], {
+    errorMap: () => ({ message: "Status must be one of: scheduled, confirmed, in_progress, completed, cancelled, no_show" })
+  }).optional(),
+  notes: z.string().max(1000, "Notes cannot exceed 1000 characters").optional().nullable(),
+  customFields: z.record(z.any()).optional().nullable(),
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
-}).extend({
-  assignedDoctorId: z.string().min(1, "Doctor assignment is required"),
 });
 export const insertPrescriptionSchema = createInsertSchema(prescriptions);
 export const insertSaleSchema = createInsertSchema(sales);

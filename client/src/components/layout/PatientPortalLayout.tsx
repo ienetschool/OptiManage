@@ -53,7 +53,7 @@ export default function PatientPortalLayout({
               <div className="text-right text-sm text-gray-600">
                 <div className="flex items-center space-x-1">
                   <Phone className="h-3 w-3" />
-                  <span>(555) 123-4567</span>
+                  <span>+592 750-3901</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <Clock className="h-3 w-3" />
@@ -79,11 +79,11 @@ export default function PatientPortalLayout({
               <div className="space-y-1 text-sm text-gray-600">
                 <div className="flex items-center space-x-2">
                   <Phone className="h-4 w-4" />
-                  <span>(555) 123-4567</span>
+                  <span>+592 750-3901</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <MapPin className="h-4 w-4" />
-                  <span>123 Vision Street, Eye City, EC 12345</span>
+                  <span>Sandy Babb Street, Kitty, Georgetown, Guyana</span>
                 </div>
               </div>
             </div>

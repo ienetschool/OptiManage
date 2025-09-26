@@ -616,10 +616,23 @@ export const patients = pgTable("patients", {
     description?: string;
   }>>().default(sql`'[]'::jsonb`),
   
+  // Government Voucher System
+  voucherType: varchar("voucher_type", { length: 100 }),
+  voucherNumber: varchar("voucher_number", { length: 100 }),
+  voucherAmount: decimal("voucher_amount", { precision: 10, scale: 2 }),
+  
+  // Patient Credentials System
+  qrCode: text("qr_code"),
+  idCard: text("id_card"),
+  
+  // Consent Forms
+  consentToTreatment: boolean("consent_to_treatment").default(false),
+  hipaaConsent: boolean("hipaa_consent").default(false),
+  
   isActive: boolean("is_active").default(true),
   loyaltyTier: varchar("loyalty_tier", { length: 20 }).default("bronze"),
   loyaltyPoints: integer("loyalty_points").default(0),
-  customFields: jsonb("custom_fields"),
+  customFields: jsonb("custom_fields").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -632,6 +645,10 @@ export const medicalAppointments = pgTable("medical_appointments", {
   doctorId: uuid("doctor_id").references(() => staff.id).notNull(),
   storeId: varchar("store_id").references(() => stores.id),
   appointmentDate: timestamp("appointment_date").notNull(),
+  appointmentFee: decimal("appointment_fee", { precision: 10, scale: 2 }).default(0.00),
+  paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default(0.00),
+  remainingBalance: decimal("remaining_balance", { precision: 10, scale: 2 }).default(0.00),
+  isPaid: boolean("is_paid").default(false),
   appointmentType: varchar("appointment_type", { length: 50 }).notNull(), // checkup, follow-up, emergency
   status: varchar("status", { length: 20 }).default("scheduled"), // scheduled, completed, cancelled, no-show
   notes: text("notes"),

@@ -306,7 +306,7 @@ export default function Pages() {
                   </div>
                   <div>
                     <label className="text-sm font-medium">SEO Title Template</label>
-                    <Input placeholder="%title% | %site_name%" defaultValue="%title% | OptiStore Pro" />
+                    <Input placeholder="%title% | %site_name%" defaultValue="%title% | IeOMS" />
                   </div>
                 </div>
                 <div>

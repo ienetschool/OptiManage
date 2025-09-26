@@ -240,14 +240,14 @@ export default function Domains() {
         <CardHeader>
           <CardTitle>Domain Transfer</CardTitle>
           <CardDescription>
-            Transfer your domain to OptiStore Pro for easier management
+            Transfer your domain to IeOMS for easier management
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
             <Globe className="h-12 w-12 text-slate-300 mx-auto mb-4" />
             <p className="text-slate-500 mb-4">
-              Simplify domain management by transferring your domain to OptiStore Pro
+              Simplify domain management by transferring your domain to IeOMS
             </p>
             <Button variant="outline">
               Start Domain Transfer

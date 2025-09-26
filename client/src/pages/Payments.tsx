@@ -442,7 +442,7 @@ export default function Payments() {
     payments: payments.slice(0, 3) // First 3 for debugging
   });
 
-  const totalAmount = payments.reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
+  const totalAmount = payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
   const completedPayments = payments.filter(p => p.status === "completed");
   const pendingPayments = payments.filter(p => p.status === "pending");
 
@@ -611,10 +611,10 @@ export default function Payments() {
     const revenuePayments = payments.filter(p => p.status === 'completed' && p.type !== 'expenditure');
     const expenditurePayments = payments.filter(p => p.type === 'expenditure');
     
-    const totalRevenue = revenuePayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const totalExpenses = expenditurePayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const productSales = revenuePayments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const serviceSales = revenuePayments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    const totalRevenue = revenuePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const totalExpenses = expenditurePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const productSales = revenuePayments.filter(p => p.source === 'regular_invoice' || p.source === 'quick_sale').reduce((sum, p) => sum + (p.amount || 0), 0);
+    const serviceSales = revenuePayments.filter(p => p.source === 'medical_invoice' || p.source === 'appointment').reduce((sum, p) => sum + (p.amount || 0), 0);
     
     return {
       totalRevenue,
@@ -789,12 +789,12 @@ export default function Payments() {
                   <div class="logo-box"></div>
                 </div>
                 <div class="company-info">
-                  <div class="company-title">OptiStore Pro</div>
+                  <div class="company-title">IeOMS</div>
                   <div class="company-subtitle">Medical Center</div>
                   <div class="company-details">
-                    123 Vision Street<br>
-                    Eyecare City, EC 12345<br>
-                    Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                    Sandy Babb Street, Kitty<br>
+                    Georgetown, Guyana<br>
+                    Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com
                   </div>
                 </div>
                 <div class="receipt-badges">
@@ -848,8 +848,8 @@ export default function Payments() {
 
                 <!-- Footer -->
                 <div class="footer">
-                  Payment processed on ${new Date().toLocaleDateString()} | OptiStore Pro Medical Center<br>
-                  Thank you for your payment. For questions, contact us at billing@optistorepro.com
+                  Payment processed on ${new Date().toLocaleDateString()} | IeOMS Medical Center<br>
+                  Thank you for your payment. For questions, contact us at info.indiaespectacular@gmail.com
                 </div>
               </div>
             </div>

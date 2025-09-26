@@ -564,12 +564,12 @@ export default function Payroll() {
                   <div class="logo-box"></div>
                 </div>
                 <div class="company-info">
-                  <div class="company-title">OptiStore Pro</div>
+                  <div class="company-title">IeOMS</div>
                   <div class="company-subtitle">Medical Center</div>
                   <div class="company-details">
                     123 Vision Street<br>
                     Eyecare City, EC 12345<br>
-                    Phone: (555) 123-4567 | Email: billing@optistorepro.com
+                    Phone: +592 750-3901 | Email: info.indiaespectacular@gmail.com
                   </div>
                 </div>
                 <div class="payslip-badges">
@@ -670,8 +670,8 @@ export default function Payroll() {
 
                 <!-- Footer -->
                 <div class="footer">
-                  Generated on ${new Date().toLocaleDateString()} | OptiStore Pro Medical Center<br>
-                  For questions about this payslip, contact us at billing@optistorepro.com
+                  Generated on ${new Date().toLocaleDateString()} | IeOMS Medical Center<br>
+                  For questions about this payslip, contact us at info.indiaespectacular@gmail.com
                 </div>
               </div>
             </div>
